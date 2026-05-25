@@ -248,21 +248,18 @@ app_license = "mit"
 # ignore_translatable_strings_from = []
 
 fixtures = [
-    "DocType",
+    {
+        "dt": "DocType",
+        "filters": [
+            ["name", "=", "Retail Packing Detail"]
+        ],
+    },
     "Custom Field",
     "Client Script",
+    "Server Script",
     "Property Setter",
     "Custom DocPerm",
     "Workflow",
     "Workflow State",
     "Workflow Action Master",
-    "Print Format",
-    "Letter Head",
-    "Web Form",
-    "Workspace",
-    "Dashboard Chart",
-    "Number Card",
-    "Notification",
-    "Email Template",
-    "Report",
 ]
