@@ -1,7 +1,7 @@
 app_name = "retail"
 app_title = "Retail"
 app_publisher = "Arab Scale"
-app_description = "Rtail Application"
+app_description = "Retail Application"
 app_email = "akshayagopal1@gmail.com"
 app_license = "mit"
 
@@ -247,3 +247,21 @@ app_license = "mit"
 # List of apps whose translatable strings should be excluded from this app's translations.
 # ignore_translatable_strings_from = []
 
+fixtures = [
+    "Custom Field",
+    "Client Script",
+    "Property Setter",
+    "Custom DocPerm",
+    "Workflow",
+    "Workflow State",
+    "Workflow Action Master",
+    "Print Format",
+    "Letter Head",
+    "Web Form",
+    "Workspace",
+    "Dashboard Chart",
+    "Number Card",
+    "Notification",
+    "Email Template",
+    "Report",
+]
