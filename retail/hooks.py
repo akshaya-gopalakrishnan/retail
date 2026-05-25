@@ -248,6 +248,7 @@ app_license = "mit"
 # ignore_translatable_strings_from = []
 
 fixtures = [
+    "DocType",
     "Custom Field",
     "Client Script",
     "Property Setter",
