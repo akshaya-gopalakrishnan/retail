@@ -1,0 +1,34 @@
+{
+ "charts": [],
+ "content": "[{\"id\":\"Z6Cp4-A6Oh\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Business Profile</span>\",\"col\":12}},{\"id\":\"noJ5qHAPBG\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Company Setup\",\"col\":4}}]",
+ "creation": "2026-06-03 16:09:24.569951",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "Business Profile",
+ "links": [],
+ "modified": "2026-06-03 17:42:00.733574",
+ "modified_by": "akshayagopal1@gmail.com",
+ "module": "Retail-app",
+ "name": "Business Profile",
+ "number_cards": [],
+ "owner": "akshayagopal1@gmail.com",
+ "parent_page": "Settings",
+ "public": 1,
+ "quick_lists": [
+  {
+   "document_type": "Company",
+   "label": "Company Setup",
+   "quick_list_filter": "[]"
+  }
+ ],
+ "roles": [],
+ "sequence_id": 60.0,
+ "shortcuts": [],
+ "title": "Business Profile"
+}

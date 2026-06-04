@@ -1,0 +1,34 @@
+{
+ "charts": [],
+ "content": "[{\"id\":\"2HnbgOHrIi\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Stock Status</span>\",\"col\":12}},{\"id\":\"L0hpWY49jf\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Current Stock Balance\",\"col\":4}}]",
+ "creation": "2026-06-03 14:32:07.086945",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "Stock Status",
+ "links": [],
+ "modified": "2026-06-03 17:43:57.694595",
+ "modified_by": "akshayagopal1@gmail.com",
+ "module": "Retail-app",
+ "name": "Stock Status",
+ "number_cards": [],
+ "owner": "akshayagopal1@gmail.com",
+ "parent_page": "Stocks",
+ "public": 1,
+ "quick_lists": [
+  {
+   "document_type": "Bin",
+   "label": "Current Stock Balance",
+   "quick_list_filter": "[]"
+  }
+ ],
+ "roles": [],
+ "sequence_id": 51.0,
+ "shortcuts": [],
+ "title": "Stock Status"
+}

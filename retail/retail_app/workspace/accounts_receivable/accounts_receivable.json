@@ -1,0 +1,42 @@
+{
+ "charts": [
+  {
+   "chart_name": "Accounts Receivable Ageing",
+   "label": "Customer Due Payments"
+  }
+ ],
+ "content": "[{\"id\":\"X4D1WQsff8\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Accounts Receivable</span>\",\"col\":12}},{\"id\":\"v1rgXSA-Fs\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"cl-402gTlX\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Accounts Receivable\",\"col\":4}},{\"id\":\"J7njYCPcO6\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"ssDY0ob3u4\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Customer Due Payments\",\"col\":12}}]",
+ "creation": "2026-06-03 17:21:16.122631",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "Accounts Receivable",
+ "links": [],
+ "modified": "2026-06-03 17:43:34.482246",
+ "modified_by": "akshayagopal1@gmail.com",
+ "module": "Retail-app",
+ "name": "Accounts Receivable",
+ "number_cards": [],
+ "owner": "akshayagopal1@gmail.com",
+ "parent_page": "Accounts",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 65.0,
+ "shortcuts": [
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Accounts Receivable",
+   "link_to": "Accounts Receivable",
+   "report_ref_doctype": "Sales Invoice",
+   "type": "Report"
+  }
+ ],
+ "title": "Accounts Receivable"
+}

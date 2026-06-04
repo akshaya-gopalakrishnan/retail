@@ -1,0 +1,34 @@
+{
+ "charts": [],
+ "content": "[{\"id\":\"h5fsvCInk3\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Price Lists</span>\",\"col\":12}},{\"id\":\"C5b0ILH3Zz\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Price Lists\",\"col\":4}}]",
+ "creation": "2026-06-03 11:18:19.165337",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "Price Lists",
+ "links": [],
+ "modified": "2026-06-03 17:46:15.729549",
+ "modified_by": "akshayagopal1@gmail.com",
+ "module": "Retail-app",
+ "name": "Price Lists",
+ "number_cards": [],
+ "owner": "akshayagopal1@gmail.com",
+ "parent_page": "Items",
+ "public": 1,
+ "quick_lists": [
+  {
+   "document_type": "Item Price",
+   "label": "Price Lists",
+   "quick_list_filter": "[]"
+  }
+ ],
+ "roles": [],
+ "sequence_id": 5.0,
+ "shortcuts": [],
+ "title": "Price Lists"
+}

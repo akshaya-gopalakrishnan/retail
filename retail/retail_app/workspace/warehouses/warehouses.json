@@ -1,0 +1,34 @@
+{
+ "charts": [],
+ "content": "[{\"id\":\"YlRjkhmSnt\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Warehouses</span>\",\"col\":12}},{\"id\":\"1Nb0N34AkG\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Store & Warehouse List\",\"col\":4}}]",
+ "creation": "2026-06-03 14:06:17.981211",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "Warehouses",
+ "links": [],
+ "modified": "2026-06-03 17:43:57.809862",
+ "modified_by": "akshayagopal1@gmail.com",
+ "module": "Retail-app",
+ "name": "Warehouses",
+ "number_cards": [],
+ "owner": "akshayagopal1@gmail.com",
+ "parent_page": "Stocks",
+ "public": 1,
+ "quick_lists": [
+  {
+   "document_type": "Warehouse",
+   "label": "Store & Warehouse List",
+   "quick_list_filter": "[]"
+  }
+ ],
+ "roles": [],
+ "sequence_id": 47.0,
+ "shortcuts": [],
+ "title": "Warehouses"
+}
