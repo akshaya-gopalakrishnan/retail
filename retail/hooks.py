@@ -266,3 +266,4 @@ fixtures = [
     "Workflow Action Master",
     "Workspace"
 ]
+app_include_js = "/assets/retail/js/retail_navigation.js?v=15"

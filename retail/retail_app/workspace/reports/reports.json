@@ -1,7 +1,7 @@
 {
  "charts": [],
- "content": "[{\"id\":\"fI3PiYuU_2\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Reports</span>\",\"col\":12}},{\"id\":\"5CK5Dbm1vK\",\"type\":\"card\",\"data\":{\"card_name\":\"Sales Reports\",\"col\":4}},{\"id\":\"dRo2D58Wj4\",\"type\":\"card\",\"data\":{\"card_name\":\"Purchase Reports\",\"col\":4}},{\"id\":\"TfquHVOgwQ\",\"type\":\"card\",\"data\":{\"card_name\":\"Financials\",\"col\":4}},{\"id\":\"B7ACoECLwL\",\"type\":\"card\",\"data\":{\"card_name\":\"Outstandings\",\"col\":4}}]",
- "creation": "2026-06-03 15:39:17.680778",
+ "content": "[{\"id\":\"fI3PiYuU_2\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Reports</span>\",\"col\":12}},{\"id\":\"RsDp10mjcu\",\"type\":\"card\",\"data\":{\"card_name\":\"Daily Sales Summary \",\"col\":4}},{\"id\":\"Yo9vnr8eK_\",\"type\":\"card\",\"data\":{\"card_name\":\"Counter Performance\",\"col\":4}},{\"id\":\"fRAIliUqRk\",\"type\":\"card\",\"data\":{\"card_name\":\"Payment Summary\",\"col\":4}},{\"id\":\"5NuIT4qRDe\",\"type\":\"card\",\"data\":{\"card_name\":\"Daily Profit Report\",\"col\":4}},{\"id\":\"B7ACoECLwL\",\"type\":\"card\",\"data\":{\"card_name\":\"Outstandings\",\"col\":4}},{\"id\":\"dRo2D58Wj4\",\"type\":\"card\",\"data\":{\"card_name\":\"Purchase Reports\",\"col\":4}},{\"id\":\"TfquHVOgwQ\",\"type\":\"card\",\"data\":{\"card_name\":\"Financials\",\"col\":4}},{\"id\":\"6supmBjfa7\",\"type\":\"card\",\"data\":{\"card_name\":\"Full Sales Register \",\"col\":4}}]",
+ "creation": "2026-06-04 12:10:33.793202",
  "custom_blocks": [],
  "docstatus": 0,
  "doctype": "Workspace",
@@ -13,25 +13,6 @@
  "is_hidden": 0,
  "label": "Reports",
  "links": [
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Sales Reports",
-   "link_count": 1,
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Card Break"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 1,
-   "label": "Sales Register",
-   "link_count": 0,
-   "link_to": "Sales Register",
-   "link_type": "Report",
-   "onboard": 0,
-   "type": "Link"
-  },
   {
    "hidden": 0,
    "is_query_report": 0,
@@ -88,14 +69,111 @@
    "link_type": "Report",
    "onboard": 0,
    "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Daily Sales Summary ",
+   "link_count": 1,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Daily Sales Summary",
+   "link_count": 0,
+   "link_to": "Daily Sales Summary",
+   "link_type": "Report",
+   "onboard": 0,
+   "report_ref_doctype": "Sales Invoice",
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Counter Performance",
+   "link_count": 1,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Counter Performance ",
+   "link_count": 0,
+   "link_to": "Counter Performance",
+   "link_type": "Report",
+   "onboard": 0,
+   "report_ref_doctype": "Sales Invoice",
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Payment Summary",
+   "link_count": 1,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Payment Summary",
+   "link_count": 0,
+   "link_to": "Sales Payment Summary",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Full Sales Register ",
+   "link_count": 1,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Sales Register",
+   "link_count": 0,
+   "link_to": "Sales Register",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Daily Profit Report",
+   "link_count": 1,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Gross Profit Report",
+   "link_count": 0,
+   "link_to": "Gross Profit",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
   }
  ],
- "modified": "2026-06-03 17:42:44.478168",
- "modified_by": "akshayagopal1@gmail.com",
+ "modified": "2026-06-04 13:16:26.227929",
+ "modified_by": "Administrator",
  "module": "Retail-app",
  "name": "Reports",
  "number_cards": [],
- "owner": "akshayagopal1@gmail.com",
+ "owner": "Administrator",
  "parent_page": "",
  "public": 1,
  "quick_lists": [],

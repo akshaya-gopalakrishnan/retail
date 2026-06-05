@@ -1,7 +1,7 @@
 {
  "charts": [],
- "content": "[{\"id\":\"Xtea6VxCU0\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Items\",\"col\":4}}]",
- "creation": "2026-06-03 10:49:51.386666",
+ "content": "[]",
+ "creation": "2026-06-04 16:22:47.390465",
  "custom_blocks": [],
  "docstatus": 0,
  "doctype": "Workspace",
@@ -12,21 +12,15 @@
  "is_hidden": 0,
  "label": "Items List",
  "links": [],
- "modified": "2026-06-03 17:46:15.664323",
- "modified_by": "akshayagopal1@gmail.com",
+ "modified": "2026-06-04 17:26:38.183973",
+ "modified_by": "Administrator",
  "module": "Retail-app",
  "name": "Items List",
  "number_cards": [],
- "owner": "akshayagopal1@gmail.com",
+ "owner": "Administrator",
  "parent_page": "Items",
  "public": 1,
- "quick_lists": [
-  {
-   "document_type": "Item",
-   "label": "Items",
-   "quick_list_filter": "[]"
-  }
- ],
+ "quick_lists": [],
  "roles": [],
  "sequence_id": 3.0,
  "shortcuts": [],
