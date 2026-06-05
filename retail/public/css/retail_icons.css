@@ -1,0 +1,95 @@
+/**
+ * RETAIL ICONS STYLING
+ * 
+ * This file manages all icon-related styles using Lucide Icons from CDN
+ * Easy to maintain and update icon colors, sizes, and effects
+ * 
+ * Last Updated: 2026-06-05
+ */
+
+/* =============================================
+   ICON BASE STYLES
+   ============================================= */
+
+.sidebar-child-item i,
+.sidebar-item-container i,
+[data-lucide] {
+    width: 18px;
+    height: 18px;
+    display: inline-block;
+    margin-right: 12px;
+    vertical-align: middle;
+    stroke-width: 1.5;
+}
+
+/* =============================================
+   MODULE-SPECIFIC ICON COLORS
+   ============================================= */
+
+/* Sales Module - Blue */
+.sales-icon {
+    stroke: #3b82f6;
+    color: #3b82f6;
+}
+
+/* Purchases Module - Purple */
+.purchase-icon {
+    stroke: #8b5cf6;
+    color: #8b5cf6;
+}
+
+/* Stocks Module - Orange */
+.stock-icon {
+    stroke: #f97316;
+    color: #f97316;
+}
+
+/* Accounts Module - Green */
+.accounts-icon {
+    stroke: #10b981;
+    color: #10b981;
+}
+
+/* Items Module - Teal */
+.items-icon {
+    stroke: #06b6d4;
+    color: #06b6d4;
+}
+
+/* Settings Module - Slate */
+.settings-icon {
+    stroke: #64748b;
+    color: #64748b;
+}
+
+/* =============================================
+   HOVER & INTERACTION EFFECTS
+   ============================================= */
+
+.sidebar-child-item:hover i {
+    transform: scale(1.05);
+    transition: transform 0.2s ease;
+}
+
+.sidebar-item-container.active i,
+.sidebar-item-container.selected i {
+    stroke-width: 2;
+}
+
+.sidebar-item-container.retail-secondary-active i {
+    stroke-width: 2;
+    opacity: 1;
+}
+
+/* =============================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================= */
+
+@media (max-width: 768px) {
+    .sidebar-child-item i,
+    [data-lucide] {
+        width: 16px;
+        height: 16px;
+        margin-right: 8px;
+    }
+}
