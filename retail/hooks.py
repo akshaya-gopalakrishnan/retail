@@ -25,14 +25,17 @@ app_license = "mit"
 # ------------------
 
 # include js, css files in header of desk.html
+# app_include_css = [
+#     "/assets/retail/css/retail_icons.css"
+# ]
+# retail/retail/hooks.py
+
 app_include_css = [
-	"/assets/retail/css/retail_icons.css",
+    "/assets/retail/css/retail_icons.css"
 ]
 
 app_include_js = [
-	"https://cdn.jsdelivr.net/npm/lucide@latest",  # Lucide Icons CDN
-	"/assets/retail/js/retail_navigation.js",
-	"/assets/retail/js/retail_icons.js",
+    "/assets/retail/js/retail_navigation.js?v=16"
 ]
 
 # include js, css files in header of web template
@@ -273,4 +276,4 @@ fixtures = [
     "Workflow Action Master",
     "Workspace"
 ]
-app_include_js = "/assets/retail/js/retail_navigation.js?v=15"
+# app_include_js = "/assets/retail/js/retail_navigation.js?v=15"

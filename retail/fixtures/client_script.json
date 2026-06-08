@@ -2,6 +2,17 @@
  {
   "docstatus": 0,
   "doctype": "Client Script",
+  "dt": "Workspace",
+  "enabled": 0,
+  "modified": "2026-06-04 16:06:21.366666",
+  "module": "Retail-app",
+  "name": "Items List&Customers",
+  "script": "frappe.ui.form.on('Workspace', {\r\n    refresh: function(frm) {\r\n        // If the user clicks 'Items List', jump to the real Item List\r\n        if (frm.doc.name == \"Items List\") {\r\n            frappe.set_route(\"List\", \"Item\");\r\n        }\r\n        // If the user clicks 'Customers', jump to real Customer List\r\n        if (frm.doc.name == \"Customers\") {\r\n            frappe.set_route(\"List\", \"Customer\");\r\n        }\r\n        // Add more 'if' blocks here for Sales Invoices, Suppliers, etc.\r\n    }\r\n});",
+  "view": "Form"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
   "dt": "Item",
   "enabled": 1,
   "modified": "2026-05-15 10:56:33.426776",
