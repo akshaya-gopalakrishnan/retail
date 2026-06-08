@@ -312,6 +312,10 @@
         return getCurrentPage()?.querySelector('.layout-side-section');
     }
 
+    function getRetailSidebarContainers() {
+        return document.querySelectorAll('.retail-persistent-sidebar .sidebar-item-container');
+    }
+
     function getItemLabel(container) {
         return container
             ?.querySelector(':scope > .desk-sidebar-item > .item-anchor .sidebar-item-label')
@@ -442,7 +446,7 @@
     function syncSidebarState() {
         const state = getRouteState();
 
-        document.querySelectorAll('.sidebar-item-container').forEach(container => {
+        getRetailSidebarContainers().forEach(container => {
             const label = getItemLabel(container);
             const directItem = container.querySelector(':scope > .desk-sidebar-item');
             const childSection = container.querySelector(':scope > .sidebar-child-item');
@@ -459,6 +463,37 @@
                 setDropIcon(container, true);
             }
         });
+    }
+
+    function ensureWorkspaceDropIcons() {
+        if (!isWorkspaceRoute(frappe.get_route())) return;
+
+        document
+            .querySelectorAll('.desk-sidebar:not(.retail-persistent-sidebar) .sidebar-item-container')
+            .forEach(container => {
+                const childSection = container.querySelector(':scope > .sidebar-child-item');
+                const control = container.querySelector(':scope > .desk-sidebar-item > .sidebar-item-control');
+                if (!childSection || !control || !childSection.children.length) return;
+
+                let button = control.querySelector(':scope > .drop-icon');
+                if (!button) {
+                    button = document.createElement('button');
+                    button.className = 'btn-reset drop-icon';
+                    button.innerHTML = frappe.utils.icon(
+                        childSection.classList.contains('hidden') ? 'es-line-down' : 'es-line-up',
+                        'sm'
+                    );
+                    button.addEventListener('click', event => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        const isHidden = childSection.classList.toggle('hidden');
+                        setDropIcon(container, !isHidden);
+                    });
+                    control.appendChild(button);
+                }
+
+                button.classList.remove('hidden');
+            });
     }
 
     function syncDesktopSidebarClass() {
@@ -631,6 +666,7 @@
                 console.log('retail_navigation: sidebar DOM mutated, reapplying icons');
                 applyDirectLinks();
                 applyIcons();
+                ensureWorkspaceDropIcons();
                 syncSidebarState();
                 renderPersistentSidebar();
                 syncDesktopSidebarClass();
@@ -649,6 +685,7 @@
                 console.log('retail_navigation: retry applyIcons after delay', delay);
                 applyDirectLinks();
                 applyIcons();
+                ensureWorkspaceDropIcons();
                 syncSidebarState();
                 renderPersistentSidebar();
             }, delay);
@@ -660,6 +697,7 @@
         injectRetailInlineCss();
         applyDirectLinks();
         applyIcons();
+        ensureWorkspaceDropIcons();
         syncSidebarState();
         renderPersistentSidebar();
         observeSidebarChanges();
@@ -670,6 +708,7 @@
             frappe.router.on('change', () => setTimeout(() => {
                 applyDirectLinks();
                 applyIcons();
+                ensureWorkspaceDropIcons();
                 syncSidebarState();
                 renderPersistentSidebar();
             }, 250));
@@ -678,6 +717,7 @@
         window.matchMedia(DESKTOP_MEDIA).addEventListener('change', () => {
             applyDirectLinks();
             applyIcons();
+            ensureWorkspaceDropIcons();
             syncSidebarState();
             renderPersistentSidebar();
         });
