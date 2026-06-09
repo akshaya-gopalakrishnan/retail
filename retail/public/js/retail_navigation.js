@@ -259,7 +259,7 @@
         const route = target.filter(part => !$.isPlainObject(part));
         const filters = target.find(part => $.isPlainObject(part));
         frappe.route_options = filters || null;
-        frappe.set_route(...route);
+        return frappe.set_route(...route);
     }
 
     function getAnchorAppUrl(anchor) {
@@ -537,21 +537,18 @@
             const target = DIRECT_MAPPING[label];
 
             if (parent) {
-                const targetUrl = target ? getTargetUrl(target) : getAnchorAppUrl(anchor);
-                if (!targetUrl) return;
+                const targetUrl = target ? '' : getAnchorAppUrl(anchor);
+                if (!target && !targetUrl) return;
 
                 event.preventDefault();
                 event.stopPropagation();
                 event.stopImmediatePropagation();
 
-                syncSidebarState();
-
-                routeToUrl(getWorkspaceUrl(parent), true)
-                    .then(() => routeToUrl(targetUrl))
-                    .then(() => {
-                        syncSidebarState();
-                        scheduleRetry();
-                    });
+                const routePromise = target ? routeToTarget(target) : routeToUrl(targetUrl);
+                Promise.resolve(routePromise).then(() => {
+                    syncSidebarState();
+                    scheduleRetry();
+                });
                 return;
             }
 
