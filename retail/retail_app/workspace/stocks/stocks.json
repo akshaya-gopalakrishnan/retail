@@ -95,7 +95,7 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Stock Reports",
-   "link_count": 4,
+   "link_count": 5,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -108,8 +108,7 @@
    "link_to": "Stock Balance",
    "link_type": "Report",
    "onboard": 0,
-   "type": "Link",
-   "report_ref_doctype": "Item"
+   "type": "Link"
   },
   {
    "hidden": 0,
@@ -119,8 +118,7 @@
    "link_to": "Stock Ledger",
    "link_type": "Report",
    "onboard": 0,
-   "type": "Link",
-   "report_ref_doctype": "Item"
+   "type": "Link"
   },
   {
    "hidden": 0,
@@ -130,8 +128,7 @@
    "link_to": "Stock Projected Qty",
    "link_type": "Report",
    "onboard": 0,
-   "type": "Link",
-   "report_ref_doctype": "Item"
+   "type": "Link"
   },
   {
    "hidden": 0,
@@ -142,9 +139,19 @@
    "link_type": "Page",
    "onboard": 0,
    "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Low Stock Report",
+   "link_count": 0,
+   "link_to": "Low Stock Report",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
   }
  ],
- "modified": "2026-06-03 17:43:57.611298",
+ "modified": "2026-06-09 15:06:45.514930",
  "modified_by": "Administrator",
  "module": "Retail-app",
  "name": "Stocks",
@@ -185,8 +192,8 @@
    "doc_view": "List",
    "label": "Stock Balance",
    "link_to": "Stock Balance",
-   "type": "Report",
-   "report_ref_doctype": "Item"
+   "report_ref_doctype": "Stock Ledger Entry",
+   "type": "Report"
   },
   {
    "color": "Grey",
@@ -201,16 +208,16 @@
    "doc_view": "List",
    "label": "Stock Ledger",
    "link_to": "Stock Ledger",
-   "type": "Report",
-   "report_ref_doctype": "Item"
+   "report_ref_doctype": "Stock Ledger Entry",
+   "type": "Report"
   },
   {
    "color": "Grey",
    "doc_view": "List",
    "label": "Stock Projected Qty",
    "link_to": "Stock Projected Qty",
-   "type": "Report",
-   "report_ref_doctype": "Item"
+   "report_ref_doctype": "Item",
+   "type": "Report"
   }
  ],
  "title": "Stocks"
