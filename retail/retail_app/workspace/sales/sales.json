@@ -6,11 +6,11 @@
  "docstatus": 0,
  "doctype": "Workspace",
  "for_user": "",
- "hide_custom": 0,
+ "hide_custom": 1,
  "icon": "sell",
  "idx": 0,
  "indicator_color": "",
- "is_hidden": 0,
+ "is_hidden": 1,
  "label": "Sales",
  "links": [
   {
@@ -118,8 +118,8 @@
    "link_to": "Daily Sales Summary",
    "link_type": "Report",
    "onboard": 0,
-   "type": "Link",
-   "report_ref_doctype": "Sales Invoice"
+   "report_ref_doctype": "Sales Invoice",
+   "type": "Link"
   },
   {
    "hidden": 0,
@@ -129,8 +129,8 @@
    "link_to": "Counter Performance",
    "link_type": "Report",
    "onboard": 0,
-   "type": "Link",
-   "report_ref_doctype": "Sales Invoice"
+   "report_ref_doctype": "Sales Invoice",
+   "type": "Link"
   },
   {
    "hidden": 0,
@@ -153,7 +153,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-06-08 17:54:49.915056",
+ "modified": "2026-06-09 12:39:43.825837",
  "modified_by": "Administrator",
  "module": "Retail-app",
  "name": "Sales",
@@ -210,16 +210,16 @@
    "doc_view": "List",
    "label": "Daily Sales Summary",
    "link_to": "Daily Sales Summary",
-   "type": "Report",
-   "report_ref_doctype": "Sales Invoice"
+   "report_ref_doctype": "Sales Invoice",
+   "type": "Report"
   },
   {
    "color": "Blue",
    "doc_view": "List",
    "label": "Counter Performance",
    "link_to": "Counter Performance",
-   "type": "Report",
-   "report_ref_doctype": "Sales Invoice"
+   "report_ref_doctype": "Sales Invoice",
+   "type": "Report"
   }
  ],
  "title": "Sales"
