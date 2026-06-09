@@ -1966,5 +1966,37 @@
   "property_type": "Check",
   "row_name": null,
   "value": "1"
+ },
+ {
+  "default_value": null,
+  "doc_type": "Stock Reconciliation Item",
+  "docstatus": 0,
+  "doctype": "Property Setter",
+  "doctype_or_field": "DocField",
+  "field_name": "quantity_difference",
+  "is_system_generated": 0,
+  "modified": "2026-06-09 15:56:47.322367",
+  "module": null,
+  "name": "Stock Reconciliation Item-quantity_difference-in_list_view",
+  "property": "in_list_view",
+  "property_type": "Check",
+  "row_name": null,
+  "value": "1"
+ },
+ {
+  "default_value": null,
+  "doc_type": "Stock Reconciliation Item",
+  "docstatus": 0,
+  "doctype": "Property Setter",
+  "doctype_or_field": "DocField",
+  "field_name": "amount_difference",
+  "is_system_generated": 0,
+  "modified": "2026-06-09 15:56:47.487440",
+  "module": null,
+  "name": "Stock Reconciliation Item-amount_difference-in_list_view",
+  "property": "in_list_view",
+  "property_type": "Check",
+  "row_name": null,
+  "value": "1"
  }
 ]
