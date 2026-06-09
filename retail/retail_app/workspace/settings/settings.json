@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\":\"ZonEcxzAgX\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Settings</span>\",\"col\":12}}]",
+ "content": "[{\"id\":\"hdr_settings\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Settings</span>\",\"col\":12}},{\"id\":\"sc_company\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Company\",\"col\":3}},{\"id\":\"sc_branch\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Branch\",\"col\":3}},{\"id\":\"sc_counter\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Counter\",\"col\":3}},{\"id\":\"sc_user\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"User\",\"col\":3}},{\"id\":\"sc_print_format\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Print Format\",\"col\":3}},{\"id\":\"sc_taxes\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Taxes\",\"col\":3}},{\"id\":\"sc_naming_rules\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Naming Rules\",\"col\":3}},{\"id\":\"sc_data_import\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Data Import\",\"col\":3}},{\"id\":\"card_business_setup\",\"type\":\"card\",\"data\":{\"card_name\":\"Business Setup\",\"col\":4}},{\"id\":\"card_retail_setup\",\"type\":\"card\",\"data\":{\"card_name\":\"Retail Setup\",\"col\":4}},{\"id\":\"card_system_rules\",\"type\":\"card\",\"data\":{\"card_name\":\"System Rules\",\"col\":4}}]",
  "creation": "2026-06-03 16:05:48.434120",
  "custom_blocks": [],
  "docstatus": 0,
@@ -12,9 +12,147 @@
  "indicator_color": "",
  "is_hidden": 0,
  "label": "Settings",
- "links": [],
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Business Setup",
+   "link_count": 3,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Company",
+   "link_count": 0,
+   "link_to": "Company",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Branch",
+   "link_count": 0,
+   "link_to": "Branch",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Letter Head",
+   "link_count": 0,
+   "link_to": "Letter Head",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Retail Setup",
+   "link_count": 3,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Counter",
+   "link_count": 0,
+   "link_to": "Counter",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Taxes",
+   "link_count": 0,
+   "link_to": "Sales Taxes and Charges Template",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "POS Profile",
+   "link_count": 0,
+   "link_to": "POS Profile",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "System Rules",
+   "link_count": 5,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Users",
+   "link_count": 0,
+   "link_to": "User",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Role Permissions",
+   "link_count": 0,
+   "link_to": "permission-manager",
+   "link_type": "Page",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Print Formats",
+   "link_count": 0,
+   "link_to": "Print Format",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Document Naming Rule",
+   "link_count": 0,
+   "link_to": "Document Naming Rule",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Data Import",
+   "link_count": 0,
+   "link_to": "Data Import",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
  "modified": "2026-06-03 17:42:00.595795",
- "modified_by": "akshayagopal1@gmail.com",
+ "modified_by": "Administrator",
  "module": "Retail-app",
  "name": "Settings",
  "number_cards": [],
@@ -24,6 +162,71 @@
  "quick_lists": [],
  "roles": [],
  "sequence_id": 59.0,
- "shortcuts": [],
+ "shortcuts": [
+  {
+   "color": "Blue",
+   "doc_view": "List",
+   "label": "Company",
+   "link_to": "Company",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Branch",
+   "link_to": "Branch",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Green",
+   "doc_view": "List",
+   "label": "Counter",
+   "link_to": "Counter",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "User",
+   "link_to": "User",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Print Format",
+   "link_to": "Print Format",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Taxes",
+   "link_to": "Sales Taxes and Charges Template",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Naming Rules",
+   "link_to": "Document Naming Rule",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Data Import",
+   "link_to": "Data Import",
+   "stats_filter": "[]",
+   "type": "DocType"
+  }
+ ],
  "title": "Settings"
 }

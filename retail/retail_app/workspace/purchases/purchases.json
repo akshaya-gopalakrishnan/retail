@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"type\":\"header\",\"data\":{\"text\":\"Purchases\"}}]",
+ "content": "[{\"id\":\"hdr_purchases\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Purchases</span>\",\"col\":12}},{\"id\":\"sc_supplier\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Supplier\",\"col\":3}},{\"id\":\"sc_purchase_order\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Purchase Order\",\"col\":3}},{\"id\":\"sc_purchase_receipt\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Purchase Receipt\",\"col\":3}},{\"id\":\"sc_purchase_bill\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Purchase Bill\",\"col\":3}},{\"id\":\"sc_purchase_return\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Purchase Return\",\"col\":3}},{\"id\":\"sc_purchase_register\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Purchase Register\",\"col\":3}},{\"id\":\"card_buying_flow\",\"type\":\"card\",\"data\":{\"card_name\":\"Buying Flow\",\"col\":4}},{\"id\":\"card_suppliers\",\"type\":\"card\",\"data\":{\"card_name\":\"Suppliers\",\"col\":4}},{\"id\":\"card_purchase_reports\",\"type\":\"card\",\"data\":{\"card_name\":\"Purchase Reports\",\"col\":4}}]",
  "creation": "2026-06-03 13:14:18.476361",
  "custom_blocks": [],
  "docstatus": 0,
@@ -12,9 +12,137 @@
  "indicator_color": "",
  "is_hidden": 0,
  "label": "Purchases",
- "links": [],
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Buying Flow",
+   "link_count": 4,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Purchase Orders",
+   "link_count": 0,
+   "link_to": "Purchase Order",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Purchase Receipts",
+   "link_count": 0,
+   "link_to": "Purchase Receipt",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Purchase Bills",
+   "link_count": 0,
+   "link_to": "Purchase Invoice",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Purchase Returns",
+   "link_count": 0,
+   "link_to": "Purchase Invoice",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Suppliers",
+   "link_count": 3,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Suppliers",
+   "link_count": 0,
+   "link_to": "Supplier",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Supplier Groups",
+   "link_count": 0,
+   "link_to": "Supplier Group",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Supplier Quotations",
+   "link_count": 0,
+   "link_to": "Supplier Quotation",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Purchase Reports",
+   "link_count": 3,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Purchase Register",
+   "link_count": 0,
+   "link_to": "Purchase Register",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Purchase Analytics",
+   "link_count": 0,
+   "link_to": "Purchase Analytics",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Item-wise Purchase History",
+   "link_count": 0,
+   "link_to": "Item-wise Purchase History",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
  "modified": "2026-06-03 17:44:29.659979",
- "modified_by": "akshayagopal1@gmail.com",
+ "modified_by": "Administrator",
  "module": "Retail-app",
  "name": "Purchases",
  "number_cards": [],
@@ -24,6 +152,54 @@
  "quick_lists": [],
  "roles": [],
  "sequence_id": 40.0,
- "shortcuts": [],
+ "shortcuts": [
+  {
+   "color": "Green",
+   "doc_view": "List",
+   "label": "Supplier",
+   "link_to": "Supplier",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Blue",
+   "doc_view": "List",
+   "label": "Purchase Order",
+   "link_to": "Purchase Order",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Purchase Receipt",
+   "link_to": "Purchase Receipt",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Purchase Bill",
+   "link_to": "Purchase Invoice",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Orange",
+   "doc_view": "List",
+   "label": "Purchase Return",
+   "link_to": "Purchase Invoice",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Purchase Register",
+   "link_to": "Purchase Register",
+   "type": "Report"
+  }
+ ],
  "title": "Purchases"
 }

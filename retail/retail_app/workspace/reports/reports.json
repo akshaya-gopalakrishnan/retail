@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\":\"fI3PiYuU_2\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Reports</span>\",\"col\":12}},{\"id\":\"RsDp10mjcu\",\"type\":\"card\",\"data\":{\"card_name\":\"Daily Sales Summary \",\"col\":4}},{\"id\":\"Yo9vnr8eK_\",\"type\":\"card\",\"data\":{\"card_name\":\"Counter Performance\",\"col\":4}},{\"id\":\"fRAIliUqRk\",\"type\":\"card\",\"data\":{\"card_name\":\"Payment Summary\",\"col\":4}},{\"id\":\"5NuIT4qRDe\",\"type\":\"card\",\"data\":{\"card_name\":\"Daily Profit Report\",\"col\":4}},{\"id\":\"B7ACoECLwL\",\"type\":\"card\",\"data\":{\"card_name\":\"Outstandings\",\"col\":4}},{\"id\":\"dRo2D58Wj4\",\"type\":\"card\",\"data\":{\"card_name\":\"Purchase Reports\",\"col\":4}},{\"id\":\"TfquHVOgwQ\",\"type\":\"card\",\"data\":{\"card_name\":\"Financials\",\"col\":4}},{\"id\":\"6supmBjfa7\",\"type\":\"card\",\"data\":{\"card_name\":\"Full Sales Register \",\"col\":4}}]",
+ "content": "[{\"id\":\"hdr_reports\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Reports</span>\",\"col\":12}},{\"id\":\"sc_daily_sales_summar\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Daily Sales Summary\",\"col\":3}},{\"id\":\"sc_counter_performanc\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Counter Performance\",\"col\":3}},{\"id\":\"sc_sales_register\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sales Register\",\"col\":3}},{\"id\":\"sc_purchase_register\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Purchase Register\",\"col\":3}},{\"id\":\"sc_accounts_receivabl\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Accounts Receivable\",\"col\":3}},{\"id\":\"sc_accounts_payable\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Accounts Payable\",\"col\":3}},{\"id\":\"sc_stock_balance\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Stock Balance\",\"col\":3}},{\"id\":\"sc_gross_profit\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Gross Profit\",\"col\":3}},{\"id\":\"card_sales_reports\",\"type\":\"card\",\"data\":{\"card_name\":\"Sales Reports\",\"col\":4}},{\"id\":\"card_purchase_reports\",\"type\":\"card\",\"data\":{\"card_name\":\"Purchase Reports\",\"col\":4}},{\"id\":\"card_stock_reports\",\"type\":\"card\",\"data\":{\"card_name\":\"Stock Reports\",\"col\":4}},{\"id\":\"card_financials\",\"type\":\"card\",\"data\":{\"card_name\":\"Financials\",\"col\":4}},{\"id\":\"card_outstandings\",\"type\":\"card\",\"data\":{\"card_name\":\"Outstandings\",\"col\":4}},{\"id\":\"card_performance\",\"type\":\"card\",\"data\":{\"card_name\":\"Performance\",\"col\":4}}]",
  "creation": "2026-06-04 12:10:33.793202",
  "custom_blocks": [],
  "docstatus": 0,
@@ -16,8 +16,59 @@
   {
    "hidden": 0,
    "is_query_report": 0,
+   "label": "Sales Reports",
+   "link_count": 4,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Daily Sales Summary",
+   "link_count": 0,
+   "link_to": "Daily Sales Summary",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link",
+   "report_ref_doctype": "Sales Invoice"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Counter Performance",
+   "link_count": 0,
+   "link_to": "Counter Performance",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link",
+   "report_ref_doctype": "Sales Invoice"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Sales Register",
+   "link_count": 0,
+   "link_to": "Sales Register",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Gross Profit",
+   "link_count": 0,
+   "link_to": "Gross Profit",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
    "label": "Purchase Reports",
-   "link_count": 1,
+   "link_count": 3,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -34,12 +85,94 @@
   },
   {
    "hidden": 0,
+   "is_query_report": 1,
+   "label": "Item-wise Purchase History",
+   "link_count": 0,
+   "link_to": "Item-wise Purchase History",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Purchase Analytics",
+   "link_count": 0,
+   "link_to": "Purchase Analytics",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
    "is_query_report": 0,
-   "label": "Financials",
-   "link_count": 1,
+   "label": "Stock Reports",
+   "link_count": 3,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Stock Balance",
+   "link_count": 0,
+   "link_to": "Stock Balance",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link",
+   "report_ref_doctype": "Item"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Stock Ledger",
+   "link_count": 0,
+   "link_to": "Stock Ledger",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link",
+   "report_ref_doctype": "Item"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Stock Projected Qty",
+   "link_count": 0,
+   "link_to": "Stock Projected Qty",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link",
+   "report_ref_doctype": "Item"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Financials",
+   "link_count": 4,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "General Ledger",
+   "link_count": 0,
+   "link_to": "General Ledger",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Trial Balance",
+   "link_count": 0,
+   "link_to": "Trial Balance",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
   },
   {
    "hidden": 0,
@@ -53,9 +186,19 @@
   },
   {
    "hidden": 0,
+   "is_query_report": 1,
+   "label": "Profit and Loss Statement",
+   "link_count": 0,
+   "link_to": "Profit and Loss Statement",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
    "is_query_report": 0,
    "label": "Outstandings",
-   "link_count": 1,
+   "link_count": 2,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -72,48 +215,18 @@
   },
   {
    "hidden": 0,
-   "is_query_report": 0,
-   "label": "Daily Sales Summary ",
-   "link_count": 1,
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Card Break"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Daily Sales Summary",
+   "is_query_report": 1,
+   "label": "Supplier Outstanding",
    "link_count": 0,
-   "link_to": "Daily Sales Summary",
+   "link_to": "Accounts Payable",
    "link_type": "Report",
    "onboard": 0,
-   "report_ref_doctype": "Sales Invoice",
    "type": "Link"
   },
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Counter Performance",
-   "link_count": 1,
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Card Break"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Counter Performance ",
-   "link_count": 0,
-   "link_to": "Counter Performance",
-   "link_type": "Report",
-   "onboard": 0,
-   "report_ref_doctype": "Sales Invoice",
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Payment Summary",
+   "label": "Performance",
    "link_count": 1,
    "link_type": "DocType",
    "onboard": 0,
@@ -125,44 +238,6 @@
    "label": "Payment Summary",
    "link_count": 0,
    "link_to": "Sales Payment Summary",
-   "link_type": "Report",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Full Sales Register ",
-   "link_count": 1,
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Card Break"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 1,
-   "label": "Sales Register",
-   "link_count": 0,
-   "link_to": "Sales Register",
-   "link_type": "Report",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Daily Profit Report",
-   "link_count": 1,
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Card Break"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 1,
-   "label": "Gross Profit Report",
-   "link_count": 0,
-   "link_to": "Gross Profit",
    "link_type": "Report",
    "onboard": 0,
    "type": "Link"
@@ -179,6 +254,66 @@
  "quick_lists": [],
  "roles": [],
  "sequence_id": 58.0,
- "shortcuts": [],
+ "shortcuts": [
+  {
+   "color": "Blue",
+   "doc_view": "List",
+   "label": "Daily Sales Summary",
+   "link_to": "Daily Sales Summary",
+   "type": "Report",
+   "report_ref_doctype": "Sales Invoice"
+  },
+  {
+   "color": "Green",
+   "doc_view": "List",
+   "label": "Counter Performance",
+   "link_to": "Counter Performance",
+   "type": "Report",
+   "report_ref_doctype": "Sales Invoice"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Sales Register",
+   "link_to": "Sales Register",
+   "type": "Report"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Purchase Register",
+   "link_to": "Purchase Register",
+   "type": "Report"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Accounts Receivable",
+   "link_to": "Accounts Receivable",
+   "type": "Report"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Accounts Payable",
+   "link_to": "Accounts Payable",
+   "type": "Report"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Stock Balance",
+   "link_to": "Stock Balance",
+   "type": "Report",
+   "report_ref_doctype": "Item"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Gross Profit",
+   "link_to": "Gross Profit",
+   "type": "Report"
+  }
+ ],
  "title": "Reports"
 }

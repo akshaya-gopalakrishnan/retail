@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\":\"EBHsH4HxzY\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Stocks</span>\",\"col\":12}}]",
+ "content": "[{\"id\":\"hdr_stocks\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Stocks</span>\",\"col\":12}},{\"id\":\"sc_warehouses\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Warehouses\",\"col\":3}},{\"id\":\"sc_stock_entry\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Stock Entry\",\"col\":3}},{\"id\":\"sc_stock_reconciliati\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Stock Reconciliation\",\"col\":3}},{\"id\":\"sc_stock_balance\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Stock Balance\",\"col\":3}},{\"id\":\"sc_serials_and_batche\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Serials & Batches\",\"col\":3}},{\"id\":\"sc_stock_ledger\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Stock Ledger\",\"col\":3}},{\"id\":\"sc_stock_projected_qt\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Stock Projected Qty\",\"col\":3}},{\"id\":\"card_stock_operations\",\"type\":\"card\",\"data\":{\"card_name\":\"Stock Operations\",\"col\":4}},{\"id\":\"card_stock_masters\",\"type\":\"card\",\"data\":{\"card_name\":\"Stock Masters\",\"col\":4}},{\"id\":\"card_stock_reports\",\"type\":\"card\",\"data\":{\"card_name\":\"Stock Reports\",\"col\":4}}]",
  "creation": "2026-06-03 14:02:44.236528",
  "custom_blocks": [],
  "docstatus": 0,
@@ -12,9 +12,140 @@
  "indicator_color": "",
  "is_hidden": 0,
  "label": "Stocks",
- "links": [],
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Stock Operations",
+   "link_count": 2,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Stock Entries",
+   "link_count": 0,
+   "link_to": "Stock Entry",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Stock Take",
+   "link_count": 0,
+   "link_to": "Stock Reconciliation",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Stock Masters",
+   "link_count": 4,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Warehouses",
+   "link_count": 0,
+   "link_to": "Warehouse",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Items",
+   "link_count": 0,
+   "link_to": "Item",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Serial and Batch Bundle",
+   "link_count": 0,
+   "link_to": "Serial and Batch Bundle",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Batch",
+   "link_count": 0,
+   "link_to": "Batch",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Stock Reports",
+   "link_count": 4,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Stock Balance",
+   "link_count": 0,
+   "link_to": "Stock Balance",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link",
+   "report_ref_doctype": "Item"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Stock Ledger",
+   "link_count": 0,
+   "link_to": "Stock Ledger",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link",
+   "report_ref_doctype": "Item"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Stock Projected Qty",
+   "link_count": 0,
+   "link_to": "Stock Projected Qty",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link",
+   "report_ref_doctype": "Item"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Stock Summary",
+   "link_count": 0,
+   "link_to": "stock-balance",
+   "link_type": "Page",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
  "modified": "2026-06-03 17:43:57.611298",
- "modified_by": "akshayagopal1@gmail.com",
+ "modified_by": "Administrator",
  "module": "Retail-app",
  "name": "Stocks",
  "number_cards": [],
@@ -24,6 +155,63 @@
  "quick_lists": [],
  "roles": [],
  "sequence_id": 46.0,
- "shortcuts": [],
+ "shortcuts": [
+  {
+   "color": "Green",
+   "doc_view": "List",
+   "label": "Warehouses",
+   "link_to": "Warehouse",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Blue",
+   "doc_view": "List",
+   "label": "Stock Entry",
+   "link_to": "Stock Entry",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Stock Reconciliation",
+   "link_to": "Stock Reconciliation",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Stock Balance",
+   "link_to": "Stock Balance",
+   "type": "Report",
+   "report_ref_doctype": "Item"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Serials & Batches",
+   "link_to": "Serial and Batch Bundle",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Stock Ledger",
+   "link_to": "Stock Ledger",
+   "type": "Report",
+   "report_ref_doctype": "Item"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Stock Projected Qty",
+   "link_to": "Stock Projected Qty",
+   "type": "Report",
+   "report_ref_doctype": "Item"
+  }
+ ],
  "title": "Stocks"
 }

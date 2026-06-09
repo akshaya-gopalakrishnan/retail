@@ -1,7 +1,7 @@
 {
  "charts": [],
- "content": "[{\"id\":\"iuP6SbFjbi\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Sales</span>\",\"col\":12}}]",
- "creation": "2026-06-03 12:38:52.062062",
+ "content": "[{\"id\":\"hdr_sales\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Sales</span>\",\"col\":12}},{\"id\":\"sc_sales_invoice\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sales Invoice\",\"col\":3}},{\"id\":\"sc_customers\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Customers\",\"col\":3}},{\"id\":\"sc_sales_order\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sales Order\",\"col\":3}},{\"id\":\"sc_delivery_note\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Delivery Note\",\"col\":3}},{\"id\":\"sc_sales_return\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sales Return\",\"col\":3}},{\"id\":\"sc_daily_sales_summar\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Daily Sales Summary\",\"col\":3}},{\"id\":\"sc_counter_performanc\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Counter Performance\",\"col\":3}},{\"id\":\"card_daily_sales\",\"type\":\"card\",\"data\":{\"card_name\":\"Daily Sales\",\"col\":4}},{\"id\":\"card_customers\",\"type\":\"card\",\"data\":{\"card_name\":\"Customers\",\"col\":4}},{\"id\":\"card_sales_reports\",\"type\":\"card\",\"data\":{\"card_name\":\"Sales Reports\",\"col\":4}}]",
+ "creation": "2026-06-08 12:27:00.867940",
  "custom_blocks": [],
  "docstatus": 0,
  "doctype": "Workspace",
@@ -12,18 +12,215 @@
  "indicator_color": "",
  "is_hidden": 0,
  "label": "Sales",
- "links": [],
- "modified": "2026-06-03 17:44:57.142256",
- "modified_by": "akshayagopal1@gmail.com",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Daily Sales",
+   "link_count": 4,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Sales Invoices",
+   "link_count": 0,
+   "link_to": "Sales Invoice",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Sales Orders",
+   "link_count": 0,
+   "link_to": "Sales Order",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Delivery Notes",
+   "link_count": 0,
+   "link_to": "Delivery Note",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Sales Returns",
+   "link_count": 0,
+   "link_to": "Sales Invoice",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Customers",
+   "link_count": 3,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Customers",
+   "link_count": 0,
+   "link_to": "Customer",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Customer Groups",
+   "link_count": 0,
+   "link_to": "Customer Group",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Territories",
+   "link_count": 0,
+   "link_to": "Territory",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Sales Reports",
+   "link_count": 4,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Daily Sales Summary",
+   "link_count": 0,
+   "link_to": "Daily Sales Summary",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link",
+   "report_ref_doctype": "Sales Invoice"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Counter Performance",
+   "link_count": 0,
+   "link_to": "Counter Performance",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link",
+   "report_ref_doctype": "Sales Invoice"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Sales Register",
+   "link_count": 0,
+   "link_to": "Sales Register",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Gross Profit",
+   "link_count": 0,
+   "link_to": "Gross Profit",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2026-06-08 17:54:49.915056",
+ "modified_by": "Administrator",
  "module": "Retail-app",
  "name": "Sales",
  "number_cards": [],
- "owner": "akshayagopal1@gmail.com",
+ "owner": "Administrator",
  "parent_page": "",
  "public": 1,
  "quick_lists": [],
  "roles": [],
  "sequence_id": 7.0,
- "shortcuts": [],
+ "shortcuts": [
+  {
+   "color": "Blue",
+   "doc_view": "List",
+   "label": "Sales Invoice",
+   "link_to": "Sales Invoice",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Green",
+   "doc_view": "List",
+   "label": "Customers",
+   "link_to": "Customer",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Sales Order",
+   "link_to": "Sales Order",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Delivery Note",
+   "link_to": "Delivery Note",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Orange",
+   "doc_view": "List",
+   "label": "Sales Return",
+   "link_to": "Sales Invoice",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Green",
+   "doc_view": "List",
+   "label": "Daily Sales Summary",
+   "link_to": "Daily Sales Summary",
+   "type": "Report",
+   "report_ref_doctype": "Sales Invoice"
+  },
+  {
+   "color": "Blue",
+   "doc_view": "List",
+   "label": "Counter Performance",
+   "link_to": "Counter Performance",
+   "type": "Report",
+   "report_ref_doctype": "Sales Invoice"
+  }
+ ],
  "title": "Sales"
 }

@@ -211,11 +211,16 @@
     }
 
     function isWorkspaceRoute(route) {
+        const view = route?.[0]?.toLowerCase();
+        const routeSlug = frappe.router.slug(
+            route?.[0] === 'private' ? route?.[1] || '' : route?.[0] || ''
+        );
         const currentPage = getCurrentPage();
         return (
-            (route && (route[0] === 'Workspaces' || route[0] === 'workspace')) ||
-            currentPage?.dataset?.pageRoute === 'Workspaces' ||
-            !!currentPage?.querySelector('.desk-sidebar:not(.retail-persistent-sidebar)')
+            view === 'workspaces' ||
+            view === 'workspace' ||
+            !!(routeSlug && frappe.workspaces?.[routeSlug]) ||
+            currentPage?.dataset?.pageRoute === 'Workspaces'
         );
     }
 
@@ -468,8 +473,8 @@
     function ensureWorkspaceDropIcons() {
         if (!isWorkspaceRoute(frappe.get_route())) return;
 
-        document
-            .querySelectorAll('.desk-sidebar:not(.retail-persistent-sidebar) .sidebar-item-container')
+        getCurrentPage()
+            ?.querySelectorAll('.desk-sidebar:not(.retail-persistent-sidebar) .sidebar-item-container')
             .forEach(container => {
                 const childSection = container.querySelector(':scope > .sidebar-child-item');
                 const control = container.querySelector(':scope > .desk-sidebar-item > .sidebar-item-control');
