@@ -1,5 +1,7 @@
 (function() {
-    console.log('retail_navigation: script loaded', {host: window.location.host, readyState: document.readyState});
+    const DEBUG = false;
+    const debugLog = (...args) => DEBUG && console.log(...args);
+    debugLog('retail_navigation: script loaded', {host: window.location.host, readyState: document.readyState});
     const ICON_MAP = {
         'home': { icon: 'fa fa-home', cls: 'color-settings' },
         'items': { icon: 'fa fa-cubes', cls: 'color-items' },
@@ -11,6 +13,8 @@
         'settings': { icon: 'fa fa-cog', cls: 'color-settings' },
         'purchase orders': { icon: 'fa fa-file-text', cls: 'color-purchase' },
         'purchase receipts': { icon: 'fa fa-file-text', cls: 'color-purchase' },
+        'purchase invoice': { icon: 'fa fa-money', cls: 'color-purchase' },
+        'purchase invoices': { icon: 'fa fa-money', cls: 'color-purchase' },
         'purchase bills': { icon: 'fa fa-money', cls: 'color-purchase' },
         'purchase returns': { icon: 'fa fa-undo', cls: 'color-purchase' },
         'suppliers': { icon: 'fa fa-building', cls: 'color-purchase' },
@@ -54,6 +58,8 @@
         'Suppliers': ['List', 'Supplier'],
         'Purchase Orders': ['List', 'Purchase Order'],
         'Purchase Receipts': ['List', 'Purchase Receipt'],
+        'Purchase Invoice': ['List', 'Purchase Invoice'],
+        'Purchase Invoices': ['List', 'Purchase Invoice'],
         'Purchase Bills': ['List', 'Purchase Invoice'],
         'Purchase Returns': ['List', 'Purchase Invoice', { is_return: 1 }],
         'Warehouses': ['List', 'Warehouse'],
@@ -113,7 +119,7 @@
         'Supplier': 'Suppliers',
         'Purchase Order': 'Purchase Orders',
         'Purchase Receipt': 'Purchase Receipts',
-        'Purchase Invoice': 'Purchase Bills',
+        'Purchase Invoice': 'Purchase Invoices',
         'Warehouse': 'Warehouses',
         'Stock Entry': 'Stock Adjustments',
         'Stock Reconciliation': 'Stock Take',
@@ -142,6 +148,8 @@
         'Suppliers': 'Purchases',
         'Purchase Orders': 'Purchases',
         'Purchase Receipts': 'Purchases',
+        'Purchase Invoice': 'Purchases',
+        'Purchase Invoices': 'Purchases',
         'Purchase Bills': 'Purchases',
         'Purchase Returns': 'Purchases',
         'Warehouses': 'Stocks',
@@ -171,6 +179,10 @@
         'Reports',
         'Settings'
     ]);
+    let sidebarItemsPromise = null;
+    let sidebarItemsCache = null;
+    let observerRefreshTimer = null;
+    let routeRefreshTimer = null;
 
     function normalizeText(text) {
         return (text || '')
@@ -262,6 +274,22 @@
         return frappe.set_route(...route);
     }
 
+    function getAnchorRouteTarget(anchor) {
+        const routeTarget = anchor?.dataset?.retailRouteTarget;
+        if (!routeTarget) return null;
+
+        try {
+            return JSON.parse(routeTarget);
+        } catch (e) {
+            return null;
+        }
+    }
+
+    function setAnchorRouteTarget(anchor, target) {
+        if (!anchor || !target) return;
+        anchor.dataset.retailRouteTarget = JSON.stringify(target);
+    }
+
     function getAnchorAppUrl(anchor) {
         const href = anchor?.getAttribute('href');
         if (!href || href === '#') return '';
@@ -272,6 +300,24 @@
         }
 
         return `${url.pathname}${url.search}${url.hash}`;
+    }
+
+    function getTargetFromUrl(anchor) {
+        const appUrl = getAnchorAppUrl(anchor);
+        if (!appUrl) return null;
+
+        const path = appUrl.split(/[?#]/)[0].replace(/\/+$/, '');
+        const purchaseInvoiceWorkspaceUrls = new Set([
+            '/app/purchase-invoice',
+            '/app/purchase-invoices',
+            '/app/purchase-bills'
+        ]);
+
+        if (purchaseInvoiceWorkspaceUrls.has(path)) {
+            return DIRECT_MAPPING['Purchase Invoices'];
+        }
+
+        return null;
     }
 
     function waitForRoute() {
@@ -372,7 +418,7 @@
         link.rel = 'stylesheet';
         link.href = href;
         link.type = 'text/css';
-        link.onload = () => console.log('retail_navigation: retail_icons.css loaded');
+        link.onload = () => debugLog('retail_navigation: retail_icons.css loaded');
         link.onerror = () => console.error('retail_navigation: failed to load retail_icons.css');
         document.head.appendChild(link);
     }
@@ -416,11 +462,11 @@
     function applyIcons() {
         const containers = document.querySelectorAll('.sidebar-item-container');
         if (!containers.length) {
-            console.log('retail_navigation: no sidebar containers found');
+            debugLog('retail_navigation: no sidebar containers found');
             return;
         }
 
-        console.log('retail_navigation: sidebar containers found', containers.length);
+        debugLog('retail_navigation: sidebar containers found', containers.length);
 
         containers.forEach(container => {
             const labelEl = container.querySelector(':scope > .desk-sidebar-item > .item-anchor .sidebar-item-label');
@@ -429,7 +475,7 @@
             const config = findIconConfig(labelText);
             if (!config) return;
 
-            console.log('retail_navigation: matched item', labelText, config.icon, config.cls);
+            debugLog('retail_navigation: matched item', labelText, config.icon, config.cls);
 
             if (iconContainer) {
                 if (iconContainer.querySelector('.retail-icon')) return;
@@ -534,18 +580,29 @@
             const container = anchor?.closest('.sidebar-item-container');
             const label = getItemLabel(container);
             const parent = CHILD_TO_PARENT[label];
-            const target = DIRECT_MAPPING[label];
+            const target = getAnchorRouteTarget(anchor) || DIRECT_MAPPING[label] || getTargetFromUrl(anchor);
+
+            if (target) {
+                event.preventDefault();
+                event.stopPropagation();
+                event.stopImmediatePropagation();
+
+                Promise.resolve(routeToTarget(target)).then(() => {
+                    syncSidebarState();
+                    scheduleRetry();
+                });
+                return;
+            }
 
             if (parent) {
-                const targetUrl = target ? '' : getAnchorAppUrl(anchor);
-                if (!target && !targetUrl) return;
+                const targetUrl = getAnchorAppUrl(anchor);
+                if (!targetUrl) return;
 
                 event.preventDefault();
                 event.stopPropagation();
                 event.stopImmediatePropagation();
 
-                const routePromise = target ? routeToTarget(target) : routeToUrl(targetUrl);
-                Promise.resolve(routePromise).then(() => {
+                routeToUrl(targetUrl).then(() => {
                     syncSidebarState();
                     scheduleRetry();
                 });
@@ -555,12 +612,8 @@
             if (!target && !TOP_LEVEL_WORKSPACES.has(label)) return;
 
             event.preventDefault();
-            if (target) {
-                routeToTarget(target);
-            } else {
-                frappe.route_options = null;
-                frappe.set_route(getWorkspaceUrl(label, true).replace(/^\/app\//, ''));
-            }
+            frappe.route_options = null;
+            frappe.set_route(getWorkspaceUrl(label, true).replace(/^\/app\//, ''));
         }, true);
     }
 
@@ -573,9 +626,11 @@
             if (target) {
                 anchor?.setAttribute('href', getTargetUrl(target));
                 anchor?.setAttribute('data-retail-direct-link', '1');
+                setAnchorRouteTarget(anchor, target);
             } else if (TOP_LEVEL_WORKSPACES.has(label)) {
                 anchor?.setAttribute('href', getWorkspaceUrl(label, true));
                 anchor?.setAttribute('data-retail-direct-link', '1');
+                anchor?.removeAttribute('data-retail-route-target');
             }
         });
     }
@@ -585,6 +640,9 @@
         const children = pages.filter(page => page.parent_page === title);
         const target = DIRECT_MAPPING[title];
         const href = target ? getTargetUrl(target) : getWorkspaceUrl(title, item.public);
+        const routeTargetAttribute = target
+            ? ` data-retail-route-target="${escapeHtml(JSON.stringify(target))}"`
+            : '';
         const container = document.createElement('div');
         container.className = 'sidebar-item-container retail-sidebar-item';
         container.setAttribute('item-name', title);
@@ -593,7 +651,7 @@
         container.setAttribute('item-is-hidden', item.is_hidden || 0);
         container.innerHTML = `
             <div class="desk-sidebar-item standard-sidebar-item">
-                <a href="${href}" class="item-anchor block-click" title="${escapeHtml(__(title))}">
+                <a href="${href}" class="item-anchor block-click" title="${escapeHtml(__(title))}"${routeTargetAttribute}>
                     <span class="sidebar-item-icon"></span>
                     <span class="sidebar-item-label">${escapeHtml(__(title))}</span>
                 </a>
@@ -621,6 +679,23 @@
         return container;
     }
 
+    function getSidebarItems() {
+        if (sidebarItemsCache) return Promise.resolve(sidebarItemsCache);
+        if (!sidebarItemsPromise) {
+            sidebarItemsPromise = frappe
+                .xcall('frappe.desk.desktop.get_workspace_sidebar_items')
+                .then(result => {
+                    sidebarItemsCache = Array.isArray(result) ? result : result?.pages || [];
+                    return sidebarItemsCache;
+                })
+                .catch(error => {
+                    sidebarItemsPromise = null;
+                    throw error;
+                });
+        }
+        return sidebarItemsPromise;
+    }
+
     function renderPersistentSidebar() {
         if (isWorkspaceRoute(frappe.get_route())) {
             removePersistentSidebar();
@@ -639,14 +714,13 @@
             return;
         }
 
-        frappe.xcall('frappe.desk.desktop.get_workspace_sidebar_items').then(result => {
+        getSidebarItems().then(items => {
             if (isWorkspaceRoute(frappe.get_route())) {
                 removePersistentSidebar();
                 return;
             }
             if (host.querySelector('.retail-persistent-sidebar')) return;
 
-            const items = Array.isArray(result) ? result : result?.pages || [];
             const visibleItems = items.filter(item => !item.is_hidden);
             const publicItems = visibleItems.filter(item => item.public);
             const roots = publicItems.filter(item => !item.parent_page);
@@ -662,16 +736,25 @@
         });
     }
 
+    function refreshSidebarEnhancements() {
+        applyDirectLinks();
+        applyIcons();
+        ensureWorkspaceDropIcons();
+        syncSidebarState();
+        renderPersistentSidebar();
+        syncDesktopSidebarClass();
+    }
+
+    function scheduleSidebarEnhancements(delay = 80) {
+        clearTimeout(observerRefreshTimer);
+        observerRefreshTimer = setTimeout(refreshSidebarEnhancements, delay);
+    }
+
     function observeSidebarChanges() {
         const observer = new MutationObserver(mutations => {
             if (mutations.some(m => m.addedNodes.length || m.removedNodes.length)) {
-                console.log('retail_navigation: sidebar DOM mutated, reapplying icons');
-                applyDirectLinks();
-                applyIcons();
-                ensureWorkspaceDropIcons();
-                syncSidebarState();
-                renderPersistentSidebar();
-                syncDesktopSidebarClass();
+                debugLog('retail_navigation: sidebar DOM mutated, reapplying icons');
+                scheduleSidebarEnhancements();
             }
         });
 
@@ -684,12 +767,8 @@
     function scheduleRetry() {
         [250, 750, 1500, 3000].forEach(delay => {
             setTimeout(() => {
-                console.log('retail_navigation: retry applyIcons after delay', delay);
-                applyDirectLinks();
-                applyIcons();
-                ensureWorkspaceDropIcons();
-                syncSidebarState();
-                renderPersistentSidebar();
+                debugLog('retail_navigation: retry applyIcons after delay', delay);
+                refreshSidebarEnhancements();
             }, delay);
         });
     }
@@ -707,21 +786,14 @@
         bindSubmenuRouting();
 
         if (window.frappe?.router?.on) {
-            frappe.router.on('change', () => setTimeout(() => {
-                applyDirectLinks();
-                applyIcons();
-                ensureWorkspaceDropIcons();
-                syncSidebarState();
-                renderPersistentSidebar();
-            }, 250));
+            frappe.router.on('change', () => {
+                clearTimeout(routeRefreshTimer);
+                routeRefreshTimer = setTimeout(refreshSidebarEnhancements, 120);
+            });
         }
 
         window.matchMedia(DESKTOP_MEDIA).addEventListener('change', () => {
-            applyDirectLinks();
-            applyIcons();
-            ensureWorkspaceDropIcons();
-            syncSidebarState();
-            renderPersistentSidebar();
+            refreshSidebarEnhancements();
         });
     }
 

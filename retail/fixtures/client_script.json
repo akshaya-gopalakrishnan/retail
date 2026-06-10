@@ -75,5 +75,16 @@
   "name": "Uncheck Warranty Box",
   "script": "frappe.ui.form.on('Item', {\r\n    custom_warranty: function(frm) {\r\n        if (!frm.doc.custom_warranty) {\r\n            frm.set_value('custom_in_months', null);\r\n        }\r\n    }\r\n});",
   "view": "Form"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Item",
+  "enabled": 1,
+  "modified": "2026-06-10 10:10:00",
+  "module": "Retail-app",
+  "name": "Item remove empty barcode rows on duplicate",
+  "script": "frappe.ui.form.on(\"Item\", {\n    validate(frm) {\n        remove_empty_barcode_rows(frm);\n    },\n    before_save(frm) {\n        remove_empty_barcode_rows(frm);\n    }\n});\n\nfunction remove_empty_barcode_rows(frm) {\n    if (!Array.isArray(frm.doc.barcodes) || !frm.doc.barcodes.length) return;\n\n    let removed = false;\n    for (let i = frm.doc.barcodes.length - 1; i >= 0; i--) {\n        const row = frm.doc.barcodes[i];\n        if (row.barcode) continue;\n\n        if (row.doctype && row.name) {\n            frappe.model.clear_doc(row.doctype, row.name);\n        }\n        frm.doc.barcodes.splice(i, 1);\n        removed = true;\n    }\n\n    if (removed) {\n        frm.refresh_field(\"barcodes\");\n    }\n}",
+  "view": "Form"
  }
 ]

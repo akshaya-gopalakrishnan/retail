@@ -1,0 +1,19 @@
+{
+ "allow_guest": 0,
+ "api_method": null,
+ "cron_format": null,
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Server Script",
+ "doctype_event": "Before Save",
+ "enable_rate_limit": 0,
+ "event_frequency": "All",
+ "modified": "2026-06-10 10:35:00.000000",
+ "module": null,
+ "name": "UOM&Barcode table sync Retail Packing Detail",
+ "rate_limit_count": 5,
+ "rate_limit_seconds": 86400,
+ "reference_doctype": "Item",
+ "script": "# -----------------------------\n# Sync UOM Table\n# -----------------------------\n\ndefault_uom = doc.stock_uom or \"Nos\"\n\ndoc.set(\"uoms\", [])\n\n# base uom mandatory\ndoc.append(\"uoms\", {\n    \"uom\": default_uom,\n    \"conversion_factor\": 1\n})\n\nseen_uoms = {default_uom}\n\nfor row in (doc.custom_retail_packing_detail or []):\n\n    if row.uom and row.uom not in seen_uoms:\n\n        doc.append(\"uoms\", {\n            \"uom\": row.uom,\n            \"conversion_factor\": row.conversion_factor or 1\n        })\n        seen_uoms.add(row.uom)\n\n# -----------------------------\n# Sync Barcode Table\n# -----------------------------\n\ndoc.set(\"barcodes\", [])\nseen_barcodes = set()\n\n# quick/default barcode from the Item form\nif doc.custom_barcode:\n    barcode = doc.custom_barcode.strip()\n    if barcode:\n        doc.append(\"barcodes\", {\n            \"barcode\": barcode,\n            \"uom\": default_uom\n        })\n        seen_barcodes.add(barcode)\n\n# advanced multi-UOM barcodes from Retail Packing Detail\nfor row in (doc.custom_retail_packing_detail or []):\n\n    if row.barcode:\n        barcode = row.barcode.strip()\n        if barcode and barcode not in seen_barcodes:\n\n            doc.append(\"barcodes\", {\n                \"barcode\": barcode,\n                \"uom\": row.uom or default_uom\n            })\n            seen_barcodes.add(barcode)",
+ "script_type": "DocType Event"
+}

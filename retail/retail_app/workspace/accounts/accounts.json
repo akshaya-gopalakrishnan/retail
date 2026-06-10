@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\":\"hdr_accounts\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Accounts</span>\",\"col\":12}},{\"id\":\"sc_payment_entry\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Payment Entry\",\"col\":3}},{\"id\":\"sc_journal_entry\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Journal Entry\",\"col\":3}},{\"id\":\"sc_sales_invoice\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sales Invoice\",\"col\":3}},{\"id\":\"sc_purchase_bill\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Purchase Bill\",\"col\":3}},{\"id\":\"sc_accounts_receivabl\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Accounts Receivable\",\"col\":3}},{\"id\":\"sc_accounts_payable\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Accounts Payable\",\"col\":3}},{\"id\":\"sc_balance_sheet\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Balance Sheet\",\"col\":3}},{\"id\":\"sc_general_ledger\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"General Ledger\",\"col\":3}},{\"id\":\"card_transactions\",\"type\":\"card\",\"data\":{\"card_name\":\"Transactions\",\"col\":4}},{\"id\":\"card_receivables_and_pa\",\"type\":\"card\",\"data\":{\"card_name\":\"Receivables & Payables\",\"col\":4}},{\"id\":\"card_financial_reports\",\"type\":\"card\",\"data\":{\"card_name\":\"Financial Reports\",\"col\":4}}]",
+ "content": "[{\"id\":\"hdr_accounts\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Accounts</span>\",\"col\":12}},{\"id\":\"sc_payment_entry\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Payment Entry\",\"col\":3}},{\"id\":\"sc_journal_entry\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Journal Entry\",\"col\":3}},{\"id\":\"sc_sales_invoice\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sales Invoice\",\"col\":3}},{\"id\":\"sc_purchase_bill\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Purchase Invoice\",\"col\":3}},{\"id\":\"sc_accounts_receivabl\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Accounts Receivable\",\"col\":3}},{\"id\":\"sc_accounts_payable\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Accounts Payable\",\"col\":3}},{\"id\":\"sc_balance_sheet\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Balance Sheet\",\"col\":3}},{\"id\":\"sc_general_ledger\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"General Ledger\",\"col\":3}},{\"id\":\"card_transactions\",\"type\":\"card\",\"data\":{\"card_name\":\"Transactions\",\"col\":4}},{\"id\":\"card_receivables_and_pa\",\"type\":\"card\",\"data\":{\"card_name\":\"Receivables & Payables\",\"col\":4}},{\"id\":\"card_financial_reports\",\"type\":\"card\",\"data\":{\"card_name\":\"Financial Reports\",\"col\":4}}]",
  "creation": "2026-06-03 15:10:31.193452",
  "custom_blocks": [],
  "docstatus": 0,
@@ -35,7 +35,7 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Purchase Bills",
+   "label": "Purchase Invoices",
    "link_count": 0,
    "link_to": "Purchase Invoice",
    "link_type": "DocType",
@@ -200,7 +200,7 @@
   {
    "color": "Grey",
    "doc_view": "List",
-   "label": "Purchase Bill",
+   "label": "Purchase Invoice",
    "link_to": "Purchase Invoice",
    "stats_filter": "[]",
    "type": "DocType"

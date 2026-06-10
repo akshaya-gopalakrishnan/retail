@@ -35,7 +35,8 @@ app_include_css = [
 ]
 
 app_include_js = [
-    "/assets/retail/js/retail_navigation.js?v=22"
+    "/assets/retail/js/retail_navigation.js?v=26",
+    "/assets/retail/js/item_duplicate_cleanup.js?v=1"
 ]
 
 # include js, css files in header of web template

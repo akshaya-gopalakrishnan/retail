@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\":\"hdr_purchases\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Purchases</span>\",\"col\":12}},{\"id\":\"sc_supplier\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Supplier\",\"col\":3}},{\"id\":\"sc_purchase_order\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Purchase Order\",\"col\":3}},{\"id\":\"sc_purchase_receipt\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Purchase Receipt\",\"col\":3}},{\"id\":\"sc_purchase_bill\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Purchase Bill\",\"col\":3}},{\"id\":\"sc_purchase_return\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Purchase Return\",\"col\":5}},{\"id\":\"sc_purchase_register\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Purchase Register\",\"col\":4}},{\"id\":\"card_buying_flow\",\"type\":\"card\",\"data\":{\"card_name\":\"Buying Flow\",\"col\":4}},{\"id\":\"card_suppliers\",\"type\":\"card\",\"data\":{\"card_name\":\"Suppliers\",\"col\":4}},{\"id\":\"card_purchase_reports\",\"type\":\"card\",\"data\":{\"card_name\":\"Purchase Reports\",\"col\":4}}]",
+ "content": "[{\"id\":\"hdr_purchases\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Purchases</span>\",\"col\":12}},{\"id\":\"sc_supplier\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Supplier\",\"col\":3}},{\"id\":\"sc_purchase_order\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Purchase Order\",\"col\":3}},{\"id\":\"sc_purchase_receipt\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Purchase Receipt\",\"col\":3}},{\"id\":\"sc_purchase_bill\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Purchase Invoice\",\"col\":3}},{\"id\":\"sc_purchase_return\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Purchase Return\",\"col\":5}},{\"id\":\"sc_purchase_register\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Purchase Register\",\"col\":4}},{\"id\":\"card_buying_flow\",\"type\":\"card\",\"data\":{\"card_name\":\"Buying Flow\",\"col\":4}},{\"id\":\"card_suppliers\",\"type\":\"card\",\"data\":{\"card_name\":\"Suppliers\",\"col\":4}},{\"id\":\"card_purchase_reports\",\"type\":\"card\",\"data\":{\"card_name\":\"Purchase Reports\",\"col\":4}}]",
  "creation": "2026-06-03 13:14:18.476361",
  "custom_blocks": [],
  "docstatus": 0,
@@ -45,7 +45,7 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Purchase Bills",
+   "label": "Purchase Invoices",
    "link_count": 0,
    "link_to": "Purchase Invoice",
    "link_type": "DocType",
@@ -190,7 +190,7 @@
   {
    "color": "Grey",
    "doc_view": "List",
-   "label": "Purchase Bill",
+   "label": "Purchase Invoice",
    "link_to": "Purchase Invoice",
    "stats_filter": "[]",
    "type": "DocType"

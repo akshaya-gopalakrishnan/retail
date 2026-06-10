@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\":\"nmaCMAOJm3\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Purchase Bills</span>\",\"col\":12}},{\"id\":\"ipHF2fJ_Yq\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Supplier Invoices\",\"col\":4}}]",
+ "content": "[{\"id\":\"nmaCMAOJm3\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Purchase Invoices</span>\",\"col\":12}},{\"id\":\"ipHF2fJ_Yq\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Supplier Invoices\",\"col\":4}}]",
  "creation": "2026-06-03 13:25:13.685857",
  "custom_blocks": [],
  "docstatus": 0,
@@ -10,12 +10,12 @@
  "idx": 0,
  "indicator_color": "green",
  "is_hidden": 0,
- "label": "Purchase Bills",
+ "label": "Purchase Invoices",
  "links": [],
  "modified": "2026-06-03 17:44:29.763350",
  "modified_by": "akshayagopal1@gmail.com",
  "module": "Retail-app",
- "name": "Purchase Bills",
+ "name": "Purchase Invoices",
  "number_cards": [],
  "owner": "akshayagopal1@gmail.com",
  "parent_page": "Purchases",
@@ -28,7 +28,7 @@
   }
  ],
  "roles": [],
- "sequence_id": 44.0,
+ "sequence_id": 44,
  "shortcuts": [],
- "title": "Purchase Bills"
+ "title": "Purchase Invoices"
 }
