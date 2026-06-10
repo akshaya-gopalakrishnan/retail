@@ -151,6 +151,9 @@ app_include_js = [
 doc_events = {
     "Item": {
         "on_update": "retail.retail_app.item_price_sync.sync_simple_item_prices",
+    },
+    "Sales Invoice": {
+        "validate": "retail.retail_app.sales_invoice_stock.ensure_stock_update",
     }
 }
 
