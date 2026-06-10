@@ -148,13 +148,11 @@ app_include_js = [
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-# 	}
-# }
+doc_events = {
+    "Item": {
+        "on_update": "retail.retail_app.item_price_sync.sync_simple_item_prices",
+    }
+}
 
 # Scheduled Tasks
 # ---------------
