@@ -15,10 +15,10 @@
   "doctype": "Client Script",
   "dt": "Item",
   "enabled": 1,
-  "modified": "2026-05-15 10:56:33.426776",
+  "modified": "2026-06-11 11:50:29.664282",
   "module": null,
   "name": "Margin",
-  "script": "frappe.ui.form.on('Item', {\r\n    refresh: function(frm) {\r\n        // Run calculation when the form loads\r\n        calculate_margin_amount(frm);\r\n    },\r\n    valuation_rate: function(frm) {\r\n        calculate_margin_amount(frm);\r\n    },\r\n    standard_rate: function(frm) {\r\n        calculate_margin_amount(frm);\r\n    }\r\n});\r\n\r\nfunction calculate_margin_amount(frm) {\r\n    // Get values and convert to float (number)\r\n    // ERPNext uses 'standard_rate' for the field \"Standard Selling Rate\"\r\n    let val_rate = flt(frm.doc.valuation_rate);\r\n    let sell_rate = flt(frm.doc.standard_rate);\r\n    \r\n    // Calculate the difference\r\n    let margin = sell_rate - val_rate;\r\n    \r\n    // Set the value into your field\r\n    // Ensure the \"Name\" in Customize Form is exactly 'custom_margin'\r\n    frm.set_value('custom_margin', margin);\r\n}",
+  "script": "frappe.ui.form.on('Item', {\n    refresh(frm) {\n        calculate_margin_amount(frm);\n    },\n    last_purchase_rate(frm) {\n        calculate_margin_amount(frm);\n    },\n    standard_rate(frm) {\n        calculate_margin_amount(frm);\n    }\n});\n\nfunction calculate_margin_amount(frm) {\n    let purchase_rate = flt(frm.doc.last_purchase_rate);\n    let sell_rate = flt(frm.doc.standard_rate);\n    frm.set_value('custom_margin', sell_rate - purchase_rate);\n}",
   "view": "Form"
  },
  {
@@ -37,10 +37,10 @@
   "doctype": "Client Script",
   "dt": "Item",
   "enabled": 1,
-  "modified": "2026-05-21 16:04:20.611014",
+  "modified": "2026-06-11 11:50:29.648444",
   "module": null,
   "name": "RPD pr calculation",
-  "script": "frappe.ui.form.on('Item', {\r\n    // 1. When you change the rate in the header\r\n    custom_default_purchase_rate: function(frm) {\r\n        calculate_child_rates(frm);\r\n    }\r\n});\r\n\r\n// 2. When you add a new row or change the conversion factor in the table\r\nfrappe.ui.form.on('Retail Packing Detail', {\r\n    conversion_factor: function(frm, cdt, cdn) {\r\n        let row = locals[cdt][cdn];\r\n        let base_rate = frm.doc.custom_default_purchase_rate || 0;\r\n        \r\n        // Calculate: Header Rate * Conversion Factor\r\n        let calculated_rate = base_rate * (row.conversion_factor || 1);\r\n        \r\n        frappe.model.set_value(cdt, cdn, 'purchase_rate', calculated_rate);\r\n    },\r\n    \r\n    // Trigger calculation when a new row is added\r\n    custom_retail_packing_detail_add: function(frm, cdt, cdn) {\r\n        let row = locals[cdt][cdn];\r\n        let base_rate = frm.doc.custom_default_purchase_rate || 0;\r\n        frappe.model.set_value(cdt, cdn, 'purchase_rate', base_rate);\r\n    }\r\n});\r\n\r\n// Helper function to update ALL rows if the header rate changes\r\nfunction calculate_child_rates(frm) {\r\n    let base_rate = frm.doc.custom_default_purchase_rate || 0;\r\n    \r\n    $.each(frm.doc.custom_retail_packing_detail || [], function(i, row) {\r\n        let calculated_rate = base_rate * (row.conversion_factor || 1);\r\n        frappe.model.set_value(row.doctype, row.name, 'purchase_rate', calculated_rate);\r\n    });\r\n}",
+  "script": "frappe.ui.form.on('Item', {\n    refresh(frm) {\n        calculate_child_rates(frm);\n    },\n    last_purchase_rate(frm) {\n        calculate_child_rates(frm);\n    }\n});\n\nfrappe.ui.form.on('Retail Packing Detail', {\n    conversion_factor(frm, cdt, cdn) {\n        let row = locals[cdt][cdn];\n        let base_rate = flt(frm.doc.last_purchase_rate);\n        let calculated_rate = base_rate * flt(row.conversion_factor || 1);\n        frappe.model.set_value(cdt, cdn, 'purchase_rate', calculated_rate);\n    },\n\n    custom_retail_packing_detail_add(frm, cdt, cdn) {\n        let base_rate = flt(frm.doc.last_purchase_rate);\n        frappe.model.set_value(cdt, cdn, 'purchase_rate', base_rate);\n    }\n});\n\nfunction calculate_child_rates(frm) {\n    let base_rate = flt(frm.doc.last_purchase_rate);\n    $.each(frm.doc.custom_retail_packing_detail || [], function(i, row) {\n        let calculated_rate = base_rate * flt(row.conversion_factor || 1);\n        frappe.model.set_value(row.doctype, row.name, 'purchase_rate', calculated_rate);\n    });\n}",
   "view": "Form"
  },
  {
@@ -59,10 +59,10 @@
   "doctype": "Client Script",
   "dt": "Item",
   "enabled": 1,
-  "modified": "2026-05-22 15:02:23.189758",
+  "modified": "2026-06-11 11:50:29.661586",
   "module": null,
   "name": "Margin %",
-  "script": "frappe.ui.form.on('Item', {\r\n    refresh: function(frm) {\r\n        calculate_margins(frm);\r\n    },\r\n    valuation_rate: function(frm) {\r\n        calculate_margins(frm);\r\n    },\r\n    standard_rate: function(frm) {\r\n        calculate_margins(frm);\r\n    }\r\n});\r\n\r\nfunction calculate_margins(frm) {\r\n    // 1. Get values and convert to float\r\n    let val_rate = flt(frm.doc.valuation_rate);\r\n    let sell_rate = flt(frm.doc.standard_rate);\r\n    \r\n    // 2. Calculate the Absolute Margin Amount\r\n    let margin_amt = sell_rate - val_rate;\r\n    frm.set_value('custom_margin', margin_amt);\r\n    \r\n    // 3. Calculate Margin Percentage\r\n    // We check if sell_rate is greater than 0 to avoid \"Division by Zero\" errors\r\n    if (sell_rate > 0) {\r\n        let margin_pct = (margin_amt / sell_rate) * 100;\r\n        frm.set_value('custom_margin_', margin_pct);\r\n    } else {\r\n        // If selling price is 0, margin % is technically 0 or undefined\r\n        frm.set_value('custom_margin_', 0);\r\n    }\r\n}\r\n\r\n\r\n// If your business uses Markup instead, change the line in the script to:\r\n// let margin_pct = (margin_amt / val_rate) * 100; (and check that val_rate > 0).",
+  "script": "frappe.ui.form.on('Item', {\n    refresh(frm) {\n        calculate_margins(frm);\n    },\n    last_purchase_rate(frm) {\n        calculate_margins(frm);\n    },\n    standard_rate(frm) {\n        calculate_margins(frm);\n    }\n});\n\nfunction calculate_margins(frm) {\n    let purchase_rate = flt(frm.doc.last_purchase_rate);\n    let sell_rate = flt(frm.doc.standard_rate);\n    let margin_amt = sell_rate - purchase_rate;\n\n    frm.set_value('custom_margin', margin_amt);\n    frm.set_value('custom_margin_', sell_rate > 0 ? (margin_amt / sell_rate) * 100 : 0);\n}",
   "view": "Form"
  },
  {
@@ -85,6 +85,17 @@
   "module": "Retail-app",
   "name": "Item remove empty barcode rows on duplicate",
   "script": "frappe.ui.form.on(\"Item\", {\n    validate(frm) {\n        remove_empty_barcode_rows(frm);\n    },\n    before_save(frm) {\n        remove_empty_barcode_rows(frm);\n    }\n});\n\nfunction remove_empty_barcode_rows(frm) {\n    if (!Array.isArray(frm.doc.barcodes) || !frm.doc.barcodes.length) return;\n\n    let removed = false;\n    for (let i = frm.doc.barcodes.length - 1; i >= 0; i--) {\n        const row = frm.doc.barcodes[i];\n        if (row.barcode) continue;\n\n        if (row.doctype && row.name) {\n            frappe.model.clear_doc(row.doctype, row.name);\n        }\n        frm.doc.barcodes.splice(i, 1);\n        removed = true;\n    }\n\n    if (removed) {\n        frm.refresh_field(\"barcodes\");\n    }\n}",
+  "view": "Form"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Item",
+  "enabled": 1,
+  "modified": "2026-06-11 12:47:08.059848",
+  "module": null,
+  "name": "Item fetch last purchase rate from same name",
+  "script": "frappe.ui.form.on(\"Item\", {\n    item_name(frm) {\n        set_last_purchase_rate_from_same_item_name(frm);\n    },\n\n    refresh(frm) {\n        if (frm.is_new() && frm.doc.item_name && !flt(frm.doc.last_purchase_rate)) {\n            set_last_purchase_rate_from_same_item_name(frm);\n        }\n    }\n});\n\nfunction set_last_purchase_rate_from_same_item_name(frm) {\n    if (!frm.is_new() || !frm.doc.item_name || flt(frm.doc.last_purchase_rate)) {\n        return;\n    }\n\n    frappe.db.get_list(\"Item\", {\n        fields: [\"name\", \"last_purchase_rate\", \"standard_rate\"],\n        filters: {\n            item_name: frm.doc.item_name,\n            disabled: 0\n        },\n        order_by: \"modified desc\",\n        limit: 1\n    }).then((items) => {\n        if (!items.length || !flt(items[0].last_purchase_rate)) {\n            return;\n        }\n\n        frm.set_value(\"last_purchase_rate\", items[0].last_purchase_rate);\n        frm.dashboard.set_headline(__(\"Last purchase rate fetched from existing Item {0}\", [items[0].name]));\n    });\n}",
   "view": "Form"
  }
 ]

@@ -28,13 +28,13 @@
   "doctype_event": "After Save",
   "enable_rate_limit": 0,
   "event_frequency": "All",
-  "modified": "2026-05-21 15:44:34.489174",
+  "modified": "2026-06-11 11:50:29.679511",
   "module": null,
   "name": "purchase rate submit",
   "rate_limit_count": 5,
   "rate_limit_seconds": 86400,
   "reference_doctype": "Item",
-  "script": "if doc.custom_default_purchase_rate:\r\n    # 1. Define the Price List name (Ensure this exists in your system)\r\n    price_list = \"Standard Buying\"\r\n    \r\n    # 2. Check if a Purchase Price already exists for this Item and Stock UOM\r\n    price_name = frappe.db.get_value(\"Item Price\", {\r\n        \"item_code\": doc.name,\r\n        \"price_list\": price_list,\r\n        \"uom\": doc.stock_uom\r\n    })\r\n\r\n    if price_name:\r\n        # Update the existing record\r\n        frappe.db.set_value(\"Item Price\", price_name, \"price_list_rate\", doc.custom_default_purchase_rate)\r\n    else:\r\n        # Create a new Item Price record\r\n        new_price = frappe.get_doc({\r\n            \"doctype\": \"Item Price\",\r\n            \"item_code\": doc.name,\r\n            \"price_list\": price_list,\r\n            \"price_list_rate\": doc.custom_default_purchase_rate,\r\n            \"uom\": doc.stock_uom\r\n        })\r\n        new_price.insert(ignore_permissions=True)\r\n        \r\n    # Optional: Log the update for debugging\r\n    # frappe.msgprint(f\"Updated {price_list} to {doc.custom_default_purchase_rate}\")",
+  "script": "purchase_rate = doc.last_purchase_rate or 0\n\nif purchase_rate:\n    price_list = \"Standard Buying\"\n    price_name = frappe.db.get_value(\"Item Price\", {\n        \"item_code\": doc.name,\n        \"price_list\": price_list,\n        \"uom\": doc.stock_uom\n    })\n\n    if price_name:\n        frappe.db.set_value(\"Item Price\", price_name, \"price_list_rate\", purchase_rate)\n    else:\n        frappe.get_doc({\n            \"doctype\": \"Item Price\",\n            \"item_code\": doc.name,\n            \"price_list\": price_list,\n            \"price_list_rate\": purchase_rate,\n            \"uom\": doc.stock_uom\n        }).insert(ignore_permissions=True)\n",
   "script_type": "DocType Event"
  },
  {
