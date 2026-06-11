@@ -271,6 +271,12 @@ fixtures = [
     "Workflow",
     "Workflow State",
     "Workflow Action Master",
+    {
+        "dt": "Dashboard Chart",
+        "filters": [
+            ["name", "in", ("Users by Role", "Companies by Country")]
+        ],
+    },
     "Workspace"
 ]
 # app_include_js = "/assets/retail/js/retail_navigation.js?v=15"
