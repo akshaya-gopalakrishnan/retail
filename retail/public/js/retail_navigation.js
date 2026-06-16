@@ -183,6 +183,7 @@
     let sidebarItemsCache = null;
     let observerRefreshTimer = null;
     let routeRefreshTimer = null;
+    let sidebarRenderRetryCount = 0;
 
     function normalizeText(text) {
         return (text || '')
@@ -355,12 +356,40 @@
         return `/app/${isPublic ? slug : `private/${slug}`}`;
     }
 
+    function isVisibleElement(element) {
+        if (!element) return false;
+        const style = window.getComputedStyle(element);
+        return style.display !== 'none' && style.visibility !== 'hidden' && element.offsetParent !== null;
+    }
+
+    function unwrapElement(value) {
+        if (!value) return null;
+        if (value instanceof Element) return value;
+        if (value.jquery) return value.get(0);
+        if (value.wrapper instanceof Element) return value.wrapper;
+        if (value.page instanceof Element) return value.page;
+        return null;
+    }
+
+    function getVisiblePageContainers() {
+        return Array.from(document.querySelectorAll('.page-container')).filter(isVisibleElement);
+    }
+
     function getCurrentPage() {
-        return frappe.container?.page || document.querySelector('.page-container[style*="display: block"]');
+        const frappePage = unwrapElement(frappe.container?.page);
+        if (isVisibleElement(frappePage)) return frappePage;
+
+        const visiblePages = getVisiblePageContainers();
+        return visiblePages[visiblePages.length - 1] || document.querySelector('.page-container[style*="display: block"]');
     }
 
     function getCurrentSideSection() {
-        return getCurrentPage()?.querySelector('.layout-side-section');
+        const pageSideSection = getCurrentPage()?.querySelector('.layout-side-section');
+        if (isVisibleElement(pageSideSection)) return pageSideSection;
+
+        const visibleSideSections = Array.from(document.querySelectorAll('.layout-side-section'))
+            .filter(isVisibleElement);
+        return visibleSideSections[visibleSideSections.length - 1] || pageSideSection;
     }
 
     function getRetailSidebarContainers() {
@@ -412,8 +441,8 @@
 
     // Ensure our CSS is loaded at runtime in case app_include_css wasn't picked up
     function ensureRetailCss() {
-        const href = '/assets/retail/css/retail_icons.css';
-        if (document.querySelector(`link[href="${href}"]`)) return;
+        const href = '/assets/retail/css/retail_icons.css?v=6';
+        if (document.querySelector('link[href^="/assets/retail/css/retail_icons.css"]')) return;
         const link = document.createElement('link');
         link.rel = 'stylesheet';
         link.href = href;
@@ -548,7 +577,7 @@
     }
 
     function syncDesktopSidebarClass() {
-        const hasSidebar = isDesktop() && !!getCurrentSideSection()?.querySelector('.retail-persistent-sidebar');
+        const hasSidebar = isDesktop() && !!document.querySelector('.layout-side-section .retail-persistent-sidebar');
         document.body.classList.toggle('retail-has-persistent-sidebar', hasSidebar);
     }
 
@@ -559,13 +588,10 @@
     }
 
     function getRetailSidebarHost(sideSection) {
-        const existingOverlay = sideSection.querySelector('.overlay-sidebar:not(.retail-sidebar-overlay)');
-        if (existingOverlay) return existingOverlay;
-
-        let host = sideSection.querySelector('.retail-sidebar-overlay');
+        let host = sideSection.querySelector(':scope > .retail-sidebar-host');
         if (!host) {
             host = document.createElement('div');
-            host.className = 'retail-sidebar-overlay overlay-sidebar hidden-xs hidden-sm';
+            host.className = 'retail-sidebar-host';
             sideSection.prepend(host);
         }
         return host;
@@ -706,8 +732,13 @@
         const sideSection = getCurrentSideSection();
         if (!sideSection) {
             syncDesktopSidebarClass();
+            if (sidebarRenderRetryCount < 8) {
+                sidebarRenderRetryCount += 1;
+                setTimeout(renderPersistentSidebar, 250);
+            }
             return;
         }
+        sidebarRenderRetryCount = 0;
         const host = getRetailSidebarHost(sideSection);
         if (host.querySelector('.retail-persistent-sidebar')) {
             syncDesktopSidebarClass();
@@ -730,8 +761,12 @@
 
             roots.forEach(item => wrapper.appendChild(buildSidebarItem(item, publicItems)));
             host.prepend(wrapper);
+            sideSection.classList.add('retail-form-sidebar-mounted');
             applyIcons();
             syncSidebarState();
+            syncDesktopSidebarClass();
+        }).catch(error => {
+            console.error('retail_navigation: failed to render persistent sidebar', error);
             syncDesktopSidebarClass();
         });
     }

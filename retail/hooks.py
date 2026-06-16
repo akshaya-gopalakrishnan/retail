@@ -31,12 +31,14 @@ app_license = "mit"
 # retail/retail/hooks.py
 
 app_include_css = [
-    "/assets/retail/css/retail_icons.css"
+    "/assets/retail/css/retail_icons.css?v=6",
+    "/assets/retail/css/brand_themes.css?v=8",
 ]
 
 app_include_js = [
-    "/assets/retail/js/retail_navigation.js?v=26",
-    "/assets/retail/js/item_duplicate_cleanup.js?v=1"
+    "/assets/retail/js/retail_navigation.js?v=31",
+    "/assets/retail/js/item_duplicate_cleanup.js?v=1",
+    "/assets/retail/js/brand_theme_switcher.js?v=7",
 ]
 
 # include js, css files in header of web template

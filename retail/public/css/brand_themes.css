@@ -1,0 +1,664 @@
+/*
+Brand theme pack for the Retail app.
+
+This file is intentionally scoped to html[data-retail-brand-theme].
+When the selected theme is "classic", no attribute-level theme overrides apply,
+so ERPNext/Frappe's standard UI remains the fallback.
+*/
+
+html[data-retail-brand-theme] {
+    --retail-brand-shadow-sm: 0 10px 28px rgba(15, 23, 42, 0.08);
+    --retail-brand-shadow-md: 0 18px 40px rgba(15, 23, 42, 0.12);
+    --retail-brand-font: "Inter", "Segoe UI", Roboto, Arial, sans-serif;
+    --retail-brand-glass-blur: 18px;
+}
+
+html[data-retail-brand-theme="executive-navy"] {
+    --retail-brand-primary: #0b1f3a;
+    --retail-brand-secondary: #1e3a5f;
+    --retail-brand-accent: #c9a227;
+    --retail-brand-accent-hover: #a8861f;
+    --retail-brand-bg: #eef7fb;
+    --retail-brand-bg-gradient:
+        radial-gradient(circle at 15% 8%, rgba(201, 162, 39, 0.22), transparent 30%),
+        radial-gradient(circle at 85% 12%, rgba(69, 169, 224, 0.25), transparent 28%),
+        linear-gradient(135deg, #f7fbff 0%, #eaf6f7 48%, #f9f2df 100%);
+    --retail-brand-surface: rgba(255, 255, 255, 0.72);
+    --retail-brand-surface-strong: rgba(255, 255, 255, 0.88);
+    --retail-brand-border: rgba(168, 134, 31, 0.22);
+    --retail-brand-text: #1f2933;
+    --retail-brand-muted: #62748e;
+    --retail-brand-focus: rgba(201, 162, 39, 0.22);
+    --retail-brand-sidebar: rgba(219, 232, 246, 0.62);
+    --retail-brand-sidebar-text: #0b1f3a;
+    --retail-brand-sidebar-muted: rgba(11, 31, 58, 0.62);
+    --retail-brand-sidebar-hover: rgba(255, 255, 255, 0.48);
+    --retail-brand-sidebar-active: rgba(255, 255, 255, 0.70);
+    --retail-brand-control: rgba(255, 255, 255, 0.58);
+    --retail-brand-hover: rgba(255, 255, 255, 0.64);
+    --primary-color: var(--retail-brand-primary);
+    --brand-color: var(--retail-brand-primary);
+    --bg-color: var(--retail-brand-bg);
+    --fg-color: var(--retail-brand-surface);
+    --navbar-bg: var(--retail-brand-surface);
+    --card-bg: var(--retail-brand-surface);
+    --control-bg: var(--retail-brand-control);
+    --control-bg-on-gray: rgba(255, 255, 255, 0.68);
+    --awesomebar-focus-bg: var(--retail-brand-surface);
+    --modal-bg: var(--retail-brand-surface);
+    --popover-bg: var(--retail-brand-surface);
+    --text-color: var(--retail-brand-text);
+    --text-muted: var(--retail-brand-muted);
+    --border-color: var(--retail-brand-border);
+    --dark-border-color: #bdcad8;
+    --table-border-color: var(--retail-brand-border);
+    --highlight-color: rgba(11, 31, 58, 0.06);
+    --checkbox-gradient: linear-gradient(180deg, var(--retail-brand-primary) -124.51%, var(--retail-brand-primary) 100%);
+    --checkbox-focus-shadow: 0 0 0 2px var(--retail-brand-focus);
+    --btn-primary: var(--retail-brand-primary);
+    --btn-primary-hover: var(--retail-brand-secondary);
+    --btn-default-bg: var(--retail-brand-control);
+    --btn-default-hover-bg: rgba(255, 255, 255, 0.82);
+    --sidebar-select-color: rgba(255, 255, 255, 0.16);
+}
+
+html[data-retail-brand-theme="modern-blue"] {
+    --retail-brand-primary: #1d4ed8;
+    --retail-brand-secondary: #1e40af;
+    --retail-brand-accent: #0ea5e9;
+    --retail-brand-accent-hover: #0284c7;
+    --retail-brand-bg: #edf8ff;
+    --retail-brand-bg-gradient:
+        radial-gradient(circle at 16% 10%, rgba(14, 165, 233, 0.28), transparent 28%),
+        radial-gradient(circle at 88% 16%, rgba(29, 78, 216, 0.20), transparent 28%),
+        linear-gradient(135deg, #f7fbff 0%, #e8f7ff 52%, #f4fbff 100%);
+    --retail-brand-surface: rgba(255, 255, 255, 0.72);
+    --retail-brand-surface-strong: rgba(255, 255, 255, 0.88);
+    --retail-brand-border: rgba(14, 165, 233, 0.24);
+    --retail-brand-text: #1e293b;
+    --retail-brand-muted: #64748b;
+    --retail-brand-focus: rgba(14, 165, 233, 0.2);
+    --retail-brand-sidebar: rgba(222, 238, 255, 0.62);
+    --retail-brand-sidebar-text: #0f2f6f;
+    --retail-brand-sidebar-muted: rgba(15, 47, 111, 0.62);
+    --retail-brand-sidebar-hover: rgba(255, 255, 255, 0.48);
+    --retail-brand-sidebar-active: rgba(255, 255, 255, 0.70);
+    --retail-brand-control: rgba(255, 255, 255, 0.58);
+    --retail-brand-hover: rgba(255, 255, 255, 0.64);
+    --primary-color: var(--retail-brand-primary);
+    --brand-color: var(--retail-brand-primary);
+    --bg-color: var(--retail-brand-bg);
+    --fg-color: var(--retail-brand-surface);
+    --navbar-bg: var(--retail-brand-surface);
+    --card-bg: var(--retail-brand-surface);
+    --control-bg: var(--retail-brand-control);
+    --control-bg-on-gray: rgba(255, 255, 255, 0.68);
+    --awesomebar-focus-bg: var(--retail-brand-surface);
+    --modal-bg: var(--retail-brand-surface);
+    --popover-bg: var(--retail-brand-surface);
+    --text-color: var(--retail-brand-text);
+    --text-muted: var(--retail-brand-muted);
+    --border-color: var(--retail-brand-border);
+    --dark-border-color: #bfdbfe;
+    --table-border-color: var(--retail-brand-border);
+    --highlight-color: rgba(29, 78, 216, 0.06);
+    --checkbox-gradient: linear-gradient(180deg, var(--retail-brand-primary) -124.51%, var(--retail-brand-primary) 100%);
+    --checkbox-focus-shadow: 0 0 0 2px var(--retail-brand-focus);
+    --btn-primary: var(--retail-brand-primary);
+    --btn-primary-hover: var(--retail-brand-secondary);
+    --btn-default-bg: var(--retail-brand-control);
+    --btn-default-hover-bg: rgba(255, 255, 255, 0.82);
+    --sidebar-select-color: rgba(255, 255, 255, 0.16);
+}
+
+html[data-retail-brand-theme="graphite-pro"] {
+    --retail-brand-primary: #2f3437;
+    --retail-brand-secondary: #111827;
+    --retail-brand-accent: #3b82f6;
+    --retail-brand-accent-hover: #2563eb;
+    --retail-brand-bg: #f3f7fb;
+    --retail-brand-bg-gradient:
+        radial-gradient(circle at 15% 8%, rgba(59, 130, 246, 0.20), transparent 28%),
+        radial-gradient(circle at 84% 18%, rgba(47, 52, 55, 0.12), transparent 30%),
+        linear-gradient(135deg, #fbfcff 0%, #eef3f8 52%, #f7fafc 100%);
+    --retail-brand-surface: rgba(255, 255, 255, 0.72);
+    --retail-brand-surface-strong: rgba(255, 255, 255, 0.88);
+    --retail-brand-border: rgba(148, 163, 184, 0.32);
+    --retail-brand-text: #111827;
+    --retail-brand-muted: #6b7280;
+    --retail-brand-focus: rgba(59, 130, 246, 0.2);
+    --retail-brand-sidebar: rgba(232, 237, 242, 0.62);
+    --retail-brand-sidebar-text: #202528;
+    --retail-brand-sidebar-muted: rgba(32, 37, 40, 0.62);
+    --retail-brand-sidebar-hover: rgba(255, 255, 255, 0.48);
+    --retail-brand-sidebar-active: rgba(255, 255, 255, 0.70);
+    --retail-brand-control: rgba(255, 255, 255, 0.58);
+    --retail-brand-hover: rgba(255, 255, 255, 0.64);
+    --primary-color: var(--retail-brand-primary);
+    --brand-color: var(--retail-brand-primary);
+    --bg-color: var(--retail-brand-bg);
+    --fg-color: var(--retail-brand-surface);
+    --navbar-bg: var(--retail-brand-surface);
+    --card-bg: var(--retail-brand-surface);
+    --control-bg: var(--retail-brand-control);
+    --control-bg-on-gray: rgba(255, 255, 255, 0.68);
+    --awesomebar-focus-bg: var(--retail-brand-surface);
+    --modal-bg: var(--retail-brand-surface);
+    --popover-bg: var(--retail-brand-surface);
+    --text-color: var(--retail-brand-text);
+    --text-muted: var(--retail-brand-muted);
+    --border-color: var(--retail-brand-border);
+    --dark-border-color: #b9c0c8;
+    --table-border-color: var(--retail-brand-border);
+    --highlight-color: rgba(47, 52, 55, 0.06);
+    --checkbox-gradient: linear-gradient(180deg, var(--retail-brand-primary) -124.51%, var(--retail-brand-primary) 100%);
+    --checkbox-focus-shadow: 0 0 0 2px var(--retail-brand-focus);
+    --btn-primary: var(--retail-brand-primary);
+    --btn-primary-hover: var(--retail-brand-secondary);
+    --btn-default-bg: var(--retail-brand-control);
+    --btn-default-hover-bg: rgba(255, 255, 255, 0.82);
+    --sidebar-select-color: rgba(255, 255, 255, 0.16);
+}
+
+html[data-retail-brand-theme="emerald-business"] {
+    --retail-brand-primary: #047857;
+    --retail-brand-secondary: #065f46;
+    --retail-brand-accent: #14b8a6;
+    --retail-brand-accent-hover: #0f766e;
+    --retail-brand-bg: #eefbf6;
+    --retail-brand-bg-gradient:
+        radial-gradient(circle at 16% 8%, rgba(20, 184, 166, 0.27), transparent 30%),
+        radial-gradient(circle at 86% 16%, rgba(167, 243, 208, 0.55), transparent 28%),
+        linear-gradient(135deg, #fbfffd 0%, #e8fbf5 50%, #f5fff8 100%);
+    --retail-brand-surface: rgba(255, 255, 255, 0.72);
+    --retail-brand-surface-strong: rgba(255, 255, 255, 0.88);
+    --retail-brand-border: rgba(20, 184, 166, 0.24);
+    --retail-brand-text: #1f2933;
+    --retail-brand-muted: #64748b;
+    --retail-brand-focus: rgba(20, 184, 166, 0.2);
+    --retail-brand-sidebar: rgba(219, 247, 235, 0.62);
+    --retail-brand-sidebar-text: #064e3b;
+    --retail-brand-sidebar-muted: rgba(6, 78, 59, 0.62);
+    --retail-brand-sidebar-hover: rgba(255, 255, 255, 0.48);
+    --retail-brand-sidebar-active: rgba(255, 255, 255, 0.70);
+    --retail-brand-control: rgba(255, 255, 255, 0.58);
+    --retail-brand-hover: rgba(255, 255, 255, 0.64);
+    --primary-color: var(--retail-brand-primary);
+    --brand-color: var(--retail-brand-primary);
+    --bg-color: var(--retail-brand-bg);
+    --fg-color: var(--retail-brand-surface);
+    --navbar-bg: var(--retail-brand-surface);
+    --card-bg: var(--retail-brand-surface);
+    --control-bg: var(--retail-brand-control);
+    --control-bg-on-gray: rgba(255, 255, 255, 0.68);
+    --awesomebar-focus-bg: var(--retail-brand-surface);
+    --modal-bg: var(--retail-brand-surface);
+    --popover-bg: var(--retail-brand-surface);
+    --text-color: var(--retail-brand-text);
+    --text-muted: var(--retail-brand-muted);
+    --border-color: var(--retail-brand-border);
+    --dark-border-color: #a7f3d0;
+    --table-border-color: var(--retail-brand-border);
+    --highlight-color: rgba(4, 120, 87, 0.06);
+    --checkbox-gradient: linear-gradient(180deg, var(--retail-brand-primary) -124.51%, var(--retail-brand-primary) 100%);
+    --checkbox-focus-shadow: 0 0 0 2px var(--retail-brand-focus);
+    --btn-primary: var(--retail-brand-primary);
+    --btn-primary-hover: var(--retail-brand-secondary);
+    --btn-default-bg: var(--retail-brand-control);
+    --btn-default-hover-bg: rgba(255, 255, 255, 0.82);
+    --sidebar-select-color: rgba(255, 255, 255, 0.16);
+}
+
+html[data-retail-brand-theme="burgundy-formal"] {
+    --retail-brand-primary: #7f1d1d;
+    --retail-brand-secondary: #5f1616;
+    --retail-brand-accent: #c8a45d;
+    --retail-brand-accent-hover: #a9843d;
+    --retail-brand-bg: #fff5f2;
+    --retail-brand-bg-gradient:
+        radial-gradient(circle at 15% 8%, rgba(200, 164, 93, 0.28), transparent 30%),
+        radial-gradient(circle at 85% 15%, rgba(127, 29, 29, 0.16), transparent 28%),
+        linear-gradient(135deg, #fffdf9 0%, #fff1ec 50%, #fbf7ef 100%);
+    --retail-brand-surface: rgba(255, 255, 255, 0.72);
+    --retail-brand-surface-strong: rgba(255, 255, 255, 0.88);
+    --retail-brand-border: rgba(200, 164, 93, 0.24);
+    --retail-brand-text: #2b2420;
+    --retail-brand-muted: #75685f;
+    --retail-brand-focus: rgba(200, 164, 93, 0.22);
+    --retail-brand-sidebar: rgba(250, 232, 220, 0.62);
+    --retail-brand-sidebar-text: #5f1616;
+    --retail-brand-sidebar-muted: rgba(95, 22, 22, 0.62);
+    --retail-brand-sidebar-hover: rgba(255, 255, 255, 0.48);
+    --retail-brand-sidebar-active: rgba(255, 255, 255, 0.70);
+    --retail-brand-control: rgba(255, 255, 255, 0.58);
+    --retail-brand-hover: rgba(255, 255, 255, 0.64);
+    --primary-color: var(--retail-brand-primary);
+    --brand-color: var(--retail-brand-primary);
+    --bg-color: var(--retail-brand-bg);
+    --fg-color: var(--retail-brand-surface);
+    --navbar-bg: var(--retail-brand-surface);
+    --card-bg: var(--retail-brand-surface);
+    --control-bg: var(--retail-brand-control);
+    --control-bg-on-gray: rgba(255, 255, 255, 0.68);
+    --awesomebar-focus-bg: var(--retail-brand-surface);
+    --modal-bg: var(--retail-brand-surface);
+    --popover-bg: var(--retail-brand-surface);
+    --text-color: var(--retail-brand-text);
+    --text-muted: var(--retail-brand-muted);
+    --border-color: var(--retail-brand-border);
+    --dark-border-color: #d7c4b2;
+    --table-border-color: var(--retail-brand-border);
+    --highlight-color: rgba(127, 29, 29, 0.06);
+    --checkbox-gradient: linear-gradient(180deg, var(--retail-brand-primary) -124.51%, var(--retail-brand-primary) 100%);
+    --checkbox-focus-shadow: 0 0 0 2px var(--retail-brand-focus);
+    --btn-primary: var(--retail-brand-primary);
+    --btn-primary-hover: var(--retail-brand-secondary);
+    --btn-default-bg: var(--retail-brand-control);
+    --btn-default-hover-bg: rgba(255, 255, 255, 0.82);
+    --sidebar-select-color: rgba(255, 255, 255, 0.16);
+}
+
+html[data-retail-brand-theme] body {
+    background: var(--retail-brand-bg-gradient, var(--retail-brand-bg));
+    background-attachment: fixed;
+    color: var(--retail-brand-text);
+    font-family: var(--retail-brand-font);
+}
+
+html[data-retail-brand-theme] .page-container,
+html[data-retail-brand-theme] .layout-main,
+html[data-retail-brand-theme] .layout-main-section,
+html[data-retail-brand-theme] .page-head,
+html[data-retail-brand-theme] .workspace-body,
+html[data-retail-brand-theme] .workspace-footer {
+    background: transparent;
+}
+
+html[data-retail-brand-theme] .navbar {
+    border-bottom: 1px solid var(--retail-brand-border);
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+    backdrop-filter: blur(var(--retail-brand-glass-blur));
+    -webkit-backdrop-filter: blur(var(--retail-brand-glass-blur));
+}
+
+html[data-retail-brand-theme] .navbar,
+html[data-retail-brand-theme] .navbar .navbar-brand {
+    background: var(--retail-brand-surface-strong);
+}
+
+html[data-retail-brand-theme] .search-bar {
+    max-width: 520px;
+}
+
+html[data-retail-brand-theme] .search-bar .awesomplete input,
+html[data-retail-brand-theme] .navbar .form-control {
+    background: var(--retail-brand-control);
+    border: 1px solid rgba(255, 255, 255, 0.58);
+    color: var(--retail-brand-text);
+}
+
+html[data-retail-brand-theme] .search-bar .awesomplete input:focus,
+html[data-retail-brand-theme] .navbar .form-control:focus {
+    background: var(--retail-brand-surface);
+    border-color: var(--retail-brand-accent);
+    box-shadow: 0 0 0 3px var(--retail-brand-focus);
+}
+
+html[data-retail-brand-theme] .navbar .navbar-home img,
+html[data-retail-brand-theme] .navbar .app-logo {
+    background: transparent;
+}
+
+html[data-retail-brand-theme] .btn-primary,
+html[data-retail-brand-theme] .btn.btn-primary {
+    background: linear-gradient(135deg, var(--retail-brand-primary), var(--retail-brand-accent));
+    border-color: rgba(255, 255, 255, 0.28);
+    color: #ffffff;
+    box-shadow: 0 10px 20px var(--retail-brand-focus);
+}
+
+html[data-retail-brand-theme] .btn-default,
+html[data-retail-brand-theme] .btn-secondary,
+html[data-retail-brand-theme] .btn.btn-default,
+html[data-retail-brand-theme] .btn.btn-secondary {
+    background-color: var(--btn-default-bg);
+    border-color: rgba(255, 255, 255, 0.42);
+    color: var(--retail-brand-text);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+}
+
+html[data-retail-brand-theme] .btn-default:hover,
+html[data-retail-brand-theme] .btn-secondary:hover,
+html[data-retail-brand-theme] .btn.btn-default:hover,
+html[data-retail-brand-theme] .btn.btn-secondary:hover {
+    background-color: var(--btn-default-hover-bg);
+    color: var(--retail-brand-primary);
+}
+
+html[data-retail-brand-theme] .btn-primary:hover,
+html[data-retail-brand-theme] .btn.btn-primary:hover,
+html[data-retail-brand-theme] .btn-primary:focus,
+html[data-retail-brand-theme] .btn.btn-primary:focus {
+    background-color: var(--retail-brand-secondary);
+    border-color: var(--retail-brand-secondary);
+    color: #ffffff;
+}
+
+html[data-retail-brand-theme] .btn-default:focus,
+html[data-retail-brand-theme] .btn-secondary:focus,
+html[data-retail-brand-theme] .form-control:focus,
+html[data-retail-brand-theme] .awesomplete > input:focus {
+    border-color: var(--retail-brand-accent);
+}
+
+html[data-retail-brand-theme] .standard-sidebar .standard-sidebar-item.selected,
+html[data-retail-brand-theme] .standard-sidebar .standard-sidebar-item:hover,
+html[data-retail-brand-theme] .desk-sidebar .standard-sidebar-item.selected,
+html[data-retail-brand-theme] .desk-sidebar .standard-sidebar-item:hover {
+    background-color: var(--sidebar-select-color);
+}
+
+@media (min-width: 992px) {
+    html[data-retail-brand-theme] body.retail-has-persistent-sidebar .layout-side-section,
+    html[data-retail-brand-theme] body.retail-has-persistent-sidebar .desk-sidebar,
+    html[data-retail-brand-theme] body.retail-has-persistent-sidebar .standard-sidebar {
+        background: var(--retail-brand-sidebar);
+        backdrop-filter: blur(var(--retail-brand-glass-blur));
+        -webkit-backdrop-filter: blur(var(--retail-brand-glass-blur));
+        border-right: 1px solid rgba(255, 255, 255, 0.58);
+    }
+
+    html[data-retail-brand-theme] body.retail-has-persistent-sidebar .layout-side-section {
+        padding: 14px 10px;
+        box-shadow: 10px 0 28px rgba(15, 23, 42, 0.08);
+    }
+
+    html[data-retail-brand-theme] body.retail-has-persistent-sidebar .standard-sidebar .standard-sidebar-label,
+    html[data-retail-brand-theme] body.retail-has-persistent-sidebar .desk-sidebar .standard-sidebar-label {
+        color: var(--retail-brand-sidebar-muted);
+    }
+
+    html[data-retail-brand-theme] body.retail-has-persistent-sidebar .standard-sidebar .standard-sidebar-item,
+    html[data-retail-brand-theme] body.retail-has-persistent-sidebar .desk-sidebar .standard-sidebar-item {
+        color: var(--retail-brand-sidebar-text);
+    }
+
+    html[data-retail-brand-theme] body.retail-has-persistent-sidebar .standard-sidebar .standard-sidebar-item .sidebar-item-label,
+    html[data-retail-brand-theme] body.retail-has-persistent-sidebar .desk-sidebar .standard-sidebar-item .sidebar-item-label {
+        color: var(--retail-brand-sidebar-text);
+    }
+
+    html[data-retail-brand-theme] body.retail-has-persistent-sidebar .standard-sidebar .standard-sidebar-item:hover,
+    html[data-retail-brand-theme] body.retail-has-persistent-sidebar .desk-sidebar .standard-sidebar-item:hover,
+    html[data-retail-brand-theme] body.retail-has-persistent-sidebar .standard-sidebar .standard-sidebar-item.selected,
+    html[data-retail-brand-theme] body.retail-has-persistent-sidebar .desk-sidebar .standard-sidebar-item.selected {
+        background: var(--retail-brand-sidebar-hover);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.56);
+    }
+
+    html[data-retail-brand-theme] body.retail-has-persistent-sidebar .standard-sidebar .standard-sidebar-item.selected,
+    html[data-retail-brand-theme] body.retail-has-persistent-sidebar .desk-sidebar .standard-sidebar-item.selected {
+        background: var(--retail-brand-sidebar-active);
+    }
+
+    html[data-retail-brand-theme] body.retail-has-persistent-sidebar .standard-sidebar .standard-sidebar-item.selected {
+        box-shadow: inset 3px 0 0 var(--retail-brand-accent);
+    }
+}
+
+html[data-retail-brand-theme] .standard-sidebar .standard-sidebar-item.selected .sidebar-item-label,
+html[data-retail-brand-theme] .desk-sidebar .standard-sidebar-item.selected .sidebar-item-label,
+html[data-retail-brand-theme] .page-title .title-text,
+html[data-retail-brand-theme] a {
+    color: var(--retail-brand-primary);
+}
+
+html[data-retail-brand-theme] .page-head .page-title .title-text {
+    color: var(--retail-brand-text);
+    font-weight: 650;
+}
+
+html[data-retail-brand-theme] .widget,
+html[data-retail-brand-theme] .number-widget-box,
+html[data-retail-brand-theme] .dashboard-widget-box,
+html[data-retail-brand-theme] .frappe-card,
+html[data-retail-brand-theme] .form-dashboard-section,
+html[data-retail-brand-theme] .list-row-container,
+html[data-retail-brand-theme] .layout-main-section.frappe-card,
+html[data-retail-brand-theme] .form-tabs-list,
+html[data-retail-brand-theme] .modal-content {
+    border-color: var(--retail-brand-border);
+}
+
+html[data-retail-brand-theme] .widget,
+html[data-retail-brand-theme] .number-widget-box,
+html[data-retail-brand-theme] .dashboard-widget-box,
+html[data-retail-brand-theme] .frappe-card,
+html[data-retail-brand-theme] .layout-main-section.frappe-card,
+html[data-retail-brand-theme] .form-tabs-list,
+html[data-retail-brand-theme] .modal-content {
+    background: var(--retail-brand-surface);
+    backdrop-filter: blur(var(--retail-brand-glass-blur));
+    -webkit-backdrop-filter: blur(var(--retail-brand-glass-blur));
+}
+
+html[data-retail-brand-theme] .widget:hover,
+html[data-retail-brand-theme] .number-widget-box:hover,
+html[data-retail-brand-theme] .dashboard-widget-box:hover,
+html[data-retail-brand-theme] .frappe-card:hover {
+    border-color: var(--retail-brand-border);
+}
+
+html[data-retail-brand-theme] .widget .widget-title,
+html[data-retail-brand-theme] .widget-title,
+html[data-retail-brand-theme] .card-title,
+html[data-retail-brand-theme] .form-section .section-head {
+    color: var(--retail-brand-text);
+    font-weight: 650;
+}
+
+html[data-retail-brand-theme] .widget .widget-subtitle,
+html[data-retail-brand-theme] .text-muted,
+html[data-retail-brand-theme] .text-extra-muted,
+html[data-retail-brand-theme] .liked-by {
+    color: var(--retail-brand-muted) !important;
+}
+
+html[data-retail-brand-theme] .list-row,
+html[data-retail-brand-theme] .list-row-head,
+html[data-retail-brand-theme] .level,
+html[data-retail-brand-theme] .grid-row,
+html[data-retail-brand-theme] .datatable,
+html[data-retail-brand-theme] .dt-scrollable {
+    background: var(--retail-brand-surface);
+    border-color: var(--retail-brand-border);
+}
+
+html[data-retail-brand-theme] .list-row:hover,
+html[data-retail-brand-theme] .grid-row:hover,
+html[data-retail-brand-theme] .dt-row:hover {
+    background: var(--retail-brand-hover);
+}
+
+html[data-retail-brand-theme] input.form-control:not([type="checkbox"]):not([type="radio"]),
+html[data-retail-brand-theme] textarea.form-control,
+html[data-retail-brand-theme] select.form-control,
+html[data-retail-brand-theme] .awesomplete > input,
+html[data-retail-brand-theme] .ql-editor,
+html[data-retail-brand-theme] .ace_editor {
+    background-color: var(--retail-brand-control);
+    border-color: rgba(255, 255, 255, 0.48);
+    color: var(--retail-brand-text);
+}
+
+html[data-retail-brand-theme] .control-input-wrapper .control-input,
+html[data-retail-brand-theme] .frappe-control .control-value {
+    color: var(--retail-brand-text);
+}
+
+@media (min-width: 992px) {
+    html[data-retail-brand-theme] body.retail-has-persistent-sidebar .layout-side-section a,
+    html[data-retail-brand-theme] body.retail-has-persistent-sidebar .layout-side-section .standard-sidebar-item,
+    html[data-retail-brand-theme] body.retail-has-persistent-sidebar .layout-side-section .standard-sidebar-item .sidebar-item-label,
+    html[data-retail-brand-theme] body.retail-has-persistent-sidebar .layout-side-section .desk-sidebar-item,
+    html[data-retail-brand-theme] body.retail-has-persistent-sidebar .layout-side-section .desk-sidebar-item .sidebar-item-label,
+    html[data-retail-brand-theme] body.retail-has-persistent-sidebar .desk-sidebar a,
+    html[data-retail-brand-theme] body.retail-has-persistent-sidebar .desk-sidebar .sidebar-item-label {
+        color: var(--retail-brand-sidebar-text) !important;
+    }
+
+    html[data-retail-brand-theme] body.retail-has-persistent-sidebar .layout-side-section .standard-sidebar-label,
+    html[data-retail-brand-theme] body.retail-has-persistent-sidebar .desk-sidebar .standard-sidebar-label {
+        color: var(--retail-brand-sidebar-muted) !important;
+    }
+}
+
+html[data-retail-brand-theme] .indicator-pill,
+html[data-retail-brand-theme] .indicator-pill-right {
+    background-color: var(--retail-brand-control);
+}
+
+.retail-brand-theme-dialog .modal-dialog {
+    max-width: 760px;
+}
+
+.retail-brand-theme-grid {
+    display: grid;
+    gap: 18px;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    padding: 6px 0 2px;
+}
+
+.retail-brand-theme-card {
+    background: #ffffff;
+    border: 1px solid #d9e2ec;
+    border-radius: 8px;
+    color: #1f2933;
+    cursor: pointer;
+    padding: 12px;
+    text-align: left;
+    transition: border-color 120ms ease, box-shadow 120ms ease, transform 120ms ease;
+}
+
+.retail-brand-theme-card:hover,
+.retail-brand-theme-card:focus {
+    border-color: #94a3b8;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
+    outline: none;
+    transform: translateY(-1px);
+}
+
+.retail-brand-theme-card.selected {
+    border-color: var(--retail-preview-primary, #0b1f3a);
+    box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.08);
+}
+
+.retail-brand-preview {
+    background: var(--retail-preview-bg, #f5f7fa);
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    border-radius: 8px;
+    height: 112px;
+    overflow: hidden;
+    position: relative;
+}
+
+.retail-brand-preview-header {
+    align-items: center;
+    background: var(--retail-preview-surface, #ffffff);
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+    display: flex;
+    gap: 6px;
+    height: 26px;
+    padding: 0 8px;
+}
+
+.retail-brand-preview-dot {
+    background: var(--retail-preview-primary, #0b1f3a);
+    border-radius: 50%;
+    height: 8px;
+    width: 8px;
+}
+
+.retail-brand-preview-line {
+    background: var(--retail-preview-muted, #94a3b8);
+    border-radius: 999px;
+    height: 6px;
+    width: 44px;
+}
+
+.retail-brand-preview-body {
+    display: grid;
+    gap: 8px;
+    grid-template-columns: 42px 1fr;
+    padding: 10px;
+}
+
+.retail-brand-preview-nav,
+.retail-brand-preview-panel {
+    background: var(--retail-preview-surface, #ffffff);
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 6px;
+}
+
+.retail-brand-preview-nav {
+    height: 58px;
+}
+
+.retail-brand-preview-panel {
+    height: 58px;
+    position: relative;
+}
+
+.retail-brand-preview-panel::before {
+    background: var(--retail-preview-primary, #0b1f3a);
+    border-radius: 999px;
+    content: "";
+    height: 6px;
+    left: 10px;
+    position: absolute;
+    top: 12px;
+    width: 48px;
+}
+
+.retail-brand-preview-panel::after {
+    background: var(--retail-preview-accent, #c9a227);
+    border-radius: 999px;
+    content: "";
+    height: 18px;
+    position: absolute;
+    right: 10px;
+    top: 30px;
+    width: 42px;
+}
+
+.retail-brand-check {
+    align-items: center;
+    background: var(--retail-preview-primary, #0b1f3a);
+    border-radius: 50%;
+    bottom: 8px;
+    color: #ffffff;
+    display: none;
+    font-size: 12px;
+    height: 24px;
+    justify-content: center;
+    position: absolute;
+    right: 8px;
+    width: 24px;
+}
+
+.retail-brand-theme-card.selected .retail-brand-check {
+    display: flex;
+}
+
+.retail-brand-theme-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin: 10px 0 2px;
+}
+
+.retail-brand-theme-description {
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.35;
+    margin: 0;
+}

@@ -10,6 +10,11 @@
     margin-bottom: 16px;
 }
 
+.retail-sidebar-host {
+    display: block;
+    width: 100%;
+}
+
 .retail-persistent-sidebar .sidebar-item-container {
     margin-left: -10px;
 }
@@ -178,6 +183,10 @@
 }
 
 @media (max-width: 991.98px) {
+    .retail-sidebar-host {
+        display: none;
+    }
+
     .retail-sidebar-overlay.overlay-sidebar {
         width: min(320px, 82vw);
     }
@@ -200,5 +209,155 @@
 
     .layout-side-section::-webkit-scrollbar-track {
         background: transparent;
+    }
+}
+
+/* Retail app readability baseline. These rules are intentionally not theme-gated:
+   forms, quick-entry modals, navigation arrows, and placeholders must stay clear
+   in Classic ERPNext and every custom brand theme. */
+.frappe-control .control-label,
+.form-group .control-label,
+.form-section .section-head,
+.modal .control-label {
+    color: #334155 !important;
+    font-weight: 600 !important;
+}
+
+.frappe-control .control-input-wrapper,
+.modal .control-input-wrapper {
+    background: transparent !important;
+}
+
+.frappe-control input.form-control:not([type="checkbox"]):not([type="radio"]),
+.frappe-control textarea.form-control,
+.frappe-control select.form-control,
+.frappe-control input.input-with-feedback:not([type="checkbox"]):not([type="radio"]),
+.frappe-control textarea.input-with-feedback,
+.frappe-control select.input-with-feedback,
+.frappe-control .awesomplete > input,
+.modal input.form-control:not([type="checkbox"]):not([type="radio"]),
+.modal textarea.form-control,
+.modal select.form-control,
+.modal input.input-with-feedback:not([type="checkbox"]):not([type="radio"]),
+.modal textarea.input-with-feedback,
+.modal select.input-with-feedback,
+.modal .awesomplete > input {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #0f172a !important;
+    opacity: 1 !important;
+}
+
+.frappe-control input.form-control:not([type="checkbox"]):not([type="radio"]):focus,
+.frappe-control textarea.form-control:focus,
+.frappe-control select.form-control:focus,
+.frappe-control input.input-with-feedback:not([type="checkbox"]):not([type="radio"]):focus,
+.frappe-control textarea.input-with-feedback:focus,
+.frappe-control select.input-with-feedback:focus,
+.frappe-control .awesomplete > input:focus,
+.modal input.form-control:not([type="checkbox"]):not([type="radio"]):focus,
+.modal textarea.form-control:focus,
+.modal select.form-control:focus,
+.modal input.input-with-feedback:not([type="checkbox"]):not([type="radio"]):focus,
+.modal textarea.input-with-feedback:focus,
+.modal select.input-with-feedback:focus,
+.modal .awesomplete > input:focus {
+    background: #ffffff !important;
+    border-color: #38bdf8 !important;
+    outline: none !important;
+}
+
+.frappe-control input::placeholder,
+.frappe-control textarea::placeholder,
+.modal input::placeholder,
+.modal textarea::placeholder {
+    color: #64748b !important;
+    opacity: 1 !important;
+}
+
+.frappe-control .control-value,
+.form-control,
+.modal .control-value,
+.modal .form-control {
+    color: #0f172a !important;
+}
+
+.frappe-control .select-icon,
+.frappe-control .link-btn,
+.frappe-control .octicon,
+.modal .select-icon,
+.modal .link-btn,
+.modal .octicon,
+.breadcrumb svg,
+.drop-icon svg,
+.sidebar-item-control svg {
+    color: #334155 !important;
+    opacity: 1 !important;
+    stroke: currentColor !important;
+}
+
+input[type="checkbox"],
+.modal input[type="checkbox"],
+.frappe-control input[type="checkbox"] {
+    background-color: #ffffff !important;
+    border-color: #64748b !important;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+input[type="checkbox"]:checked,
+.modal input[type="checkbox"]:checked,
+.frappe-control input[type="checkbox"]:checked {
+    background-color: var(--primary-color, var(--primary)) !important;
+    border-color: transparent !important;
+    background-image:
+        url("data:image/svg+xml,%3Csvg viewBox='0 0 8 7' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 4.00001L2.66667 5.80001L7 1.20001' stroke='white' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"),
+        var(--checkbox-gradient) !important;
+    background-size: 57%, 100%;
+}
+
+.form-tabs-list,
+.modal-content {
+    background: rgba(255, 255, 255, 0.94) !important;
+}
+
+.frappe-control,
+.form-group,
+.control-input-wrapper,
+.awesomplete {
+    overflow: visible !important;
+}
+
+.awesomplete > ul,
+.modal .awesomplete > ul {
+    z-index: 1051 !important;
+}
+
+.form-tabs-list .nav-link,
+.form-tabs-list .nav-link span,
+.form-tabs-list a {
+    color: #475569 !important;
+    opacity: 1 !important;
+}
+
+.form-tabs-list .nav-link.active,
+.form-tabs-list .nav-link.active span,
+.form-tabs-list a.active {
+    color: #0f172a !important;
+    font-weight: 650 !important;
+}
+
+@media (min-width: 992px) {
+    body.retail-has-persistent-sidebar .layout-side-section {
+        min-width: 270px !important;
+        width: 270px !important;
+    }
+
+    body.retail-has-persistent-sidebar .retail-persistent-sidebar {
+        display: block !important;
+    }
+
+    body:not(.retail-has-persistent-sidebar) .layout-side-section:empty {
+        display: none !important;
     }
 }
