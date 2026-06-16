@@ -5,3 +5,4 @@
 [post_model_sync]
 # Patches added in this section will be executed after doctypes are migrated
 retail.patches.v1_0.disable_prepared_stock_balance
+retail.patches.v1_1.setup_offline_pos_sync

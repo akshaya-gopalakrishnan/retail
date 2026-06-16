@@ -153,7 +153,13 @@ app_include_js = [
 doc_events = {
     "Item": {
         "on_update": "retail.retail_app.item_price_sync.sync_simple_item_prices",
-    }
+    },
+    "Sales Invoice": {
+        "validate": "retail.api.pos_sync.validate_external_reference",
+    },
+    "Payment Entry": {
+        "validate": "retail.api.pos_sync.validate_external_reference",
+    },
 }
 
 # Scheduled Tasks

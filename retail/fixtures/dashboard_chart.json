@@ -23,7 +23,7 @@
   "module": "Retail-app",
   "name": "Users by Role",
   "number_of_groups": 0,
-  "parent_document_type": null,
+  "parent_document_type": "User",
   "report_name": null,
   "roles": [],
   "show_values_over_chart": 0,
