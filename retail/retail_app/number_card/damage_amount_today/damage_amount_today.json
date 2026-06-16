@@ -1,0 +1,19 @@
+{
+ "color": "#DC2626",
+ "currency": "AED",
+ "docstatus": 0,
+ "doctype": "Number Card",
+ "document_type": "Stock Entry",
+ "function": "Sum",
+ "is_public": 1,
+ "is_standard": 1,
+ "label": "Damage Amount Today",
+ "method": "retail.retail_app.retail_dashboard.get_damage_amount_today",
+ "module": "Retail-app",
+ "name": "Damage Amount Today",
+ "report_function": "Sum",
+ "show_full_number": 1,
+ "show_percentage_stats": 1,
+ "stats_time_interval": "Daily",
+ "type": "Custom"
+}

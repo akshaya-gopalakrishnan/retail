@@ -276,7 +276,50 @@ fixtures = [
     {
         "dt": "Dashboard Chart",
         "filters": [
-            ["name", "in", ("Users by Role", "Companies by Country")]
+            [
+                "name",
+                "in",
+                (
+                    "Users by Role",
+                    "Companies by Country",
+                    "Retail Top Selling Products",
+                    "Retail Sales by Counter",
+                    "Retail Sales Trend 7 Days",
+                ),
+            ]
+        ],
+    },
+    {
+        "dt": "Dashboard Chart Source",
+        "filters": [
+            [
+                "name",
+                "in",
+                (
+                    "Retail Top Selling Products",
+                    "Retail Sales by Counter",
+                    "Retail Sales Trend 7 Days",
+                ),
+            ]
+        ],
+    },
+    {
+        "dt": "Number Card",
+        "filters": [
+            [
+                "name",
+                "in",
+                (
+                    "Today's Sales",
+                    "Today's Profit",
+                    "Invoice Count Today",
+                    "Low Stock Items",
+                    "Out of Stock Items",
+                    "Return Amount Today",
+                    "Damage Amount Today",
+                    "Cash in Hand Today",
+                ),
+            ]
         ],
     },
     "Workspace"

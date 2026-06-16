@@ -1,0 +1,140 @@
+{
+ "charts": [
+  {
+   "chart_name": "Retail Top Selling Products",
+   "label": "Retail Top Selling Products"
+  },
+  {
+   "chart_name": "Retail Sales by Counter",
+   "label": "Retail Sales by Counter"
+  },
+  {
+   "chart_name": "Retail Sales Trend 7 Days",
+   "label": "Retail Sales Trend 7 Days"
+  }
+ ],
+ "content": "[{\"id\":\"hdr_owner_dashboard\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Dashboard</span>\",\"col\":12}},{\"id\":\"nc_todays_sales\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Today's Sales\",\"col\":3}},{\"id\":\"nc_todays_profit\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Today's Profit\",\"col\":3}},{\"id\":\"nc_invoice_count_today\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Invoice Count Today\",\"col\":3}},{\"id\":\"nc_return_amount_today\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Return Amount Today\",\"col\":3}},{\"id\":\"nc_low_stock_items\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Low Stock Items\",\"col\":3}},{\"id\":\"nc_out_of_stock_items\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Out of Stock Items\",\"col\":3}},{\"id\":\"nc_damage_amount_today\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Damage Amount Today\",\"col\":3}},{\"id\":\"nc_cash_in_hand_today\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Cash in Hand Today\",\"col\":3}},{\"id\":\"sp_owner_dashboard_1\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"chart_retail_top_selling_products\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Retail Top Selling Products\",\"col\":4}},{\"id\":\"chart_retail_sales_by_counter\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Retail Sales by Counter\",\"col\":4}},{\"id\":\"chart_retail_sales_trend_7_days\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Retail Sales Trend 7 Days\",\"col\":4}},{\"id\":\"sp_owner_dashboard_2\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"sc_daily_sales_summary\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Daily Sales Summary\",\"col\":3}},{\"id\":\"sc_daily_transaction_log\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Daily Transaction Log\",\"col\":3}},{\"id\":\"sc_low_stock_reorder_report\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Low Stock Reorder Report\",\"col\":3}},{\"id\":\"sc_fast_moving_items\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Fast Moving Items\",\"col\":3}},{\"id\":\"sc_slow_moving_items\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Slow Moving Items\",\"col\":3}},{\"id\":\"sc_stock_adjustment_history\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Stock Adjustment History\",\"col\":3}},{\"id\":\"sc_cashier_wise_damage\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Cashier Wise Damage\",\"col\":3}},{\"id\":\"sc_reports\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Reports\",\"col\":3}}]",
+ "creation": "2026-06-13 11:35:00.711179",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 1,
+ "icon": "getting-started",
+ "idx": 0,
+ "indicator_color": "",
+ "is_hidden": 0,
+ "label": "Home",
+ "links": [],
+ "modified": "2026-06-13 11:40:45.559726",
+ "modified_by": "Administrator",
+ "module": "Retail-app",
+ "name": "Home",
+ "number_cards": [
+  {
+   "label": "Today's Sales",
+   "number_card_name": "Today's Sales"
+  },
+  {
+   "label": "Today's Profit",
+   "number_card_name": "Today's Profit"
+  },
+  {
+   "label": "Invoice Count Today",
+   "number_card_name": "Invoice Count Today"
+  },
+  {
+   "label": "Return Amount Today",
+   "number_card_name": "Return Amount Today"
+  },
+  {
+   "label": "Low Stock Items",
+   "number_card_name": "Low Stock Items"
+  },
+  {
+   "label": "Out of Stock Items",
+   "number_card_name": "Out of Stock Items"
+  },
+  {
+   "label": "Damage Amount Today",
+   "number_card_name": "Damage Amount Today"
+  },
+  {
+   "label": "Cash in Hand Today",
+   "number_card_name": "Cash in Hand Today"
+  }
+ ],
+ "owner": "Administrator",
+ "parent_page": "",
+ "public": 1,
+ "quick_lists": [],
+ "restrict_to_domain": "",
+ "roles": [],
+ "sequence_id": 1.0,
+ "shortcuts": [
+  {
+   "color": "Blue",
+   "doc_view": "List",
+   "label": "Daily Sales Summary",
+   "link_to": "Daily Sales Summary",
+   "report_ref_doctype": "Sales Invoice",
+   "type": "Report"
+  },
+  {
+   "color": "Orange",
+   "doc_view": "List",
+   "label": "Daily Transaction Log",
+   "link_to": "Daily Transaction Log",
+   "report_ref_doctype": "Sales Invoice",
+   "type": "Report"
+  },
+  {
+   "color": "Orange",
+   "doc_view": "List",
+   "label": "Low Stock Reorder Report",
+   "link_to": "Low Stock Reorder Report",
+   "report_ref_doctype": "Item",
+   "type": "Report"
+  },
+  {
+   "color": "Green",
+   "doc_view": "List",
+   "label": "Fast Moving Items",
+   "link_to": "Fast Moving Items",
+   "report_ref_doctype": "Sales Invoice",
+   "type": "Report"
+  },
+  {
+   "color": "Orange",
+   "doc_view": "List",
+   "label": "Slow Moving Items",
+   "link_to": "Slow Moving Items",
+   "report_ref_doctype": "Item",
+   "type": "Report"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Stock Adjustment History",
+   "link_to": "Stock Adjustment History",
+   "report_ref_doctype": "Stock Entry",
+   "type": "Report"
+  },
+  {
+   "color": "Red",
+   "doc_view": "List",
+   "label": "Cashier Wise Damage",
+   "link_to": "Cashier Wise Damage",
+   "report_ref_doctype": "Stock Entry",
+   "type": "Report"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Reports",
+   "type": "URL",
+   "url": "/app/reports"
+  }
+ ],
+ "title": "Home"
+}

@@ -1,0 +1,19 @@
+{
+ "color": "#7C3AED",
+ "currency": "AED",
+ "docstatus": 0,
+ "doctype": "Number Card",
+ "document_type": "Sales Invoice",
+ "function": "Sum",
+ "is_public": 1,
+ "is_standard": 1,
+ "label": "Return Amount Today",
+ "method": "retail.retail_app.retail_dashboard.get_return_amount_today",
+ "module": "Retail-app",
+ "name": "Return Amount Today",
+ "report_function": "Sum",
+ "show_full_number": 1,
+ "show_percentage_stats": 1,
+ "stats_time_interval": "Daily",
+ "type": "Custom"
+}
