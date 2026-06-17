@@ -36,7 +36,7 @@ app_include_css = [
 ]
 
 app_include_js = [
-    "/assets/retail/js/retail_navigation.js?v=31",
+    "/assets/retail/js/retail_navigation.js?v=32",
     "/assets/retail/js/item_duplicate_cleanup.js?v=1",
     "/assets/retail/js/brand_theme_switcher.js?v=7",
 ]

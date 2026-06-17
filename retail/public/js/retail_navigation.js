@@ -42,7 +42,8 @@
         'staff & users': { icon: 'fa fa-user', cls: 'color-settings' },
         'branding': { icon: 'fa fa-paint-brush', cls: 'color-settings' },
         'system rules': { icon: 'fa fa-gavel', cls: 'color-settings' },
-        'counters': { icon: 'fa fa-arrow-up', cls: 'color-settings' }
+        'counters': { icon: 'fa fa-arrow-up', cls: 'color-settings' },
+        'pos counters': { icon: 'fa fa-desktop', cls: 'color-settings' }
     };
     const DESKTOP_MEDIA = '(min-width: 992px)';
     const DIRECT_MAPPING = {
@@ -77,7 +78,8 @@
         'Staff & Users': ['List', 'User'],
         'Branding': ['List', 'Letter Head'],
         'System Rules': ['List', 'Document Naming Rule'],
-        'Counters': ['List', 'Counter']
+        'Counters': ['List', 'Counter'],
+        'POS Counters': ['List', 'POS Branch Counter']
     };
     const DOCTYPE_TO_WORKSPACE = {
         'Item': 'Items',
@@ -105,7 +107,8 @@
         'User': 'Settings',
         'Letter Head': 'Settings',
         'Document Naming Rule': 'Settings',
-        'Counter': 'Settings'
+        'Counter': 'Settings',
+        'POS Branch Counter': 'Settings'
     };
     const DOCTYPE_TO_CHILD = {
         'Item': 'Items List',
@@ -133,7 +136,8 @@
         'User': 'Staff & Users',
         'Letter Head': 'Branding',
         'Document Naming Rule': 'System Rules',
-        'Counter': 'Counters'
+        'Counter': 'Counters',
+        'POS Branch Counter': 'POS Counters'
     };
     const CHILD_TO_PARENT = Object.freeze({
         'Items List': 'Items',
@@ -167,7 +171,8 @@
         'Staff & Users': 'Settings',
         'Branding': 'Settings',
         'System Rules': 'Settings',
-        'Counters': 'Settings'
+        'Counters': 'Settings',
+        'POS Counters': 'Settings'
     });
     const TOP_LEVEL_WORKSPACES = new Set([
         'Home',
