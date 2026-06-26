@@ -177,11 +177,22 @@ items
 item_barcodes
 item_prices
 customers
+cashiers
 modes_of_payment
 counters
 ```
 
 Use ERPNext `server_time` as the next `modified_after`; do not rely on Windows time.
+
+Cashiers are returned from ERPNext `Employee` records. .NET must store the returned `name`/`employee` value locally and send it as `cashier_employee` in all cashier shift and invoice APIs.
+
+Recommended master sync schedule:
+
+- First install/startup: call without `modified_after` and store the full response locally.
+- Normal online mode: call with the last saved ERPNext `server_time` every 2-3 minutes.
+- Offline recovery: when internet returns, immediately run the same incremental pull before sending queued transactions.
+- .NET manual sync button: run the same API immediately.
+- ERPNext manual action: use it only to mark/check that POS master sync is needed unless the branch has a reachable .NET service. The reliable transfer direction is .NET pulling from ERPNext.
 
 ## 7. Cashier Shift APIs
 

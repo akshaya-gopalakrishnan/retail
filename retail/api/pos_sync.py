@@ -524,6 +524,27 @@ def _pos_tax_config(counter_doc):
 	return {"tax_template": template, "taxes": taxes}
 
 
+def _cashier_master_rows(branch=None, modified_after=None):
+	filters = [["status", "=", "Active"]]
+	if modified_after:
+		filters.append(["modified", ">", modified_after])
+
+	fields = ["name", "employee", "employee_name", "status", "modified"]
+	for fieldname in ("branch", "company", "designation", "cell_number", "user_id"):
+		if frappe.get_meta("Employee").has_field(fieldname):
+			fields.append(fieldname)
+
+	rows = frappe.get_all(
+		"Employee",
+		filters=filters,
+		fields=fields,
+		limit_page_length=0,
+	)
+	if branch and frappe.get_meta("Employee").has_field("branch"):
+		rows = [row for row in rows if not row.get("branch") or row.get("branch") == branch]
+	return rows
+
+
 def _validate_vat(doc, payload):
 	"""Check the POS-provided VAT against ERPNext's configured-tax calculation."""
 	provided = payload.get("vat_amount")
@@ -596,6 +617,7 @@ def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
 			fields=["name", "customer_name", "customer_group", "territory", "modified"],
 			limit_page_length=0,
 		),
+		"cashiers": _cashier_master_rows(branch, modified_after),
 		"modes_of_payment": frappe.get_all(
 			"Mode of Payment",
 			filters=modified_filter,
