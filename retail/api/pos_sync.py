@@ -1132,6 +1132,16 @@ def close_cashier_shift(data=None, **kwargs):
 			if closing:
 				closing_names.append(closing.name)
 
+		frappe.db.set_value(
+			"POS Counter Session",
+			{"cashier_shift": shift.name, "status": "Paused"},
+			{
+				"status": "Closed",
+				"closing_external_reference": payload.external_pos_reference,
+			},
+			update_modified=False,
+		)
+
 		closing_amount = _cash_amount(payload.get("closing_balances"), "closing_amount")
 		expected_cash = _expected_cash_for_shift(shift.name)
 		_db_set_values(
