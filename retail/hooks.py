@@ -32,12 +32,12 @@ app_logo_url = "/assets/retail/images/celesta-app-icon.svg"
 # retail/retail/hooks.py
 
 app_include_css = [
-    "/assets/retail/css/retail_icons.css?v=9",
+    "/assets/retail/css/retail_icons.css?v=10",
     "/assets/retail/css/brand_themes.css?v=13",
 ]
 
 app_include_js = [
-    "/assets/retail/js/retail_navigation.js?v=41",
+    "/assets/retail/js/retail_navigation.js?v=42",
     "/assets/retail/js/brand_theme_switcher.js?v=8",
 ]
 

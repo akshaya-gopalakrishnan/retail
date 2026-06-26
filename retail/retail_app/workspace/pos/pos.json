@@ -174,7 +174,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-06-26 12:49:27.159180",
+ "modified": "2026-06-26 13:02:29.867721",
  "modified_by": "Administrator",
  "module": "Retail-app",
  "name": "POS",
@@ -185,6 +185,108 @@
  "quick_lists": [],
  "roles": [],
  "sequence_id": 62.0,
- "shortcuts": [],
+ "shortcuts": [
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "POS Invoices",
+   "link_to": "POS Invoice",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "POS Sales Invoices",
+   "link_to": "Sales Invoice",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "POS Profile",
+   "link_to": "POS Profile",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "POS Counters",
+   "link_to": "POS Branch Counter",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "POS Cashier Shifts",
+   "link_to": "POS Cashier Shift",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "POS Counter Sessions",
+   "link_to": "POS Counter Session",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "POS Opening Entry",
+   "link_to": "POS Opening Entry",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "POS Closing Entry",
+   "link_to": "POS Closing Entry",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "POS Branch Day Closing",
+   "link_to": "POS Branch Day Closing",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "POS Sync Log",
+   "link_to": "POS Sync Log",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Mode of Payment",
+   "link_to": "Mode of Payment",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "POS Sales Summary",
+   "link_to": "Daily Sales Summary",
+   "report_ref_doctype": "Sales Invoice",
+   "type": "Report"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "POS Transaction Log",
+   "link_to": "Daily Transaction Log",
+   "report_ref_doctype": "Sales Invoice",
+   "type": "Report"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Counter Performance",
+   "link_to": "Counter Performance",
+   "report_ref_doctype": "Sales Invoice",
+   "type": "Report"
+  }
+ ],
  "title": "POS"
 }

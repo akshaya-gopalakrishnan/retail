@@ -75,8 +75,11 @@
 .color-pos-profiles { color: #8b5cf6 !important; } /* Purple */
 .color-pos-invoices { color: #0ea5e9 !important; } /* Sky */
 .color-pos-counters { color: #f97316 !important; } /* Orange */
+.color-pos-cashier-shifts { color: #14b8a6 !important; } /* Teal */
+.color-pos-counter-sessions { color: #2563eb !important; } /* Blue */
 .color-pos-opening { color: #10b981 !important; } /* Green */
 .color-pos-closing { color: #ef4444 !important; } /* Red */
+.color-pos-day-closing { color: #f59e0b !important; } /* Amber */
 .color-pos-sync { color: #64748b !important; } /* Slate */
 .color-pos-reports { color: #ec4899 !important; } /* Pink */
 
@@ -126,8 +129,11 @@
     .color-pos-profiles { color: #8b5cf6 !important; }
     .color-pos-invoices { color: #0ea5e9 !important; }
     .color-pos-counters { color: #f97316 !important; }
+    .color-pos-cashier-shifts { color: #14b8a6 !important; }
+    .color-pos-counter-sessions { color: #2563eb !important; }
     .color-pos-opening { color: #10b981 !important; }
     .color-pos-closing { color: #ef4444 !important; }
+    .color-pos-day-closing { color: #f59e0b !important; }
     .color-pos-sync { color: #64748b !important; }
     .color-pos-reports { color: #ec4899 !important; }
 

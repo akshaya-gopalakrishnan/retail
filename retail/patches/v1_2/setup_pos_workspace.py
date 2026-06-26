@@ -52,6 +52,9 @@ def create_pos_workspace():
 		}
 	)
 
+	for shortcut in get_pos_workspace_shortcuts():
+		doc.append("shortcuts", shortcut)
+
 	for link in links:
 		row = link.copy()
 		row.setdefault("hidden", 0)
@@ -67,38 +70,47 @@ def create_pos_child_workspaces():
 	child_workspaces = [
 		{
 			"title": "POS Invoices",
+			"icon": "file",
 			"quick_list": {"label": "POS Invoices", "document_type": "POS Invoice"},
 		},
 		{
 			"title": "POS Profiles",
+			"icon": "users",
 			"quick_list": {"label": "POS Profiles", "document_type": "POS Profile"},
 		},
 		{
 			"title": "POS Counters",
+			"icon": "dialpad",
 			"quick_list": {"label": "POS Counters", "document_type": "POS Branch Counter"},
 		},
 		{
 			"title": "POS Cashier Shifts",
+			"icon": "hr",
 			"quick_list": {"label": "POS Cashier Shifts", "document_type": "POS Cashier Shift"},
 		},
 		{
 			"title": "POS Counter Sessions",
+			"icon": "pos",
 			"quick_list": {"label": "POS Counter Sessions", "document_type": "POS Counter Session"},
 		},
 		{
 			"title": "POS Opening Entries",
+			"icon": "up-arrow",
 			"quick_list": {"label": "POS Opening Entries", "document_type": "POS Opening Entry"},
 		},
 		{
 			"title": "POS Closing Entries",
+			"icon": "down-arrow",
 			"quick_list": {"label": "POS Closing Entries", "document_type": "POS Closing Entry"},
 		},
 		{
 			"title": "POS Branch Day Closings",
+			"icon": "calendar",
 			"quick_list": {"label": "POS Branch Day Closings", "document_type": "POS Branch Day Closing"},
 		},
 		{
 			"title": "POS Sync Logs",
+			"icon": "refresh",
 			"quick_list": {"label": "POS Sync Logs", "document_type": "POS Sync Log"},
 		},
 		{
@@ -134,6 +146,7 @@ def create_pos_child_workspace(workspace, index):
 			"indicator_color": "green",
 			"is_hidden": 0,
 			"hide_custom": 0,
+			"icon": workspace.get("icon", ""),
 			"public": 1,
 			"sequence_id": index,
 			"content": json.dumps(get_child_workspace_content(workspace)),
@@ -189,6 +202,34 @@ def get_child_workspace_content(workspace):
 		)
 
 	return content
+
+
+def get_pos_workspace_shortcuts():
+	shortcuts = []
+	for label, doctype in get_pos_doctype_links():
+		if frappe.db.exists("DocType", doctype):
+			shortcuts.append(
+				{
+					"label": label,
+					"type": "DocType",
+					"link_to": doctype,
+					"doc_view": "List",
+					"color": "Grey",
+				}
+			)
+	for label, report in get_pos_report_links():
+		if frappe.db.exists("Report", report):
+			shortcuts.append(
+				{
+					"label": label,
+					"type": "Report",
+					"link_to": report,
+					"doc_view": "List",
+					"color": "Grey",
+					"report_ref_doctype": "Sales Invoice",
+				}
+			)
+	return shortcuts
 
 
 def get_available_shortcuts():

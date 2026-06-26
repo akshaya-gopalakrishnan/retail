@@ -55,10 +55,16 @@
         , 'pos invoices': { icon: 'fa fa-file-text', cls: 'color-pos-invoices' }
         , 'pos profiles': { icon: 'fa fa-id-card', cls: 'color-pos-profiles' }
         , 'pos profile': { icon: 'fa fa-id-card', cls: 'color-settings' }
+        , 'pos cashier shifts': { icon: 'fa fa-user', cls: 'color-pos-cashier-shifts' }
+        , 'pos cashier shift': { icon: 'fa fa-user', cls: 'color-pos-cashier-shifts' }
+        , 'pos counter sessions': { icon: 'fa fa-desktop', cls: 'color-pos-counter-sessions' }
+        , 'pos counter session': { icon: 'fa fa-desktop', cls: 'color-pos-counter-sessions' }
         , 'pos opening entries': { icon: 'fa fa-sign-in', cls: 'color-pos-opening' }
         , 'pos opening entry': { icon: 'fa fa-sign-in', cls: 'color-accounts' }
         , 'pos closing entries': { icon: 'fa fa-sign-out', cls: 'color-pos-closing' }
         , 'pos closing entry': { icon: 'fa fa-sign-out', cls: 'color-accounts' }
+        , 'pos branch day closings': { icon: 'fa fa-calendar-check-o', cls: 'color-pos-day-closing' }
+        , 'pos branch day closing': { icon: 'fa fa-calendar-check-o', cls: 'color-pos-day-closing' }
         , 'pos sync logs': { icon: 'fa fa-exchange', cls: 'color-pos-sync' }
         , 'pos sync log': { icon: 'fa fa-exchange', cls: 'color-settings' }
         , 'pos reports': { icon: 'fa fa-bar-chart', cls: 'color-pos-reports' }
@@ -633,8 +639,11 @@
             .color-pos-profiles { color: #8b5cf6 !important; }
             .color-pos-invoices { color: #0ea5e9 !important; }
             .color-pos-counters { color: #f97316 !important; }
+            .color-pos-cashier-shifts { color: #14b8a6 !important; }
+            .color-pos-counter-sessions { color: #2563eb !important; }
             .color-pos-opening { color: #10b981 !important; }
             .color-pos-closing { color: #ef4444 !important; }
+            .color-pos-day-closing { color: #f59e0b !important; }
             .color-pos-sync { color: #64748b !important; }
             .color-pos-reports { color: #ec4899 !important; }
 
