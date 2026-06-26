@@ -65,6 +65,20 @@
 .color-stock    { color: #f97316 !important; } /* Orange */
 .color-accounts { color: #10b981 !important; } /* Green */
 .color-settings { color: #64748b !important; } /* Slate */
+.color-hr { color: #8b5cf6 !important; } /* Purple */
+.color-hr-recruitment { color: #ec4899 !important; } /* Pink */
+.color-hr-lifecycle { color: #06b6d4 !important; } /* Cyan */
+.color-hr-performance { color: #f59e0b !important; } /* Amber */
+.color-hr-attendance { color: #3b82f6 !important; } /* Blue */
+.color-hr-expenses { color: #ef4444 !important; } /* Red */
+.color-hr-leaves { color: #10b981 !important; } /* Green */
+.color-pos-profiles { color: #8b5cf6 !important; } /* Purple */
+.color-pos-invoices { color: #0ea5e9 !important; } /* Sky */
+.color-pos-counters { color: #f97316 !important; } /* Orange */
+.color-pos-opening { color: #10b981 !important; } /* Green */
+.color-pos-closing { color: #ef4444 !important; } /* Red */
+.color-pos-sync { color: #64748b !important; } /* Slate */
+.color-pos-reports { color: #ec4899 !important; } /* Pink */
 
 .sidebar-item-container.retail-primary-active > .desk-sidebar-item,
 .sidebar-item-container.retail-secondary-active > .desk-sidebar-item {
@@ -102,6 +116,20 @@
     .color-stock    { color: #f97316 !important; } /* Orange */
     .color-accounts { color: #10b981 !important; } /* Green */
     .color-settings { color: #64748b !important; } /* Slate */
+    .color-hr { color: #8b5cf6 !important; }
+    .color-hr-recruitment { color: #ec4899 !important; }
+    .color-hr-lifecycle { color: #06b6d4 !important; }
+    .color-hr-performance { color: #f59e0b !important; }
+    .color-hr-attendance { color: #3b82f6 !important; }
+    .color-hr-expenses { color: #ef4444 !important; }
+    .color-hr-leaves { color: #10b981 !important; }
+    .color-pos-profiles { color: #8b5cf6 !important; }
+    .color-pos-invoices { color: #0ea5e9 !important; }
+    .color-pos-counters { color: #f97316 !important; }
+    .color-pos-opening { color: #10b981 !important; }
+    .color-pos-closing { color: #ef4444 !important; }
+    .color-pos-sync { color: #64748b !important; }
+    .color-pos-reports { color: #ec4899 !important; }
 
     /* 4. ALIGN THE LABEL */
     .sidebar-item-label {
@@ -321,6 +349,24 @@ input[type="checkbox"]:checked,
     background: rgba(255, 255, 255, 0.94) !important;
 }
 
+.navbar .navbar-home {
+    align-items: center !important;
+    display: flex !important;
+    min-width: 32px !important;
+}
+
+.navbar .navbar-home .app-logo {
+    background: transparent !important;
+    border-radius: 8px !important;
+    display: block !important;
+    height: 28px !important;
+    max-height: 28px !important;
+    object-fit: contain !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    width: 28px !important;
+}
+
 .frappe-control,
 .form-group,
 .control-input-wrapper,
@@ -331,6 +377,23 @@ input[type="checkbox"]:checked,
 .awesomplete > ul,
 .modal .awesomplete > ul {
     z-index: 1051 !important;
+}
+
+/* Keep every open workspace-editor menu above later workspace blocks. */
+[data-page-route="Workspaces"] .layout-main-section.edit-mode .ce-block:has(.dropdown-list:not(.hidden)) {
+    position: relative;
+    z-index: 1054 !important;
+    overflow: visible !important;
+}
+
+[data-page-route="Workspaces"] .layout-main-section.edit-mode .widget.edit-mode:has(.dropdown-list:not(.hidden)),
+[data-page-route="Workspaces"] .layout-main-section.edit-mode .dropdown-btn:has(.dropdown-list:not(.hidden)) {
+    position: relative;
+    z-index: 1055 !important;
+}
+
+[data-page-route="Workspaces"] .layout-main-section.edit-mode .dropdown-list:not(.hidden) {
+    z-index: 1056 !important;
 }
 
 .form-tabs-list .nav-link,

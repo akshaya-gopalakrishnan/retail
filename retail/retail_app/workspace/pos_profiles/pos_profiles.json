@@ -1,0 +1,34 @@
+{
+ "charts": [],
+ "content": "[{\"id\": \"hdr_pos_profiles\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">POS Profiles</span>\", \"col\": 12}}, {\"id\": \"ql_pos_profiles\", \"type\": \"quick_list\", \"data\": {\"quick_list_name\": \"POS Profiles\", \"col\": 4}}]",
+ "creation": "2026-06-19 17:48:38.462222",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "hide_custom": 0,
+ "icon": "users",
+ "idx": 0,
+ "indicator_color": "purple",
+ "is_hidden": 0,
+ "label": "POS Profiles",
+ "links": [],
+ "modified": "2026-06-20 10:03:36.538687",
+ "modified_by": "Administrator",
+ "module": "Retail-app",
+ "name": "POS Profiles",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "POS",
+ "public": 1,
+ "quick_lists": [
+  {
+   "document_type": "POS Profile",
+   "label": "POS Profiles",
+   "quick_list_filter": "[]"
+  }
+ ],
+ "roles": [],
+ "sequence_id": 64.0,
+ "shortcuts": [],
+ "title": "POS Profiles"
+}

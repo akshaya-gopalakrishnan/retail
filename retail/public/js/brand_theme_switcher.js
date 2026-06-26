@@ -1,6 +1,7 @@
 (function () {
     const STORAGE_KEY = "retail.brand_theme";
     const ATTRIBUTE = "data-retail-brand-theme";
+    const DEFAULT_THEME = "executive-navy";
 
     const THEMES = [
         {
@@ -78,7 +79,7 @@
     ];
 
     function getSavedTheme() {
-        return localStorage.getItem(STORAGE_KEY) || "classic";
+        return localStorage.getItem(STORAGE_KEY) || DEFAULT_THEME;
     }
 
     function setDocumentTheme(themeName) {

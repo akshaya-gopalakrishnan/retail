@@ -12,8 +12,8 @@
  "is_hidden": 0,
  "label": "Stock Adjustments",
  "links": [],
- "modified": "2026-06-03 17:43:57.781817",
- "modified_by": "akshayagopal1@gmail.com",
+ "modified": "2026-06-20 10:03:34.310146",
+ "modified_by": "Administrator",
  "module": "Retail-app",
  "name": "Stock Adjustments",
  "number_cards": [],
@@ -28,7 +28,7 @@
   }
  ],
  "roles": [],
- "sequence_id": 48.0,
+ "sequence_id": 43.0,
  "shortcuts": [],
  "title": "Stock Adjustments"
 }

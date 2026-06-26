@@ -1,0 +1,34 @@
+{
+ "charts": [],
+ "content": "[{\"id\": \"hdr_pos_opening_entries\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">POS Opening Entries</span>\", \"col\": 12}}, {\"id\": \"ql_pos_opening_entries\", \"type\": \"quick_list\", \"data\": {\"quick_list_name\": \"POS Opening Entries\", \"col\": 4}}]",
+ "creation": "2026-06-19 17:48:38.508226",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "hide_custom": 0,
+ "icon": "up-arrow",
+ "idx": 0,
+ "indicator_color": "cyan",
+ "is_hidden": 0,
+ "label": "POS Opening Entries",
+ "links": [],
+ "modified": "2026-06-20 10:03:36.707613",
+ "modified_by": "Administrator",
+ "module": "Retail-app",
+ "name": "POS Opening Entries",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "POS",
+ "public": 1,
+ "quick_lists": [
+  {
+   "document_type": "POS Opening Entry",
+   "label": "POS Opening Entries",
+   "quick_list_filter": "[]"
+  }
+ ],
+ "roles": [],
+ "sequence_id": 66.0,
+ "shortcuts": [],
+ "title": "POS Opening Entries"
+}

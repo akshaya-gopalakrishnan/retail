@@ -6,3 +6,13 @@
 # Patches added in this section will be executed after doctypes are migrated
 retail.patches.v1_0.disable_prepared_stock_balance
 retail.patches.v1_1.setup_offline_pos_sync
+retail.patches.v1_2.setup_sales_channel_separation
+retail.patches.v1_2.setup_pos_workspace
+retail.patches.v1_3.install_transaction_naming_series
+retail.patches.v1_4.install_list_titles
+retail.patches.v1_5.add_sales_invoice_counter_display
+retail.patches.v1_7.hide_transaction_tax_templates
+retail.patches.v1_8.setup_cashier_shift_fields
+retail.patches.item_master
+retail.patches.pos_invoice_sync_fields
+retail.patches.pos_customer_sync_field

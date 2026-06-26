@@ -1,0 +1,39 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-06-25 00:00:00.000000",
+ "doctype": "DocType",
+ "document_type": "Document",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "counter",
+  "counter_code",
+  "session_count",
+  "invoice_count",
+  "sales_total",
+  "expected_cash",
+  "closing_amount",
+  "variance"
+ ],
+ "fields": [
+  {"fieldname": "counter", "fieldtype": "Link", "in_list_view": 1, "label": "Counter", "options": "POS Branch Counter", "read_only": 1},
+  {"fieldname": "counter_code", "fieldtype": "Data", "in_list_view": 1, "label": "Counter Code", "read_only": 1},
+  {"fieldname": "session_count", "fieldtype": "Int", "label": "Session Count", "read_only": 1},
+  {"fieldname": "invoice_count", "fieldtype": "Int", "label": "Invoice Count", "read_only": 1},
+  {"fieldname": "sales_total", "fieldtype": "Currency", "in_list_view": 1, "label": "Sales Total", "read_only": 1},
+  {"fieldname": "expected_cash", "fieldtype": "Currency", "label": "Expected Cash", "read_only": 1},
+  {"fieldname": "closing_amount", "fieldtype": "Currency", "label": "Closing Amount", "read_only": 1},
+  {"fieldname": "variance", "fieldtype": "Currency", "in_list_view": 1, "label": "Variance", "read_only": 1}
+ ],
+ "istable": 1,
+ "modified": "2026-06-25 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Retail-app",
+ "name": "POS Day Closing Counter Summary",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

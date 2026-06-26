@@ -12,8 +12,8 @@
  "is_hidden": 0,
  "label": "Payments",
  "links": [],
- "modified": "2026-06-03 17:43:34.607589",
- "modified_by": "akshayagopal1@gmail.com",
+ "modified": "2026-06-20 10:03:34.989415",
+ "modified_by": "Administrator",
  "module": "Retail-app",
  "name": "Payments",
  "number_cards": [],
@@ -28,7 +28,7 @@
   }
  ],
  "roles": [],
- "sequence_id": 55.0,
+ "sequence_id": 50.0,
  "shortcuts": [],
  "title": "Payments"
 }

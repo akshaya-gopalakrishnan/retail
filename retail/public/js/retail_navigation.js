@@ -6,6 +6,14 @@
         'home': { icon: 'fa fa-home', cls: 'color-settings' },
         'items': { icon: 'fa fa-cubes', cls: 'color-items' },
         'sales': { icon: 'fa fa-shopping-cart', cls: 'color-sales' },
+        'pos': { icon: 'fa fa-desktop', cls: 'color-sales' },
+        'hr': { icon: 'fa fa-users', cls: 'color-hr' },
+        'recruitment': { icon: 'fa fa-user-plus', cls: 'color-hr-recruitment' },
+        'employee lifecycle': { icon: 'fa fa-random', cls: 'color-hr-lifecycle' },
+        'performance': { icon: 'fa fa-star', cls: 'color-hr-performance' },
+        'shift & attendance': { icon: 'fa fa-calendar-check-o', cls: 'color-hr-attendance' },
+        'expense claims': { icon: 'fa fa-money', cls: 'color-hr-expenses' },
+        'leaves': { icon: 'fa fa-calendar', cls: 'color-hr-leaves' },
         'purchases': { icon: 'fa fa-cart-arrow-down', cls: 'color-purchase' },
         'stocks': { icon: 'fa fa-archive', cls: 'color-stock' },
         'accounts': { icon: 'fa fa-university', cls: 'color-accounts' },
@@ -43,7 +51,20 @@
         'branding': { icon: 'fa fa-paint-brush', cls: 'color-settings' },
         'system rules': { icon: 'fa fa-gavel', cls: 'color-settings' },
         'counters': { icon: 'fa fa-arrow-up', cls: 'color-settings' },
-        'pos counters': { icon: 'fa fa-desktop', cls: 'color-settings' }
+        'pos counters': { icon: 'fa fa-desktop', cls: 'color-pos-counters' }
+        , 'pos invoices': { icon: 'fa fa-file-text', cls: 'color-pos-invoices' }
+        , 'pos profiles': { icon: 'fa fa-id-card', cls: 'color-pos-profiles' }
+        , 'pos profile': { icon: 'fa fa-id-card', cls: 'color-settings' }
+        , 'pos opening entries': { icon: 'fa fa-sign-in', cls: 'color-pos-opening' }
+        , 'pos opening entry': { icon: 'fa fa-sign-in', cls: 'color-accounts' }
+        , 'pos closing entries': { icon: 'fa fa-sign-out', cls: 'color-pos-closing' }
+        , 'pos closing entry': { icon: 'fa fa-sign-out', cls: 'color-accounts' }
+        , 'pos sync logs': { icon: 'fa fa-exchange', cls: 'color-pos-sync' }
+        , 'pos sync log': { icon: 'fa fa-exchange', cls: 'color-settings' }
+        , 'pos reports': { icon: 'fa fa-bar-chart', cls: 'color-pos-reports' }
+        , 'mode of payment': { icon: 'fa fa-credit-card', cls: 'color-accounts' }
+        , 'pos sales summary': { icon: 'fa fa-bar-chart', cls: 'color-accounts' }
+        , 'pos transaction log': { icon: 'fa fa-list', cls: 'color-accounts' }
     };
     const DESKTOP_MEDIA = '(min-width: 992px)';
     const DIRECT_MAPPING = {
@@ -55,6 +76,25 @@
         'Sales Orders': ['List', 'Sales Order'],
         'Sales Invoices': ['List', 'Sales Invoice'],
         'Sales Returns': ['List', 'Sales Invoice', { is_return: 1 }],
+        'POS Invoices': ['List', 'POS Invoice'],
+        'POS Sales Invoices': ['List', 'Sales Invoice', { is_pos: 1 }],
+        'Trading Invoices': ['List', 'Sales Invoice', { is_pos: 0 }],
+        'All Sales Invoices': ['List', 'Sales Invoice'],
+        'POS Profile': ['List', 'POS Profile'],
+        'POS Profiles': ['List', 'POS Profile'],
+        'POS Opening Entry': ['List', 'POS Opening Entry'],
+        'POS Opening Entries': ['List', 'POS Opening Entry'],
+        'POS Closing Entry': ['List', 'POS Closing Entry'],
+        'POS Closing Entries': ['List', 'POS Closing Entry'],
+        'POS Sync Log': ['List', 'POS Sync Log'],
+        'POS Sync Logs': ['List', 'POS Sync Log'],
+        'Mode of Payment': ['List', 'Mode of Payment'],
+        'POS Counters': ['List', 'POS Branch Counter'],
+        'POS Payments': ['List', 'Payment Entry', { sales_channel: 'POS' }],
+        'POS Reports': ['query-report', 'Daily Sales Summary', { sales_channel: 'POS' }],
+        'POS Sales Summary': ['query-report', 'Daily Sales Summary', { sales_channel: 'POS' }],
+        'POS Transaction Log': ['query-report', 'Daily Transaction Log', { sales_channel: 'POS' }],
+        'Counter Performance': ['query-report', 'Counter Performance'],
         'Delivery Notes': ['List', 'Delivery Note'],
         'Suppliers': ['List', 'Supplier'],
         'Purchase Orders': ['List', 'Purchase Order'],
@@ -62,7 +102,7 @@
         'Purchase Invoice': ['List', 'Purchase Invoice'],
         'Purchase Invoices': ['List', 'Purchase Invoice'],
         'Purchase Bills': ['List', 'Purchase Invoice'],
-        'Purchase Returns': ['List', 'Purchase Invoice', { is_return: 1 }],
+        'Purchase Returns': ['List', 'Purchase Receipt', { is_return: 1 }],
         'Warehouses': ['List', 'Warehouse'],
         'Stock Adjustments': ['List', 'Stock Entry'],
         'Stock Take': ['List', 'Stock Reconciliation'],
@@ -89,6 +129,11 @@
         'Customer': 'Sales',
         'Sales Order': 'Sales',
         'Sales Invoice': 'Sales',
+        'POS Invoice': 'POS',
+        'POS Profile': 'POS',
+        'POS Opening Entry': 'POS',
+        'POS Closing Entry': 'POS',
+        'POS Sync Log': 'POS',
         'Delivery Note': 'Sales',
         'Supplier': 'Purchases',
         'Purchase Order': 'Purchases',
@@ -118,6 +163,11 @@
         'Customer': 'Customers',
         'Sales Order': 'Sales Orders',
         'Sales Invoice': 'Sales Invoices',
+        'POS Invoice': 'POS Invoices',
+        'POS Profile': 'POS Profile',
+        'POS Opening Entry': 'POS Opening Entry',
+        'POS Closing Entry': 'POS Closing Entry',
+        'POS Sync Log': 'POS Sync Log',
         'Delivery Note': 'Delivery Notes',
         'Supplier': 'Suppliers',
         'Purchase Order': 'Purchase Orders',
@@ -148,6 +198,23 @@
         'Sales Orders': 'Sales',
         'Sales Invoices': 'Sales',
         'Sales Returns': 'Sales',
+        'POS Invoices': 'POS',
+        'POS Sales Invoices': 'POS',
+        'POS Profile': 'POS',
+        'POS Profiles': 'POS',
+        'POS Opening Entry': 'POS',
+        'POS Opening Entries': 'POS',
+        'POS Closing Entry': 'POS',
+        'POS Closing Entries': 'POS',
+        'POS Counters': 'POS',
+        'POS Sync Log': 'POS',
+        'POS Sync Logs': 'POS',
+        'Mode of Payment': 'POS',
+        'POS Payments': 'POS',
+        'POS Reports': 'POS',
+        'POS Sales Summary': 'POS',
+        'POS Transaction Log': 'POS',
+        'Counter Performance': 'POS',
         'Delivery Notes': 'Sales',
         'Suppliers': 'Purchases',
         'Purchase Orders': 'Purchases',
@@ -178,6 +245,7 @@
         'Home',
         'Items',
         'Sales',
+        'POS',
         'Purchases',
         'Stocks',
         'Accounts',
@@ -189,6 +257,7 @@
     let observerRefreshTimer = null;
     let routeRefreshTimer = null;
     let sidebarRenderRetryCount = 0;
+    let workspaceCustomCardsPatched = false;
 
     function normalizeText(text) {
         return (text || '')
@@ -242,6 +311,33 @@
         );
     }
 
+    function suppressCustomDocumentCards() {
+        const workspacePrototype = frappe.views?.Workspace?.prototype;
+        if (!workspacePrototype || workspaceCustomCardsPatched) return !!workspacePrototype;
+
+        const addCustomCards = workspacePrototype.add_custom_cards_in_content;
+        if (typeof addCustomCards !== "function") return false;
+
+        workspacePrototype.add_custom_cards_in_content = function () {
+            addCustomCards.call(this);
+            this.content = (this.content || []).filter(
+                (block) => !(block.type === "card" && block.data?.card_name === "Custom Documents")
+            );
+        };
+        workspaceCustomCardsPatched = true;
+        return true;
+    }
+
+    function waitForWorkspaceModule() {
+        if (suppressCustomDocumentCards()) return;
+
+        let attempts = 0;
+        const timer = setInterval(() => {
+            attempts += 1;
+            if (suppressCustomDocumentCards() || attempts >= 40) clearInterval(timer);
+        }, 250);
+    }
+
     function isReturnFilter(value) {
         return value === true || value === 1 || value === '1' || value === 'true';
     }
@@ -273,11 +369,41 @@
         return url;
     }
 
+    function clearSalesReturnFilter() {
+        if (window.cur_list?.doctype !== "Sales Invoice") return false;
+
+        const filter = window.cur_list.filter_area?.get_filter("is_return");
+        if (!filter) return false;
+
+        filter.remove();
+        window.cur_list.filter_area.update_filters();
+        return true;
+    }
+
     function routeToTarget(target) {
         const route = target.filter(part => !$.isPlainObject(part));
         const filters = target.find(part => $.isPlainObject(part));
+
+        // A route option alone keeps the same URL as an unfiltered list. When
+        // moving from Sales Invoices to Sales Returns, Frappe can therefore
+        // reuse the already-rendered list and ignore the new filter. Put list
+        // filters in the URL so this is always a distinct, reloadable route.
+        if (filters && Object.keys(filters).length) {
+            return routeToUrl(getTargetUrl(target));
+        }
+
+        // Sales Invoices is the normal, unfiltered list. Remove only the
+        // return filter left by the Sales Returns submenu, preserving any
+        // other filters the user has selected.
+        const clearedReturnFilter = route[0] === "List" && route[1] === "Sales Invoice"
+            ? clearSalesReturnFilter()
+            : false;
         frappe.route_options = filters || null;
-        return frappe.set_route(...route);
+        return frappe.set_route(...route).then(() => {
+            if (clearedReturnFilter && window.cur_list?.doctype === "Sales Invoice") {
+                return window.cur_list.refresh();
+            }
+        });
     }
 
     function getAnchorRouteTarget(anchor) {
@@ -434,7 +560,7 @@
 
             if (doctype === 'Sales Invoice' && isReturnFilter(filters.is_return)) {
                 child = 'Sales Returns';
-            } else if (doctype === 'Purchase Invoice' && isReturnFilter(filters.is_return)) {
+            } else if (doctype === 'Purchase Receipt' && isReturnFilter(filters.is_return)) {
                 child = 'Purchase Returns';
             }
 
@@ -483,6 +609,20 @@
             .color-stock    { color: #f97316 !important; }
             .color-accounts { color: #10b981 !important; }
             .color-settings { color: #64748b !important; }
+            .color-hr { color: #8b5cf6 !important; }
+            .color-hr-recruitment { color: #ec4899 !important; }
+            .color-hr-lifecycle { color: #06b6d4 !important; }
+            .color-hr-performance { color: #f59e0b !important; }
+            .color-hr-attendance { color: #3b82f6 !important; }
+            .color-hr-expenses { color: #ef4444 !important; }
+            .color-hr-leaves { color: #10b981 !important; }
+            .color-pos-profiles { color: #8b5cf6 !important; }
+            .color-pos-invoices { color: #0ea5e9 !important; }
+            .color-pos-counters { color: #f97316 !important; }
+            .color-pos-opening { color: #10b981 !important; }
+            .color-pos-closing { color: #ef4444 !important; }
+            .color-pos-sync { color: #64748b !important; }
+            .color-pos-reports { color: #ec4899 !important; }
 
             .sidebar-item-label { display: inline-block !important; vertical-align: middle !important; }
         }
@@ -711,12 +851,13 @@
     }
 
     function getSidebarItems() {
-        if (sidebarItemsCache) return Promise.resolve(sidebarItemsCache);
+        sidebarItemsCache = null;
         if (!sidebarItemsPromise) {
             sidebarItemsPromise = frappe
                 .xcall('frappe.desk.desktop.get_workspace_sidebar_items')
                 .then(result => {
                     sidebarItemsCache = Array.isArray(result) ? result : result?.pages || [];
+                    sidebarItemsPromise = null;
                     return sidebarItemsCache;
                 })
                 .catch(error => {
@@ -816,6 +957,7 @@
     function init() {
         ensureRetailCss();
         injectRetailInlineCss();
+        waitForWorkspaceModule();
         applyDirectLinks();
         applyIcons();
         ensureWorkspaceDropIcons();

@@ -18,9 +18,9 @@
  "owner": "Administrator",
  "prepared_report": 0,
  "ref_doctype": "Sales Invoice",
- "reference_report": "Gross Profit Report",
+ "reference_report": null,
  "report_name": "Daily Profit Report",
- "report_type": "Report Builder",
+ "report_type": "Script Report",
  "roles": [
   {
    "role": "Accounts Manager"

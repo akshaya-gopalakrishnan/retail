@@ -292,16 +292,30 @@ html[data-retail-brand-theme] .search-bar {
 
 html[data-retail-brand-theme] .search-bar .awesomplete input,
 html[data-retail-brand-theme] .navbar .form-control {
-    background: var(--retail-brand-control);
-    border: 1px solid rgba(255, 255, 255, 0.58);
+    background: rgba(255, 255, 255, 0.94);
+    border: 1px solid rgba(11, 31, 58, 0.16);
+    box-shadow: 0 4px 24px rgba(15, 23, 42, 0.06);
     color: var(--retail-brand-text);
+}
+
+html[data-retail-brand-theme] .search-bar .search-icon {
+    color: #334155;
+    opacity: 0.9;
+}
+
+html[data-retail-brand-theme] .search-bar .awesomplete input::placeholder,
+html[data-retail-brand-theme] .navbar .form-control::placeholder,
+html[data-retail-brand-theme] #navbar-search::placeholder {
+    color: #334155;
+    font-weight: 600;
+    opacity: 0.92;
 }
 
 html[data-retail-brand-theme] .search-bar .awesomplete input:focus,
 html[data-retail-brand-theme] .navbar .form-control:focus {
     background: var(--retail-brand-surface);
     border-color: var(--retail-brand-accent);
-    box-shadow: 0 0 0 3px var(--retail-brand-focus);
+    box-shadow: 0 0 0 3px var(--retail-brand-focus), 0 10px 24px rgba(15, 23, 42, 0.1);
 }
 
 html[data-retail-brand-theme] .navbar .navbar-home img,
@@ -515,7 +529,17 @@ html[data-retail-brand-theme] .frappe-control .control-value {
 
 html[data-retail-brand-theme] .indicator-pill,
 html[data-retail-brand-theme] .indicator-pill-right {
+    background: transparent;
+    min-width: 0;
+    padding: 0;
+}
+
+html[data-retail-brand-theme] .indicator-pill:not(:empty),
+html[data-retail-brand-theme] .indicator-pill-right:not(:empty) {
     background-color: var(--retail-brand-control);
+    border: 1px solid rgba(11, 31, 58, 0.08);
+    box-shadow: 0 6px 14px rgba(15, 23, 42, 0.06);
+    padding: 2px 9px;
 }
 
 .retail-brand-theme-dialog .modal-dialog {

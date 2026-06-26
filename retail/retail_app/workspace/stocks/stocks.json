@@ -9,16 +9,16 @@
    "label": "Item Shortage Summary"
   }
  ],
- "content": "[{\"id\":\"hdr_stocks\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Stocks</span>\",\"col\":12}},{\"id\":\"nc_low_stock_items\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Low Stock Items\",\"col\":5}},{\"id\":\"nc_out_of_stock_items\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Out of Stock Items\",\"col\":5}},{\"id\":\"sc_warehouses\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Warehouses\",\"col\":3}},{\"id\":\"sc_stock_entry\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Stock Entry\",\"col\":3}},{\"id\":\"sc_stock_reconciliati\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Stock Reconciliation\",\"col\":3}},{\"id\":\"sc_stock_balance\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Stock Balance\",\"col\":3}},{\"id\":\"sc_low_stock_reorder_report\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Low Stock Reorder Report\",\"col\":3}},{\"id\":\"sc_fast_moving_items\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Fast Moving Items\",\"col\":3}},{\"id\":\"sc_slow_moving_items\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Slow Moving Items\",\"col\":3}},{\"id\":\"sc_serials_and_batche\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Serials & Batches\",\"col\":3}},{\"id\":\"sc_stock_ledger\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Stock Ledger\",\"col\":3}},{\"id\":\"sc_stock_projected_qt\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Stock Projected Qty\",\"col\":3}},{\"id\":\"2JSLewpZWq\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"chart_warehouse_wise_stock_value\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Warehouse wise Stock Value\",\"col\":6}},{\"id\":\"chart_item_shortage_summary\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Item Shortage Summary\",\"col\":6}},{\"id\":\"card_stock_operations\",\"type\":\"card\",\"data\":{\"card_name\":\"Stock Operations\",\"col\":4}},{\"id\":\"card_stock_masters\",\"type\":\"card\",\"data\":{\"card_name\":\"Stock Masters\",\"col\":4}},{\"id\":\"card_stock_reports\",\"type\":\"card\",\"data\":{\"card_name\":\"Stock Reports\",\"col\":4}}]",
+ "content": "[{\"id\":\"hdr_stocks\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Stocks</span>\",\"col\":12}},{\"id\":\"nc_total_stock_value\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total Stock Value\",\"col\":3}},{\"id\":\"nc_total_warehouses\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total Warehouses\",\"col\":3}},{\"id\":\"nc_low_stock_items\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Low Stock Items\",\"col\":3}},{\"id\":\"nc_out_of_stock_items\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Out of Stock Items\",\"col\":3}},{\"id\":\"sc_warehouses\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Warehouses\",\"col\":3}},{\"id\":\"sc_stock_entry\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Stock Entry\",\"col\":3}},{\"id\":\"sc_stock_reconciliation\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Stock Reconciliation\",\"col\":3}},{\"id\":\"sc_stock_balance\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Stock Balance\",\"col\":3}},{\"id\":\"sc_low_stock_reorder_report\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Low Stock Reorder Report\",\"col\":3}},{\"id\":\"sc_fast_moving_items\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Fast Moving Items\",\"col\":3}},{\"id\":\"sc_slow_moving_items\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Slow Moving Items\",\"col\":3}},{\"id\":\"sc_stock_movement_summary\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Stock Movement Summary\",\"col\":3}},{\"id\":\"sc_stock_adjustment_history\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Stock Adjustment History\",\"col\":3}},{\"id\":\"sc_stock_ledger\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Stock Ledger\",\"col\":3}},{\"id\":\"sc_stock_projected_qty\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Stock Projected Qty\",\"col\":3}},{\"id\":\"sc_serials___batches\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Serials & Batches\",\"col\":3}},{\"id\":\"sp_stocks_charts\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"chart_warehouse_wise_stock_value\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Warehouse wise Stock Value\",\"col\":6}},{\"id\":\"chart_item_shortage_summary\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Item Shortage Summary\",\"col\":6}},{\"id\":\"sp_stocks_cards\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"card_stock_operations\",\"type\":\"card\",\"data\":{\"card_name\":\"Stock Operations\",\"col\":4}},{\"id\":\"card_stock_masters\",\"type\":\"card\",\"data\":{\"card_name\":\"Stock Masters\",\"col\":4}},{\"id\":\"card_stock_reports\",\"type\":\"card\",\"data\":{\"card_name\":\"Stock Reports\",\"col\":4}}]",
  "creation": "2026-06-13 10:18:11.926770",
  "custom_blocks": [],
  "docstatus": 0,
  "doctype": "Workspace",
  "for_user": "",
- "hide_custom": 1,
+ "hide_custom": 0,
  "icon": "stock",
  "idx": 0,
- "indicator_color": "",
+ "indicator_color": "blue",
  "is_hidden": 0,
  "label": "Stocks",
  "links": [
@@ -26,7 +26,7 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Stock Operations",
-   "link_count": 2,
+   "link_count": 3,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -44,7 +44,7 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Stock Take",
+   "label": "Stock Reconciliation",
    "link_count": 0,
    "link_to": "Stock Reconciliation",
    "link_type": "DocType",
@@ -54,8 +54,18 @@
   {
    "hidden": 0,
    "is_query_report": 0,
+   "label": "Stock Summary",
+   "link_count": 0,
+   "link_to": "stock-balance",
+   "link_type": "Page",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
    "label": "Stock Masters",
-   "link_count": 4,
+   "link_count": 5,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -103,8 +113,18 @@
   {
    "hidden": 0,
    "is_query_report": 0,
+   "label": "UOM",
+   "link_count": 0,
+   "link_to": "UOM",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
    "label": "Stock Reports",
-   "link_count": 8,
+   "link_count": 11,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -117,39 +137,6 @@
    "link_to": "Stock Balance",
    "link_type": "Report",
    "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 1,
-   "label": "Low Stock Reorder Report",
-   "link_count": 0,
-   "link_to": "Low Stock Reorder Report",
-   "link_type": "Report",
-   "onboard": 0,
-   "report_ref_doctype": "Item",
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 1,
-   "label": "Fast Moving Items",
-   "link_count": 0,
-   "link_to": "Fast Moving Items",
-   "link_type": "Report",
-   "onboard": 0,
-   "report_ref_doctype": "Sales Invoice",
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 1,
-   "label": "Slow Moving Items",
-   "link_count": 0,
-   "link_to": "Slow Moving Items",
-   "link_type": "Report",
-   "onboard": 0,
-   "report_ref_doctype": "Item",
    "type": "Link"
   },
   {
@@ -174,30 +161,98 @@
   },
   {
    "hidden": 0,
-   "is_query_report": 0,
-   "label": "Stock Summary",
+   "is_query_report": 1,
+   "label": "Low Stock Reorder Report",
    "link_count": 0,
-   "link_to": "stock-balance",
-   "link_type": "Page",
+   "link_to": "Low Stock Reorder Report",
+   "link_type": "Report",
    "onboard": 0,
    "type": "Link"
   },
   {
    "hidden": 0,
    "is_query_report": 1,
-   "label": "Low Stock Report",
+   "label": "Fast Moving Items",
    "link_count": 0,
-   "link_to": "Low Stock Report",
+   "link_to": "Fast Moving Items",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Slow Moving Items",
+   "link_count": 0,
+   "link_to": "Slow Moving Items",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Stock Movement Summary",
+   "link_count": 0,
+   "link_to": "Stock Movement Summary",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Stock Adjustment History",
+   "link_count": 0,
+   "link_to": "Stock Adjustment History",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Daily Closing Summary",
+   "link_count": 0,
+   "link_to": "Daily Closing Summary",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Expiry Loss",
+   "link_count": 0,
+   "link_to": "Expiry Loss",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Negative Stock Report",
+   "link_count": 0,
+   "link_to": "Negative Stock Report",
    "link_type": "Report",
    "onboard": 0,
    "type": "Link"
   }
  ],
- "modified": "2026-06-13 10:29:13.501184",
+ "modified": "2026-06-22 13:42:59.008821",
  "modified_by": "Administrator",
  "module": "Retail-app",
  "name": "Stocks",
  "number_cards": [
+  {
+   "label": "Total Stock Value",
+   "number_card_name": "Total Stock Value"
+  },
+  {
+   "label": "Total Warehouses",
+   "number_card_name": "Total Warehouses"
+  },
   {
    "label": "Low Stock Items",
    "number_card_name": "Low Stock Items"
@@ -211,6 +266,7 @@
  "parent_page": "",
  "public": 1,
  "quick_lists": [],
+ "restrict_to_domain": "",
  "roles": [],
  "sequence_id": 46.0,
  "shortcuts": [
@@ -271,12 +327,20 @@
    "type": "Report"
   },
   {
+   "color": "Blue",
+   "doc_view": "List",
+   "label": "Stock Movement Summary",
+   "link_to": "Stock Movement Summary",
+   "report_ref_doctype": "Stock Ledger Entry",
+   "type": "Report"
+  },
+  {
    "color": "Grey",
    "doc_view": "List",
-   "label": "Serials & Batches",
-   "link_to": "Serial and Batch Bundle",
-   "stats_filter": "[]",
-   "type": "DocType"
+   "label": "Stock Adjustment History",
+   "link_to": "Stock Adjustment History",
+   "report_ref_doctype": "Stock Entry",
+   "type": "Report"
   },
   {
    "color": "Grey",
@@ -293,6 +357,14 @@
    "link_to": "Stock Projected Qty",
    "report_ref_doctype": "Item",
    "type": "Report"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Serials & Batches",
+   "link_to": "Serial and Batch Bundle",
+   "stats_filter": "[]",
+   "type": "DocType"
   }
  ],
  "title": "Stocks"

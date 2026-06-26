@@ -1,0 +1,288 @@
+:root {
+    --retail-brand-primary: #0b1f3a;
+    --retail-brand-secondary: #1e3a5f;
+    --retail-brand-accent: #c9a227;
+    --retail-brand-bg: #eef7fb;
+    --retail-brand-bg-gradient:
+        radial-gradient(circle at 14% 8%, rgba(201, 162, 39, 0.18), transparent 28%),
+        radial-gradient(circle at 88% 16%, rgba(69, 169, 224, 0.22), transparent 30%),
+        linear-gradient(135deg, #f8fbff 0%, #eaf6fb 48%, #f8f2df 100%);
+    --retail-brand-surface: rgba(255, 255, 255, 0.76);
+    --retail-brand-surface-strong: rgba(255, 255, 255, 0.92);
+    --retail-brand-border: rgba(11, 31, 58, 0.12);
+    --retail-brand-text: #111827;
+    --retail-brand-muted: #64748b;
+    --retail-brand-focus: rgba(201, 162, 39, 0.22);
+    --retail-brand-control: rgba(255, 255, 255, 0.72);
+    --retail-brand-sidebar-active: rgba(201, 162, 39, 0.12);
+    --retail-brand-shadow-md: 0 18px 46px rgba(15, 23, 42, 0.12);
+    --retail-brand-glass-blur: 18px;
+}
+
+body {
+    background: var(--retail-brand-bg-gradient);
+    background-attachment: fixed;
+    color: var(--retail-brand-text);
+}
+
+.web-page,
+.page_content,
+.page-content-wrapper {
+    background: transparent;
+}
+
+.navbar.navbar-light {
+    background: var(--retail-brand-surface-strong);
+    border-bottom: 1px solid var(--retail-brand-border);
+}
+
+.navbar .container,
+.web-footer .container {
+    max-width: 1240px;
+}
+
+.navbar-brand span,
+.navbar-brand {
+    color: var(--retail-brand-primary) !important;
+    font-weight: 700;
+}
+
+.retail-web-brand-icon {
+    height: 28px;
+    margin-right: 6px;
+    vertical-align: middle;
+    width: 28px;
+}
+
+.navbar .dropdown-menu {
+    background: var(--retail-brand-surface-strong);
+}
+
+.navbar .dropdown-item {
+    color: var(--retail-brand-text) !important;
+}
+
+.navbar .dropdown-item:hover,
+.navbar .dropdown-item:focus {
+    background: var(--retail-brand-sidebar-active);
+    color: var(--retail-brand-primary) !important;
+}
+
+.page-card {
+    background: var(--retail-brand-surface);
+    border: 1px solid var(--retail-brand-border);
+    border-radius: 8px;
+    box-shadow: var(--retail-brand-shadow-md);
+    backdrop-filter: blur(var(--retail-brand-glass-blur));
+    -webkit-backdrop-filter: blur(var(--retail-brand-glass-blur));
+}
+
+.page-card-head .app-logo {
+    background: transparent;
+    border-radius: 8px;
+    height: 64px;
+    object-fit: contain;
+    width: 64px;
+}
+
+.page-card-head h4 {
+    color: var(--retail-brand-text);
+    font-weight: 700;
+}
+
+body[data-path="login"] .page-content-wrapper,
+body[data-path="login"] .for-login,
+body[data-path="login"] .for-forgot,
+body[data-path="login"] .for-signup,
+body[data-path="login"] .for-email-login {
+    min-height: calc(100vh - 66px);
+}
+
+body[data-path="login"] .for-login,
+body[data-path="login"] .for-forgot,
+body[data-path="login"] .for-signup,
+body[data-path="login"] .for-email-login {
+    align-content: center;
+    background: var(--retail-brand-surface-strong);
+    border: 1px solid var(--retail-brand-border);
+    border-radius: 8px;
+    box-shadow: var(--retail-brand-shadow-md);
+    display: grid;
+    grid-template-areas:
+        "banner head"
+        "banner card";
+    grid-template-columns: minmax(340px, 1fr) minmax(360px, 430px);
+    grid-template-rows: auto auto;
+    justify-content: center;
+    margin: 34px auto;
+    max-width: 1080px;
+    min-height: min(620px, calc(100vh - 118px));
+    overflow: hidden;
+    padding: 0;
+    position: relative;
+    width: min(1080px, calc(100vw - 48px));
+}
+
+body[data-path="login"] .for-login::before,
+body[data-path="login"] .for-forgot::before,
+body[data-path="login"] .for-signup::before,
+body[data-path="login"] .for-email-login::before {
+    align-self: stretch;
+    background:
+        linear-gradient(135deg, rgba(11, 31, 58, 0.10), rgba(14, 165, 233, 0.08)),
+        url("/assets/retail/images/celesta-login-banner.svg") center / contain no-repeat;
+    background-color: #f5fbff;
+    content: "";
+    grid-area: banner;
+    min-height: 100%;
+    width: 100%;
+}
+
+body[data-path="login"] .page-card-head {
+    grid-area: head;
+    margin: 0;
+    padding: 52px 54px 14px;
+    text-align: left;
+}
+
+body[data-path="login"] .login-content.page-card,
+body[data-path="login"] .page-card {
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    grid-area: card;
+    max-width: none;
+    padding: 0 54px 54px;
+    width: 100%;
+}
+
+body[data-path="login"] .page-card-body,
+body[data-path="login"] .page-card-actions {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.page-card-actions .btn-primary,
+.page-card .btn-primary,
+.login-content .btn-primary,
+.btn-login,
+.btn-forgot {
+    background: linear-gradient(135deg, #020617 0%, #111827 42%, #0b1f3a 72%, #075985 100%) !important;
+    border: 1px solid rgba(56, 189, 248, 0.22) !important;
+    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.2);
+    color: #ffffff !important;
+}
+
+.page-card-actions .btn-primary:hover,
+.page-card .btn-primary:hover,
+.login-content .btn-primary:hover,
+.btn-login:hover,
+.btn-forgot:hover,
+.page-card-actions .btn-primary:focus,
+.page-card .btn-primary:focus,
+.login-content .btn-primary:focus,
+.btn-login:focus,
+.btn-forgot:focus {
+    background: linear-gradient(135deg, #075985 0%, #0b1f3a 34%, #111827 72%, #020617 100%) !important;
+    border-color: rgba(56, 189, 248, 0.42) !important;
+    box-shadow: 0 14px 28px rgba(15, 23, 42, 0.24), 0 0 0 3px rgba(56, 189, 248, 0.12);
+    color: #ffffff !important;
+}
+
+.btn-login-with-email-link,
+.btn-login-with-email-link:hover,
+.btn-login-with-email-link:focus {
+    background: var(--retail-brand-control) !important;
+    border-color: rgba(255, 255, 255, 0.58) !important;
+    box-shadow: none !important;
+    color: var(--retail-brand-text) !important;
+}
+
+body[data-path="login"] .web-footer {
+    display: none;
+}
+
+@media (max-width: 860px) {
+    body[data-path="login"] .for-login,
+    body[data-path="login"] .for-forgot,
+    body[data-path="login"] .for-signup,
+    body[data-path="login"] .for-email-login {
+        grid-template-areas:
+            "banner"
+            "head"
+            "card";
+        grid-template-columns: 1fr;
+        margin: 20px auto;
+        min-height: auto;
+        width: min(520px, calc(100vw - 28px));
+    }
+
+    body[data-path="login"] .for-login::before,
+    body[data-path="login"] .for-forgot::before,
+    body[data-path="login"] .for-signup::before,
+    body[data-path="login"] .for-email-login::before {
+        min-height: 220px;
+    }
+
+    body[data-path="login"] .page-card-head {
+        padding: 30px 28px 12px;
+        text-align: center;
+    }
+
+    body[data-path="login"] .login-content.page-card,
+    body[data-path="login"] .page-card {
+        padding: 0 28px 32px;
+    }
+}
+
+.login-content input.form-control,
+.page-card input.form-control,
+.web-form input.form-control {
+    background: var(--retail-brand-control);
+    border-color: rgba(255, 255, 255, 0.58);
+    color: var(--retail-brand-text);
+}
+
+.web-list-container,
+.portal-container,
+.container.my-4,
+.my-account-container,
+.card {
+    border-color: var(--retail-brand-border);
+}
+
+.web-list-container,
+.portal-container .card,
+.my-account-container .card,
+.card {
+    background: var(--retail-brand-surface);
+    backdrop-filter: blur(var(--retail-brand-glass-blur));
+    -webkit-backdrop-filter: blur(var(--retail-brand-glass-blur));
+}
+
+.web-sidebar a,
+.sidebar-column a,
+.portal-sidebar a {
+    color: var(--retail-brand-text);
+}
+
+.web-sidebar a.active,
+.sidebar-column a.active,
+.portal-sidebar a.active {
+    color: var(--retail-brand-primary);
+    font-weight: 700;
+}
+
+.web-footer {
+    background: var(--retail-brand-surface-strong);
+    border-top: 1px solid var(--retail-brand-border);
+    color: var(--retail-brand-muted);
+}
+
+.web-footer a {
+    color: var(--retail-brand-primary);
+}
+
+.footer-powered {
+    color: var(--retail-brand-muted);
+}

@@ -37,10 +37,10 @@
   "doctype": "Client Script",
   "dt": "Item",
   "enabled": 1,
-  "modified": "2026-06-11 11:50:29.648444",
+  "modified": "2026-06-25 17:50:45.595152",
   "module": null,
   "name": "RPD pr calculation",
-  "script": "frappe.ui.form.on('Item', {\n    refresh(frm) {\n        calculate_child_rates(frm);\n    },\n    last_purchase_rate(frm) {\n        calculate_child_rates(frm);\n    }\n});\n\nfrappe.ui.form.on('Retail Packing Detail', {\n    conversion_factor(frm, cdt, cdn) {\n        let row = locals[cdt][cdn];\n        let base_rate = flt(frm.doc.last_purchase_rate);\n        let calculated_rate = base_rate * flt(row.conversion_factor || 1);\n        frappe.model.set_value(cdt, cdn, 'purchase_rate', calculated_rate);\n    },\n\n    custom_retail_packing_detail_add(frm, cdt, cdn) {\n        let base_rate = flt(frm.doc.last_purchase_rate);\n        frappe.model.set_value(cdt, cdn, 'purchase_rate', base_rate);\n    }\n});\n\nfunction calculate_child_rates(frm) {\n    let base_rate = flt(frm.doc.last_purchase_rate);\n    $.each(frm.doc.custom_retail_packing_detail || [], function(i, row) {\n        let calculated_rate = base_rate * flt(row.conversion_factor || 1);\n        frappe.model.set_value(row.doctype, row.name, 'purchase_rate', calculated_rate);\n    });\n}",
+  "script": "frappe.ui.form.on(\"Item\", {\n\tlast_purchase_rate(frm) {\n\t\tfill_empty_packing_purchase_rates(frm);\n\t},\n\tcustom_default_purchase_rate(frm) {\n\t\tfill_empty_packing_purchase_rates(frm);\n\t},\n});\n\nfrappe.ui.form.on(\"Retail Packing Detail\", {\n\tconversion_factor(frm, cdt, cdn) {\n\t\tset_default_packing_purchase_rate(frm, cdt, cdn);\n\t},\n\tcustom_retail_packing_detail_add(frm, cdt, cdn) {\n\t\tset_default_packing_purchase_rate(frm, cdt, cdn);\n\t},\n});\n\nfunction get_packing_base_purchase_rate(frm) {\n\treturn flt(frm.doc.custom_default_purchase_rate || frm.doc.last_purchase_rate);\n}\n\nfunction set_default_packing_purchase_rate(frm, cdt, cdn) {\n\tconst row = locals[cdt][cdn];\n\tif (flt(row.purchase_rate)) return;\n\n\tconst base_rate = get_packing_base_purchase_rate(frm);\n\tif (!base_rate) return;\n\n\tfrappe.model.set_value(\n\t\tcdt,\n\t\tcdn,\n\t\t\"purchase_rate\",\n\t\tbase_rate * flt(row.conversion_factor || 1)\n\t);\n}\n\nfunction fill_empty_packing_purchase_rates(frm) {\n\t(frm.doc.custom_retail_packing_detail || []).forEach((row) => {\n\t\tif (!flt(row.purchase_rate)) {\n\t\t\tset_default_packing_purchase_rate(frm, row.doctype, row.name);\n\t\t}\n\t});\n}\n",
   "view": "Form"
  },
  {
@@ -96,6 +96,17 @@
   "module": "Retail-app",
   "name": "Item remove empty barcode rows on duplicate",
   "script": "frappe.ui.form.on(\"Item\", {\n    validate(frm) {\n        remove_empty_barcode_rows(frm);\n    },\n    before_save(frm) {\n        remove_empty_barcode_rows(frm);\n    }\n});\n\nfunction remove_empty_barcode_rows(frm) {\n    if (!Array.isArray(frm.doc.barcodes) || !frm.doc.barcodes.length) return;\n\n    let removed = false;\n    for (let i = frm.doc.barcodes.length - 1; i >= 0; i--) {\n        const row = frm.doc.barcodes[i];\n        if (row.barcode) continue;\n\n        if (row.doctype && row.name) {\n            frappe.model.clear_doc(row.doctype, row.name);\n        }\n        frm.doc.barcodes.splice(i, 1);\n        removed = true;\n    }\n\n    if (removed) {\n        frm.refresh_field(\"barcodes\");\n    }\n}",
+  "view": "Form"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Purchase Order",
+  "enabled": 1,
+  "modified": "2026-06-21 00:00:00",
+  "module": "Retail-app",
+  "name": "Purchase Order Balance Quantity",
+  "script": "frappe.ui.form.on(\"Purchase Order Item\", {\n\tqty(frm, cdt, cdn) {\n\t\tset_balance_qty(cdt, cdn);\n\t},\n\treceived_qty(frm, cdt, cdn) {\n\t\tset_balance_qty(cdt, cdn);\n\t}\n});\n\nfunction set_balance_qty(cdt, cdn) {\n\tconst row = locals[cdt][cdn];\n\tfrappe.model.set_value(cdt, cdn, \"balance_qty\", flt(row.qty) - flt(row.received_qty));\n}",
   "view": "Form"
  }
 ]

@@ -1,6 +1,7 @@
 {
  "chart_name": "Retail Sales Trend 7 Days",
  "chart_type": "Custom",
+ "document_type": "Sales Invoice",
  "docstatus": 0,
  "doctype": "Dashboard Chart",
  "dynamic_filters_json": "[]",

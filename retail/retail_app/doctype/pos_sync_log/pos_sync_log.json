@@ -23,7 +23,7 @@
   "error_message"
  ],
  "fields": [
-  {"fieldname": "sync_type", "fieldtype": "Select", "in_list_view": 1, "label": "Sync Type", "options": "Sales Invoice\nPayment Entry\nReturn\nItem Pull\nCustomer Pull\nMaster Data Pull", "reqd": 1},
+  {"fieldname": "sync_type", "fieldtype": "Select", "in_list_view": 1, "label": "Sync Type", "options": "Sales Invoice\nPayment Entry\nReturn\nItem Pull\nCustomer Pull\nMaster Data Pull\nShift Opening\nShift Pause\nShift Resume\nShift Closing\nShift Reopen\nCustomer Upsert\nQueue Error", "reqd": 1},
   {"fieldname": "external_reference", "fieldtype": "Data", "in_list_view": 1, "label": "External Reference"},
   {"fieldname": "erpnext_docname", "fieldtype": "Data", "in_list_view": 1, "label": "ERPNext Docname"},
   {"fieldname": "status", "fieldtype": "Select", "in_list_view": 1, "label": "Status", "options": "Pending\nSuccess\nFailed\nDuplicate\nRetry", "reqd": 1},

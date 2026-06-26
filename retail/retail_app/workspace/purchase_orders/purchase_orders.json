@@ -12,8 +12,8 @@
  "is_hidden": 0,
  "label": "Purchase Orders",
  "links": [],
- "modified": "2026-06-03 17:44:29.826699",
- "modified_by": "akshayagopal1@gmail.com",
+ "modified": "2026-06-20 10:03:33.880507",
+ "modified_by": "Administrator",
  "module": "Retail-app",
  "name": "Purchase Orders",
  "number_cards": [],
@@ -28,7 +28,7 @@
   }
  ],
  "roles": [],
- "sequence_id": 42.0,
+ "sequence_id": 37.0,
  "shortcuts": [],
  "title": "Purchase Orders"
 }

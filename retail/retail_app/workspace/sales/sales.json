@@ -9,22 +9,22 @@
    "label": "Top Customers"
   }
  ],
- "content": "[{\"id\":\"hdr_sales\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Sales</span>\",\"col\":12}},{\"id\":\"sc_sales_invoice\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sales Invoice\",\"col\":3}},{\"id\":\"sc_customers\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Customers\",\"col\":3}},{\"id\":\"sc_sales_order\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sales Order\",\"col\":3}},{\"id\":\"sc_delivery_note\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Delivery Note\",\"col\":3}},{\"id\":\"sc_sales_return\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sales Return\",\"col\":3}},{\"id\":\"sc_daily_sales_summar\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Daily Sales Summary\",\"col\":3}},{\"id\":\"sc_counter_performanc\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Counter Performance\",\"col\":3}},{\"id\":\"sc_daily_transaction_log\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Daily Transaction Log\",\"col\":3}},{\"id\":\"W82HyO2tBy\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"chart_sales_order_trends\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Sales Order Trends\",\"col\":6}},{\"id\":\"chart_top_customers\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Top Customers\",\"col\":6}},{\"id\":\"EW3Ua5GMyU\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"card_daily_sales\",\"type\":\"card\",\"data\":{\"card_name\":\"Daily Sales\",\"col\":4}},{\"id\":\"card_customers\",\"type\":\"card\",\"data\":{\"card_name\":\"Customers\",\"col\":4}},{\"id\":\"card_sales_reports\",\"type\":\"card\",\"data\":{\"card_name\":\"Sales Reports\",\"col\":4}}]",
+ "content": "[{\"id\":\"hdr_sales\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Sales</span>\",\"col\":12}},{\"id\":\"sc_sales_invoice\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sales Invoice\",\"col\":3}},{\"id\":\"sc_customers\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Customers\",\"col\":3}},{\"id\":\"sc_sales_order\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sales Order\",\"col\":3}},{\"id\":\"sc_delivery_note\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Delivery Note\",\"col\":3}},{\"id\":\"sc_sales_return\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sales Return\",\"col\":3}},{\"id\":\"sc_daily_sales_summary\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Daily Sales Summary\",\"col\":3}},{\"id\":\"sc_counter_performance\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Counter Performance\",\"col\":3}},{\"id\":\"sc_daily_transaction_log\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Daily Transaction Log\",\"col\":3}},{\"id\":\"sp_sales_charts\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"chart_sales_order_trends\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Sales Order Trends\",\"col\":6}},{\"id\":\"chart_top_customers\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Top Customers\",\"col\":6}},{\"id\":\"sp_sales_cards\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"card_daily_sales\",\"type\":\"card\",\"data\":{\"card_name\":\"Daily Sales\",\"col\":4}},{\"id\":\"card_customers\",\"type\":\"card\",\"data\":{\"card_name\":\"Customers\",\"col\":4}},{\"id\":\"card_sales_reports\",\"type\":\"card\",\"data\":{\"card_name\":\"Sales Reports\",\"col\":4}}]",
  "creation": "2026-06-12 16:58:53.952164",
  "custom_blocks": [],
  "docstatus": 0,
  "doctype": "Workspace",
  "for_user": "",
- "hide_custom": 1,
- "icon": "sell",
+ "hide_custom": 0,
+ "icon": "selling",
  "idx": 0,
- "indicator_color": "",
+ "indicator_color": "green",
  "is_hidden": 0,
  "label": "Sales",
  "links": [
   {
    "hidden": 0,
-   "is_query_report": 1,
+   "is_query_report": 0,
    "label": "Daily Sales",
    "link_count": 5,
    "link_type": "DocType",
@@ -33,7 +33,7 @@
   },
   {
    "hidden": 0,
-   "is_query_report": 1,
+   "is_query_report": 0,
    "label": "Sales Invoices",
    "link_count": 0,
    "link_to": "Sales Invoice",
@@ -74,38 +74,9 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Customers",
-   "link_count": 3,
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Card Break"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Customers",
+   "label": "Payments",
    "link_count": 0,
-   "link_to": "Customer",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Customer Groups",
-   "link_count": 0,
-   "link_to": "Customer Group",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Territories",
-   "link_count": 0,
-   "link_to": "Territory",
+   "link_to": "Payment Entry",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -114,7 +85,7 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Sales Reports",
-   "link_count": 4,
+   "link_count": 6,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -155,11 +126,23 @@
   {
    "hidden": 0,
    "is_query_report": 1,
+   "label": "Daily Profit Report",
+   "link_count": 0,
+   "link_to": "Daily Profit Report",
+   "link_type": "Report",
+   "onboard": 0,
+   "report_ref_doctype": "Sales Invoice",
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
    "label": "Sales Register",
    "link_count": 0,
    "link_to": "Sales Register",
    "link_type": "Report",
    "onboard": 0,
+   "report_ref_doctype": "Sales Invoice",
    "type": "Link"
   },
   {
@@ -170,10 +153,60 @@
    "link_to": "Gross Profit",
    "link_type": "Report",
    "onboard": 0,
+   "report_ref_doctype": "Sales Invoice",
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Customers",
+   "link_count": 4,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Customers",
+   "link_count": 0,
+   "link_to": "Customer",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Customer Groups",
+   "link_count": 0,
+   "link_to": "Customer Group",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Territories",
+   "link_count": 0,
+   "link_to": "Territory",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Customer Ledger Summary",
+   "link_count": 0,
+   "link_to": "Customer Ledger Summary",
+   "link_type": "Report",
+   "onboard": 0,
    "type": "Link"
   }
  ],
- "modified": "2026-06-13 09:19:56.008855",
+ "modified": "2026-06-20 10:55:30.854397",
  "modified_by": "Administrator",
  "module": "Retail-app",
  "name": "Sales",
@@ -182,6 +215,7 @@
  "parent_page": "",
  "public": 1,
  "quick_lists": [],
+ "restrict_to_domain": "",
  "roles": [],
  "sequence_id": 7.0,
  "shortcuts": [

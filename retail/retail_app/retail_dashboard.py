@@ -164,12 +164,20 @@ def get_sales_by_counter(
 	rows = frappe.db.sql(
 		"""
 		select
-			coalesce(nullif(custom_counter, ''), %(no_counter)s) as counter,
-			sum(case when is_return = 1 then -abs(base_grand_total) else abs(base_grand_total) end) as net_sales
-		from `tabSales Invoice`
-		where docstatus = 1
-			and posting_date = %(posting_date)s
-		group by coalesce(nullif(custom_counter, ''), %(no_counter)s)
+			case
+				when ifnull(si.custom_counter, '') = '' then %(no_counter)s
+				else coalesce(nullif(counter.counter_name, ''), si.custom_counter)
+			end as counter,
+			sum(case when si.is_return = 1 then -abs(si.base_grand_total) else abs(si.base_grand_total) end) as net_sales
+		from `tabSales Invoice` si
+		left join `tabCounter` counter on counter.name = si.custom_counter
+		where si.docstatus = 1
+			and si.posting_date = %(posting_date)s
+		group by
+			case
+				when ifnull(si.custom_counter, '') = '' then %(no_counter)s
+				else coalesce(nullif(counter.counter_name, ''), si.custom_counter)
+			end
 		having net_sales != 0
 		order by net_sales desc
 		""",

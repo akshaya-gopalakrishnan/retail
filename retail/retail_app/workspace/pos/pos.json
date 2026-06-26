@@ -1,0 +1,71 @@
+{
+ "charts": [],
+ "content": "[{\"id\":\"hdr_pos\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">POS</span>\",\"col\":12}},{\"id\":\"sp_pos_reports\",\"type\":\"spacer\",\"data\":{\"col\":12}}]",
+ "creation": "2026-06-19 16:52:40.232013",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "hide_custom": 0,
+ "icon": "pos",
+ "idx": 0,
+ "indicator_color": "blue",
+ "is_hidden": 0,
+ "label": "POS",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "POS Reports",
+   "link_count": 3,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "POS Sales Summary",
+   "link_count": 0,
+   "link_to": "Daily Sales Summary",
+   "link_type": "Report",
+   "onboard": 0,
+   "report_ref_doctype": "Sales Invoice",
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "POS Transaction Log",
+   "link_count": 0,
+   "link_to": "Daily Transaction Log",
+   "link_type": "Report",
+   "onboard": 0,
+   "report_ref_doctype": "Sales Invoice",
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Counter Performance",
+   "link_count": 0,
+   "link_to": "Counter Performance",
+   "link_type": "Report",
+   "onboard": 0,
+   "report_ref_doctype": "Sales Invoice",
+   "type": "Link"
+  }
+ ],
+ "modified": "2026-06-20 10:03:36.358808",
+ "modified_by": "Administrator",
+ "module": "Retail-app",
+ "name": "POS",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 62.0,
+ "shortcuts": [],
+ "title": "POS"
+}

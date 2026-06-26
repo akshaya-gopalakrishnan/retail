@@ -12,8 +12,8 @@
  "is_hidden": 0,
  "label": "Taxes",
  "links": [],
- "modified": "2026-06-03 17:43:34.578225",
- "modified_by": "akshayagopal1@gmail.com",
+ "modified": "2026-06-20 10:03:35.074863",
+ "modified_by": "Administrator",
  "module": "Retail-app",
  "name": "Taxes",
  "number_cards": [],
@@ -28,7 +28,7 @@
   }
  ],
  "roles": [],
- "sequence_id": 56.0,
+ "sequence_id": 51.0,
  "shortcuts": [],
  "title": "Taxes"
 }

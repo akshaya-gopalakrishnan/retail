@@ -12,8 +12,8 @@
  "is_hidden": 0,
  "label": "Bank Accounts",
  "links": [],
- "modified": "2026-06-03 17:43:34.643032",
- "modified_by": "akshayagopal1@gmail.com",
+ "modified": "2026-06-20 10:03:34.901880",
+ "modified_by": "Administrator",
  "module": "Retail-app",
  "name": "Bank Accounts",
  "number_cards": [],
@@ -28,7 +28,7 @@
   }
  ],
  "roles": [],
- "sequence_id": 54.0,
+ "sequence_id": 49.0,
  "shortcuts": [],
  "title": "Bank Accounts"
 }

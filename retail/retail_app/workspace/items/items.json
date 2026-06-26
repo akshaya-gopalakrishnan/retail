@@ -1,24 +1,24 @@
 {
  "charts": [
   {
-   "chart_name": "Items by Item Group",
-   "label": "Items by Item Group"
-  },
-  {
    "chart_name": "Item-wise Annual Sales",
    "label": "Item-wise Annual Sales"
+  },
+  {
+   "chart_name": "Oldest Items",
+   "label": "Oldest Items"
   }
  ],
- "content": "[{\"id\":\"hdr_items\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Items</span>\",\"col\":12}},{\"id\":\"sc_items\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Items\",\"col\":3}},{\"id\":\"sc_item_groups\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Item Groups\",\"col\":3}},{\"id\":\"sc_brands\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Brands\",\"col\":3}},{\"id\":\"sc_item_prices\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Item Prices\",\"col\":3}},{\"id\":\"nc_total_skus\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total SKUs\",\"col\":4}},{\"id\":\"nc_disabled_items\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Disabled Items\",\"col\":4}},{\"id\":\"RdhoUl3ZZU\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"chart_items_by_item_group\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Items by Item Group\",\"col\":6}},{\"id\":\"chart_item_wise_annual_sales\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Item-wise Annual Sales\",\"col\":6}},{\"id\":\"8Wp5-BINd3\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"card_item_masters\",\"type\":\"card\",\"data\":{\"card_name\":\"Item Masters\",\"col\":4}},{\"id\":\"card_retail_item_setup\",\"type\":\"card\",\"data\":{\"card_name\":\"Retail Item Setup\",\"col\":4}},{\"id\":\"card_item_reports\",\"type\":\"card\",\"data\":{\"card_name\":\"Item Reports\",\"col\":4}}]",
+ "content": "[{\"id\":\"hdr_items\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Items</span>\",\"col\":12}},{\"id\":\"nc_total_active_items\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total Active Items\",\"col\":4}},{\"id\":\"nc_low_stock_items\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Low Stock Items\",\"col\":4}},{\"id\":\"nc_out_of_stock_items\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Out of Stock Items\",\"col\":4}},{\"id\":\"sc_items\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Items\",\"col\":3}},{\"id\":\"sc_item_groups\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Item Groups\",\"col\":3}},{\"id\":\"sc_brands\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Brands\",\"col\":3}},{\"id\":\"sc_item_prices\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Item Prices\",\"col\":3}},{\"id\":\"sc_price_lists\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Price Lists\",\"col\":3}},{\"id\":\"sc_units_of_measure\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Units of Measure\",\"col\":3}},{\"id\":\"sp_items_charts\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"chart_item_wise_annual_sales\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Item-wise Annual Sales\",\"col\":6}},{\"id\":\"chart_oldest_items\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Oldest Items\",\"col\":6}},{\"id\":\"sp_items_cards\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"card_item_masters\",\"type\":\"card\",\"data\":{\"card_name\":\"Item Masters\",\"col\":4}},{\"id\":\"card_retail_stock_signals\",\"type\":\"card\",\"data\":{\"card_name\":\"Retail Stock Signals\",\"col\":4}},{\"id\":\"card_item_reports\",\"type\":\"card\",\"data\":{\"card_name\":\"Item Reports\",\"col\":4}}]",
  "creation": "2026-06-11 16:49:23.406524",
  "custom_blocks": [],
  "docstatus": 0,
  "doctype": "Workspace",
  "for_user": "",
- "hide_custom": 1,
- "icon": "star",
+ "hide_custom": 0,
+ "icon": "stock",
  "idx": 0,
- "indicator_color": "",
+ "indicator_color": "blue",
  "is_hidden": 0,
  "label": "Items",
  "links": [
@@ -26,7 +26,7 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Item Masters",
-   "link_count": 4,
+   "link_count": 6,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -74,11 +74,12 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Retail Item Setup",
-   "link_count": 1,
+   "label": "Price Lists",
+   "link_count": 0,
+   "link_to": "Price List",
    "link_type": "DocType",
    "onboard": 0,
-   "type": "Card Break"
+   "type": "Link"
   },
   {
    "hidden": 0,
@@ -93,8 +94,50 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Item Reports",
+   "label": "Retail Stock Signals",
    "link_count": 3,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Low Stock Reorder Report",
+   "link_count": 0,
+   "link_to": "Low Stock Reorder Report",
+   "link_type": "Report",
+   "onboard": 0,
+   "report_ref_doctype": "Item",
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Fast Moving Items",
+   "link_count": 0,
+   "link_to": "Fast Moving Items",
+   "link_type": "Report",
+   "onboard": 0,
+   "report_ref_doctype": "Sales Invoice",
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Slow Moving Items",
+   "link_count": 0,
+   "link_to": "Slow Moving Items",
+   "link_type": "Report",
+   "onboard": 0,
+   "report_ref_doctype": "Item",
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Item Reports",
+   "link_count": 4,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -131,26 +174,42 @@
    "onboard": 0,
    "report_ref_doctype": "Sales Invoice",
    "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Gross Profit",
+   "link_count": 0,
+   "link_to": "Gross Profit",
+   "link_type": "Report",
+   "onboard": 0,
+   "report_ref_doctype": "Sales Invoice",
+   "type": "Link"
   }
  ],
- "modified": "2026-06-13 09:19:03.579142",
+ "modified": "2026-06-20 10:03:29.050608",
  "modified_by": "Administrator",
  "module": "Retail-app",
  "name": "Items",
  "number_cards": [
   {
-   "label": "Total SKUs",
-   "number_card_name": "Total SKUs"
+   "label": "Total Active Items",
+   "number_card_name": "Total Active Items"
   },
   {
-   "label": "Disabled Items",
-   "number_card_name": "Disabled Items"
+   "label": "Low Stock Items",
+   "number_card_name": "Low Stock Items"
+  },
+  {
+   "label": "Out of Stock Items",
+   "number_card_name": "Out of Stock Items"
   }
  ],
  "owner": "Administrator",
  "parent_page": "",
  "public": 1,
  "quick_lists": [],
+ "restrict_to_domain": "",
  "roles": [],
  "sequence_id": 2.0,
  "shortcuts": [
@@ -183,6 +242,22 @@
    "doc_view": "List",
    "label": "Item Prices",
    "link_to": "Item Price",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Price Lists",
+   "link_to": "Price List",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Units of Measure",
+   "link_to": "UOM",
    "stats_filter": "[]",
    "type": "DocType"
   }

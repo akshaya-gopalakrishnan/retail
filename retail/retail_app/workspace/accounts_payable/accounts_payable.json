@@ -5,7 +5,7 @@
    "label": "Supplier Due Payments"
   }
  ],
- "content": "[{\"id\":\"lRyXmC_iC_\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Accounts Payable</span>\",\"col\":12}},{\"id\":\"A6_6gpq0VB\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"fURgtRBHhN\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Accounts Payable\",\"col\":4}},{\"id\":\"OW1DqEDb4k\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"9KbCA-vzrY\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Supplier Due Payments\",\"col\":12}}]",
+ "content": "[{\"id\":\"lRyXmC_iC_\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Accounts Payable</span>\",\"col\":12}},{\"id\":\"A6_6gpq0VB\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"fURgtRBHhN\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Accounts Payable\",\"col\":4}},{\"id\":\"OW1DqEDb4k\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"9KbCA-vzrY\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Accounts Payable Ageing\",\"col\":12}}]",
  "creation": "2026-06-03 17:32:08.668953",
  "custom_blocks": [],
  "docstatus": 0,
@@ -17,8 +17,8 @@
  "is_hidden": 0,
  "label": "Accounts Payable",
  "links": [],
- "modified": "2026-06-03 17:43:34.515008",
- "modified_by": "akshayagopal1@gmail.com",
+ "modified": "2026-06-20 10:03:35.252333",
+ "modified_by": "Administrator",
  "module": "Retail-app",
  "name": "Accounts Payable",
  "number_cards": [],
@@ -27,7 +27,7 @@
  "public": 1,
  "quick_lists": [],
  "roles": [],
- "sequence_id": 66.0,
+ "sequence_id": 54.0,
  "shortcuts": [
   {
    "color": "Grey",

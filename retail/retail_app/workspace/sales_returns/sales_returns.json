@@ -12,8 +12,8 @@
  "is_hidden": 0,
  "label": "Sales Returns",
  "links": [],
- "modified": "2026-06-03 17:44:57.222082",
- "modified_by": "akshayagopal1@gmail.com",
+ "modified": "2026-06-20 10:03:29.528918",
+ "modified_by": "Administrator",
  "module": "Retail-app",
  "name": "Sales Returns",
  "number_cards": [],
@@ -24,11 +24,11 @@
   {
    "document_type": "Sales Invoice",
    "label": "Sales Returns",
-   "quick_list_filter": "[]"
+   "quick_list_filter": "[[\"Sales Invoice\", \"is_return\", \"=\", 1]]"
   }
  ],
  "roles": [],
- "sequence_id": 64.0,
+ "sequence_id": 11.0,
  "shortcuts": [],
  "title": "Sales Returns"
 }

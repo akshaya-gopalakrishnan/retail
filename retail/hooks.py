@@ -4,6 +4,7 @@ app_publisher = "Arab Scale"
 app_description = "Retail Application"
 app_email = "akshayagopal1@gmail.com"
 app_license = "mit"
+app_logo_url = "/assets/retail/images/celesta-app-icon.svg"
 
 # Apps
 # ------------------
@@ -31,19 +32,26 @@ app_license = "mit"
 # retail/retail/hooks.py
 
 app_include_css = [
-    "/assets/retail/css/retail_icons.css?v=6",
-    "/assets/retail/css/brand_themes.css?v=8",
+    "/assets/retail/css/retail_icons.css?v=9",
+    "/assets/retail/css/brand_themes.css?v=13",
 ]
 
 app_include_js = [
-    "/assets/retail/js/retail_navigation.js?v=32",
-    "/assets/retail/js/item_duplicate_cleanup.js?v=1",
-    "/assets/retail/js/brand_theme_switcher.js?v=7",
+    "/assets/retail/js/retail_navigation.js?v=41",
+    "/assets/retail/js/brand_theme_switcher.js?v=8",
 ]
 
 # include js, css files in header of web template
-# web_include_css = "/assets/retail/css/retail.css"
-# web_include_js = "/assets/retail/js/retail.js"
+web_include_css = [
+    "/assets/retail/css/brand_themes.css?v=11",
+    "/assets/retail/css/website_branding.css?v=11",
+]
+
+website_context = {
+    "brand_html": '<img src="/assets/retail/images/celesta-app-icon.svg?v=1" class="retail-web-brand-icon" alt="Celesta"><span class="retail-web-brand">CELESTA</span>',
+    "favicon": "/assets/retail/images/celesta-app-icon.svg?v=1",
+    "splash_image": "/assets/retail/images/retail-logo.svg?v=2",
+}
 
 # include custom scss in every website theme (without file extension ".scss")
 # website_theme_scss = "retail/public/scss/website"
@@ -57,7 +65,31 @@ app_include_js = [
 
 # include js in doctype views
 # doctype_js = {"doctype" : "public/js/doctype.js"}
-# doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
+doctype_list_js = {
+	"Journal Entry": "public/js/hide_transaction_id_list.js",
+	"Payment Entry": "public/js/hide_transaction_id_list.js",
+	"Sales Invoice": [
+		"public/js/forms/sales_invoice_list.js",
+		"public/js/hide_transaction_id_list.js",
+	],
+	"Purchase Invoice": "public/js/hide_transaction_id_list.js",
+	"Sales Order": "public/js/hide_transaction_id_list.js",
+	"Purchase Order": "public/js/hide_transaction_id_list.js",
+	"Delivery Note": "public/js/hide_transaction_id_list.js",
+	"Purchase Receipt": "public/js/hide_transaction_id_list.js",
+	"Stock Entry": "public/js/hide_transaction_id_list.js",
+	"Material Request": "public/js/hide_transaction_id_list.js",
+	"Customer": "public/js/hide_transaction_id_list.js",
+	"Item": "public/js/hide_transaction_id_list.js",
+	"Supplier": "public/js/hide_transaction_id_list.js",
+	"Serial and Batch Bundle": "public/js/hide_transaction_id_list.js",
+	"Bin": "public/js/hide_transaction_id_list.js",
+	"Sales Taxes and Charges Template": "public/js/hide_transaction_id_list.js",
+	"Counter": "public/js/hide_transaction_id_list.js",
+}
+doctype_js = {
+	"Item": "public/js/forms/item.js",
+}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
 
@@ -96,7 +128,7 @@ app_include_js = [
 # ------------
 
 # before_install = "retail.install.before_install"
-# after_install = "retail.install.after_install"
+after_install = "retail.naming.install_retail_defaults"
 
 # Uninstallation
 # ------------
@@ -151,16 +183,91 @@ app_include_js = [
 # Hook on document methods and events
 
 doc_events = {
+	"Purchase Order": {
+		"validate": "retail.domains.purchase.order.set_balance_qty",
+	},
+	"Purchase Receipt": {
+		"before_naming": "retail.naming.set_transaction_naming_series",
+		"on_submit": [
+			"retail.domains.purchase.order.sync_balance_qty_from_transaction",
+			"retail.domains.item.average_purchase_rate.sync_average_purchase_rates",
+		],
+		"on_cancel": [
+			"retail.domains.purchase.order.sync_balance_qty_from_transaction",
+			"retail.domains.item.average_purchase_rate.sync_average_purchase_rates",
+		],
+		"on_update_after_submit": [
+			"retail.domains.purchase.order.sync_balance_qty_from_transaction",
+			"retail.domains.item.average_purchase_rate.sync_average_purchase_rates",
+		],
+	},
+	"Purchase Invoice": {
+		"before_naming": "retail.naming.set_transaction_naming_series",
+		"on_submit": [
+			"retail.domains.purchase.order.sync_balance_qty_from_transaction",
+			"retail.domains.item.average_purchase_rate.sync_average_purchase_rates",
+		],
+		"on_cancel": [
+			"retail.domains.purchase.order.sync_balance_qty_from_transaction",
+			"retail.domains.item.average_purchase_rate.sync_average_purchase_rates",
+		],
+		"on_update_after_submit": [
+			"retail.domains.purchase.order.sync_balance_qty_from_transaction",
+			"retail.domains.item.average_purchase_rate.sync_average_purchase_rates",
+		],
+	},
     "Item": {
-        "on_update": "retail.retail_app.item_price_sync.sync_simple_item_prices",
+		"before_naming": "retail.domains.item.naming.set_automatic_item_code",
+		"validate": "retail.domains.item.vat_pricing.update_item_vat_prices",
+        "on_update": [
+			"retail.domains.item.item_price_sync.sync_simple_item_prices",
+			"retail.domains.item.average_purchase_rate.sync_average_purchase_rate_from_item",
+        ],
     },
-    "Sales Invoice": {
-        "validate": "retail.api.pos_sync.validate_external_reference",
+	"Sales Invoice": {
+		"before_naming": "retail.naming.set_transaction_naming_series",
+		"validate": [
+			"retail.domains.sales.counter.set_sales_invoice_counter_name",
+			"retail.domains.sales.channel.set_sales_channel",
+			"retail.api.pos_sync.validate_external_reference",
+			"retail.api.pos_sync.block_external_sales_invoice",
+		],
+	},
+	"POS Invoice": {
+		"validate": "retail.api.pos_sync.validate_external_reference",
+	},
+    "Sales Order": {
+		"validate": "retail.domains.sales.channel.set_sales_channel",
     },
-    "Payment Entry": {
-        "validate": "retail.api.pos_sync.validate_external_reference",
+    "Delivery Note": {
+		"before_naming": "retail.naming.set_transaction_naming_series",
+		"validate": "retail.domains.sales.channel.set_sales_channel",
     },
+	"Payment Entry": {
+		"before_naming": "retail.naming.set_transaction_naming_series",
+		"validate": [
+			"retail.domains.sales.channel.set_sales_channel",
+            "retail.api.pos_sync.validate_external_reference",
+        ],
+	},
+	"Journal Entry": {
+		"before_naming": "retail.naming.set_transaction_naming_series",
+	},
 }
+
+after_migrate = [
+    "retail.domains.purchase.order.backfill_balance_qty",
+    "retail.retail_app.report.damaged_and_expired_stock.damaged_and_expired_stock.ensure_report",
+    "retail.retail_app.report.near_expiry_report.near_expiry_report.ensure_report",
+	"retail.retail_app.report.negative_stock_report.negative_stock_report.ensure_report",
+	"retail.domains.item.average_purchase_rate.backfill_average_purchase_rates",
+	"retail.domains.item.average_purchase_rate.clear_average_purchase_rate_description",
+	"retail.domains.item.average_purchase_rate.ensure_item_price_list_field",
+	"retail.domains.item.item_price_sync.disable_legacy_last_purchase_rate_script",
+	"retail.domains.item.item_price_sync.ensure_standard_purchase_rate_field",
+	"retail.domains.item.packing_rate.ensure_packing_purchase_rate_script",
+	"retail.domains.item.vat_pricing.ensure_item_vat_pricing_fields",
+]
 
 # Scheduled Tasks
 # ---------------
@@ -288,9 +395,6 @@ fixtures = [
                 (
                     "Users by Role",
                     "Companies by Country",
-                    "Retail Top Selling Products",
-                    "Retail Sales by Counter",
-                    "Retail Sales Trend 7 Days",
                 ),
             ]
         ],
@@ -328,6 +432,60 @@ fixtures = [
             ]
         ],
     },
-    "Workspace"
+    {
+        "dt": "Workspace",
+        "filters": [
+            [
+                "name",
+                "in",
+                (
+                    "Accounts",
+                    "Accounts Payable",
+                    "Accounts Receivable",
+                    "Bank Accounts",
+                    "Branding",
+                    "Brands",
+                    "Business Profile",
+                    "Customers",
+                    "Delivery Notes",
+                    "Home",
+                    "Item Groups",
+                    "Items",
+                    "Items List",
+                    "Journal Entries",
+                    "Payments",
+                    "Price Lists",
+                    "Purchase Invoices",
+                    "Purchase Orders",
+                    "Purchase Receipts",
+                    "Purchase Returns",
+                    "Purchases",
+                    "POS",
+                    "POS Closing Entries",
+                    "POS Counters",
+                    "POS Invoices",
+                    "POS Opening Entries",
+                    "POS Profiles",
+                    "POS Reports",
+                    "POS Sync Logs",
+                    "Reports",
+                    "Sales",
+                    "Sales Invoices",
+                    "Sales Orders",
+                    "Sales Returns",
+                    "Serials & Batches",
+                    "Settings",
+                    "Stock Adjustments",
+                    "Stock Status",
+                    "Stock Take",
+                    "Stocks",
+                    "Suppliers",
+                    "System Rules",
+                    "Taxes",
+                    "Warehouses",
+                ),
+            ]
+        ],
+    },
 ]
 # app_include_js = "/assets/retail/js/retail_navigation.js?v=15"

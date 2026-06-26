@@ -9,8 +9,9 @@ def execute(filters=None):
 	filters = frappe._dict(filters or {})
 	filters.setdefault("from_date", getdate())
 	filters.setdefault("to_date", getdate())
+	filters.sales_channel = filters.get("sales_channel") or None
 
-	return get_columns(), get_data(filters)
+	return get_columns(), get_data(filters), None, None, None, 1
 
 
 def get_data(filters):
@@ -25,12 +26,11 @@ def get_data(filters):
 	data = []
 	for key in sorted(summary, reverse=True):
 		row = summary[key]
-		row.net_sales = flt(row.gross_sales) - flt(row.return_amount)
-		row.average_bill_value = flt(row.net_sales / row.invoice_count) if row.invoice_count else 0
-		row.profit_percent = (
-			flt(row.gross_profit / row.net_item_sales * 100) if row.net_item_sales else 0
-		)
+		set_calculated_values(row)
 		data.append(row)
+
+	if data:
+		data.append(get_total_row(data))
 
 	return data
 
@@ -54,6 +54,33 @@ def new_summary_row():
 			"profit_percent": 0,
 		}
 	)
+
+
+def set_calculated_values(row):
+	row.net_sales = flt(row.gross_sales) - flt(row.return_amount)
+	row.average_bill_value = flt(row.net_sales / row.invoice_count) if row.invoice_count else 0
+	row.profit_percent = flt(row.gross_profit / row.net_item_sales * 100) if row.net_item_sales else 0
+
+
+def get_total_row(data):
+	total_row = new_summary_row()
+	total_row.counter = _("Total")
+
+	for row in data:
+		total_row.invoice_count += flt(row.invoice_count)
+		total_row.return_count += flt(row.return_count)
+		total_row.gross_sales += flt(row.gross_sales)
+		total_row.return_amount += flt(row.return_amount)
+		total_row.paid_amount += flt(row.paid_amount)
+		total_row.outstanding_amount += flt(row.outstanding_amount)
+		total_row.items_sold += flt(row.items_sold)
+		total_row.net_item_sales += flt(row.net_item_sales)
+		total_row.gross_profit += flt(row.gross_profit)
+
+	set_calculated_values(total_row)
+	total_row.is_total_row = 1
+
+	return total_row
 
 
 def add_invoice(summary, invoice):
@@ -112,12 +139,14 @@ def get_sales_invoice_rows(filters):
 			and posting_date between %(from_date)s and %(to_date)s
 			and (%(company)s is null or company = %(company)s)
 			and (%(counter)s is null or custom_counter = %(counter)s)
+			and (%(sales_channel)s is null or sales_channel = %(sales_channel)s)
 		""",
 		{
 			"from_date": filters.from_date,
 			"to_date": filters.to_date,
 			"company": filters.get("company"),
 			"counter": filters.get("counter"),
+			"sales_channel": filters.get("sales_channel"),
 		},
 		as_dict=True,
 	)
@@ -140,12 +169,14 @@ def get_sales_invoice_item_rows(filters):
 			and si.posting_date between %(from_date)s and %(to_date)s
 			and (%(company)s is null or si.company = %(company)s)
 			and (%(counter)s is null or si.custom_counter = %(counter)s)
+			and (%(sales_channel)s is null or si.sales_channel = %(sales_channel)s)
 		""",
 		{
 			"from_date": filters.from_date,
 			"to_date": filters.to_date,
 			"company": filters.get("company"),
 			"counter": filters.get("counter"),
+			"sales_channel": filters.get("sales_channel"),
 		},
 		as_dict=True,
 	)

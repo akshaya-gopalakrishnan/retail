@@ -1,0 +1,21 @@
+{
+  "info": {
+    "name": "Retail Offline POS API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {"key": "base_url", "value": "https://erp.example.com"},
+    {"key": "api_key", "value": ""},
+    {"key": "api_secret", "value": ""},
+    {"key": "branch", "value": "Branch A"},
+    {"key": "counter_code", "value": "C01"},
+    {"key": "shift_open_reference", "value": "{{branch}}-{{counter_code}}-T01-SHIFTOPEN-20260624-000001"}
+  ],
+  "item": [
+    {"name": "Health", "request": {"method": "GET", "header": [{"key": "Authorization", "value": "token {{api_key}}:{{api_secret}}"}], "url": "{{base_url}}/api/method/retail.api.pos_sync.health_check?branch={{branch}}&counter_code={{counter_code}}"}, "event": [{"listen": "test", "script": {"exec": ["pm.test('OK', () => pm.expect(pm.response.json().message.status).to.eql('OK'));"]}}]},
+    {"name": "Open shift", "request": {"method": "POST", "header": [{"key": "Authorization", "value": "token {{api_key}}:{{api_secret}}"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\n  \"external_pos_reference\": \"{{shift_open_reference}}\",\n  \"branch\": \"{{branch}}\",\n  \"counter_code\": \"{{counter_code}}\",\n  \"opening_balances\": [{\"mode_of_payment\": \"Cash\", \"opening_amount\": 0}]\n}"}, "url": "{{base_url}}/api/method/retail.api.pos_sync.open_pos_shift"}},
+    {"name": "Create POS invoice", "request": {"method": "POST", "header": [{"key": "Authorization", "value": "token {{api_key}}:{{api_secret}}"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\n  \"external_pos_reference\": \"{{branch}}-{{counter_code}}-T01-S-20260624-000002\",\n  \"branch\": \"{{branch}}\",\n  \"counter_code\": \"{{counter_code}}\",\n  \"pos_shift_no\": \"{{shift_open_reference}}\",\n  \"vat_amount\": 0,\n  \"items\": [{\"item_code\": \"ITEM-001\", \"qty\": 1, \"rate\": 10}],\n  \"payments\": [{\"mode_of_payment\": \"Cash\", \"amount\": 10}]\n}"}, "url": "{{base_url}}/api/method/retail.api.pos_sync.create_pos_invoice"}, "event": [{"listen": "test", "script": {"exec": ["const body = pm.response.json().message;", "pm.test('creates POS Invoice', () => pm.expect(['Success', 'Duplicate']).to.include(body.status));", "pm.test('has POS invoice name', () => pm.expect(body.pos_invoice_name).to.be.ok);"]}}]},
+    {"name": "Stock snapshot", "request": {"method": "POST", "header": [{"key": "Authorization", "value": "token {{api_key}}:{{api_secret}}"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"branch\": \"{{branch}}\", \"counter_code\": \"{{counter_code}}\"}"}, "url": "{{base_url}}/api/method/retail.api.pos_sync.get_warehouse_stock_snapshot"}},
+    {"name": "Close shift", "request": {"method": "POST", "header": [{"key": "Authorization", "value": "token {{api_key}}:{{api_secret}}"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\n  \"external_pos_reference\": \"{{branch}}-{{counter_code}}-CLOSE-001\",\n  \"branch\": \"{{branch}}\",\n  \"counter_code\": \"{{counter_code}}\",\n  \"closing_balances\": [{\"mode_of_payment\": \"Cash\", \"closing_amount\": 10}]\n}"}, "url": "{{base_url}}/api/method/retail.api.pos_sync.close_pos_shift"}}
+  ]
+}

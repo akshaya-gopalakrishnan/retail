@@ -1,0 +1,53 @@
+{
+ "charts": [],
+ "content": "[{\"id\": \"hdr_pos_reports\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">POS Reports</span>\", \"col\": 12}}, {\"id\": \"sc_pos_sales_summary\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Sales Summary\", \"col\": 4}}, {\"id\": \"sc_pos_transaction_log\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Transaction Log\", \"col\": 4}}, {\"id\": \"sc_counter_performance\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Counter Performance\", \"col\": 4}}]",
+ "creation": "2026-06-19 17:48:38.597945",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "hide_custom": 0,
+ "icon": "chart",
+ "idx": 0,
+ "indicator_color": "pink",
+ "is_hidden": 0,
+ "label": "POS Reports",
+ "links": [],
+ "modified": "2026-06-20 10:03:36.867582",
+ "modified_by": "Administrator",
+ "module": "Retail-app",
+ "name": "POS Reports",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "POS",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 69.0,
+ "shortcuts": [
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "POS Sales Summary",
+   "link_to": "Daily Sales Summary",
+   "report_ref_doctype": "Sales Invoice",
+   "type": "Report"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "POS Transaction Log",
+   "link_to": "Daily Transaction Log",
+   "report_ref_doctype": "Sales Invoice",
+   "type": "Report"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Counter Performance",
+   "link_to": "Counter Performance",
+   "report_ref_doctype": "Sales Invoice",
+   "type": "Report"
+  }
+ ],
+ "title": "POS Reports"
+}

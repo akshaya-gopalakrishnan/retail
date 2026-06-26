@@ -12,8 +12,8 @@
  "is_hidden": 0,
  "label": "Business Profile",
  "links": [],
- "modified": "2026-06-03 17:42:00.733574",
- "modified_by": "akshayagopal1@gmail.com",
+ "modified": "2026-06-20 10:03:37.261515",
+ "modified_by": "Administrator",
  "module": "Retail-app",
  "name": "Business Profile",
  "number_cards": [],
@@ -28,7 +28,7 @@
   }
  ],
  "roles": [],
- "sequence_id": 60.0,
+ "sequence_id": 72.0,
  "shortcuts": [],
  "title": "Business Profile"
 }

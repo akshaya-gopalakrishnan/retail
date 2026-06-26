@@ -29,7 +29,7 @@ def get_custom_fields():
 			"label": "Offline POS Sync",
 			"fieldtype": "Section Break",
 			"insert_after": "cost_center",
-			"collapsible": 1,
+			"collapsible": 0,
 			"allow_on_submit": 1,
 		},
 		{
@@ -37,8 +37,8 @@ def get_custom_fields():
 			"label": "External POS Reference",
 			"fieldtype": "Data",
 			"insert_after": "pos_sync_section",
-			"in_list_view": 1,
-			"in_standard_filter": 1,
+			"in_list_view": 0,
+			"in_standard_filter": 0,
 			"allow_on_submit": 1,
 			"read_only": 1,
 			"no_copy": 1,
@@ -58,7 +58,7 @@ def get_custom_fields():
 			"fieldtype": "Link",
 			"options": "Branch",
 			"insert_after": "pos_bill_no",
-			"in_standard_filter": 1,
+			"in_standard_filter": 0,
 			"allow_on_submit": 1,
 			"read_only": 1,
 			"no_copy": 1,
@@ -69,7 +69,7 @@ def get_custom_fields():
 			"fieldtype": "Link",
 			"options": "POS Branch Counter",
 			"insert_after": "pos_branch",
-			"in_standard_filter": 1,
+			"in_standard_filter": 0,
 			"allow_on_submit": 1,
 			"read_only": 1,
 			"no_copy": 1,
@@ -213,7 +213,15 @@ def get_custom_fields():
 		},
 	]
 
+	pos_invoice_fields = [field.copy() for field in sales_invoice_fields]
+	for field in pos_invoice_fields:
+		if field.get("fieldname") == "pos_sync_section":
+			field["insert_after"] = "pos_profile"
+		if field.get("fieldname") == "pos_counter":
+			field["options"] = "POS Branch Counter"
+
 	return {
 		"Sales Invoice": sales_invoice_fields,
+		"POS Invoice": pos_invoice_fields,
 		"Payment Entry": payment_entry_fields,
 	}
