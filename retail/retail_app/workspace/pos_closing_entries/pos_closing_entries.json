@@ -8,11 +8,11 @@
  "hide_custom": 0,
  "icon": "down-arrow",
  "idx": 0,
- "indicator_color": "red",
+ "indicator_color": "green",
  "is_hidden": 0,
  "label": "POS Closing Entries",
  "links": [],
- "modified": "2026-06-20 10:03:36.764713",
+ "modified": "2026-06-26 12:49:28.594033",
  "modified_by": "Administrator",
  "module": "Retail-app",
  "name": "POS Closing Entries",
@@ -28,7 +28,7 @@
   }
  ],
  "roles": [],
- "sequence_id": 67.0,
+ "sequence_id": 7.0,
  "shortcuts": [],
  "title": "POS Closing Entries"
 }

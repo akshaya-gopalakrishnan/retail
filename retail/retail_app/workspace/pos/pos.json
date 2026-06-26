@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\":\"hdr_pos\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">POS</span>\",\"col\":12}},{\"id\":\"sp_pos_reports\",\"type\":\"spacer\",\"data\":{\"col\":12}}]",
+ "content": "[{\"id\": \"hdr_pos\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">POS</span>\", \"col\": 12}}, {\"id\": \"sc_pos_invoices\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Invoices\", \"col\": 3}}, {\"id\": \"sc_pos_sales_invoices\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Sales Invoices\", \"col\": 3}}, {\"id\": \"sc_pos_profile\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Profile\", \"col\": 3}}, {\"id\": \"sc_pos_counters\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Counters\", \"col\": 3}}, {\"id\": \"sc_pos_cashier_shifts\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Cashier Shifts\", \"col\": 3}}, {\"id\": \"sc_pos_counter_sessions\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Counter Sessions\", \"col\": 3}}, {\"id\": \"sc_pos_opening_entry\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Opening Entry\", \"col\": 3}}, {\"id\": \"sc_pos_closing_entry\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Closing Entry\", \"col\": 3}}, {\"id\": \"sc_pos_branch_day_closing\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Branch Day Closing\", \"col\": 3}}, {\"id\": \"sc_pos_sync_log\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Sync Log\", \"col\": 3}}, {\"id\": \"sc_mode_of_payment\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Mode of Payment\", \"col\": 3}}, {\"id\": \"sp_pos_reports\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"sc_pos_sales_summary\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Sales Summary\", \"col\": 3}}, {\"id\": \"sc_pos_transaction_log\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Transaction Log\", \"col\": 3}}, {\"id\": \"sc_counter_performance\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Counter Performance\", \"col\": 3}}]",
  "creation": "2026-06-19 16:52:40.232013",
  "custom_blocks": [],
  "docstatus": 0,
@@ -12,6 +12,125 @@
  "is_hidden": 0,
  "label": "POS",
  "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "POS Documents",
+   "link_count": 11,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "POS Invoices",
+   "link_count": 0,
+   "link_to": "POS Invoice",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "POS Sales Invoices",
+   "link_count": 0,
+   "link_to": "Sales Invoice",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "POS Profile",
+   "link_count": 0,
+   "link_to": "POS Profile",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "POS Counters",
+   "link_count": 0,
+   "link_to": "POS Branch Counter",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "POS Cashier Shifts",
+   "link_count": 0,
+   "link_to": "POS Cashier Shift",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "POS Counter Sessions",
+   "link_count": 0,
+   "link_to": "POS Counter Session",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "POS Opening Entry",
+   "link_count": 0,
+   "link_to": "POS Opening Entry",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "POS Closing Entry",
+   "link_count": 0,
+   "link_to": "POS Closing Entry",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "POS Branch Day Closing",
+   "link_count": 0,
+   "link_to": "POS Branch Day Closing",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "POS Sync Log",
+   "link_count": 0,
+   "link_to": "POS Sync Log",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Mode of Payment",
+   "link_count": 0,
+   "link_to": "Mode of Payment",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
   {
    "hidden": 0,
    "is_query_report": 0,
@@ -55,7 +174,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-06-20 10:03:36.358808",
+ "modified": "2026-06-26 12:49:27.159180",
  "modified_by": "Administrator",
  "module": "Retail-app",
  "name": "POS",

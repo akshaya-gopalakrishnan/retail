@@ -8,11 +8,11 @@
  "hide_custom": 0,
  "icon": "up-arrow",
  "idx": 0,
- "indicator_color": "cyan",
+ "indicator_color": "green",
  "is_hidden": 0,
  "label": "POS Opening Entries",
  "links": [],
- "modified": "2026-06-20 10:03:36.707613",
+ "modified": "2026-06-26 12:49:28.538462",
  "modified_by": "Administrator",
  "module": "Retail-app",
  "name": "POS Opening Entries",
@@ -28,7 +28,7 @@
   }
  ],
  "roles": [],
- "sequence_id": 66.0,
+ "sequence_id": 6.0,
  "shortcuts": [],
  "title": "POS Opening Entries"
 }

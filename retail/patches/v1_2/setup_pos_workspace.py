@@ -78,12 +78,24 @@ def create_pos_child_workspaces():
 			"quick_list": {"label": "POS Counters", "document_type": "POS Branch Counter"},
 		},
 		{
+			"title": "POS Cashier Shifts",
+			"quick_list": {"label": "POS Cashier Shifts", "document_type": "POS Cashier Shift"},
+		},
+		{
+			"title": "POS Counter Sessions",
+			"quick_list": {"label": "POS Counter Sessions", "document_type": "POS Counter Session"},
+		},
+		{
 			"title": "POS Opening Entries",
 			"quick_list": {"label": "POS Opening Entries", "document_type": "POS Opening Entry"},
 		},
 		{
 			"title": "POS Closing Entries",
 			"quick_list": {"label": "POS Closing Entries", "document_type": "POS Closing Entry"},
+		},
+		{
+			"title": "POS Branch Day Closings",
+			"quick_list": {"label": "POS Branch Day Closings", "document_type": "POS Branch Day Closing"},
 		},
 		{
 			"title": "POS Sync Logs",
@@ -231,8 +243,11 @@ def get_pos_doctype_links():
 		("POS Sales Invoices", "Sales Invoice"),
 		("POS Profile", "POS Profile"),
 		("POS Counters", "POS Branch Counter"),
+		("POS Cashier Shifts", "POS Cashier Shift"),
+		("POS Counter Sessions", "POS Counter Session"),
 		("POS Opening Entry", "POS Opening Entry"),
 		("POS Closing Entry", "POS Closing Entry"),
+		("POS Branch Day Closing", "POS Branch Day Closing"),
 		("POS Sync Log", "POS Sync Log"),
 		("Mode of Payment", "Mode of Payment"),
 	]

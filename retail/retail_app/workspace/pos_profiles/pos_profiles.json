@@ -8,11 +8,11 @@
  "hide_custom": 0,
  "icon": "users",
  "idx": 0,
- "indicator_color": "purple",
+ "indicator_color": "green",
  "is_hidden": 0,
  "label": "POS Profiles",
  "links": [],
- "modified": "2026-06-20 10:03:36.538687",
+ "modified": "2026-06-26 12:49:28.363709",
  "modified_by": "Administrator",
  "module": "Retail-app",
  "name": "POS Profiles",
@@ -28,7 +28,7 @@
   }
  ],
  "roles": [],
- "sequence_id": 64.0,
+ "sequence_id": 2.0,
  "shortcuts": [],
  "title": "POS Profiles"
 }

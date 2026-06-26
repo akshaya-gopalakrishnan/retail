@@ -1,0 +1,33 @@
+{
+ "charts": [],
+ "content": "[{\"id\": \"hdr_pos_counter_sessions\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">POS Counter Sessions</span>\", \"col\": 12}}, {\"id\": \"ql_pos_counter_sessions\", \"type\": \"quick_list\", \"data\": {\"quick_list_name\": \"POS Counter Sessions\", \"col\": 4}}]",
+ "creation": "2026-06-26 12:49:28.501754",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "hide_custom": 0,
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "POS Counter Sessions",
+ "links": [],
+ "modified": "2026-06-26 12:49:28.501754",
+ "modified_by": "Administrator",
+ "module": "Retail-app",
+ "name": "POS Counter Sessions",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "POS",
+ "public": 1,
+ "quick_lists": [
+  {
+   "document_type": "POS Counter Session",
+   "label": "POS Counter Sessions",
+   "quick_list_filter": "[]"
+  }
+ ],
+ "roles": [],
+ "sequence_id": 5.0,
+ "shortcuts": [],
+ "title": "POS Counter Sessions"
+}

@@ -8,11 +8,11 @@
  "hide_custom": 0,
  "icon": "chart",
  "idx": 0,
- "indicator_color": "pink",
+ "indicator_color": "green",
  "is_hidden": 0,
  "label": "POS Reports",
  "links": [],
- "modified": "2026-06-20 10:03:36.867582",
+ "modified": "2026-06-26 12:49:28.737857",
  "modified_by": "Administrator",
  "module": "Retail-app",
  "name": "POS Reports",
@@ -22,7 +22,7 @@
  "public": 1,
  "quick_lists": [],
  "roles": [],
- "sequence_id": 69.0,
+ "sequence_id": 10.0,
  "shortcuts": [
   {
    "color": "Grey",
