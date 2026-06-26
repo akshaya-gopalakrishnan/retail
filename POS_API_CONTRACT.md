@@ -18,7 +18,7 @@ Example for one branch with 100 counters:
 | Cost Center | 1 or more | `Main - N` |
 | POS Profile | Usually 1 per branch/setup | `Karama POS` |
 | POS Branch Counter | 100 | `C001` to `C100` |
-| Device/API User | Recommended 1 per counter | `pos.c001@company.com` |
+| Device/API User | Recommended 1 per branch; optional 1 per counter for stricter isolation | `pos.karama.api@company.com` |
 | Cashier Employee | As many as required | `HR-EMP-00001` |
 
 Each `POS Branch Counter` must be configured with:
@@ -36,10 +36,12 @@ Default Customer
 Cash Account
 Card Account
 Allow Offline Sync = 1
-Integration User = counter/device API user
+Integration User = branch/counter API user
 ```
 
 The .NET POS does not choose company, warehouse, cost center, POS profile, or payment accounts. ERPNext resolves them from `branch + counter_code`.
+
+If using one API user per branch, set the same integration user on every `POS Branch Counter` in that branch. Reports and postings still remain counter-wise because .NET sends `counter_code`, `terminal_id`, `cashier_employee`, `cashier_shift`, and `counter_session`.
 
 ## 2. What .NET Needs Per Counter
 
@@ -61,7 +63,7 @@ ErpBaseUrl = https://erp.company.com
 Branch = Karama
 CounterCode = C001
 TerminalId = T001
-ApiKey/ApiSecret = API credentials of pos.c001@company.com
+ApiKey/ApiSecret = API credentials of pos.karama.api@company.com
 ```
 
 Cashier is not the API user. Cashier is selected/login inside .NET POS as an ERPNext `Employee`.
@@ -428,6 +430,30 @@ Return dependency:
 
 ```text
 original sale must sync first
+```
+
+### Create Payment Entry
+
+Normally not required for paid POS invoices because `create_pos_invoice` submits invoice payments in the same payload. Use this only for a separate ERPNext `Sales Invoice` payment sync if your .NET flow supports that.
+
+```text
+POST /api/method/retail.api.pos_sync.create_pos_payment_entry
+```
+
+```json
+{
+  "external_pos_reference": "KARAMA-C001-T001-PAY-20260625-000004",
+  "branch": "Karama",
+  "counter_code": "C001",
+  "pos_terminal_id": "T001",
+  "cashier_employee": "HR-EMP-00001",
+  "cashier_shift": "POS-CSH-2026-00001",
+  "counter_session": "POS-CSES-2026-00001",
+  "sales_invoice": "ACC-SINV-2026-00001",
+  "mode_of_payment": "Cash",
+  "reference_no": "CASH-000004",
+  "posting_date": "2026-06-25"
+}
 ```
 
 ## 9. Customer And Stock APIs
