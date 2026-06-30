@@ -84,7 +84,7 @@ def get_total_row(data):
 
 
 def add_invoice(summary, invoice):
-	counter = invoice.custom_counter or _("No Counter")
+	counter = invoice.counter_name or _("No Counter")
 	key = (invoice.posting_date, counter)
 	row = summary[key]
 	row.posting_date = invoice.posting_date
@@ -107,7 +107,7 @@ def add_invoice(summary, invoice):
 
 
 def add_item(summary, item):
-	counter = item.custom_counter or _("No Counter")
+	counter = item.counter_name or _("No Counter")
 	key = (item.posting_date, counter)
 	row = summary[key]
 	row.posting_date = item.posting_date
@@ -130,6 +130,7 @@ def get_sales_invoice_rows(filters):
 			name,
 			posting_date,
 			coalesce(custom_counter, '') as custom_counter,
+			coalesce(custom_counter_name, custom_counter, '') as counter_name,
 			is_return,
 			base_grand_total,
 			base_paid_amount,
@@ -158,6 +159,7 @@ def get_sales_invoice_item_rows(filters):
 		select
 			si.posting_date,
 			coalesce(si.custom_counter, '') as custom_counter,
+			coalesce(si.custom_counter_name, si.custom_counter, '') as counter_name,
 			si.is_return,
 			sii.qty,
 			sii.stock_qty,
@@ -188,8 +190,7 @@ def get_columns():
 		{
 			"label": _("Counter"),
 			"fieldname": "counter",
-			"fieldtype": "Link",
-			"options": "Counter",
+			"fieldtype": "Data",
 			"width": 160,
 		},
 		{"label": _("Invoice Count"), "fieldname": "invoice_count", "fieldtype": "Int", "width": 110},

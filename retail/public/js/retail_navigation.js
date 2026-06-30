@@ -128,7 +128,6 @@
         'Staff & Users': ['List', 'User'],
         'Branding': ['List', 'Letter Head'],
         'System Rules': ['List', 'Document Naming Rule'],
-        'Counters': ['List', 'Counter'],
         'POS Counters': ['List', 'POS Branch Counter']
     };
     const DOCTYPE_TO_WORKSPACE = {
@@ -165,8 +164,7 @@
         'User': 'Settings',
         'Letter Head': 'Settings',
         'Document Naming Rule': 'Settings',
-        'Counter': 'Settings',
-        'POS Branch Counter': 'Settings'
+        'POS Branch Counter': 'POS'
     };
     const DOCTYPE_TO_CHILD = {
         'Item': 'Items List',
@@ -202,7 +200,6 @@
         'User': 'Staff & Users',
         'Letter Head': 'Branding',
         'Document Naming Rule': 'System Rules',
-        'Counter': 'Counters',
         'POS Branch Counter': 'POS Counters'
     };
     const CHILD_TO_PARENT = Object.freeze({
@@ -214,6 +211,8 @@
         'Sales Orders': 'Sales',
         'Sales Invoices': 'Sales',
         'Sales Returns': 'Sales',
+        'Trading Invoices': 'Sales',
+        'All Sales Invoices': 'Sales',
         'POS Invoices': 'POS',
         'POS Sales Invoices': 'POS',
         'POS Profile': 'POS',
@@ -257,9 +256,7 @@
         'Business Profile': 'Settings',
         'Staff & Users': 'Settings',
         'Branding': 'Settings',
-        'System Rules': 'Settings',
-        'Counters': 'Settings',
-        'POS Counters': 'Settings'
+        'System Rules': 'Settings'
     });
     const TOP_LEVEL_WORKSPACES = new Set([
         'Home',
@@ -362,6 +359,18 @@
         return value === true || value === 1 || value === '1' || value === 'true';
     }
 
+    function getRouteParts(route) {
+        return (route || []).filter(part => !$.isPlainObject(part));
+    }
+
+    function getTargetRouteParts(target) {
+        return getRouteParts(target);
+    }
+
+    function getTargetFilters(target) {
+        return target?.find(part => $.isPlainObject(part)) || {};
+    }
+
     function getRouteFilters(route) {
         const queryFilters = {};
         new URLSearchParams(window.location.search).forEach((value, field) => {
@@ -374,6 +383,37 @@
             queryFilters,
             frappe.route_options || {}
         );
+    }
+
+    function normalizeFilterValue(value) {
+        if (value === true) return '1';
+        if (value === false) return '0';
+        if (value === undefined || value === null) return '';
+        return String(value);
+    }
+
+    function routePartsMatch(currentParts, targetParts) {
+        if (!currentParts.length || currentParts.length < targetParts.length) return false;
+        return targetParts.every((part, index) => currentParts[index] === part);
+    }
+
+    function targetFiltersMatch(currentFilters, targetFilters) {
+        return Object.entries(targetFilters).every(([field, value]) => (
+            normalizeFilterValue(currentFilters[field]) === normalizeFilterValue(value)
+        ));
+    }
+
+    function getMappedChildFromRoute(route, filters) {
+        const currentParts = getRouteParts(route);
+        const visibleLabels = getVisibleSidebarLabels();
+        const matches = Object.entries(DIRECT_MAPPING)
+            .sort((a, b) => Object.keys(getTargetFilters(b[1])).length - Object.keys(getTargetFilters(a[1])).length)
+            .filter(([, target]) => (
+                routePartsMatch(currentParts, getTargetRouteParts(target))
+                && targetFiltersMatch(filters, getTargetFilters(target))
+            ));
+
+        return matches.find(([label]) => visibleLabels.has(label))?.[0] || matches[0]?.[0];
     }
 
     function getTargetUrl(target) {
@@ -547,11 +587,25 @@
         return document.querySelectorAll('.retail-persistent-sidebar .sidebar-item-container');
     }
 
+    function getSelectableSidebarContainers() {
+        return document.querySelectorAll(
+            '.retail-persistent-sidebar .sidebar-item-container, .desk-sidebar .sidebar-item-container'
+        );
+    }
+
     function getItemLabel(container) {
         return container
             ?.querySelector(':scope > .desk-sidebar-item > .item-anchor .sidebar-item-label')
             ?.innerText
             ?.trim();
+    }
+
+    function getVisibleSidebarLabels() {
+        return new Set(
+            Array.from(getSelectableSidebarContainers())
+                .map(container => getItemLabel(container))
+                .filter(Boolean)
+        );
     }
 
     function escapeHtml(value) {
@@ -567,15 +621,23 @@
     function getRouteState() {
         const route = frappe.get_route();
         const view = route?.[0]?.toLowerCase();
+        const filters = getRouteFilters(route);
+        const mappedChild = getMappedChildFromRoute(route, filters);
+
+        if (mappedChild) {
+            return { main: CHILD_TO_PARENT[mappedChild] || DOCTYPE_TO_WORKSPACE[route?.[1]], child: mappedChild };
+        }
 
         if (view === 'workspaces' || view === 'workspace') {
             const title = decodeURIComponent(route[route[1] === 'private' ? 2 : 1] || '');
+            if (CHILD_TO_PARENT[title]) {
+                return { main: CHILD_TO_PARENT[title], child: title };
+            }
             return { main: title, child: '' };
         }
 
         if (view === 'list' || view === 'form') {
             const doctype = route[1];
-            const filters = getRouteFilters(route);
             let child = DOCTYPE_TO_CHILD[doctype];
 
             if (doctype === 'Sales Invoice' && isReturnFilter(filters.is_return)) {
@@ -694,7 +756,7 @@
     function syncSidebarState() {
         const state = getRouteState();
 
-        getRetailSidebarContainers().forEach(container => {
+        getSelectableSidebarContainers().forEach(container => {
             const label = getItemLabel(container);
             const directItem = container.querySelector(':scope > .desk-sidebar-item');
             const childSection = container.querySelector(':scope > .sidebar-child-item');

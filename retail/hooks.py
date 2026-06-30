@@ -37,7 +37,7 @@ app_include_css = [
 ]
 
 app_include_js = [
-    "/assets/retail/js/retail_navigation.js?v=42",
+    "/assets/retail/js/retail_navigation.js?v=45",
     "/assets/retail/js/brand_theme_switcher.js?v=8",
 ]
 
@@ -66,6 +66,12 @@ website_context = {
 # include js in doctype views
 # doctype_js = {"doctype" : "public/js/doctype.js"}
 doctype_list_js = {
+	"POS Invoice": "public/js/pos_creation_controls.js",
+	"POS Opening Entry": "public/js/pos_creation_controls.js",
+	"POS Closing Entry": "public/js/pos_creation_controls.js",
+	"POS Cashier Shift": "public/js/pos_creation_controls.js",
+	"POS Counter Session": "public/js/pos_creation_controls.js",
+	"POS Sync Log": "public/js/pos_creation_controls.js",
 	"Journal Entry": "public/js/hide_transaction_id_list.js",
 	"Payment Entry": "public/js/hide_transaction_id_list.js",
 	"Sales Invoice": [
@@ -263,7 +269,8 @@ after_migrate = [
 	"retail.domains.item.average_purchase_rate.backfill_average_purchase_rates",
 	"retail.domains.item.average_purchase_rate.clear_average_purchase_rate_description",
 	"retail.domains.item.average_purchase_rate.ensure_item_price_list_field",
-	"retail.domains.item.item_price_sync.disable_legacy_last_purchase_rate_script",
+	"retail.domains.item.naming.install_item_code_defaults",
+	"retail.domains.item.item_price_sync.disable_legacy_item_price_scripts",
 	"retail.domains.item.item_price_sync.ensure_standard_purchase_rate_field",
 	"retail.domains.item.packing_rate.ensure_packing_purchase_rate_script",
 	"retail.domains.item.vat_pricing.ensure_item_vat_pricing_fields",

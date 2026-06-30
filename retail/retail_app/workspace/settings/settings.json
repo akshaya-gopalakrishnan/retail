@@ -9,7 +9,7 @@
    "label": "Companies by Country"
   }
  ],
- "content": "[{\"id\":\"hdr_settings\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Settings</span>\",\"col\":12}},{\"id\":\"sc_company\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Company\",\"col\":3}},{\"id\":\"sc_branch\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Branch\",\"col\":3}},{\"id\":\"sc_counter\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Counter\",\"col\":3}},{\"id\":\"sc_pos_counters\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"POS Counters\",\"col\":3}},{\"id\":\"sc_pos_profile\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"POS Profile\",\"col\":3}},{\"id\":\"sc_user\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"User\",\"col\":3}},{\"id\":\"sc_print_format\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Print Format\",\"col\":3}},{\"id\":\"sc_taxes\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Taxes\",\"col\":3}},{\"id\":\"sc_data_import\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Data Import\",\"col\":3}},{\"id\":\"sp_settings_charts\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"chart_users_by_role\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Users by Role\",\"col\":6}},{\"id\":\"chart_companies_by_country\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Companies by Country\",\"col\":6}},{\"id\":\"sp_settings_cards\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"card_business_setup\",\"type\":\"card\",\"data\":{\"card_name\":\"Business Setup\",\"col\":4}},{\"id\":\"card_retail_setup\",\"type\":\"card\",\"data\":{\"card_name\":\"Retail Setup\",\"col\":4}},{\"id\":\"card_system_rules\",\"type\":\"card\",\"data\":{\"card_name\":\"System Rules\",\"col\":4}}]",
+ "content": "[{\"id\":\"hdr_settings\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Settings</span>\",\"col\":12}},{\"id\":\"sc_company\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Company\",\"col\":3}},{\"id\":\"sc_branch\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Branch\",\"col\":3}},{\"id\":\"sc_pos_profile\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"POS Profile\",\"col\":3}},{\"id\":\"sc_user\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"User\",\"col\":3}},{\"id\":\"sc_print_format\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Print Format\",\"col\":3}},{\"id\":\"sc_taxes\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Taxes\",\"col\":3}},{\"id\":\"sc_data_import\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Data Import\",\"col\":3}},{\"id\":\"sp_settings_charts\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"chart_users_by_role\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Users by Role\",\"col\":6}},{\"id\":\"chart_companies_by_country\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Companies by Country\",\"col\":6}},{\"id\":\"sp_settings_cards\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"card_business_setup\",\"type\":\"card\",\"data\":{\"card_name\":\"Business Setup\",\"col\":4}},{\"id\":\"card_retail_setup\",\"type\":\"card\",\"data\":{\"card_name\":\"Retail Setup\",\"col\":4}},{\"id\":\"card_system_rules\",\"type\":\"card\",\"data\":{\"card_name\":\"System Rules\",\"col\":4}}]",
  "creation": "2026-06-11 16:50:30.526780",
  "custom_blocks": [],
  "docstatus": 0,
@@ -75,30 +75,10 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Retail Setup",
-   "link_count": 6,
+   "link_count": 4,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Counter",
-   "link_count": 0,
-   "link_to": "Counter",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "POS Counters",
-   "link_count": 0,
-   "link_to": "POS Branch Counter",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
   },
   {
    "hidden": 0,
@@ -236,22 +216,6 @@
    "doc_view": "List",
    "label": "Branch",
    "link_to": "Branch",
-   "stats_filter": "[]",
-   "type": "DocType"
-  },
-  {
-   "color": "Green",
-   "doc_view": "List",
-   "label": "Counter",
-   "link_to": "Counter",
-   "stats_filter": "[]",
-   "type": "DocType"
-  },
-  {
-   "color": "Green",
-   "doc_view": "List",
-   "label": "POS Counters",
-   "link_to": "POS Branch Counter",
    "stats_filter": "[]",
    "type": "DocType"
   },

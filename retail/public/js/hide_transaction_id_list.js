@@ -27,6 +27,15 @@
 	});
 });
 
+const counter_settings = frappe.listview_settings["Counter"];
+counter_settings.add_fields = [
+	...(counter_settings.add_fields || []),
+	"counter_name",
+];
+counter_settings.formatters = counter_settings.formatters || {};
+counter_settings.formatters.name = (value, df, doc) =>
+	frappe.utils.escape_html(doc.counter_name || value || "");
+
 // Sales Invoice stores Counter's internal name as the link value. Show the
 // business-facing Counter Name in the list while retaining that stable link.
 const sales_invoice_settings = frappe.listview_settings["Sales Invoice"];

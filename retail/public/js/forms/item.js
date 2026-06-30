@@ -20,6 +20,7 @@
 		refresh(frm) {
 			setOpeningAveragePurchaseRate(frm, false);
 			refreshVatPrices(frm);
+			refreshMargin(frm);
 		},
 		last_purchase_rate(frm) {
 			setOpeningAveragePurchaseRate(frm, true);
@@ -33,6 +34,8 @@
 		custom_sales_rate_includes_vat(frm) { refreshVatPrices(frm, "sales"); },
 		custom_purchase_rate_entry(frm) { refreshVatPrices(frm, "purchase"); },
 		custom_purchase_rate_includes_vat(frm) { refreshVatPrices(frm, "purchase"); },
+		custom_average_purchase_rate(frm) { refreshMargin(frm); },
+		custom_b2b(frm) { refreshMargin(frm); },
 		validate(frm) { removeEmptyBarcodeRows(frm); },
 		before_save(frm) { removeEmptyBarcodeRows(frm); },
 	});
@@ -61,12 +64,47 @@
 				const net = inclusive && rate ? entered / (1 + rate / 100) : entered;
 				const vat = inclusive ? entered - net : net * rate / 100;
 				const gross = inclusive ? entered : net + vat;
-				frappe.model.set_value("Item", frm.doc.name, {
+				Promise.resolve(frappe.model.set_value("Item", frm.doc.name, {
 					[fields.base]: flt(net, 2), [fields.net]: flt(net, 2),
 					[fields.vat]: flt(vat, 2), [fields.gross]: flt(gross, 2),
-				});
+				})).then(() => refreshMargin(frm));
 			},
 		});
+	}
+
+	function refreshMargin(frm) {
+		const sellingNet = getSellingNetRate(frm);
+		const costNet = getCostNetRate(frm);
+		const margin = sellingNet - costNet;
+		const marginPercent = sellingNet ? (margin / sellingNet) * 100 : 0;
+
+		frappe.model.set_value("Item", frm.doc.name, {
+			custom_margin: flt(margin, 2),
+			custom_margin_: flt(marginPercent, 3),
+		});
+	}
+
+	function getSellingNetRate(frm) {
+		if (frm.doc.custom_sales_rate_entry !== undefined
+			&& frm.doc.custom_sales_rate_entry !== null
+			&& frm.doc.custom_sales_rate_entry !== "") {
+			return flt(frm.doc.custom_sales_net_rate);
+		}
+		return flt(frm.doc.standard_rate || frm.doc.custom_b2b);
+	}
+
+	function getCostNetRate(frm) {
+		if (frm.doc.custom_purchase_rate_entry !== undefined
+			&& frm.doc.custom_purchase_rate_entry !== null
+			&& frm.doc.custom_purchase_rate_entry !== "") {
+			return flt(frm.doc.custom_purchase_net_rate);
+		}
+		return flt(
+			frm.doc.custom_average_purchase_rate
+			|| frm.doc.custom_default_purchase_rate
+			|| frm.doc.last_purchase_rate
+			|| frm.doc.valuation_rate
+		);
 	}
 
 	function removeEmptyBarcodeRows(frm) {

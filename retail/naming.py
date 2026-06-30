@@ -86,12 +86,40 @@ def install_list_titles():
 				validate_fields_for_doctype=False,
 			)
 
+		if doctype == "Counter":
+			_set_doctype_property(doctype, "show_title_field_in_link", "1", "Check")
+			_set_doctype_property(doctype, "search_fields", "counter_name", "Data")
+			_set_doctype_property(doctype, "autoname", "field:counter_name", "Data")
+
 	frappe.clear_cache()
+
+
+def _set_doctype_property(doctype, property_name, value, property_type):
+	property_setter_name = f"{doctype}-main-{property_name}"
+	if frappe.db.exists("Property Setter", property_setter_name):
+		frappe.db.set_value(
+			"Property Setter", property_setter_name, "value", value, update_modified=False
+		)
+		return
+
+	make_property_setter(
+		doctype,
+		None,
+		property_name,
+		value,
+		property_type,
+		for_doctype=True,
+		validate_fields_for_doctype=False,
+	)
 
 
 def install_retail_defaults():
 	from retail.domains.sales.counter import ensure_counter_display_field
 	from retail.domains.item.naming import install_item_code_defaults
+	from retail.domains.item.item_price_sync import (
+		disable_legacy_item_price_scripts,
+		ensure_standard_purchase_rate_field,
+	)
 	from retail.domains.item.packing_rate import ensure_packing_purchase_rate_script
 	from retail.tax_visibility import hide_transaction_tax_templates
 	from retail.domains.item.vat_pricing import ensure_item_vat_pricing_fields
@@ -100,6 +128,8 @@ def install_retail_defaults():
 	install_list_titles()
 	ensure_counter_display_field()
 	install_item_code_defaults()
+	disable_legacy_item_price_scripts()
+	ensure_standard_purchase_rate_field()
 	hide_transaction_tax_templates()
 	ensure_packing_purchase_rate_script()
 	ensure_item_vat_pricing_fields()

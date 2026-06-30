@@ -14,12 +14,34 @@ def _as_dict(data=None, **kwargs):
 	if isinstance(data, str):
 		data = json.loads(data)
 	if data is None:
-		data = {}
+		data = _request_json_payload() or _request_form_payload()
 	if not isinstance(data, dict):
 		frappe.throw(_("Payload must be a JSON object."))
 	payload = frappe._dict(data)
 	payload.update({key: value for key, value in kwargs.items() if value is not None})
 	return payload
+
+
+def _request_json_payload():
+	if not getattr(frappe.local, "request", None):
+		return {}
+
+	request = frappe.local.request
+	if not request or not request.is_json:
+		return {}
+
+	data = request.get_json(silent=True)
+	if not data:
+		return {}
+	return data
+
+
+def _request_form_payload():
+	form_dict = getattr(frappe.local, "form_dict", None)
+	if not form_dict:
+		return {}
+
+	return {key: value for key, value in form_dict.items() if key not in ("cmd", "data") and value is not None}
 
 
 def _json(data):
@@ -563,6 +585,9 @@ def _validate_vat(doc, payload):
 @frappe.whitelist()
 def health_check(branch=None, counter_code=None):
 	_assert_pos_user()
+	payload = _as_dict(None, branch=branch, counter_code=counter_code)
+	branch = payload.get("branch")
+	counter_code = payload.get("counter_code")
 	response = {
 		"status": "OK",
 		"server_time": now_datetime(),
@@ -585,6 +610,10 @@ def health_check(branch=None, counter_code=None):
 @frappe.whitelist()
 def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
 	_assert_pos_user()
+	payload = _as_dict(None, branch=branch, counter_code=counter_code, modified_after=modified_after)
+	branch = payload.get("branch")
+	counter_code = payload.get("counter_code")
+	modified_after = payload.get("modified_after")
 	counter_doc = _counter(branch, counter_code)
 	modified_filter = [["modified", ">", modified_after]] if modified_after else []
 
