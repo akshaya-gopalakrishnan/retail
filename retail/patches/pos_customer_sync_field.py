@@ -1,5 +1,6 @@
 """Add the stable customer identifier used by offline POS upserts."""
 
+import frappe
 from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 
 
@@ -20,3 +21,4 @@ def execute():
 		ignore_validate=True,
 		update=True,
 	)
+	frappe.db.updatedb("Customer")

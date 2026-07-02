@@ -22,4 +22,5 @@ def execute():
 			{"hidden": 0, "depends_on": "eval:doc.external_pos_reference"},
 			update_modified=False,
 		)
+	frappe.db.updatedb("POS Invoice")
 	frappe.clear_cache(doctype="POS Invoice")

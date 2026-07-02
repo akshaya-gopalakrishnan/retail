@@ -7,11 +7,16 @@ from frappe.utils import flt
 def set_balance_qty(doc, method=None):
 	"""Keep each PO line's balance in sync when the order itself is saved."""
 	for item in doc.get("items", []):
+		if not item.meta.has_field("balance_qty"):
+			continue
 		item.balance_qty = flt(item.qty) - flt(item.received_qty)
 
 
 def sync_balance_qty_from_transaction(doc, method=None):
 	"""Refresh affected PO lines after a receipt or stock-updating invoice."""
+	if not frappe.db.has_column("Purchase Order Item", "balance_qty"):
+		return
+
 	purchase_orders = {
 		item.purchase_order
 		for item in doc.get("items", [])

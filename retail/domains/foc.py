@@ -78,7 +78,9 @@ def ensure_foc_fields():
 	)
 
 	for doctype in FOC_ITEM_DOCTYPES:
+		frappe.db.updatedb(doctype)
 		frappe.clear_cache(doctype=doctype)
+	frappe.db.updatedb("Stock Ledger Entry")
 	frappe.clear_cache(doctype="Stock Ledger Entry")
 
 
@@ -127,6 +129,9 @@ def _set_paid_amounts(doc, row, paid_qty):
 def add_foc_stock_ledger_entries(doc, method=None):
 	"""Post FOC quantities as separate stock ledger rows after the normal movement."""
 	if doc.doctype not in FOC_STOCK_DOCTYPES or doc.docstatus != 1:
+		return
+
+	if not frappe.db.has_column("Stock Ledger Entry", "custom_is_foc_stock_entry"):
 		return
 
 	if doc.doctype in ("Purchase Invoice", "Sales Invoice", "POS Invoice") and not doc.get("update_stock"):

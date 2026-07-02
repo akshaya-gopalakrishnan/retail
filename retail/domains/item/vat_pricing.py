@@ -294,6 +294,7 @@ def ensure_item_vat_pricing_fields():
 		},
 		ignore_validate=True,
 	)
+	frappe.db.updatedb("Item")
 	_set_field_property("custom_tax", "label", "Sales VAT Template", "Data")
 	_set_field_property("custom_pricing_summary_section", "label", "Pricing Summary", "Data")
 	_set_field_property("custom_vat_pricing_section", "label", "Purchase & Sales VAT Pricing", "Data")
@@ -438,6 +439,7 @@ def ensure_packing_vat_pricing_fields():
 		},
 		ignore_validate=True,
 	)
+	frappe.db.updatedb("Retail Packing Detail")
 	frappe.clear_cache(doctype="Retail Packing Detail")
 
 

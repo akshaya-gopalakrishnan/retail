@@ -6,6 +6,8 @@ def execute():
 	frappe.flags.in_patch = True
 	ensure_role()
 	create_custom_fields(get_custom_fields(), ignore_validate=True, update=True)
+	frappe.db.updatedb("POS Invoice")
+	frappe.db.updatedb("Payment Entry")
 	frappe.clear_cache(doctype="POS Invoice")
 	frappe.clear_cache(doctype="Payment Entry")
 

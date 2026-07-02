@@ -53,18 +53,20 @@ def ensure_sales_invoice_retail_totals_fields():
 		},
 		ignore_validate=True,
 	)
+	frappe.db.updatedb("Sales Invoice")
 	_update_sales_invoice_retail_field_layout()
 	frappe.clear_cache(doctype="Sales Invoice")
 
 
 def _update_sales_invoice_retail_field_layout():
 	"""Keep custom Sales Invoice fields in the intended positions even with field_order setters."""
-	frappe.db.set_value(
-		"Custom Field",
-		"Sales Invoice-custom_retail_totals_section",
-		{"fieldtype": "Column Break", "insert_after": "net_total"},
-		update_modified=False,
-	)
+	if frappe.db.exists("Custom Field", "Sales Invoice-custom_retail_totals_section"):
+		frappe.db.set_value(
+			"Custom Field",
+			"Sales Invoice-custom_retail_totals_section",
+			{"fieldtype": "Column Break", "insert_after": "net_total"},
+			update_modified=False,
+		)
 	make_property_setter(
 		"Sales Invoice",
 		"company",

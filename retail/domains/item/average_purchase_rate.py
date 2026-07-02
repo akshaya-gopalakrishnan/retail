@@ -47,10 +47,13 @@ def sync_item_average_purchase_rate(item_code, fallback_rate=None):
 	invoice made against a receipt.
 	"""
 	average_rate = get_average_purchase_rate(item_code, fallback_rate=fallback_rate)
-	if frappe.db.exists("Custom Field", "Item-custom_average_purchase_rate"):
+	if frappe.db.has_column("Item", "custom_average_purchase_rate"):
 		frappe.db.set_value(
 			"Item", item_code, "custom_average_purchase_rate", average_rate, update_modified=False
 		)
+
+	if not frappe.db.has_column("Item Price", "custom_average_purchase_rate"):
+		return average_rate
 
 	for price_name in frappe.get_all("Item Price", filters={"item_code": item_code}, pluck="name"):
 		frappe.db.set_value(
@@ -102,15 +105,23 @@ def get_average_purchase_rate(item_code, fallback_rate=None):
 	# cost until real purchase history exists; it is never mixed into the
 	# weighted calculation because it has no transaction quantity.
 	if fallback_rate is None:
-		fallback_rate = frappe.db.get_value(
-			"Item", item_code, ["custom_default_purchase_rate", "last_purchase_rate"], as_dict=True
+		fields = ["last_purchase_rate"]
+		if frappe.db.has_column("Item", "custom_default_purchase_rate"):
+			fields.insert(0, "custom_default_purchase_rate")
+		fallback = frappe.db.get_value("Item", item_code, fields, as_dict=True)
+		fallback_rate = (fallback.get("custom_default_purchase_rate") if fallback else None) or (
+			fallback.get("last_purchase_rate") if fallback else None
 		)
-		fallback_rate = fallback_rate.custom_default_purchase_rate or fallback_rate.last_purchase_rate
 	return flt(fallback_rate)
 
 
 def backfill_average_purchase_rates():
 	"""Populate the field for all existing Item Price records after migration."""
+	if not frappe.db.has_column("Item", "custom_average_purchase_rate") and not frappe.db.has_column(
+		"Item Price", "custom_average_purchase_rate"
+	):
+		return
+
 	item_codes = set(frappe.get_all("Item Price", pluck="item_code", distinct=True))
 	item_codes.update(frappe.get_all("Item", filters={"is_stock_item": 1}, pluck="name"))
 	for item_code in item_codes:

@@ -12,6 +12,15 @@ def ensure_counter_display_field():
 		{
 			"Sales Invoice": [
 				{
+					"fieldname": "custom_counter",
+					"label": "Counter",
+					"fieldtype": "Link",
+					"options": "Counter",
+					"hidden": 1,
+					"no_copy": 1,
+					"report_hide": 1,
+				},
+				{
 					"fieldname": "custom_counter_name",
 					"label": "Counter Name",
 					"fieldtype": "Data",
@@ -24,6 +33,7 @@ def ensure_counter_display_field():
 		},
 		ignore_validate=True,
 	)
+	frappe.db.updatedb("Sales Invoice")
 	backfill_sales_invoice_counter_names()
 	frappe.clear_cache(doctype="Sales Invoice")
 
@@ -36,7 +46,9 @@ def set_sales_invoice_counter_name(doc, method=None):
 
 
 def backfill_sales_invoice_counter_names():
-	if not frappe.db.has_column("Sales Invoice", "custom_counter_name"):
+	if not frappe.db.has_column("Sales Invoice", "custom_counter_name") or not frappe.db.has_column(
+		"Sales Invoice", "custom_counter"
+	):
 		return
 
 	for invoice in frappe.get_all(
