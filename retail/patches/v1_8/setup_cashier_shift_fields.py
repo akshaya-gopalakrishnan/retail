@@ -5,7 +5,7 @@ from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 def execute():
 	frappe.flags.in_patch = True
 	create_custom_fields(get_custom_fields(), ignore_validate=True, update=True)
-	for doctype in ("POS Invoice", "Sales Invoice", "Payment Entry", "POS Opening Entry", "POS Closing Entry"):
+	for doctype in ("POS Invoice", "Payment Entry", "POS Opening Entry", "POS Closing Entry"):
 		frappe.clear_cache(doctype=doctype)
 
 
@@ -139,7 +139,6 @@ def get_custom_fields():
 
 	return {
 		"POS Invoice": common_cashier_fields,
-		"Sales Invoice": common_cashier_fields,
 		"Payment Entry": payment_fields,
 		"POS Opening Entry": opening_closing_fields,
 		"POS Closing Entry": opening_closing_fields,

@@ -3,12 +3,19 @@ from __future__ import annotations
 import frappe
 from frappe import _
 from frappe.utils import flt, getdate
+from frappe.desk.query_report import run as run_standard_query_report
 
 
 SALES_VOUCHERS = ("POS Invoice", "Sales Invoice", "Delivery Note")
 PURCHASE_VOUCHERS = ("Purchase Receipt", "Purchase Invoice")
 DAMAGE_KEYWORDS = ("damage", "wastage", "expired", "expiry", "broken", "spoil", "theft", "loss")
 EXPIRY_KEYWORDS = ("expired", "expiry")
+MOVEMENT_TYPE_COLUMN = {
+	"label": _("Movement Type"),
+	"fieldname": "movement_type",
+	"fieldtype": "Data",
+	"width": 130,
+}
 
 
 def get_default_filters(filters=None):
@@ -220,3 +227,110 @@ def get_movement_type_options():
 		_("Adjustment"),
 		_("Transfer"),
 	]
+
+
+@frappe.whitelist()
+@frappe.read_only()
+def run_query_report(
+	report_name,
+	filters=None,
+	user=None,
+	ignore_prepared_report=False,
+	custom_columns=None,
+	is_tree=False,
+	parent_field=None,
+	are_default_filters=True,
+):
+	result = run_standard_query_report(
+		report_name,
+		filters=filters,
+		user=user,
+		ignore_prepared_report=ignore_prepared_report,
+		custom_columns=custom_columns,
+		is_tree=is_tree,
+		parent_field=parent_field,
+		are_default_filters=are_default_filters,
+	)
+
+	if report_name == "Stock Ledger":
+		add_stock_ledger_movement_types(result)
+
+	return result
+
+
+def add_stock_ledger_movement_types(result):
+	if not result or not result.get("result"):
+		return
+
+	columns = result.get("columns") or []
+	if not any(get_column_fieldname(column) == "movement_type" for column in columns):
+		insert_at = get_column_index(columns, "voucher_type")
+		if insert_at is None:
+			columns.append(MOVEMENT_TYPE_COLUMN)
+		else:
+			columns.insert(insert_at, MOVEMENT_TYPE_COLUMN)
+
+	voucher_returns = get_return_flags_by_voucher(result.get("result"))
+	for row in result.get("result") or []:
+		if not isinstance(row, dict):
+			continue
+
+		row["movement_type"] = get_stock_ledger_movement_type(row, voucher_returns)
+
+
+def get_column_fieldname(column):
+	if isinstance(column, dict):
+		return column.get("fieldname")
+	if isinstance(column, str):
+		return column.split(":")[0]
+
+
+def get_column_index(columns, fieldname):
+	for index, column in enumerate(columns):
+		if get_column_fieldname(column) == fieldname:
+			return index
+
+
+def get_return_flags_by_voucher(rows):
+	vouchers_by_type = {}
+	for row in rows or []:
+		if not isinstance(row, dict):
+			continue
+
+		voucher_type = row.get("voucher_type")
+		voucher_no = row.get("voucher_no")
+		if voucher_type in (*SALES_VOUCHERS, *PURCHASE_VOUCHERS) and voucher_no:
+			vouchers_by_type.setdefault(voucher_type, set()).add(voucher_no)
+
+	return_flags = {}
+	for voucher_type, voucher_names in vouchers_by_type.items():
+		for voucher in frappe.get_all(
+			voucher_type,
+			filters={"name": ["in", tuple(voucher_names)]},
+			fields=["name", "is_return"],
+		):
+			return_flags[(voucher_type, voucher.name)] = bool(voucher.is_return)
+
+	return return_flags
+
+
+def get_stock_ledger_movement_type(row, return_flags):
+	voucher_type = row.get("voucher_type")
+	voucher_no = row.get("voucher_no")
+	actual_qty = flt(row.get("actual_qty"))
+	is_return = return_flags.get((voucher_type, voucher_no))
+
+	if voucher_type == "Sales Invoice":
+		return _("Sales Return") if is_return or actual_qty > 0 else _("Sales")
+	if voucher_type == "POS Invoice":
+		return _("POS Return") if is_return or actual_qty > 0 else _("POS Sale")
+	if voucher_type == "Delivery Note":
+		return _("Delivery Return") if is_return or actual_qty > 0 else _("Delivery")
+	if voucher_type in PURCHASE_VOUCHERS:
+		return _("Purchase Return") if is_return or actual_qty < 0 else _("Purchase")
+	if voucher_type == "Stock Entry":
+		return _("Stock Entry")
+	if voucher_type == "Stock Reconciliation":
+		return _("Adjustment")
+
+	return voucher_type or ""

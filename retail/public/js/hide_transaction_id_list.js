@@ -35,14 +35,3 @@ counter_settings.add_fields = [
 counter_settings.formatters = counter_settings.formatters || {};
 counter_settings.formatters.name = (value, df, doc) =>
 	frappe.utils.escape_html(doc.counter_name || value || "");
-
-// Sales Invoice stores Counter's internal name as the link value. Show the
-// business-facing Counter Name in the list while retaining that stable link.
-const sales_invoice_settings = frappe.listview_settings["Sales Invoice"];
-sales_invoice_settings.add_fields = [
-	...(sales_invoice_settings.add_fields || []),
-	"custom_counter_name",
-];
-sales_invoice_settings.formatters = sales_invoice_settings.formatters || {};
-sales_invoice_settings.formatters.custom_counter = (value, df, doc) =>
-	frappe.utils.escape_html(doc.custom_counter_name || value || "");

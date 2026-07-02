@@ -23,8 +23,12 @@ def sync_packing_item_prices(doc):
 		if not row.get("uom"):
 			continue
 
-		sync_item_price(doc, "Standard Selling", row.get("selling_rate"), uom=row.uom)
-		sync_item_price(doc, "Standard Buying", row.get("purchase_rate"), uom=row.uom)
+		sync_item_price(
+			doc, "Standard Selling", row.get("selling_net_rate") or row.get("selling_rate"), uom=row.uom
+		)
+		sync_item_price(
+			doc, "Standard Buying", row.get("purchase_net_rate") or row.get("purchase_rate"), uom=row.uom
+		)
 
 
 def sync_item_price(doc, price_list, rate, uom=None):

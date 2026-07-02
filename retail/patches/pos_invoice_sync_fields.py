@@ -6,14 +6,15 @@ from retail.patches.v1_1.setup_offline_pos_sync import ensure_role, get_custom_f
 
 def execute():
 	ensure_role()
+	pos_invoice_fields = get_custom_fields()["POS Invoice"]
 	# Existing fields created before the section placement was corrected need a
 	# one-time rebuild; otherwise Frappe retains their old rendered positions.
-	for field in get_custom_fields()["POS Invoice"]:
+	for field in pos_invoice_fields:
 		name = f"POS Invoice-{field['fieldname']}"
 		if frappe.db.exists("Custom Field", name):
 			frappe.delete_doc("Custom Field", name, force=True)
-	create_custom_fields(get_custom_fields(), ignore_validate=True, update=True)
-	for field in get_custom_fields()["POS Invoice"]:
+	create_custom_fields({"POS Invoice": pos_invoice_fields}, ignore_validate=True, update=True)
+	for field in pos_invoice_fields:
 		name = f"POS Invoice-{field['fieldname']}"
 		frappe.db.set_value(
 			"Custom Field",

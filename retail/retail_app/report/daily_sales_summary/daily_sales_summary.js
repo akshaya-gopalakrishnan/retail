@@ -27,11 +27,5 @@ frappe.query_reports["Daily Sales Summary"] = {
 			fieldtype: "Link",
 			options: "Counter",
 		},
-		{
-			fieldname: "sales_channel",
-			label: __("Sales Channel"),
-			fieldtype: "Select",
-			options: "\nTrading\nPOS",
-		},
 	],
 };

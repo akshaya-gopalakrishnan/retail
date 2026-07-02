@@ -731,9 +731,15 @@ def create_pos_payment_entry(data=None, **kwargs):
 
 		counter_doc = _counter(payload.get("branch"), payload.get("counter_code"))
 		_assert_day_not_closed(counter_doc.branch, _business_date(payload))
-		sales_invoice = payload.get("sales_invoice") or frappe.db.get_value(
-			"Sales Invoice", {"external_pos_reference": payload.get("sales_invoice_external_reference")}, "name"
-		)
+		sales_invoice = payload.get("sales_invoice")
+		if (
+			not sales_invoice
+			and payload.get("sales_invoice_external_reference")
+			and frappe.db.has_column("Sales Invoice", "external_pos_reference")
+		):
+			sales_invoice = frappe.db.get_value(
+				"Sales Invoice", {"external_pos_reference": payload.get("sales_invoice_external_reference")}, "name"
+			)
 		if not sales_invoice:
 			frappe.throw(_("Sales Invoice is required for payment sync."))
 
@@ -1451,7 +1457,11 @@ def validate_external_reference(doc: Document, method=None):
 	if not doc.get("external_pos_reference"):
 		return
 
-	for doctype in ("POS Invoice", "Sales Invoice"):
+	doctypes = ["POS Invoice"]
+	if frappe.db.has_column("Sales Invoice", "external_pos_reference"):
+		doctypes.append("Sales Invoice")
+
+	for doctype in doctypes:
 		duplicate = frappe.db.get_value(
 			doctype,
 			{"external_pos_reference": doc.external_pos_reference, "name": ["!=", doc.name], "docstatus": ["!=", 2]},

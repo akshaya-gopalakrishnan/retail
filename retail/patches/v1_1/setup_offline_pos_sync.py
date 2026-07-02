@@ -6,7 +6,7 @@ def execute():
 	frappe.flags.in_patch = True
 	ensure_role()
 	create_custom_fields(get_custom_fields(), ignore_validate=True, update=True)
-	frappe.clear_cache(doctype="Sales Invoice")
+	frappe.clear_cache(doctype="POS Invoice")
 	frappe.clear_cache(doctype="Payment Entry")
 
 
@@ -221,7 +221,6 @@ def get_custom_fields():
 			field["options"] = "POS Branch Counter"
 
 	return {
-		"Sales Invoice": sales_invoice_fields,
 		"POS Invoice": pos_invoice_fields,
 		"Payment Entry": payment_entry_fields,
 	}

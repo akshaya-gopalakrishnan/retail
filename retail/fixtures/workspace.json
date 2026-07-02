@@ -1,7 +1,7 @@
 [
  {
   "charts": [],
-  "content": "[{\"id\":\"74rPqxkGX0\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Item Groups</span>\",\"col\":12}},{\"id\":\"tEFzICqgIU\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Item Group\",\"col\":4}}]",
+  "content": "[{\"id\": \"74rPqxkGX0\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Item Groups</span>\", \"col\": 12}}, {\"id\": \"tEFzICqgIU\", \"type\": \"quick_list\", \"data\": {\"quick_list_name\": \"Item Group\", \"col\": 4}}]",
   "custom_blocks": [],
   "docstatus": 0,
   "doctype": "Workspace",
@@ -36,7 +36,7 @@
  },
  {
   "charts": [],
-  "content": "[{\"id\":\"h5fsvCInk3\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Price Lists</span>\",\"col\":12}},{\"id\":\"C5b0ILH3Zz\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Price Lists\",\"col\":4}}]",
+  "content": "[{\"id\": \"h5fsvCInk3\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Price Lists</span>\", \"col\": 12}}, {\"id\": \"C5b0ILH3Zz\", \"type\": \"quick_list\", \"data\": {\"quick_list_name\": \"Price Lists\", \"col\": 4}}]",
   "custom_blocks": [],
   "docstatus": 0,
   "doctype": "Workspace",
@@ -71,7 +71,7 @@
  },
  {
   "charts": [],
-  "content": "[{\"id\":\"3p3ythQn_s\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Brands</span>\",\"col\":12}},{\"id\":\"MdotqXVhqu\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Brands\",\"col\":4}}]",
+  "content": "[{\"id\": \"3p3ythQn_s\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Brands</span>\", \"col\": 12}}, {\"id\": \"MdotqXVhqu\", \"type\": \"quick_list\", \"data\": {\"quick_list_name\": \"Brands\", \"col\": 4}}]",
   "custom_blocks": [],
   "docstatus": 0,
   "doctype": "Workspace",
@@ -106,7 +106,7 @@
  },
  {
   "charts": [],
-  "content": "[{\"id\":\"yZEp_0eAZN\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Customers</span>\",\"col\":12}},{\"id\":\"lstv5KKk8J\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Customers\",\"col\":4}}]",
+  "content": "[{\"id\": \"yZEp_0eAZN\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Customers</span>\", \"col\": 12}}, {\"id\": \"lstv5KKk8J\", \"type\": \"quick_list\", \"data\": {\"quick_list_name\": \"Customers\", \"col\": 4}}]",
   "custom_blocks": [],
   "docstatus": 0,
   "doctype": "Workspace",
@@ -141,7 +141,7 @@
  },
  {
   "charts": [],
-  "content": "[{\"id\":\"0meFRXloz1\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Sales Orders</span>\",\"col\":12}},{\"id\":\"0Tdx8F164P\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Sales Orders\",\"col\":4}}]",
+  "content": "[{\"id\": \"0meFRXloz1\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Sales Orders</span>\", \"col\": 12}}, {\"id\": \"0Tdx8F164P\", \"type\": \"quick_list\", \"data\": {\"quick_list_name\": \"Sales Orders\", \"col\": 4}}]",
   "custom_blocks": [],
   "docstatus": 0,
   "doctype": "Workspace",
@@ -176,7 +176,7 @@
  },
  {
   "charts": [],
-  "content": "[{\"id\":\"5f8J8aiZye\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Sales Invoices</span>\",\"col\":12}},{\"id\":\"mz5hbHb9pR\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Sales Invoices\",\"col\":4}}]",
+  "content": "[{\"id\": \"5f8J8aiZye\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Sales Invoices</span>\", \"col\": 12}}, {\"id\": \"mz5hbHb9pR\", \"type\": \"quick_list\", \"data\": {\"quick_list_name\": \"Sales Invoices\", \"col\": 4}}]",
   "custom_blocks": [],
   "docstatus": 0,
   "doctype": "Workspace",
@@ -211,7 +211,7 @@
  },
  {
   "charts": [],
-  "content": "[{\"id\":\"KRGDsihwcO\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Suppliers</span>\",\"col\":12}},{\"id\":\"yIYc-cTMue\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Supplier List\",\"col\":4}}]",
+  "content": "[{\"id\": \"KRGDsihwcO\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Suppliers</span>\", \"col\": 12}}, {\"id\": \"yIYc-cTMue\", \"type\": \"quick_list\", \"data\": {\"quick_list_name\": \"Supplier List\", \"col\": 4}}]",
   "custom_blocks": [],
   "docstatus": 0,
   "doctype": "Workspace",
@@ -246,7 +246,42 @@
  },
  {
   "charts": [],
-  "content": "[{\"id\":\"4LT0lqeYfi\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Purchase Orders</span>\",\"col\":12}},{\"id\":\"Nm2YwoHmyk\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Orders to Suppliers\",\"col\":4}}]",
+  "content": "[{\"id\": \"hdr_material_requests\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Material Requests</span>\", \"col\": 12}}, {\"id\": \"ql_material_requests\", \"type\": \"quick_list\", \"data\": {\"quick_list_name\": \"Material Requests\", \"col\": 4}}]",
+  "custom_blocks": [],
+  "docstatus": 0,
+  "doctype": "Workspace",
+  "for_user": "",
+  "hide_custom": 0,
+  "icon": "material-request",
+  "indicator_color": "green",
+  "is_hidden": 0,
+  "label": "Material Requests",
+  "links": [],
+  "modified": "2026-07-01 00:00:00",
+  "module": "Retail-app",
+  "name": "Material Requests",
+  "number_cards": [],
+  "parent_page": "Purchases",
+  "public": 1,
+  "quick_lists": [
+   {
+    "document_type": "Material Request",
+    "label": "Material Requests",
+    "parent": "Material Requests",
+    "parentfield": "quick_lists",
+    "parenttype": "Workspace",
+    "quick_list_filter": "[]"
+   }
+  ],
+  "restrict_to_domain": null,
+  "roles": [],
+  "sequence_id": 41.5,
+  "shortcuts": [],
+  "title": "Material Requests"
+ },
+ {
+  "charts": [],
+  "content": "[{\"id\": \"4LT0lqeYfi\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Purchase Orders</span>\", \"col\": 12}}, {\"id\": \"Nm2YwoHmyk\", \"type\": \"quick_list\", \"data\": {\"quick_list_name\": \"Orders to Suppliers\", \"col\": 4}}]",
   "custom_blocks": [],
   "docstatus": 0,
   "doctype": "Workspace",
@@ -281,7 +316,7 @@
  },
  {
   "charts": [],
-  "content": "[{\"id\":\"BRvOFno0_s\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Purchase Receipts</span>\",\"col\":12}},{\"id\":\"UQSDzttaAK\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Received Items\",\"col\":4}}]",
+  "content": "[{\"id\": \"BRvOFno0_s\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Purchase Receipts</span>\", \"col\": 12}}, {\"id\": \"UQSDzttaAK\", \"type\": \"quick_list\", \"data\": {\"quick_list_name\": \"Received Items\", \"col\": 4}}]",
   "custom_blocks": [],
   "docstatus": 0,
   "doctype": "Workspace",
@@ -316,7 +351,7 @@
  },
  {
   "charts": [],
-  "content": "[{\"id\":\"nmaCMAOJm3\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Purchase Invoices</span>\",\"col\":12}},{\"id\":\"ipHF2fJ_Yq\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Supplier Invoices\",\"col\":4}}]",
+  "content": "[{\"id\": \"nmaCMAOJm3\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Purchase Invoices</span>\", \"col\": 12}}, {\"id\": \"ipHF2fJ_Yq\", \"type\": \"quick_list\", \"data\": {\"quick_list_name\": \"Supplier Invoices\", \"col\": 4}}]",
   "custom_blocks": [],
   "docstatus": 0,
   "doctype": "Workspace",
@@ -351,7 +386,7 @@
  },
  {
   "charts": [],
-  "content": "[{\"id\":\"SyLZEA3orp\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Purchase Returns</span>\",\"col\":12}},{\"id\":\"9RG2zjJhUH\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Supplier Invoices\",\"col\":4}}]",
+  "content": "[{\"id\": \"SyLZEA3orp\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Purchase Returns</span>\", \"col\": 12}}, {\"id\": \"9RG2zjJhUH\", \"type\": \"quick_list\", \"data\": {\"quick_list_name\": \"Supplier Invoices\", \"col\": 4}}]",
   "custom_blocks": [],
   "docstatus": 0,
   "doctype": "Workspace",
@@ -386,7 +421,7 @@
  },
  {
   "charts": [],
-  "content": "[{\"id\":\"YlRjkhmSnt\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Warehouses</span>\",\"col\":12}},{\"id\":\"1Nb0N34AkG\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Store & Warehouse List\",\"col\":4}}]",
+  "content": "[{\"id\": \"YlRjkhmSnt\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Warehouses</span>\", \"col\": 12}}, {\"id\": \"1Nb0N34AkG\", \"type\": \"quick_list\", \"data\": {\"quick_list_name\": \"Store & Warehouse List\", \"col\": 4}}]",
   "custom_blocks": [],
   "docstatus": 0,
   "doctype": "Workspace",
@@ -421,7 +456,7 @@
  },
  {
   "charts": [],
-  "content": "[{\"id\":\"E8YQjUNSrr\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Stock Adjustments</span>\",\"col\":12}},{\"id\":\"cGRqVgQ7nG\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Stock Entries\",\"col\":4}}]",
+  "content": "[{\"id\": \"E8YQjUNSrr\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Stock Adjustments</span>\", \"col\": 12}}, {\"id\": \"cGRqVgQ7nG\", \"type\": \"quick_list\", \"data\": {\"quick_list_name\": \"Stock Entries\", \"col\": 4}}]",
   "custom_blocks": [],
   "docstatus": 0,
   "doctype": "Workspace",
@@ -456,7 +491,7 @@
  },
  {
   "charts": [],
-  "content": "[{\"id\":\"RmUQTisxjK\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Serials &amp; Batches</span>\",\"col\":12}},{\"id\":\"uHIHAFtUp6\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Serial & Batch Numbers\",\"col\":4}}]",
+  "content": "[{\"id\": \"RmUQTisxjK\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Serials &amp; Batches</span>\", \"col\": 12}}, {\"id\": \"uHIHAFtUp6\", \"type\": \"quick_list\", \"data\": {\"quick_list_name\": \"Serial & Batch Numbers\", \"col\": 4}}]",
   "custom_blocks": [],
   "docstatus": 0,
   "doctype": "Workspace",
@@ -491,7 +526,7 @@
  },
  {
   "charts": [],
-  "content": "[{\"id\":\"2HnbgOHrIi\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Stock Status</span>\",\"col\":12}},{\"id\":\"L0hpWY49jf\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Current Stock Balance\",\"col\":4}}]",
+  "content": "[{\"id\": \"2HnbgOHrIi\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Stock Status</span>\", \"col\": 12}}, {\"id\": \"L0hpWY49jf\", \"type\": \"quick_list\", \"data\": {\"quick_list_name\": \"Current Stock Balance\", \"col\": 4}}]",
   "custom_blocks": [],
   "docstatus": 0,
   "doctype": "Workspace",
@@ -526,7 +561,7 @@
  },
  {
   "charts": [],
-  "content": "[{\"id\":\"D7oNdwFFo7\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Bank Accounts</span>\",\"col\":12}},{\"id\":\"5JaGGFY2_0\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Our Bank Accounts \",\"col\":4}}]",
+  "content": "[{\"id\": \"D7oNdwFFo7\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Bank Accounts</span>\", \"col\": 12}}, {\"id\": \"5JaGGFY2_0\", \"type\": \"quick_list\", \"data\": {\"quick_list_name\": \"Our Bank Accounts \", \"col\": 4}}]",
   "custom_blocks": [],
   "docstatus": 0,
   "doctype": "Workspace",
@@ -561,7 +596,7 @@
  },
  {
   "charts": [],
-  "content": "[{\"id\":\"xLsWGOyunv\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Payments</span>\",\"col\":12}},{\"id\":\"WTG2e2Lioa\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Payments Received & Made\",\"col\":4}}]",
+  "content": "[{\"id\": \"xLsWGOyunv\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Payments</span>\", \"col\": 12}}, {\"id\": \"WTG2e2Lioa\", \"type\": \"quick_list\", \"data\": {\"quick_list_name\": \"Payments Received & Made\", \"col\": 4}}]",
   "custom_blocks": [],
   "docstatus": 0,
   "doctype": "Workspace",
@@ -596,7 +631,7 @@
  },
  {
   "charts": [],
-  "content": "[{\"id\":\"C5TvMsIFsd\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Taxes</span>\",\"col\":12}},{\"id\":\"KmOAs-RZ1u\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Sales Tax Templates\",\"col\":4}}]",
+  "content": "[{\"id\": \"C5TvMsIFsd\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Taxes</span>\", \"col\": 12}}, {\"id\": \"KmOAs-RZ1u\", \"type\": \"quick_list\", \"data\": {\"quick_list_name\": \"Sales Tax Templates\", \"col\": 4}}]",
   "custom_blocks": [],
   "docstatus": 0,
   "doctype": "Workspace",
@@ -631,7 +666,7 @@
  },
  {
   "charts": [],
-  "content": "[{\"id\":\"Z9yFPQubYk\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Journal Entries</span>\",\"col\":12}},{\"id\":\"Ul8yApp9ys\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Journal Entries\",\"col\":4}}]",
+  "content": "[{\"id\": \"Z9yFPQubYk\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Journal Entries</span>\", \"col\": 12}}, {\"id\": \"Ul8yApp9ys\", \"type\": \"quick_list\", \"data\": {\"quick_list_name\": \"Journal Entries\", \"col\": 4}}]",
   "custom_blocks": [],
   "docstatus": 0,
   "doctype": "Workspace",
@@ -666,7 +701,7 @@
  },
  {
   "charts": [],
-  "content": "[{\"id\":\"Z6Cp4-A6Oh\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Business Profile</span>\",\"col\":12}},{\"id\":\"noJ5qHAPBG\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Company Setup\",\"col\":4}}]",
+  "content": "[{\"id\": \"Z6Cp4-A6Oh\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Business Profile</span>\", \"col\": 12}}, {\"id\": \"noJ5qHAPBG\", \"type\": \"quick_list\", \"data\": {\"quick_list_name\": \"Company Setup\", \"col\": 4}}]",
   "custom_blocks": [],
   "docstatus": 0,
   "doctype": "Workspace",
@@ -701,7 +736,7 @@
  },
  {
   "charts": [],
-  "content": "[{\"id\":\"aRXTePqJ-U\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Branding</span>\",\"col\":12}},{\"id\":\"5OMti_dzmJ\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Letter Heads\",\"col\":4}}]",
+  "content": "[{\"id\": \"aRXTePqJ-U\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Branding</span>\", \"col\": 12}}, {\"id\": \"5OMti_dzmJ\", \"type\": \"quick_list\", \"data\": {\"quick_list_name\": \"Letter Heads\", \"col\": 4}}]",
   "custom_blocks": [],
   "docstatus": 0,
   "doctype": "Workspace",
@@ -736,7 +771,7 @@
  },
  {
   "charts": [],
-  "content": "[{\"id\":\"xzK3QmehWY\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">System Rules</span>\",\"col\":12}},{\"id\":\"iXDbeVp1PL\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Naming Series\",\"col\":4}}]",
+  "content": "[{\"id\": \"xzK3QmehWY\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">System Rules</span>\", \"col\": 12}}, {\"id\": \"iXDbeVp1PL\", \"type\": \"quick_list\", \"data\": {\"quick_list_name\": \"Naming Series\", \"col\": 4}}]",
   "custom_blocks": [],
   "docstatus": 0,
   "doctype": "Workspace",
@@ -771,7 +806,7 @@
  },
  {
   "charts": [],
-  "content": "[{\"id\":\"GxZHADeNnX\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Sales Returns</span>\",\"col\":12}},{\"id\":\"_JWWTwEpDi\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Sales Returns\",\"col\":4}}]",
+  "content": "[{\"id\": \"GxZHADeNnX\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Sales Returns</span>\", \"col\": 12}}, {\"id\": \"_JWWTwEpDi\", \"type\": \"quick_list\", \"data\": {\"quick_list_name\": \"Sales Returns\", \"col\": 4}}]",
   "custom_blocks": [],
   "docstatus": 0,
   "doctype": "Workspace",
@@ -814,7 +849,7 @@
     "parenttype": "Workspace"
    }
   ],
-  "content": "[{\"id\":\"X4D1WQsff8\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Accounts Receivable</span>\",\"col\":12}},{\"id\":\"v1rgXSA-Fs\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"cl-402gTlX\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Accounts Receivable\",\"col\":4}},{\"id\":\"J7njYCPcO6\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"ssDY0ob3u4\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Accounts Receivable Ageing\",\"col\":12}}]",
+  "content": "[{\"id\": \"X4D1WQsff8\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Accounts Receivable</span>\", \"col\": 12}}, {\"id\": \"v1rgXSA-Fs\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"cl-402gTlX\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Accounts Receivable\", \"col\": 4}}, {\"id\": \"J7njYCPcO6\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"ssDY0ob3u4\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Accounts Receivable Ageing\", \"col\": 12}}]",
   "custom_blocks": [],
   "docstatus": 0,
   "doctype": "Workspace",
@@ -866,7 +901,7 @@
     "parenttype": "Workspace"
    }
   ],
-  "content": "[{\"id\":\"lRyXmC_iC_\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Accounts Payable</span>\",\"col\":12}},{\"id\":\"A6_6gpq0VB\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"fURgtRBHhN\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Accounts Payable\",\"col\":4}},{\"id\":\"OW1DqEDb4k\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"9KbCA-vzrY\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Accounts Payable Ageing\",\"col\":12}}]",
+  "content": "[{\"id\": \"lRyXmC_iC_\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Accounts Payable</span>\", \"col\": 12}}, {\"id\": \"A6_6gpq0VB\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"fURgtRBHhN\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Accounts Payable\", \"col\": 4}}, {\"id\": \"OW1DqEDb4k\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"9KbCA-vzrY\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Accounts Payable Ageing\", \"col\": 12}}]",
   "custom_blocks": [],
   "docstatus": 0,
   "doctype": "Workspace",
@@ -910,7 +945,7 @@
  },
  {
   "charts": [],
-  "content": "[{\"id\":\"85OVy4tCTF\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Delivery Notes</span>\",\"col\":12}},{\"id\":\"ojLX-f23JM\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Delivery Notes\",\"col\":4}}]",
+  "content": "[{\"id\": \"85OVy4tCTF\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Delivery Notes</span>\", \"col\": 12}}, {\"id\": \"ojLX-f23JM\", \"type\": \"quick_list\", \"data\": {\"quick_list_name\": \"Delivery Notes\", \"col\": 4}}]",
   "custom_blocks": [],
   "docstatus": 0,
   "doctype": "Workspace",
@@ -971,7 +1006,7 @@
  },
  {
   "charts": [],
-  "content": "[{\"id\":\"C-MdAYcLkl\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Stock Take</span>\",\"col\":12}},{\"id\":\"e_3qoqd5Sk\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Stock Reconciliation\",\"col\":4}}]",
+  "content": "[{\"id\": \"C-MdAYcLkl\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Stock Take</span>\", \"col\": 12}}, {\"id\": \"e_3qoqd5Sk\", \"type\": \"quick_list\", \"data\": {\"quick_list_name\": \"Stock Reconciliation\", \"col\": 4}}]",
   "custom_blocks": [],
   "docstatus": 0,
   "doctype": "Workspace",
@@ -1021,7 +1056,7 @@
     "parenttype": "Workspace"
    }
   ],
-  "content": "[{\"id\":\"hdr_items\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Items</span>\",\"col\":12}},{\"id\":\"nc_total_active_items\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total Active Items\",\"col\":4}},{\"id\":\"nc_low_stock_items\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Low Stock Items\",\"col\":4}},{\"id\":\"nc_out_of_stock_items\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Out of Stock Items\",\"col\":4}},{\"id\":\"sc_items\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Items\",\"col\":3}},{\"id\":\"sc_item_groups\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Item Groups\",\"col\":3}},{\"id\":\"sc_brands\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Brands\",\"col\":3}},{\"id\":\"sc_item_prices\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Item Prices\",\"col\":3}},{\"id\":\"sc_price_lists\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Price Lists\",\"col\":3}},{\"id\":\"sc_units_of_measure\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Units of Measure\",\"col\":3}},{\"id\":\"sp_items_charts\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"chart_item_wise_annual_sales\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Item-wise Annual Sales\",\"col\":6}},{\"id\":\"chart_oldest_items\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Oldest Items\",\"col\":6}},{\"id\":\"sp_items_cards\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"card_item_masters\",\"type\":\"card\",\"data\":{\"card_name\":\"Item Masters\",\"col\":4}},{\"id\":\"card_retail_stock_signals\",\"type\":\"card\",\"data\":{\"card_name\":\"Retail Stock Signals\",\"col\":4}},{\"id\":\"card_item_reports\",\"type\":\"card\",\"data\":{\"card_name\":\"Item Reports\",\"col\":4}}]",
+  "content": "[{\"id\": \"hdr_items\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Items</span>\", \"col\": 12}}, {\"id\": \"nc_total_active_items\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Total Active Items\", \"col\": 4}}, {\"id\": \"nc_low_stock_items\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Low Stock Items\", \"col\": 4}}, {\"id\": \"nc_out_of_stock_items\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Out of Stock Items\", \"col\": 4}}, {\"id\": \"sc_items\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Items\", \"col\": 3}}, {\"id\": \"sc_item_groups\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Item Groups\", \"col\": 3}}, {\"id\": \"sc_brands\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Brands\", \"col\": 3}}, {\"id\": \"sc_item_prices\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Item Prices\", \"col\": 3}}, {\"id\": \"sc_price_lists\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Price Lists\", \"col\": 3}}, {\"id\": \"sc_units_of_measure\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Units of Measure\", \"col\": 3}}, {\"id\": \"sp_items_charts\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"chart_item_wise_annual_sales\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Item-wise Annual Sales\", \"col\": 6}}, {\"id\": \"chart_oldest_items\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Oldest Items\", \"col\": 6}}, {\"id\": \"sp_items_cards\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"card_item_masters\", \"type\": \"card\", \"data\": {\"card_name\": \"Item Masters\", \"col\": 4}}, {\"id\": \"card_retail_stock_signals\", \"type\": \"card\", \"data\": {\"card_name\": \"Retail Stock Signals\", \"col\": 4}}, {\"id\": \"card_item_reports\", \"type\": \"card\", \"data\": {\"card_name\": \"Item Reports\", \"col\": 4}}]",
   "custom_blocks": [],
   "docstatus": 0,
   "doctype": "Workspace",
@@ -1483,7 +1518,7 @@
     "parenttype": "Workspace"
    }
   ],
-  "content": "[{\"id\":\"hdr_accounts\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Accounts</span>\",\"col\":12}},{\"id\":\"sc_payment_entry\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Payment Entry\",\"col\":3}},{\"id\":\"sc_journal_entry\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Journal Entry\",\"col\":3}},{\"id\":\"sc_sales_invoice\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sales Invoice\",\"col\":3}},{\"id\":\"sc_purchase_invoice\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Purchase Invoice\",\"col\":3}},{\"id\":\"sc_accounts_receivable\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Accounts Receivable\",\"col\":3}},{\"id\":\"sc_accounts_payable\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Accounts Payable\",\"col\":3}},{\"id\":\"sc_balance_sheet\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Balance Sheet\",\"col\":3}},{\"id\":\"sc_general_ledger\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"General Ledger\",\"col\":3}},{\"id\":\"sp_accounts_charts\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"chart_profit_and_loss\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Profit and Loss\",\"col\":4}},{\"id\":\"chart_accounts_receivable_ageing\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Accounts Receivable Ageing\",\"col\":4}},{\"id\":\"chart_accounts_payable_ageing\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Accounts Payable Ageing\",\"col\":4}},{\"id\":\"sp_accounts_cards\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"card_transactions\",\"type\":\"card\",\"data\":{\"card_name\":\"Transactions\",\"col\":4}},{\"id\":\"card_receivables___payables\",\"type\":\"card\",\"data\":{\"card_name\":\"Receivables & Payables\",\"col\":4}},{\"id\":\"card_financial_reports\",\"type\":\"card\",\"data\":{\"card_name\":\"Financial Reports\",\"col\":4}}]",
+  "content": "[{\"id\": \"hdr_accounts\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Accounts</span>\", \"col\": 12}}, {\"id\": \"sc_payment_entry\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Payment Entry\", \"col\": 3}}, {\"id\": \"sc_journal_entry\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Journal Entry\", \"col\": 3}}, {\"id\": \"sc_sales_invoice\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Sales Invoice\", \"col\": 3}}, {\"id\": \"sc_purchase_invoice\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Purchase Invoice\", \"col\": 3}}, {\"id\": \"sc_accounts_receivable\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Accounts Receivable\", \"col\": 3}}, {\"id\": \"sc_accounts_payable\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Accounts Payable\", \"col\": 3}}, {\"id\": \"sc_balance_sheet\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Balance Sheet\", \"col\": 3}}, {\"id\": \"sc_general_ledger\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"General Ledger\", \"col\": 3}}, {\"id\": \"sp_accounts_charts\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"chart_profit_and_loss\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Profit and Loss\", \"col\": 4}}, {\"id\": \"chart_accounts_receivable_ageing\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Accounts Receivable Ageing\", \"col\": 4}}, {\"id\": \"chart_accounts_payable_ageing\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Accounts Payable Ageing\", \"col\": 4}}, {\"id\": \"sp_accounts_cards\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"card_transactions\", \"type\": \"card\", \"data\": {\"card_name\": \"Transactions\", \"col\": 4}}, {\"id\": \"card_receivables___payables\", \"type\": \"card\", \"data\": {\"card_name\": \"Receivables & Payables\", \"col\": 4}}, {\"id\": \"card_financial_reports\", \"type\": \"card\", \"data\": {\"card_name\": \"Financial Reports\", \"col\": 4}}]",
   "custom_blocks": [],
   "docstatus": 0,
   "doctype": "Workspace",
@@ -1986,7 +2021,7 @@
     "parenttype": "Workspace"
    }
   ],
-  "content": "[{\"id\":\"hdr_settings\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Settings</span>\",\"col\":12}},{\"id\":\"sc_company\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Company\",\"col\":3}},{\"id\":\"sc_branch\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Branch\",\"col\":3}},{\"id\":\"sc_pos_profile\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"POS Profile\",\"col\":3}},{\"id\":\"sc_user\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"User\",\"col\":3}},{\"id\":\"sc_print_format\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Print Format\",\"col\":3}},{\"id\":\"sc_taxes\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Taxes\",\"col\":3}},{\"id\":\"sc_data_import\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Data Import\",\"col\":3}},{\"id\":\"sp_settings_charts\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"chart_users_by_role\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Users by Role\",\"col\":6}},{\"id\":\"chart_companies_by_country\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Companies by Country\",\"col\":6}},{\"id\":\"sp_settings_cards\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"card_business_setup\",\"type\":\"card\",\"data\":{\"card_name\":\"Business Setup\",\"col\":4}},{\"id\":\"card_retail_setup\",\"type\":\"card\",\"data\":{\"card_name\":\"Retail Setup\",\"col\":4}},{\"id\":\"card_system_rules\",\"type\":\"card\",\"data\":{\"card_name\":\"System Rules\",\"col\":4}}]",
+  "content": "[{\"id\": \"hdr_settings\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Settings</span>\", \"col\": 12}}, {\"id\": \"sc_company\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Company\", \"col\": 3}}, {\"id\": \"sc_branch\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Branch\", \"col\": 3}}, {\"id\": \"sc_pos_profile\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Profile\", \"col\": 3}}, {\"id\": \"sc_user\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"User\", \"col\": 3}}, {\"id\": \"sc_print_format\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Print Format\", \"col\": 3}}, {\"id\": \"sc_taxes\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Taxes\", \"col\": 3}}, {\"id\": \"sc_data_import\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Data Import\", \"col\": 3}}, {\"id\": \"sp_settings_charts\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"chart_users_by_role\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Users by Role\", \"col\": 6}}, {\"id\": \"chart_companies_by_country\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Companies by Country\", \"col\": 6}}, {\"id\": \"sp_settings_cards\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"card_business_setup\", \"type\": \"card\", \"data\": {\"card_name\": \"Business Setup\", \"col\": 4}}, {\"id\": \"card_retail_setup\", \"type\": \"card\", \"data\": {\"card_name\": \"Retail Setup\", \"col\": 4}}, {\"id\": \"card_system_rules\", \"type\": \"card\", \"data\": {\"card_name\": \"System Rules\", \"col\": 4}}]",
   "custom_blocks": [],
   "docstatus": 0,
   "doctype": "Workspace",
@@ -2454,7 +2489,7 @@
     "parenttype": "Workspace"
    }
   ],
-  "content": "[{\"id\":\"hdr_sales\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Sales</span>\",\"col\":12}},{\"id\":\"sc_sales_invoice\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sales Invoice\",\"col\":3}},{\"id\":\"sc_customers\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Customers\",\"col\":3}},{\"id\":\"sc_sales_order\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sales Order\",\"col\":3}},{\"id\":\"sc_delivery_note\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Delivery Note\",\"col\":3}},{\"id\":\"sc_sales_return\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sales Return\",\"col\":3}},{\"id\":\"sc_daily_sales_summary\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Daily Sales Summary\",\"col\":3}},{\"id\":\"sc_counter_performance\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Counter Performance\",\"col\":3}},{\"id\":\"sc_daily_transaction_log\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Daily Transaction Log\",\"col\":3}},{\"id\":\"sp_sales_charts\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"chart_sales_order_trends\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Sales Order Trends\",\"col\":6}},{\"id\":\"chart_top_customers\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Top Customers\",\"col\":6}},{\"id\":\"sp_sales_cards\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"card_daily_sales\",\"type\":\"card\",\"data\":{\"card_name\":\"Daily Sales\",\"col\":4}},{\"id\":\"card_customers\",\"type\":\"card\",\"data\":{\"card_name\":\"Customers\",\"col\":4}},{\"id\":\"card_sales_reports\",\"type\":\"card\",\"data\":{\"card_name\":\"Sales Reports\",\"col\":4}}]",
+  "content": "[{\"id\": \"hdr_sales\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Sales</span>\", \"col\": 12}}, {\"id\": \"sc_sales_invoice\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Sales Invoice\", \"col\": 3}}, {\"id\": \"sc_customers\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Customers\", \"col\": 3}}, {\"id\": \"sc_sales_order\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Sales Order\", \"col\": 3}}, {\"id\": \"sc_delivery_note\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Delivery Note\", \"col\": 3}}, {\"id\": \"sc_sales_return\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Sales Return\", \"col\": 3}}, {\"id\": \"sc_daily_sales_summary\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Daily Sales Summary\", \"col\": 3}}, {\"id\": \"sc_counter_performance\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Counter Performance\", \"col\": 3}}, {\"id\": \"sc_daily_transaction_log\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Daily Transaction Log\", \"col\": 3}}, {\"id\": \"sp_sales_charts\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"chart_sales_order_trends\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Sales Order Trends\", \"col\": 6}}, {\"id\": \"chart_top_customers\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Top Customers\", \"col\": 6}}, {\"id\": \"sp_sales_cards\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"card_daily_sales\", \"type\": \"card\", \"data\": {\"card_name\": \"Daily Sales\", \"col\": 4}}, {\"id\": \"card_customers\", \"type\": \"card\", \"data\": {\"card_name\": \"Customers\", \"col\": 4}}, {\"id\": \"card_sales_reports\", \"type\": \"card\", \"data\": {\"card_name\": \"Sales Reports\", \"col\": 4}}]",
   "custom_blocks": [],
   "docstatus": 0,
   "doctype": "Workspace",
@@ -2939,7 +2974,7 @@
     "parenttype": "Workspace"
    }
   ],
-  "content": "[{\"id\":\"hdr_stocks\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Stocks</span>\",\"col\":12}},{\"id\":\"nc_total_stock_value\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total Stock Value\",\"col\":3}},{\"id\":\"nc_total_warehouses\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total Warehouses\",\"col\":3}},{\"id\":\"nc_low_stock_items\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Low Stock Items\",\"col\":3}},{\"id\":\"nc_out_of_stock_items\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Out of Stock Items\",\"col\":3}},{\"id\":\"sc_warehouses\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Warehouses\",\"col\":3}},{\"id\":\"sc_stock_entry\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Stock Entry\",\"col\":3}},{\"id\":\"sc_stock_reconciliation\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Stock Reconciliation\",\"col\":3}},{\"id\":\"sc_stock_balance\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Stock Balance\",\"col\":3}},{\"id\":\"sc_low_stock_reorder_report\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Low Stock Reorder Report\",\"col\":3}},{\"id\":\"sc_fast_moving_items\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Fast Moving Items\",\"col\":3}},{\"id\":\"sc_slow_moving_items\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Slow Moving Items\",\"col\":3}},{\"id\":\"sc_stock_movement_summary\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Stock Movement Summary\",\"col\":3}},{\"id\":\"sc_stock_adjustment_history\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Stock Adjustment History\",\"col\":3}},{\"id\":\"sc_stock_ledger\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Stock Ledger\",\"col\":3}},{\"id\":\"sc_stock_projected_qty\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Stock Projected Qty\",\"col\":3}},{\"id\":\"sc_serials___batches\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Serials & Batches\",\"col\":3}},{\"id\":\"sp_stocks_charts\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"chart_warehouse_wise_stock_value\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Warehouse wise Stock Value\",\"col\":6}},{\"id\":\"chart_item_shortage_summary\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Item Shortage Summary\",\"col\":6}},{\"id\":\"sp_stocks_cards\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"card_stock_operations\",\"type\":\"card\",\"data\":{\"card_name\":\"Stock Operations\",\"col\":4}},{\"id\":\"card_stock_masters\",\"type\":\"card\",\"data\":{\"card_name\":\"Stock Masters\",\"col\":4}},{\"id\":\"card_stock_reports\",\"type\":\"card\",\"data\":{\"card_name\":\"Stock Reports\",\"col\":4}}]",
+  "content": "[{\"id\": \"hdr_stocks\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Stocks</span>\", \"col\": 12}}, {\"id\": \"nc_total_stock_value\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Total Stock Value\", \"col\": 3}}, {\"id\": \"nc_total_warehouses\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Total Warehouses\", \"col\": 3}}, {\"id\": \"nc_low_stock_items\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Low Stock Items\", \"col\": 3}}, {\"id\": \"nc_out_of_stock_items\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Out of Stock Items\", \"col\": 3}}, {\"id\": \"sc_warehouses\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Warehouses\", \"col\": 3}}, {\"id\": \"sc_stock_entry\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Stock Entry\", \"col\": 3}}, {\"id\": \"sc_stock_reconciliation\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Stock Reconciliation\", \"col\": 3}}, {\"id\": \"sc_stock_balance\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Stock Balance\", \"col\": 3}}, {\"id\": \"sc_low_stock_reorder_report\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Low Stock Reorder Report\", \"col\": 3}}, {\"id\": \"sc_fast_moving_items\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Fast Moving Items\", \"col\": 3}}, {\"id\": \"sc_slow_moving_items\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Slow Moving Items\", \"col\": 3}}, {\"id\": \"sc_stock_movement_summary\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Stock Movement Summary\", \"col\": 3}}, {\"id\": \"sc_stock_adjustment_history\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Stock Adjustment History\", \"col\": 3}}, {\"id\": \"sc_stock_ledger\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Stock Ledger\", \"col\": 3}}, {\"id\": \"sc_stock_projected_qty\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Stock Projected Qty\", \"col\": 3}}, {\"id\": \"sc_serials___batches\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Serials & Batches\", \"col\": 3}}, {\"id\": \"sp_stocks_charts\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"chart_warehouse_wise_stock_value\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Warehouse wise Stock Value\", \"col\": 6}}, {\"id\": \"chart_item_shortage_summary\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Item Shortage Summary\", \"col\": 6}}, {\"id\": \"sp_stocks_cards\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"card_stock_operations\", \"type\": \"card\", \"data\": {\"card_name\": \"Stock Operations\", \"col\": 4}}, {\"id\": \"card_stock_masters\", \"type\": \"card\", \"data\": {\"card_name\": \"Stock Masters\", \"col\": 4}}, {\"id\": \"card_stock_reports\", \"type\": \"card\", \"data\": {\"card_name\": \"Stock Reports\", \"col\": 4}}]",
   "custom_blocks": [],
   "docstatus": 0,
   "doctype": "Workspace",
@@ -3600,7 +3635,7 @@
     "parenttype": "Workspace"
    }
   ],
-  "content": "[{\"id\":\"hdr_reports\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Reports</span>\",\"col\":12}},{\"id\":\"sc_daily_sales_summary\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Daily Sales Summary\",\"col\":3}},{\"id\":\"sc_counter_performance\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Counter Performance\",\"col\":3}},{\"id\":\"sc_daily_transaction_log\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Daily Transaction Log\",\"col\":3}},{\"id\":\"sc_daily_profit_report\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Daily Profit Report\",\"col\":3}},{\"id\":\"sc_low_stock_reorder_report\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Low Stock Reorder Report\",\"col\":3}},{\"id\":\"sc_stock_movement_summary\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Stock Movement Summary\",\"col\":3}},{\"id\":\"sc_accounts_receivable\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Accounts Receivable\",\"col\":3}},{\"id\":\"sc_accounts_payable\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Accounts Payable\",\"col\":3}},{\"id\":\"sc_gross_profit\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Gross Profit\",\"col\":3}},{\"id\":\"sp_reports_charts\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"chart_outgoing_bills__sales_invoic\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Outgoing Bills (Sales Invoice)\",\"col\":4}},{\"id\":\"chart_incoming_bills__purchase_inv\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Incoming Bills (Purchase Invoice)\",\"col\":4}},{\"id\":\"chart_profit_and_loss\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Profit and Loss\",\"col\":4}},{\"id\":\"sp_reports_cards\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"card_sales_reports\",\"type\":\"card\",\"data\":{\"card_name\":\"Sales Reports\",\"col\":4}},{\"id\":\"card_purchase_reports\",\"type\":\"card\",\"data\":{\"card_name\":\"Purchase Reports\",\"col\":4}},{\"id\":\"card_stock_reports\",\"type\":\"card\",\"data\":{\"card_name\":\"Stock Reports\",\"col\":4}},{\"id\":\"card_financials\",\"type\":\"card\",\"data\":{\"card_name\":\"Financials\",\"col\":4}},{\"id\":\"card_outstandings\",\"type\":\"card\",\"data\":{\"card_name\":\"Outstandings\",\"col\":4}},{\"id\":\"card_performance\",\"type\":\"card\",\"data\":{\"card_name\":\"Performance\",\"col\":4}}]",
+  "content": "[{\"id\": \"hdr_reports\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Reports</span>\", \"col\": 12}}, {\"id\": \"sc_daily_sales_summary\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Daily Sales Summary\", \"col\": 3}}, {\"id\": \"sc_counter_performance\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Counter Performance\", \"col\": 3}}, {\"id\": \"sc_daily_transaction_log\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Daily Transaction Log\", \"col\": 3}}, {\"id\": \"sc_daily_profit_report\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Daily Profit Report\", \"col\": 3}}, {\"id\": \"sc_low_stock_reorder_report\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Low Stock Reorder Report\", \"col\": 3}}, {\"id\": \"sc_stock_movement_summary\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Stock Movement Summary\", \"col\": 3}}, {\"id\": \"sc_accounts_receivable\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Accounts Receivable\", \"col\": 3}}, {\"id\": \"sc_accounts_payable\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Accounts Payable\", \"col\": 3}}, {\"id\": \"sc_gross_profit\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Gross Profit\", \"col\": 3}}, {\"id\": \"sp_reports_charts\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"chart_outgoing_bills__sales_invoic\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Outgoing Bills (Sales Invoice)\", \"col\": 4}}, {\"id\": \"chart_incoming_bills__purchase_inv\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Incoming Bills (Purchase Invoice)\", \"col\": 4}}, {\"id\": \"chart_profit_and_loss\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Profit and Loss\", \"col\": 4}}, {\"id\": \"sp_reports_cards\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"card_sales_reports\", \"type\": \"card\", \"data\": {\"card_name\": \"Sales Reports\", \"col\": 4}}, {\"id\": \"card_purchase_reports\", \"type\": \"card\", \"data\": {\"card_name\": \"Purchase Reports\", \"col\": 4}}, {\"id\": \"card_stock_reports\", \"type\": \"card\", \"data\": {\"card_name\": \"Stock Reports\", \"col\": 4}}, {\"id\": \"card_financials\", \"type\": \"card\", \"data\": {\"card_name\": \"Financials\", \"col\": 4}}, {\"id\": \"card_outstandings\", \"type\": \"card\", \"data\": {\"card_name\": \"Outstandings\", \"col\": 4}}, {\"id\": \"card_performance\", \"type\": \"card\", \"data\": {\"card_name\": \"Performance\", \"col\": 4}}]",
   "custom_blocks": [],
   "docstatus": 0,
   "doctype": "Workspace",
@@ -4415,7 +4450,7 @@
     "parenttype": "Workspace"
    }
   ],
-  "content": "[{\"id\":\"hdr_owner_dashboard\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Dashboard</span>\",\"col\":12}},{\"id\":\"nc_todays_sales\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Today's Sales\",\"col\":3}},{\"id\":\"nc_todays_profit\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Today's Profit\",\"col\":3}},{\"id\":\"nc_invoice_count_today\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Invoice Count Today\",\"col\":3}},{\"id\":\"nc_return_amount_today\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Return Amount Today\",\"col\":3}},{\"id\":\"nc_low_stock_items\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Low Stock Items\",\"col\":3}},{\"id\":\"nc_out_of_stock_items\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Out of Stock Items\",\"col\":3}},{\"id\":\"nc_damage_amount_today\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Damage Amount Today\",\"col\":3}},{\"id\":\"nc_cash_in_hand_today\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Cash in Hand Today\",\"col\":3}},{\"id\":\"sp_owner_dashboard_1\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"chart_retail_top_selling_products\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Retail Top Selling Products\",\"col\":4}},{\"id\":\"chart_retail_sales_by_counter\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Retail Sales by Counter\",\"col\":4}},{\"id\":\"chart_retail_sales_trend_7_days\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Retail Sales Trend 7 Days\",\"col\":4}},{\"id\":\"sp_owner_dashboard_2\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"sc_daily_sales_summary\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Daily Sales Summary\",\"col\":3}},{\"id\":\"sc_daily_transaction_log\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Daily Transaction Log\",\"col\":3}},{\"id\":\"sc_low_stock_reorder_report\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Low Stock Reorder Report\",\"col\":3}},{\"id\":\"sc_fast_moving_items\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Fast Moving Items\",\"col\":3}},{\"id\":\"sc_slow_moving_items\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Slow Moving Items\",\"col\":3}},{\"id\":\"sc_stock_adjustment_history\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Stock Adjustment History\",\"col\":3}},{\"id\":\"sc_cashier_wise_damage\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Cashier Wise Damage\",\"col\":3}},{\"id\":\"sc_reports\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Reports\",\"col\":3}}]",
+  "content": "[{\"id\": \"hdr_owner_dashboard\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Dashboard</span>\", \"col\": 12}}, {\"id\": \"nc_todays_sales\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Today's Sales\", \"col\": 3}}, {\"id\": \"nc_todays_profit\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Today's Profit\", \"col\": 3}}, {\"id\": \"nc_invoice_count_today\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Invoice Count Today\", \"col\": 3}}, {\"id\": \"nc_return_amount_today\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Return Amount Today\", \"col\": 3}}, {\"id\": \"nc_low_stock_items\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Low Stock Items\", \"col\": 3}}, {\"id\": \"nc_out_of_stock_items\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Out of Stock Items\", \"col\": 3}}, {\"id\": \"nc_damage_amount_today\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Damage Amount Today\", \"col\": 3}}, {\"id\": \"nc_cash_in_hand_today\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Cash in Hand Today\", \"col\": 3}}, {\"id\": \"sp_owner_dashboard_1\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"chart_retail_top_selling_products\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Retail Top Selling Products\", \"col\": 4}}, {\"id\": \"chart_retail_sales_by_counter\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Retail Sales by Counter\", \"col\": 4}}, {\"id\": \"chart_retail_sales_trend_7_days\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Retail Sales Trend 7 Days\", \"col\": 4}}, {\"id\": \"sp_owner_dashboard_2\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"sc_daily_sales_summary\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Daily Sales Summary\", \"col\": 3}}, {\"id\": \"sc_daily_transaction_log\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Daily Transaction Log\", \"col\": 3}}, {\"id\": \"sc_low_stock_reorder_report\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Low Stock Reorder Report\", \"col\": 3}}, {\"id\": \"sc_fast_moving_items\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Fast Moving Items\", \"col\": 3}}, {\"id\": \"sc_slow_moving_items\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Slow Moving Items\", \"col\": 3}}, {\"id\": \"sc_stock_adjustment_history\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Stock Adjustment History\", \"col\": 3}}, {\"id\": \"sc_cashier_wise_damage\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Cashier Wise Damage\", \"col\": 3}}, {\"id\": \"sc_reports\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Reports\", \"col\": 3}}]",
   "custom_blocks": [],
   "docstatus": 0,
   "doctype": "Workspace",
@@ -4635,7 +4670,7 @@
  },
  {
   "charts": [],
-  "content": "[{\"id\": \"hdr_pos\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">POS</span>\", \"col\": 12}}, {\"id\": \"sc_pos_invoices\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Invoices\", \"col\": 3}}, {\"id\": \"sc_pos_sales_invoices\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Sales Invoices\", \"col\": 3}}, {\"id\": \"sc_pos_profile\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Profile\", \"col\": 3}}, {\"id\": \"sc_pos_counters\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Counters\", \"col\": 3}}, {\"id\": \"sc_pos_cashier_shifts\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Cashier Shifts\", \"col\": 3}}, {\"id\": \"sc_pos_counter_sessions\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Counter Sessions\", \"col\": 3}}, {\"id\": \"sc_pos_opening_entry\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Opening Entry\", \"col\": 3}}, {\"id\": \"sc_pos_closing_entry\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Closing Entry\", \"col\": 3}}, {\"id\": \"sc_pos_branch_day_closing\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Branch Day Closing\", \"col\": 3}}, {\"id\": \"sc_pos_sync_log\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Sync Log\", \"col\": 3}}, {\"id\": \"sc_mode_of_payment\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Mode of Payment\", \"col\": 3}}, {\"id\": \"sp_pos_reports\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"sc_pos_sales_summary\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Sales Summary\", \"col\": 3}}, {\"id\": \"sc_pos_transaction_log\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Transaction Log\", \"col\": 3}}, {\"id\": \"sc_counter_performance\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Counter Performance\", \"col\": 3}}]",
+  "content": "[{\"id\": \"hdr_pos\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">POS</span>\", \"col\": 12}}, {\"id\": \"sc_pos_invoices\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Invoices\", \"col\": 3}}, {\"id\": \"sc_pos_profile\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Profile\", \"col\": 3}}, {\"id\": \"sc_pos_counters\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Counters\", \"col\": 3}}, {\"id\": \"sc_pos_cashier_shifts\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Cashier Shifts\", \"col\": 3}}, {\"id\": \"sc_pos_counter_sessions\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Counter Sessions\", \"col\": 3}}, {\"id\": \"sc_pos_opening_entry\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Opening Entry\", \"col\": 3}}, {\"id\": \"sc_pos_closing_entry\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Closing Entry\", \"col\": 3}}, {\"id\": \"sc_pos_branch_day_closing\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Branch Day Closing\", \"col\": 3}}, {\"id\": \"sc_pos_sync_log\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Sync Log\", \"col\": 3}}, {\"id\": \"sc_mode_of_payment\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Mode of Payment\", \"col\": 3}}, {\"id\": \"sp_pos_reports\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"sc_pos_sales_summary\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Sales Summary\", \"col\": 3}}, {\"id\": \"sc_pos_transaction_log\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Transaction Log\", \"col\": 3}}, {\"id\": \"sc_counter_performance\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Counter Performance\", \"col\": 3}}]",
   "custom_blocks": [],
   "docstatus": 0,
   "doctype": "Workspace",
@@ -4653,7 +4688,7 @@
     "icon": null,
     "is_query_report": 0,
     "label": "POS Documents",
-    "link_count": 11,
+    "link_count": 10,
     "link_to": null,
     "link_type": "DocType",
     "onboard": 0,
@@ -4673,24 +4708,6 @@
     "label": "POS Invoices",
     "link_count": 0,
     "link_to": "POS Invoice",
-    "link_type": "DocType",
-    "onboard": 0,
-    "only_for": null,
-    "parent": "POS",
-    "parentfield": "links",
-    "parenttype": "Workspace",
-    "report_ref_doctype": null,
-    "type": "Link"
-   },
-   {
-    "dependencies": null,
-    "description": null,
-    "hidden": 0,
-    "icon": null,
-    "is_query_report": 0,
-    "label": "POS Sales Invoices",
-    "link_count": 0,
-    "link_to": "Sales Invoice",
     "link_type": "DocType",
     "onboard": 0,
     "only_for": null,
@@ -4954,23 +4971,6 @@
     "kanban_board": null,
     "label": "POS Invoices",
     "link_to": "POS Invoice",
-    "parent": "POS",
-    "parentfield": "shortcuts",
-    "parenttype": "Workspace",
-    "report_ref_doctype": null,
-    "restrict_to_domain": null,
-    "stats_filter": null,
-    "type": "DocType",
-    "url": null
-   },
-   {
-    "color": "Grey",
-    "doc_view": "List",
-    "format": null,
-    "icon": null,
-    "kanban_board": null,
-    "label": "POS Sales Invoices",
-    "link_to": "Sales Invoice",
     "parent": "POS",
     "parentfield": "shortcuts",
     "parenttype": "Workspace",
@@ -5492,7 +5492,7 @@
     "parenttype": "Workspace"
    }
   ],
-  "content": "[{\"id\":\"hdr_purchases\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Purchases</span>\",\"col\":12}},{\"id\":\"sc_supplier\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Supplier\",\"col\":3}},{\"id\":\"sc_purchase_order\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Purchase Order\",\"col\":3}},{\"id\":\"sc_purchase_receipt\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Purchase Receipt\",\"col\":3}},{\"id\":\"sc_purchase_invoice\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Purchase Invoice\",\"col\":3}},{\"id\":\"sc_purchase_return\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Purchase Return\",\"col\":3}},{\"id\":\"sc_purchase_register\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Purchase Register\",\"col\":3}},{\"id\":\"sc_accounts_payable\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Accounts Payable\",\"col\":3}},{\"id\":\"sc_supplier_wise_returns\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Supplier Wise Returns\",\"col\":3}},{\"id\":\"sp_purchases_charts\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"chart_purchase_order_trends\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Purchase Order Trends\",\"col\":6}},{\"id\":\"chart_top_suppliers\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Top Suppliers\",\"col\":6}},{\"id\":\"sp_purchases_cards\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"card_buying_flow\",\"type\":\"card\",\"data\":{\"card_name\":\"Buying Flow\",\"col\":4}},{\"id\":\"card_suppliers\",\"type\":\"card\",\"data\":{\"card_name\":\"Suppliers\",\"col\":4}},{\"id\":\"card_purchase_reports\",\"type\":\"card\",\"data\":{\"card_name\":\"Purchase Reports\",\"col\":4}}]",
+  "content": "[{\"id\": \"hdr_purchases\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Purchases</span>\", \"col\": 12}}, {\"id\": \"sc_supplier\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Supplier\", \"col\": 3}}, {\"id\": \"sc_purchase_order\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Purchase Order\", \"col\": 3}}, {\"id\": \"sc_purchase_receipt\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Purchase Receipt\", \"col\": 3}}, {\"id\": \"sc_purchase_invoice\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Purchase Invoice\", \"col\": 3}}, {\"id\": \"sc_purchase_return\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Purchase Return\", \"col\": 3}}, {\"id\": \"sc_purchase_register\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Purchase Register\", \"col\": 3}}, {\"id\": \"sc_accounts_payable\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Accounts Payable\", \"col\": 3}}, {\"id\": \"sc_supplier_wise_returns\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Supplier Wise Returns\", \"col\": 3}}, {\"id\": \"sp_purchases_charts\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"chart_purchase_order_trends\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Purchase Order Trends\", \"col\": 6}}, {\"id\": \"chart_top_suppliers\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Top Suppliers\", \"col\": 6}}, {\"id\": \"sp_purchases_cards\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"card_buying_flow\", \"type\": \"card\", \"data\": {\"card_name\": \"Buying Flow\", \"col\": 4}}, {\"id\": \"card_suppliers\", \"type\": \"card\", \"data\": {\"card_name\": \"Suppliers\", \"col\": 4}}, {\"id\": \"card_purchase_reports\", \"type\": \"card\", \"data\": {\"card_name\": \"Purchase Reports\", \"col\": 4}}]",
   "custom_blocks": [],
   "docstatus": 0,
   "doctype": "Workspace",

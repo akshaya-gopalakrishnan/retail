@@ -5,6 +5,102 @@
   "docstatus": 0,
   "doctype": "Property Setter",
   "doctype_or_field": "DocField",
+  "field_name": "custom_purchase_rate_entry",
+  "is_system_generated": 1,
+  "modified": "2026-06-29 17:07:22.914605",
+  "module": null,
+  "name": "Item-custom_purchase_rate_entry-in_list_view",
+  "property": "in_list_view",
+  "property_type": "Check",
+  "row_name": null,
+  "value": "0"
+ },
+ {
+  "default_value": null,
+  "doc_type": "Item",
+  "docstatus": 0,
+  "doctype": "Property Setter",
+  "doctype_or_field": "DocField",
+  "field_name": "custom_purchase_gross_rate",
+  "is_system_generated": 1,
+  "modified": "2026-06-29 17:07:23.014578",
+  "module": null,
+  "name": "Item-custom_purchase_gross_rate-in_list_view",
+  "property": "in_list_view",
+  "property_type": "Check",
+  "row_name": null,
+  "value": "1"
+ },
+ {
+  "default_value": null,
+  "doc_type": "Item",
+  "docstatus": 0,
+  "doctype": "Property Setter",
+  "doctype_or_field": "DocField",
+  "field_name": "custom_sales_gross_rate",
+  "is_system_generated": 1,
+  "modified": "2026-06-29 17:07:23.022351",
+  "module": null,
+  "name": "Item-custom_sales_gross_rate-in_list_view",
+  "property": "in_list_view",
+  "property_type": "Check",
+  "row_name": null,
+  "value": "1"
+ },
+ {
+  "default_value": null,
+  "doc_type": "Sales Invoice",
+  "docstatus": 0,
+  "doctype": "Property Setter",
+  "doctype_or_field": "DocField",
+  "field_name": "company",
+  "is_system_generated": 1,
+  "modified": "2026-07-01 13:31:09.507134",
+  "module": null,
+  "name": "Sales Invoice-company-hidden",
+  "property": "hidden",
+  "property_type": "Check",
+  "row_name": null,
+  "value": "0"
+ },
+ {
+  "default_value": null,
+  "doc_type": "Sales Invoice",
+  "docstatus": 0,
+  "doctype": "Property Setter",
+  "doctype_or_field": "DocField",
+  "field_name": "total",
+  "is_system_generated": 1,
+  "modified": "2026-07-01 13:31:09.535413",
+  "module": null,
+  "name": "Sales Invoice-total-hidden",
+  "property": "hidden",
+  "property_type": "Check",
+  "row_name": null,
+  "value": "1"
+ },
+ {
+  "default_value": null,
+  "doc_type": "Sales Invoice",
+  "docstatus": 0,
+  "doctype": "Property Setter",
+  "doctype_or_field": "DocField",
+  "field_name": "net_total",
+  "is_system_generated": 1,
+  "modified": "2026-07-01 13:31:09.563124",
+  "module": null,
+  "name": "Sales Invoice-net_total-hidden",
+  "property": "hidden",
+  "property_type": "Check",
+  "row_name": null,
+  "value": "1"
+ },
+ {
+  "default_value": null,
+  "doc_type": "Item",
+  "docstatus": 0,
+  "doctype": "Property Setter",
+  "doctype_or_field": "DocField",
   "field_name": "custom_b2b",
   "is_system_generated": 1,
   "modified": "2026-06-29 13:49:13.576479",
@@ -423,7 +519,7 @@
   "doctype_or_field": "DocType",
   "field_name": null,
   "is_system_generated": 1,
-  "modified": "2026-06-29 15:30:00.000000",
+  "modified": "2026-06-29 15:30:00",
   "module": null,
   "name": "Counter-main-autoname",
   "property": "autoname",
@@ -439,7 +535,7 @@
   "doctype_or_field": "DocType",
   "field_name": null,
   "is_system_generated": 1,
-  "modified": "2026-06-29 15:30:00.000000",
+  "modified": "2026-06-29 15:30:00",
   "module": null,
   "name": "Counter-main-search_fields",
   "property": "search_fields",
@@ -2269,7 +2365,7 @@
   "property": "options",
   "property_type": "Text",
   "row_name": null,
-  "value": "STO-ITEM-.YYYY.-"
+  "value": "RTL-ITEM-.YYYY.-"
  },
  {
   "default_value": null,
@@ -2282,22 +2378,6 @@
   "modified": "2026-06-04 13:00:37.845873",
   "module": null,
   "name": "Sales Invoice-title-in_list_view",
-  "property": "in_list_view",
-  "property_type": "Check",
-  "row_name": null,
-  "value": "1"
- },
- {
-  "default_value": null,
-  "doc_type": "Sales Invoice",
-  "docstatus": 0,
-  "doctype": "Property Setter",
-  "doctype_or_field": "DocField",
-  "field_name": "custom_counter",
-  "is_system_generated": 1,
-  "modified": "2026-06-04 13:00:37.893085",
-  "module": null,
-  "name": "Sales Invoice-custom_counter-in_list_view",
   "property": "in_list_view",
   "property_type": "Check",
   "row_name": null,
@@ -3645,7 +3725,7 @@
   "property": "hidden",
   "property_type": "Check",
   "row_name": null,
-  "value": "0"
+  "value": "1"
  },
  {
   "default_value": null,
@@ -3677,7 +3757,7 @@
   "property": "reqd",
   "property_type": "Check",
   "row_name": null,
-  "value": "1"
+  "value": "0"
  },
  {
   "default_value": null,
@@ -4109,7 +4189,7 @@
   "property": "in_list_view",
   "property_type": "Check",
   "row_name": null,
-  "value": "1"
+  "value": "0"
  },
  {
   "default_value": null,
@@ -4333,7 +4413,7 @@
   "property": "in_list_view",
   "property_type": "Check",
   "row_name": null,
-  "value": "1"
+  "value": "0"
  },
  {
   "default_value": null,

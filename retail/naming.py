@@ -114,7 +114,9 @@ def _set_doctype_property(doctype, property_name, value, property_type):
 
 
 def install_retail_defaults():
+	from retail.domains.foc import ensure_foc_fields
 	from retail.domains.sales.counter import ensure_counter_display_field
+	from retail.domains.sales.invoice_totals import ensure_sales_invoice_retail_totals_fields
 	from retail.domains.item.naming import install_item_code_defaults
 	from retail.domains.item.item_price_sync import (
 		disable_legacy_item_price_scripts,
@@ -122,17 +124,23 @@ def install_retail_defaults():
 	)
 	from retail.domains.item.packing_rate import ensure_packing_purchase_rate_script
 	from retail.tax_visibility import hide_transaction_tax_templates
-	from retail.domains.item.vat_pricing import ensure_item_vat_pricing_fields
+	from retail.domains.item.vat_pricing import (
+		ensure_item_vat_pricing_fields,
+		ensure_packing_vat_pricing_fields,
+	)
 
 	install_naming_series()
 	install_list_titles()
+	ensure_foc_fields()
 	ensure_counter_display_field()
+	ensure_sales_invoice_retail_totals_fields()
 	install_item_code_defaults()
 	disable_legacy_item_price_scripts()
 	ensure_standard_purchase_rate_field()
 	hide_transaction_tax_templates()
 	ensure_packing_purchase_rate_script()
 	ensure_item_vat_pricing_fields()
+	ensure_packing_vat_pricing_fields()
 
 
 def set_transaction_naming_series(doc, method=None):

@@ -31,6 +31,31 @@ VAT_PRICE_FIELDS = {
 	},
 }
 
+PACKING_VAT_FIELDS = {
+	"purchase": {
+		"entry": "purchase_rate",
+		"mode": "purchase_vat_mode",
+		"rate": "purchase_vat_rate",
+		"confirmed": "purchase_vat_confirmed",
+		"net": "purchase_net_rate",
+		"vat": "purchase_vat_amount",
+		"gross": "purchase_gross_rate",
+		"status": "purchase_vat_status",
+		"template": "custom_purchase_tax_template",
+	},
+	"selling": {
+		"entry": "selling_rate",
+		"mode": "selling_vat_mode",
+		"rate": "selling_vat_rate",
+		"confirmed": "selling_vat_confirmed",
+		"net": "selling_net_rate",
+		"vat": "selling_vat_amount",
+		"gross": "selling_gross_rate",
+		"status": "selling_vat_status",
+		"template": "custom_tax",
+	},
+}
+
 ITEM_PRICING_LAYOUT_FIELDS = [
 	"custom_pricing_summary_section",
 	"last_purchase_rate",
@@ -284,6 +309,138 @@ def ensure_item_vat_pricing_fields():
 	frappe.clear_cache(doctype="Item")
 
 
+def ensure_packing_vat_pricing_fields():
+	"""Add VAT confirmation and breakdown fields to Retail Packing Detail rows."""
+	create_custom_fields(
+		{
+			"Retail Packing Detail": [
+				{
+					"fieldname": "purchase_vat_status",
+					"label": "P VAT",
+					"fieldtype": "Data",
+					"read_only": 1,
+					"in_list_view": 1,
+					"columns": 1,
+					"insert_after": "purchase_rate",
+				},
+				{
+					"fieldname": "selling_vat_status",
+					"label": "S VAT",
+					"fieldtype": "Data",
+					"read_only": 1,
+					"in_list_view": 1,
+					"columns": 1,
+					"insert_after": "selling_rate",
+				},
+				{
+					"fieldname": "packing_vat_section",
+					"label": "VAT Breakdown",
+					"fieldtype": "Section Break",
+					"insert_after": "selling_vat_status",
+				},
+				{
+					"fieldname": "purchase_vat_mode",
+					"label": "Purchase VAT Mode",
+					"fieldtype": "Select",
+					"options": "Excluding VAT\nIncluding VAT",
+					"default": "Excluding VAT",
+					"insert_after": "packing_vat_section",
+				},
+				{
+					"fieldname": "purchase_vat_rate",
+					"label": "Purchase VAT %",
+					"fieldtype": "Percent",
+					"insert_after": "purchase_vat_mode",
+				},
+				{
+					"fieldname": "purchase_vat_confirmed",
+					"label": "Purchase VAT Confirmed",
+					"fieldtype": "Check",
+					"default": "0",
+					"insert_after": "purchase_vat_rate",
+				},
+				{
+					"fieldname": "purchase_net_rate",
+					"label": "Purchase Rate Excl. VAT",
+					"fieldtype": "Currency",
+					"read_only": 1,
+					"insert_after": "purchase_vat_confirmed",
+				},
+				{
+					"fieldname": "purchase_vat_amount",
+					"label": "Purchase VAT Amount",
+					"fieldtype": "Currency",
+					"read_only": 1,
+					"insert_after": "purchase_net_rate",
+				},
+				{
+					"fieldname": "purchase_gross_rate",
+					"label": "Purchase Rate Incl. VAT",
+					"fieldtype": "Currency",
+					"read_only": 1,
+					"insert_after": "purchase_vat_amount",
+				},
+				{
+					"fieldname": "packing_vat_column",
+					"fieldtype": "Column Break",
+					"insert_after": "purchase_gross_rate",
+				},
+				{
+					"fieldname": "selling_vat_mode",
+					"label": "Selling VAT Mode",
+					"fieldtype": "Select",
+					"options": "Excluding VAT\nIncluding VAT",
+					"default": "Excluding VAT",
+					"insert_after": "packing_vat_column",
+				},
+				{
+					"fieldname": "selling_vat_rate",
+					"label": "Selling VAT %",
+					"fieldtype": "Percent",
+					"insert_after": "selling_vat_mode",
+				},
+				{
+					"fieldname": "selling_vat_confirmed",
+					"label": "Selling VAT Confirmed",
+					"fieldtype": "Check",
+					"default": "0",
+					"insert_after": "selling_vat_rate",
+				},
+				{
+					"fieldname": "selling_net_rate",
+					"label": "Selling Rate Excl. VAT",
+					"fieldtype": "Currency",
+					"read_only": 1,
+					"insert_after": "selling_vat_confirmed",
+				},
+				{
+					"fieldname": "selling_vat_amount",
+					"label": "Selling VAT Amount",
+					"fieldtype": "Currency",
+					"read_only": 1,
+					"insert_after": "selling_net_rate",
+				},
+				{
+					"fieldname": "selling_gross_rate",
+					"label": "Selling Rate Incl. VAT",
+					"fieldtype": "Currency",
+					"read_only": 1,
+					"insert_after": "selling_vat_amount",
+				},
+				{
+					"fieldname": "packing_margin",
+					"label": "Margin Excl. VAT",
+					"fieldtype": "Currency",
+					"read_only": 1,
+					"insert_after": "selling_gross_rate",
+				},
+			],
+		},
+		ignore_validate=True,
+	)
+	frappe.clear_cache(doctype="Retail Packing Detail")
+
+
 def arrange_item_vat_pricing_layout():
 	"""Arrange Item pricing into clean paired rows: left field and right field."""
 	insert_after = {
@@ -445,6 +602,7 @@ def update_item_vat_prices(doc, method=None):
 		_apply_direction(doc, direction)
 
 	_update_margin(doc)
+	update_packing_vat_prices(doc)
 
 
 def _apply_direction(doc, direction):
@@ -472,6 +630,54 @@ def _apply_direction(doc, direction):
 	doc.set(fields["net"], flt(net, 2))
 	doc.set(fields["vat"], flt(vat, 2))
 	doc.set(fields["gross"], flt(gross, 2))
+
+
+def update_packing_vat_prices(doc):
+	"""Recalculate VAT breakdowns held on each Retail Packing Detail row."""
+	if not doc.meta.has_field("custom_retail_packing_detail"):
+		return
+
+	for row in doc.get("custom_retail_packing_detail") or []:
+		for direction in PACKING_VAT_FIELDS:
+			_apply_packing_direction(doc, row, direction)
+
+		row.set("packing_margin", flt(row.get("selling_net_rate") - row.get("purchase_net_rate"), 2))
+
+
+def _apply_packing_direction(doc, row, direction):
+	fields = PACKING_VAT_FIELDS[direction]
+	entry = flt(row.get(fields["entry"]))
+	template = doc.get(fields["template"])
+	default_rate = get_item_tax_rate(template) if template else 0.0
+	rate = flt(row.get(fields["rate"]) if row.get(fields["rate"]) not in (None, "") else default_rate)
+	mode = row.get(fields["mode"]) or "Excluding VAT"
+
+	if mode == "Including VAT" and rate:
+		net = entry / (1 + rate / 100)
+		gross = entry
+		vat = gross - net
+	else:
+		net = entry
+		vat = net * rate / 100
+		gross = net + vat
+
+	row.set(fields["mode"], mode)
+	row.set(fields["rate"], flt(rate, 3))
+	row.set(fields["net"], flt(net, 2))
+	row.set(fields["vat"], flt(vat, 2))
+	row.set(fields["gross"], flt(gross, 2))
+	row.set(fields["status"], _get_packing_vat_status(mode, rate, row.get(fields["confirmed"])))
+
+
+def _get_packing_vat_status(mode, rate, confirmed):
+	if not rate:
+		return "Exempt"
+
+	status = f"{'Incl' if mode == 'Including VAT' else 'Excl'} {flt(rate, 3):g}%"
+	if confirmed:
+		return f"{status} OK"
+
+	return f"{status} Pending"
 
 
 def _update_margin(doc):

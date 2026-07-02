@@ -281,7 +281,6 @@ def get_available_links():
 def get_pos_doctype_links():
 	return [
 		("POS Invoices", "POS Invoice"),
-		("POS Sales Invoices", "Sales Invoice"),
 		("POS Profile", "POS Profile"),
 		("POS Counters", "POS Branch Counter"),
 		("POS Cashier Shifts", "POS Cashier Shift"),
@@ -304,9 +303,8 @@ def get_pos_report_links():
 
 def get_legacy_links():
 	return [
-		{"label": "POS Documents", "type": "Card Break", "link_type": "DocType", "link_count": 8},
+		{"label": "POS Documents", "type": "Card Break", "link_type": "DocType", "link_count": 7},
 		{"label": "POS Invoices", "type": "Link", "link_type": "DocType", "link_to": "POS Invoice"},
-		{"label": "POS Sales Invoices", "type": "Link", "link_type": "DocType", "link_to": "Sales Invoice"},
 		{"label": "POS Profile", "type": "Link", "link_type": "DocType", "link_to": "POS Profile"},
 		{"label": "POS Counters", "type": "Link", "link_type": "DocType", "link_to": "POS Branch Counter"},
 		{"label": "POS Opening Entry", "type": "Link", "link_type": "DocType", "link_to": "POS Opening Entry"},

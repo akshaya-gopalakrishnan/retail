@@ -9,7 +9,6 @@ def execute(filters=None):
 	filters = frappe._dict(filters or {})
 	filters.setdefault("from_date", getdate())
 	filters.setdefault("to_date", getdate())
-	filters.sales_channel = filters.get("sales_channel") or None
 
 	return get_columns(), get_data(filters), None, None, None, 1
 
@@ -140,14 +139,12 @@ def get_sales_invoice_rows(filters):
 			and posting_date between %(from_date)s and %(to_date)s
 			and (%(company)s is null or company = %(company)s)
 			and (%(counter)s is null or custom_counter = %(counter)s)
-			and (%(sales_channel)s is null or sales_channel = %(sales_channel)s)
 		""",
 		{
 			"from_date": filters.from_date,
 			"to_date": filters.to_date,
 			"company": filters.get("company"),
 			"counter": filters.get("counter"),
-			"sales_channel": filters.get("sales_channel"),
 		},
 		as_dict=True,
 	)
@@ -171,14 +168,12 @@ def get_sales_invoice_item_rows(filters):
 			and si.posting_date between %(from_date)s and %(to_date)s
 			and (%(company)s is null or si.company = %(company)s)
 			and (%(counter)s is null or si.custom_counter = %(counter)s)
-			and (%(sales_channel)s is null or si.sales_channel = %(sales_channel)s)
 		""",
 		{
 			"from_date": filters.from_date,
 			"to_date": filters.to_date,
 			"company": filters.get("company"),
 			"counter": filters.get("counter"),
-			"sales_channel": filters.get("sales_channel"),
 		},
 		as_dict=True,
 	)

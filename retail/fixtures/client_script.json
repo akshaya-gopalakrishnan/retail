@@ -13,17 +13,6 @@
  {
   "docstatus": 0,
   "doctype": "Client Script",
-  "dt": "Item",
-  "enabled": 1,
-  "modified": "2026-06-11 11:50:29.664282",
-  "module": null,
-  "name": "Margin",
-  "script": "frappe.ui.form.on('Item', {\n    refresh(frm) {\n        calculate_margin_amount(frm);\n    },\n    last_purchase_rate(frm) {\n        calculate_margin_amount(frm);\n    },\n    standard_rate(frm) {\n        calculate_margin_amount(frm);\n    }\n});\n\nfunction calculate_margin_amount(frm) {\n    let purchase_rate = flt(frm.doc.last_purchase_rate);\n    let sell_rate = flt(frm.doc.standard_rate);\n    frm.set_value('custom_margin', sell_rate - purchase_rate);\n}",
-  "view": "Form"
- },
- {
-  "docstatus": 0,
-  "doctype": "Client Script",
   "dt": "Sales Invoice",
   "enabled": 1,
   "modified": "2026-05-21 15:18:42.228939",
@@ -48,10 +37,10 @@
   "doctype": "Client Script",
   "dt": "Item",
   "enabled": 1,
-  "modified": "2026-05-21 23:36:16.339315",
-  "module": null,
-  "name": "generate unique scale barcode",
-  "script": "frappe.ui.form.on('Item', {\r\n\r\n    custom_scale_item: function(frm) {\r\n\r\n        if (frm.doc.custom_scale_item) {\r\n\r\n            if (!frm.doc.custom_barcode) {\r\n\r\n                let prefix = \"21\";\r\n                let rand = Math.floor(10000 + Math.random() * 90000);\r\n\r\n                frm.set_value(\r\n                    'custom_barcode',\r\n                    prefix + rand\r\n                );\r\n            }\r\n        }\r\n    }\r\n\r\n});",
+  "modified": "2026-06-30 12:00:00",
+  "module": "Retail-app",
+  "name": "Margin",
+  "script": "(function () {\n\tfrappe.ui.form.on(\"Item\", {\n\t\trefresh(frm) { set_margin_amount(frm); },\n\t\tstandard_rate(frm) { set_margin_amount(frm); },\n\t\tcustom_sales_net_rate(frm) { set_margin_amount(frm); },\n\t\tcustom_sales_rate_entry(frm) { set_margin_amount(frm); },\n\t\tcustom_b2b(frm) { set_margin_amount(frm); },\n\t\tlast_purchase_rate(frm) { set_margin_amount(frm); },\n\t\tvaluation_rate(frm) { set_margin_amount(frm); },\n\t\tcustom_default_purchase_rate(frm) { set_margin_amount(frm); },\n\t\tcustom_average_purchase_rate(frm) { set_margin_amount(frm); },\n\t\tcustom_purchase_net_rate(frm) { set_margin_amount(frm); },\n\t\tcustom_purchase_rate_entry(frm) { set_margin_amount(frm); },\n\t});\n\n\tfunction set_margin_amount(frm) {\n\t\tconst selling_net = get_selling_net_rate(frm);\n\t\tconst cost_net = get_cost_net_rate(frm);\n\t\tfrm.set_value(\"custom_margin\", flt(selling_net - cost_net, 2));\n\t}\n\n\tfunction get_selling_net_rate(frm) {\n\t\tif (has_entered_value(frm.doc.custom_sales_rate_entry)) {\n\t\t\treturn flt(frm.doc.custom_sales_net_rate);\n\t\t}\n\t\treturn flt(frm.doc.standard_rate || frm.doc.custom_b2b);\n\t}\n\n\tfunction get_cost_net_rate(frm) {\n\t\tif (has_entered_value(frm.doc.custom_purchase_rate_entry)) {\n\t\t\treturn flt(frm.doc.custom_purchase_net_rate);\n\t\t}\n\t\treturn flt(\n\t\t\tfrm.doc.custom_average_purchase_rate\n\t\t\t|| frm.doc.custom_default_purchase_rate\n\t\t\t|| frm.doc.last_purchase_rate\n\t\t\t|| frm.doc.valuation_rate\n\t\t);\n\t}\n\n\tfunction has_entered_value(value) {\n\t\treturn value !== undefined && value !== null && value !== \"\";\n\t}\n})();",
   "view": "Form"
  },
  {
@@ -59,10 +48,21 @@
   "doctype": "Client Script",
   "dt": "Item",
   "enabled": 1,
-  "modified": "2026-06-11 11:50:29.661586",
-  "module": null,
+  "modified": "2026-06-30 12:00:00",
+  "module": "Retail-app",
   "name": "Margin %",
-  "script": "frappe.ui.form.on('Item', {\n    refresh(frm) {\n        calculate_margins(frm);\n    },\n    last_purchase_rate(frm) {\n        calculate_margins(frm);\n    },\n    standard_rate(frm) {\n        calculate_margins(frm);\n    }\n});\n\nfunction calculate_margins(frm) {\n    let purchase_rate = flt(frm.doc.last_purchase_rate);\n    let sell_rate = flt(frm.doc.standard_rate);\n    let margin_amt = sell_rate - purchase_rate;\n\n    frm.set_value('custom_margin', margin_amt);\n    frm.set_value('custom_margin_', sell_rate > 0 ? (margin_amt / sell_rate) * 100 : 0);\n}",
+  "script": "(function () {\n\tfrappe.ui.form.on(\"Item\", {\n\t\trefresh(frm) { set_margin_percent(frm); },\n\t\tstandard_rate(frm) { set_margin_percent(frm); },\n\t\tcustom_sales_net_rate(frm) { set_margin_percent(frm); },\n\t\tcustom_sales_rate_entry(frm) { set_margin_percent(frm); },\n\t\tcustom_b2b(frm) { set_margin_percent(frm); },\n\t\tlast_purchase_rate(frm) { set_margin_percent(frm); },\n\t\tvaluation_rate(frm) { set_margin_percent(frm); },\n\t\tcustom_default_purchase_rate(frm) { set_margin_percent(frm); },\n\t\tcustom_average_purchase_rate(frm) { set_margin_percent(frm); },\n\t\tcustom_purchase_net_rate(frm) { set_margin_percent(frm); },\n\t\tcustom_purchase_rate_entry(frm) { set_margin_percent(frm); },\n\t});\n\n\tfunction set_margin_percent(frm) {\n\t\tconst selling_net = get_selling_net_rate(frm);\n\t\tconst margin = selling_net - get_cost_net_rate(frm);\n\t\tfrm.set_value(\"custom_margin_\", selling_net ? flt((margin / selling_net) * 100, 3) : 0);\n\t}\n\n\tfunction get_selling_net_rate(frm) {\n\t\tif (has_entered_value(frm.doc.custom_sales_rate_entry)) {\n\t\t\treturn flt(frm.doc.custom_sales_net_rate);\n\t\t}\n\t\treturn flt(frm.doc.standard_rate || frm.doc.custom_b2b);\n\t}\n\n\tfunction get_cost_net_rate(frm) {\n\t\tif (has_entered_value(frm.doc.custom_purchase_rate_entry)) {\n\t\t\treturn flt(frm.doc.custom_purchase_net_rate);\n\t\t}\n\t\treturn flt(\n\t\t\tfrm.doc.custom_average_purchase_rate\n\t\t\t|| frm.doc.custom_default_purchase_rate\n\t\t\t|| frm.doc.last_purchase_rate\n\t\t\t|| frm.doc.valuation_rate\n\t\t);\n\t}\n\n\tfunction has_entered_value(value) {\n\t\treturn value !== undefined && value !== null && value !== \"\";\n\t}\n})();",
+  "view": "Form"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Item",
+  "enabled": 1,
+  "modified": "2026-05-21 23:36:16.339315",
+  "module": null,
+  "name": "generate unique scale barcode",
+  "script": "frappe.ui.form.on('Item', {\r\n\r\n    custom_scale_item: function(frm) {\r\n\r\n        if (frm.doc.custom_scale_item) {\r\n\r\n            if (!frm.doc.custom_barcode) {\r\n\r\n                let prefix = \"21\";\r\n                let rand = Math.floor(10000 + Math.random() * 90000);\r\n\r\n                frm.set_value(\r\n                    'custom_barcode',\r\n                    prefix + rand\r\n                );\r\n            }\r\n        }\r\n    }\r\n\r\n});",
   "view": "Form"
  },
  {

@@ -37,7 +37,7 @@ app_include_css = [
 ]
 
 app_include_js = [
-    "/assets/retail/js/retail_navigation.js?v=45",
+    "/assets/retail/js/retail_navigation.js?v=46",
     "/assets/retail/js/brand_theme_switcher.js?v=8",
 ]
 
@@ -75,7 +75,6 @@ doctype_list_js = {
 	"Journal Entry": "public/js/hide_transaction_id_list.js",
 	"Payment Entry": "public/js/hide_transaction_id_list.js",
 	"Sales Invoice": [
-		"public/js/forms/sales_invoice_list.js",
 		"public/js/hide_transaction_id_list.js",
 	],
 	"Purchase Invoice": "public/js/hide_transaction_id_list.js",
@@ -95,6 +94,14 @@ doctype_list_js = {
 }
 doctype_js = {
 	"Item": "public/js/forms/item.js",
+	"Purchase Order": "public/js/forms/foc_qty.js",
+	"Purchase Receipt": "public/js/forms/foc_qty.js",
+	"Purchase Invoice": "public/js/forms/foc_qty.js",
+	"Sales Order": "public/js/forms/foc_qty.js",
+	"Delivery Note": "public/js/forms/foc_qty.js",
+	"Sales Invoice": "public/js/forms/sales_invoice.js",
+	"POS Invoice": "public/js/forms/foc_qty.js",
+	"Stock Entry": "public/js/forms/foc_qty.js",
 }
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -190,11 +197,16 @@ after_install = "retail.naming.install_retail_defaults"
 
 doc_events = {
 	"Purchase Order": {
-		"validate": "retail.domains.purchase.order.set_balance_qty",
+		"validate": [
+			"retail.domains.foc.apply_foc_quantities",
+			"retail.domains.purchase.order.set_balance_qty",
+		],
 	},
 	"Purchase Receipt": {
 		"before_naming": "retail.naming.set_transaction_naming_series",
+		"validate": "retail.domains.foc.apply_foc_quantities",
 		"on_submit": [
+			"retail.domains.foc.add_foc_stock_ledger_entries",
 			"retail.domains.purchase.order.sync_balance_qty_from_transaction",
 			"retail.domains.item.average_purchase_rate.sync_average_purchase_rates",
 		],
@@ -209,7 +221,9 @@ doc_events = {
 	},
 	"Purchase Invoice": {
 		"before_naming": "retail.naming.set_transaction_naming_series",
+		"validate": "retail.domains.foc.apply_foc_quantities",
 		"on_submit": [
+			"retail.domains.foc.add_foc_stock_ledger_entries",
 			"retail.domains.purchase.order.sync_balance_qty_from_transaction",
 			"retail.domains.item.average_purchase_rate.sync_average_purchase_rates",
 		],
@@ -233,28 +247,36 @@ doc_events = {
 	"Sales Invoice": {
 		"before_naming": "retail.naming.set_transaction_naming_series",
 		"validate": [
+			"retail.domains.foc.apply_foc_quantities",
 			"retail.domains.sales.counter.set_sales_invoice_counter_name",
-			"retail.domains.sales.channel.set_sales_channel",
+			"retail.domains.sales.invoice_totals.apply_retail_shipping_charges",
 			"retail.api.pos_sync.validate_external_reference",
 			"retail.api.pos_sync.block_external_sales_invoice",
 		],
+		"on_submit": "retail.domains.foc.add_foc_stock_ledger_entries",
 	},
 	"POS Invoice": {
-		"validate": "retail.api.pos_sync.validate_external_reference",
+		"validate": [
+			"retail.domains.foc.apply_foc_quantities",
+			"retail.api.pos_sync.validate_external_reference",
+		],
+		"on_submit": "retail.domains.foc.add_foc_stock_ledger_entries",
 	},
-    "Sales Order": {
-		"validate": "retail.domains.sales.channel.set_sales_channel",
-    },
     "Delivery Note": {
 		"before_naming": "retail.naming.set_transaction_naming_series",
-		"validate": "retail.domains.sales.channel.set_sales_channel",
+		"validate": "retail.domains.foc.apply_foc_quantities",
+		"on_submit": "retail.domains.foc.add_foc_stock_ledger_entries",
     },
+	"Sales Order": {
+		"validate": "retail.domains.foc.apply_foc_quantities",
+	},
+	"Stock Entry": {
+		"validate": "retail.domains.foc.apply_foc_quantities",
+		"on_submit": "retail.domains.foc.add_foc_stock_ledger_entries",
+	},
 	"Payment Entry": {
 		"before_naming": "retail.naming.set_transaction_naming_series",
-		"validate": [
-			"retail.domains.sales.channel.set_sales_channel",
-            "retail.api.pos_sync.validate_external_reference",
-        ],
+		"validate": "retail.api.pos_sync.validate_external_reference",
 	},
 	"Journal Entry": {
 		"before_naming": "retail.naming.set_transaction_naming_series",
@@ -308,6 +330,9 @@ after_migrate = [
 # override_whitelisted_methods = {
 # 	"frappe.desk.doctype.event.event.get_events": "retail.event.get_events"
 # }
+override_whitelisted_methods = {
+	"frappe.desk.query_report.run": "retail.retail_app.report.stock_movement_utils.run_query_report",
+}
 #
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,
@@ -388,6 +413,7 @@ fixtures = [
     "Custom Field",
     "Client Script",
     "Server Script",
+    "Print Format",
     "Property Setter",
     "Custom DocPerm",
     "Workflow",
@@ -460,6 +486,7 @@ fixtures = [
                     "Items",
                     "Items List",
                     "Journal Entries",
+                    "Material Requests",
                     "Payments",
                     "Price Lists",
                     "Purchase Invoices",
