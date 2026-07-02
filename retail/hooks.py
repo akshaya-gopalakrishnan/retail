@@ -407,7 +407,7 @@ fixtures = [
     {
         "dt": "DocType",
         "filters": [
-            ["name", "in", ("Retail Packing Detail", "Counter")]
+            ["name", "in", ("Counter",)]
         ],
     },
     "Custom Field",
