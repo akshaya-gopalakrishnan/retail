@@ -426,8 +426,9 @@ fixtures = [
                 "name",
                 "in",
                 (
-                    "Users by Role",
-                    "Companies by Country",
+                    "Retail Top Selling Products",
+                    "Retail Sales by Counter",
+                    "Retail Sales Trend 7 Days",
                 ),
             ]
         ],
