@@ -1,7 +1,7 @@
 import frappe
 
 
-BRAND_NAME = "Celestial Software LLC"
+BRAND_NAME = "CELESTA ERP"
 LOGO_URL = "/assets/retail/images/retail-logo.svg?v=2"
 FAVICON_URL = "/assets/retail/images/celesta-app-icon.svg?v=1"
 APP_LOGO_URL = "/assets/retail/images/celesta-app-icon.svg"

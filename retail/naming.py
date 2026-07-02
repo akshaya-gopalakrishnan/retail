@@ -117,6 +117,8 @@ def _set_doctype_property(doctype, property_name, value, property_type):
 
 
 def install_retail_defaults():
+	from retail.branding import apply_default_branding
+	from retail.setup import hide_non_retail_workspaces
 	from retail.domains.foc import ensure_foc_fields
 	from retail.domains.sales.counter import ensure_counter_display_field
 	from retail.domains.sales.invoice_totals import ensure_sales_invoice_retail_totals_fields
@@ -132,6 +134,8 @@ def install_retail_defaults():
 		ensure_packing_vat_pricing_fields,
 	)
 
+	apply_default_branding()
+	hide_non_retail_workspaces()
 	install_naming_series()
 	install_list_titles()
 	ensure_foc_fields()

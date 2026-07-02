@@ -44,7 +44,11 @@ app_include_js = [
 # include js, css files in header of web template
 web_include_css = [
     "/assets/retail/css/brand_themes.css?v=11",
-    "/assets/retail/css/website_branding.css?v=11",
+    "/assets/retail/css/website_branding.css?v=12",
+]
+
+web_include_js = [
+    "/assets/retail/js/website_branding.js?v=2",
 ]
 
 website_context = {
@@ -284,6 +288,8 @@ doc_events = {
 }
 
 after_migrate = [
+	"retail.branding.apply_default_branding",
+	"retail.setup.hide_non_retail_workspaces",
     "retail.domains.purchase.order.backfill_balance_qty",
     "retail.retail_app.report.damaged_and_expired_stock.damaged_and_expired_stock.ensure_report",
     "retail.retail_app.report.near_expiry_report.near_expiry_report.ensure_report",
