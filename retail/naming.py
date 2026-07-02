@@ -70,6 +70,9 @@ def install_naming_series():
 def install_list_titles():
 	"""Use business fields, rather than opaque database names, as list titles."""
 	for doctype, title_field in LIST_TITLE_FIELDS.items():
+		if not frappe.db.exists("DocType", doctype):
+			continue
+
 		property_setter_name = f"{doctype}-main-title_field"
 		if frappe.db.exists("Property Setter", property_setter_name):
 			frappe.db.set_value(

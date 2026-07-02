@@ -55,6 +55,9 @@ def get_counter_display_name(counter):
 	if not counter:
 		return ""
 
+	if not frappe.db.exists("DocType", "Counter"):
+		return counter
+
 	return (
 		frappe.db.get_value("Counter", counter, "counter_name")
 		or frappe.db.get_value("Counter", {"counter_name": counter}, "counter_name")
