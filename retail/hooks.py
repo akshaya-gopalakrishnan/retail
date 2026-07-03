@@ -242,7 +242,10 @@ doc_events = {
 	},
     "Item": {
 		"before_naming": "retail.domains.item.naming.set_automatic_item_code",
-		"validate": "retail.domains.item.vat_pricing.update_item_vat_prices",
+		"validate": [
+			"retail.domains.item.packing_sync.sync_uoms_and_barcodes",
+			"retail.domains.item.vat_pricing.update_item_vat_prices",
+		],
         "on_update": [
 			"retail.domains.item.item_price_sync.sync_simple_item_prices",
 			"retail.domains.item.average_purchase_rate.sync_average_purchase_rate_from_item",
@@ -300,6 +303,7 @@ after_migrate = [
 	"retail.domains.item.naming.install_item_code_defaults",
 	"retail.domains.item.item_price_sync.disable_legacy_item_price_scripts",
 	"retail.domains.item.item_price_sync.ensure_standard_purchase_rate_field",
+	"retail.domains.item.packing_sync.disable_legacy_uom_barcode_script",
 	"retail.domains.item.packing_rate.ensure_packing_purchase_rate_script",
 	"retail.domains.item.vat_pricing.ensure_item_vat_pricing_fields",
 ]
