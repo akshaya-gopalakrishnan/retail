@@ -16,6 +16,12 @@ MOVEMENT_TYPE_COLUMN = {
 	"fieldtype": "Data",
 	"width": 130,
 }
+FOC_MARKER_COLUMN = {
+	"label": _("FOC"),
+	"fieldname": "foc_stock_entry",
+	"fieldtype": "Data",
+	"width": 70,
+}
 
 
 def get_default_filters(filters=None):
@@ -254,8 +260,35 @@ def run_query_report(
 
 	if report_name == "Stock Ledger":
 		add_stock_ledger_movement_types(result)
+		add_stock_ledger_foc_markers(result)
 
 	return result
+
+
+def add_stock_ledger_foc_markers(result):
+	if not result or not result.get("result"):
+		return
+
+	if not frappe.db.has_column("Stock Ledger Entry", "custom_is_foc_stock_entry"):
+		return
+
+	columns = result.get("columns") or []
+	if not any(get_column_fieldname(column) == "foc_stock_entry" for column in columns):
+		insert_at = get_column_index(columns, "movement_type")
+		if insert_at is None:
+			insert_at = get_column_index(columns, "voucher_type")
+		if insert_at is None:
+			columns.append(FOC_MARKER_COLUMN)
+		else:
+			columns.insert(insert_at + 1, FOC_MARKER_COLUMN)
+
+	flags_by_key = get_foc_flags_by_stock_ledger_key(result.get("result"))
+	for row in result.get("result") or []:
+		if not isinstance(row, dict):
+			continue
+
+		flag_queue = flags_by_key.get(get_stock_ledger_row_key(row))
+		row["foc_stock_entry"] = _("FOC") if flag_queue and flag_queue.pop(0) else ""
 
 
 def add_stock_ledger_movement_types(result):
@@ -289,6 +322,60 @@ def get_column_index(columns, fieldname):
 	for index, column in enumerate(columns):
 		if get_column_fieldname(column) == fieldname:
 			return index
+
+
+def get_foc_flags_by_stock_ledger_key(rows):
+	voucher_filters = get_voucher_filters(rows)
+	if not voucher_filters:
+		return {}
+
+	flags_by_key = {}
+	for entry in frappe.get_all(
+		"Stock Ledger Entry",
+		filters={
+			"docstatus": ["<", 2],
+			"is_cancelled": 0,
+			"voucher_no": ["in", tuple(voucher_filters)],
+		},
+		fields=[
+			"posting_datetime as date",
+			"item_code",
+			"warehouse",
+			"voucher_type",
+			"voucher_no",
+			"actual_qty",
+			"stock_value_difference",
+			"qty_after_transaction",
+			"custom_is_foc_stock_entry",
+		],
+		order_by="posting_datetime, creation",
+	):
+		flags_by_key.setdefault(get_stock_ledger_row_key(entry), []).append(
+			1 if entry.custom_is_foc_stock_entry else 0
+		)
+
+	return flags_by_key
+
+
+def get_voucher_filters(rows):
+	return {
+		row.get("voucher_no")
+		for row in rows or []
+		if isinstance(row, dict) and row.get("voucher_type") and row.get("voucher_no")
+	}
+
+
+def get_stock_ledger_row_key(row):
+	return (
+		str(row.get("date") or ""),
+		row.get("item_code"),
+		row.get("warehouse"),
+		row.get("voucher_type"),
+		row.get("voucher_no"),
+		flt(row.get("actual_qty")),
+		flt(row.get("stock_value_difference")),
+		flt(row.get("qty_after_transaction")),
+	)
 
 
 def get_return_flags_by_voucher(rows):

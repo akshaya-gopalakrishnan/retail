@@ -71,11 +71,27 @@ def ensure_foc_fields():
 						"insert_after": "actual_qty",
 						"read_only": 1,
 						"no_copy": 1,
+						"in_standard_filter": 1,
 					}
 				]
 		},
 		ignore_validate=True,
 	)
+
+	field_name = "Stock Ledger Entry-custom_is_foc_stock_entry"
+	if frappe.db.exists("Custom Field", field_name):
+		frappe.db.set_value(
+			"Custom Field",
+			field_name,
+			{
+				"label": "FOC Stock Entry",
+				"in_list_view": 0,
+				"in_standard_filter": 1,
+				"read_only": 1,
+				"no_copy": 1,
+			},
+			update_modified=False,
+		)
 
 	for doctype in FOC_ITEM_DOCTYPES:
 		frappe.db.updatedb(doctype)
