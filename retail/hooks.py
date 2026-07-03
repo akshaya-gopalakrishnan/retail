@@ -44,7 +44,7 @@ app_include_js = [
 # include js, css files in header of web template
 web_include_css = [
     "/assets/retail/css/brand_themes.css?v=11",
-    "/assets/retail/css/website_branding.css?v=12",
+    "/assets/retail/css/website_branding.css?v=13",
 ]
 
 web_include_js = [

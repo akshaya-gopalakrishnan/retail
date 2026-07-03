@@ -34,6 +34,8 @@ body {
 .navbar.navbar-light {
     background: var(--retail-brand-surface-strong);
     border-bottom: 1px solid var(--retail-brand-border);
+    position: relative;
+    z-index: 1100;
 }
 
 .navbar .container,
@@ -56,6 +58,8 @@ body {
 
 .navbar .dropdown-menu {
     background: var(--retail-brand-surface-strong);
+    pointer-events: auto;
+    z-index: 1110;
 }
 
 .navbar .dropdown-item {
