@@ -603,6 +603,7 @@ def update_item_vat_prices(doc, method=None):
 	for direction in VAT_PRICE_FIELDS:
 		_apply_direction(doc, direction)
 
+	_sync_last_purchase_rate_from_item_master(doc)
 	_update_margin(doc)
 	update_packing_vat_prices(doc)
 
@@ -632,6 +633,14 @@ def _apply_direction(doc, direction):
 	doc.set(fields["net"], flt(net, 2))
 	doc.set(fields["vat"], flt(vat, 2))
 	doc.set(fields["gross"], flt(gross, 2))
+
+
+def _sync_last_purchase_rate_from_item_master(doc):
+	"""Use the Item Master purchase entry as this item's latest maintained buying rate."""
+	if doc.get("custom_purchase_rate_entry") in (None, ""):
+		return
+
+	doc.set("last_purchase_rate", flt(doc.get("custom_purchase_net_rate") or doc.get("custom_default_purchase_rate"), 2))
 
 
 def update_packing_vat_prices(doc):

@@ -134,10 +134,12 @@
 				const net = inclusive && rate ? entered / (1 + rate / 100) : entered;
 				const vat = inclusive ? entered - net : net * rate / 100;
 				const gross = inclusive ? entered : net + vat;
-				Promise.resolve(frappe.model.set_value("Item", frm.doc.name, {
+				const updates = {
 					[fields.base]: flt(net, 2), [fields.net]: flt(net, 2),
 					[fields.vat]: flt(vat, 2), [fields.gross]: flt(gross, 2),
-				})).then(() => refreshMargin(frm));
+				};
+				if (direction === "purchase") updates.last_purchase_rate = flt(net, 2);
+				Promise.resolve(frappe.model.set_value("Item", frm.doc.name, updates)).then(() => refreshMargin(frm));
 			},
 		});
 	}
