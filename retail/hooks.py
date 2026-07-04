@@ -205,6 +205,9 @@ doc_events = {
 			"retail.domains.foc.apply_foc_quantities",
 			"retail.domains.purchase.order.set_balance_qty",
 		],
+		"on_submit": "retail.domains.item.item_price_sync.sync_latest_transaction_item_prices",
+		"on_cancel": "retail.domains.item.item_price_sync.recalculate_transaction_item_prices",
+		"on_update_after_submit": "retail.domains.item.item_price_sync.sync_latest_transaction_item_prices",
 	},
 	"Purchase Receipt": {
 		"before_naming": "retail.naming.set_transaction_naming_series",
@@ -213,14 +216,17 @@ doc_events = {
 			"retail.domains.foc.add_foc_stock_ledger_entries",
 			"retail.domains.purchase.order.sync_balance_qty_from_transaction",
 			"retail.domains.item.average_purchase_rate.sync_average_purchase_rates",
+			"retail.domains.item.item_price_sync.sync_latest_transaction_item_prices",
 		],
 		"on_cancel": [
 			"retail.domains.purchase.order.sync_balance_qty_from_transaction",
 			"retail.domains.item.average_purchase_rate.sync_average_purchase_rates",
+			"retail.domains.item.item_price_sync.recalculate_transaction_item_prices",
 		],
 		"on_update_after_submit": [
 			"retail.domains.purchase.order.sync_balance_qty_from_transaction",
 			"retail.domains.item.average_purchase_rate.sync_average_purchase_rates",
+			"retail.domains.item.item_price_sync.sync_latest_transaction_item_prices",
 		],
 	},
 	"Purchase Invoice": {
@@ -230,14 +236,17 @@ doc_events = {
 			"retail.domains.foc.add_foc_stock_ledger_entries",
 			"retail.domains.purchase.order.sync_balance_qty_from_transaction",
 			"retail.domains.item.average_purchase_rate.sync_average_purchase_rates",
+			"retail.domains.item.item_price_sync.sync_latest_transaction_item_prices",
 		],
 		"on_cancel": [
 			"retail.domains.purchase.order.sync_balance_qty_from_transaction",
 			"retail.domains.item.average_purchase_rate.sync_average_purchase_rates",
+			"retail.domains.item.item_price_sync.recalculate_transaction_item_prices",
 		],
 		"on_update_after_submit": [
 			"retail.domains.purchase.order.sync_balance_qty_from_transaction",
 			"retail.domains.item.average_purchase_rate.sync_average_purchase_rates",
+			"retail.domains.item.item_price_sync.sync_latest_transaction_item_prices",
 		],
 	},
     "Item": {
@@ -260,22 +269,40 @@ doc_events = {
 			"retail.api.pos_sync.validate_external_reference",
 			"retail.api.pos_sync.block_external_sales_invoice",
 		],
-		"on_submit": "retail.domains.foc.add_foc_stock_ledger_entries",
+		"on_submit": [
+			"retail.domains.foc.add_foc_stock_ledger_entries",
+			"retail.domains.item.item_price_sync.sync_latest_transaction_item_prices",
+		],
+		"on_cancel": "retail.domains.item.item_price_sync.recalculate_transaction_item_prices",
+		"on_update_after_submit": "retail.domains.item.item_price_sync.sync_latest_transaction_item_prices",
 	},
 	"POS Invoice": {
 		"validate": [
 			"retail.domains.foc.apply_foc_quantities",
 			"retail.api.pos_sync.validate_external_reference",
 		],
-		"on_submit": "retail.domains.foc.add_foc_stock_ledger_entries",
-	},
+		"on_submit": [
+			"retail.domains.foc.add_foc_stock_ledger_entries",
+			"retail.domains.item.item_price_sync.sync_latest_transaction_item_prices",
+		],
+		"on_cancel": "retail.domains.item.item_price_sync.recalculate_transaction_item_prices",
+		"on_update_after_submit": "retail.domains.item.item_price_sync.sync_latest_transaction_item_prices",
+    },
     "Delivery Note": {
 		"before_naming": "retail.naming.set_transaction_naming_series",
 		"validate": "retail.domains.foc.apply_foc_quantities",
-		"on_submit": "retail.domains.foc.add_foc_stock_ledger_entries",
+		"on_submit": [
+			"retail.domains.foc.add_foc_stock_ledger_entries",
+			"retail.domains.item.item_price_sync.sync_latest_transaction_item_prices",
+		],
+		"on_cancel": "retail.domains.item.item_price_sync.recalculate_transaction_item_prices",
+		"on_update_after_submit": "retail.domains.item.item_price_sync.sync_latest_transaction_item_prices",
     },
 	"Sales Order": {
 		"validate": "retail.domains.foc.apply_foc_quantities",
+		"on_submit": "retail.domains.item.item_price_sync.sync_latest_transaction_item_prices",
+		"on_cancel": "retail.domains.item.item_price_sync.recalculate_transaction_item_prices",
+		"on_update_after_submit": "retail.domains.item.item_price_sync.sync_latest_transaction_item_prices",
 	},
 	"Stock Entry": {
 		"validate": "retail.domains.foc.apply_foc_quantities",
@@ -305,6 +332,7 @@ after_migrate = [
 	"retail.domains.item.item_price_sync.ensure_standard_purchase_rate_field",
 	"retail.domains.item.packing_sync.disable_legacy_uom_barcode_script",
 	"retail.domains.item.packing_rate.ensure_packing_purchase_rate_script",
+	"retail.domains.item.arabic_name.ensure_item_arabic_name_field",
 	"retail.domains.item.vat_pricing.ensure_item_vat_pricing_fields",
 ]
 

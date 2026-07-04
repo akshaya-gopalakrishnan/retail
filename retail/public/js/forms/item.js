@@ -32,14 +32,23 @@
 			label: __("Selling"),
 		},
 	};
+	const arabicItemNameField = "custom_arabic_item_name";
+	const arabicTranslationDelay = 900;
 
 	frappe.ui.form.on("Item", {
 		refresh(frm) {
+			setupArabicItemNameField(frm);
 			setOpeningAveragePurchaseRate(frm, false);
 			refreshVatPrices(frm);
 			refreshPackingVatRows(frm);
 			refreshMargin(frm);
 			addPackingVatButton(frm);
+		},
+		item_name(frm) {
+			queueArabicItemNameTranslation(frm);
+		},
+		custom_arabic_item_name(frm) {
+			frm._arabic_item_name_touched = true;
 		},
 		last_purchase_rate(frm) {
 			setOpeningAveragePurchaseRate(frm, true);
@@ -335,6 +344,65 @@
 		return String(value || "").replace(/[&<>"']/g, (char) => ({
 			"&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;",
 		})[char]);
+	}
+
+	function setupArabicItemNameField(frm) {
+		const field = frm.fields_dict[arabicItemNameField];
+		if (!field) return;
+		frm._arabic_item_name_auto_value = frm._arabic_item_name_auto_value || "";
+		if (field.$input) field.$input.attr("dir", "rtl").css("text-align", "right");
+	}
+
+	function queueArabicItemNameTranslation(frm) {
+		if (!frm.fields_dict[arabicItemNameField]) return;
+
+		clearTimeout(frm._arabic_item_name_timer);
+		frm._arabic_item_name_timer = setTimeout(() => {
+			translateArabicItemName(frm);
+		}, arabicTranslationDelay);
+	}
+
+	function translateArabicItemName(frm) {
+		const sourceText = (frm.doc.item_name || "").trim();
+		const currentArabic = (frm.doc[arabicItemNameField] || "").trim();
+		const lastAutoValue = (frm._arabic_item_name_auto_value || "").trim();
+		const manuallyChanged = frm._arabic_item_name_touched && currentArabic && currentArabic !== lastAutoValue;
+		if (!sourceText || manuallyChanged) return;
+
+		frm._arabic_item_name_source = sourceText;
+		frappe.call({
+			method: "retail.domains.item.arabic_name.translate_item_name_to_arabic",
+			args: { text: sourceText },
+			freeze: false,
+			callback: ({ message }) => {
+				if (!message || frm._arabic_item_name_source !== (frm.doc.item_name || "").trim()) return;
+				if (message.configured === false) {
+					showArabicTranslationConfigOnce(frm);
+					return;
+				}
+				if (message.error) {
+					showArabicTranslationErrorOnce(frm);
+					return;
+				}
+				if (!message.translated_text) return;
+
+				frm._arabic_item_name_auto_value = message.translated_text;
+				frm._arabic_item_name_touched = false;
+				frm.set_value(arabicItemNameField, message.translated_text);
+			},
+		});
+	}
+
+	function showArabicTranslationConfigOnce(frm) {
+		if (frm._arabic_item_name_config_shown) return;
+		frm._arabic_item_name_config_shown = true;
+		frappe.show_alert({ message: __("Arabic translation service not configured"), indicator: "orange" });
+	}
+
+	function showArabicTranslationErrorOnce(frm) {
+		if (frm._arabic_item_name_error_shown) return;
+		frm._arabic_item_name_error_shown = true;
+		frappe.show_alert({ message: __("Arabic translation failed"), indicator: "orange" });
 	}
 
 	function refreshMargin(frm) {
