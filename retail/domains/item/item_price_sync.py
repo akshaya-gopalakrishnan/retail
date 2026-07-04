@@ -21,6 +21,9 @@ LEGACY_ITEM_PRICE_SCRIPTS = (
 	"purchase rate submit",
 	"UOM&Barcode table sync Retail Packing detail after save",
 )
+LEGACY_ITEM_RATE_CLIENT_SCRIPTS = (
+	"Item fetch last purchase rate from same name",
+)
 
 
 def sync_simple_item_prices(doc, method=None):
@@ -133,13 +136,18 @@ def sync_item_price(doc, price_list, rate, uom=None):
 	)
 
 	if price_name:
-		frappe.db.set_value(
+		for duplicate in frappe.get_all(
 			"Item Price",
-			price_name,
-			"price_list_rate",
-			rate,
-			update_modified=False,
-		)
+			filters={"item_code": item_code, "price_list": price_list, "uom": uom},
+			pluck="name",
+		):
+			frappe.db.set_value(
+				"Item Price",
+				duplicate,
+				"price_list_rate",
+				rate,
+				update_modified=False,
+			)
 		return
 
 	frappe.get_doc(
@@ -234,6 +242,10 @@ def disable_legacy_item_price_scripts():
 	for script_name in LEGACY_ITEM_PRICE_SCRIPTS:
 		if frappe.db.exists("Server Script", script_name):
 			frappe.db.set_value("Server Script", script_name, "disabled", 1, update_modified=False)
+
+	for script_name in LEGACY_ITEM_RATE_CLIENT_SCRIPTS:
+		if frappe.db.exists("Client Script", script_name):
+			frappe.db.set_value("Client Script", script_name, "enabled", 0, update_modified=False)
 
 
 def disable_legacy_last_purchase_rate_script():

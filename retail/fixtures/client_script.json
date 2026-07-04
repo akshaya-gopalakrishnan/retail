@@ -80,7 +80,7 @@
   "docstatus": 0,
   "doctype": "Client Script",
   "dt": "Item",
-  "enabled": 1,
+  "enabled": 0,
   "modified": "2026-06-11 12:47:08.059848",
   "module": null,
   "name": "Item fetch last purchase rate from same name",
