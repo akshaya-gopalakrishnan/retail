@@ -256,6 +256,7 @@ doc_events = {
 			"retail.domains.item.vat_pricing.update_item_vat_prices",
 		],
         "on_update": [
+			"retail.domains.item.vat_pricing.sync_last_purchase_rate_from_item_master",
 			"retail.domains.item.item_price_sync.sync_simple_item_prices",
 			"retail.domains.item.average_purchase_rate.sync_average_purchase_rate_from_item",
         ],

@@ -608,6 +608,19 @@ def update_item_vat_prices(doc, method=None):
 	update_packing_vat_prices(doc)
 
 
+def sync_last_purchase_rate_from_item_master(doc, method=None):
+	"""Persist the Item Master purchase entry as the latest maintained purchase rate."""
+	if isinstance(doc, str):
+		doc = frappe.get_doc("Item", doc)
+
+	rate = _get_item_master_purchase_rate(doc)
+	if rate <= 0:
+		return
+
+	doc.set("last_purchase_rate", rate)
+	frappe.db.set_value("Item", doc.name, "last_purchase_rate", rate, update_modified=False)
+
+
 def _apply_direction(doc, direction):
 	fields = VAT_PRICE_FIELDS[direction]
 	template = doc.get(fields["template"])
@@ -637,10 +650,16 @@ def _apply_direction(doc, direction):
 
 def _sync_last_purchase_rate_from_item_master(doc):
 	"""Use the Item Master purchase entry as this item's latest maintained buying rate."""
-	if doc.get("custom_purchase_rate_entry") in (None, ""):
-		return
+	rate = _get_item_master_purchase_rate(doc)
+	if rate > 0:
+		doc.set("last_purchase_rate", rate)
 
-	doc.set("last_purchase_rate", flt(doc.get("custom_purchase_net_rate") or doc.get("custom_default_purchase_rate"), 2))
+
+def _get_item_master_purchase_rate(doc):
+	if doc.get("custom_purchase_rate_entry") in (None, ""):
+		return 0
+
+	return flt(doc.get("custom_purchase_net_rate") or doc.get("custom_default_purchase_rate"), 2)
 
 
 def update_packing_vat_prices(doc):
