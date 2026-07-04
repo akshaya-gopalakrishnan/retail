@@ -335,6 +335,7 @@ after_migrate = [
 	"retail.domains.item.packing_rate.ensure_packing_purchase_rate_script",
 	"retail.domains.item.arabic_name.ensure_item_arabic_name_field",
 	"retail.domains.item.vat_pricing.ensure_item_vat_pricing_fields",
+	"retail.domains.item.vat_pricing.backfill_item_master_last_purchase_rates",
 ]
 
 # Scheduled Tasks

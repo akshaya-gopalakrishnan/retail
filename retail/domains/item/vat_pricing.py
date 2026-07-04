@@ -621,6 +621,19 @@ def sync_last_purchase_rate_from_item_master(doc, method=None):
 	frappe.db.set_value("Item", doc.name, "last_purchase_rate", rate, update_modified=False)
 
 
+def backfill_item_master_last_purchase_rates():
+	"""Repair existing Items where purchase entry exists but last purchase rate is stale."""
+	if not frappe.db.has_column("Item", "custom_purchase_rate_entry"):
+		return
+
+	for item_code in frappe.get_all(
+		"Item",
+		filters={"custom_purchase_rate_entry": [">", 0]},
+		pluck="name",
+	):
+		sync_last_purchase_rate_from_item_master(item_code)
+
+
 def _apply_direction(doc, direction):
 	fields = VAT_PRICE_FIELDS[direction]
 	template = doc.get(fields["template"])
