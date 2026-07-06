@@ -112,6 +112,8 @@ OBSOLETE_ITEM_PRICING_FIELDS = (
 	"custom_column_break_kcr7n",
 )
 
+DEFAULT_VAT_TEMPLATE_TITLE = "UAE VAT 5%"
+
 
 def ensure_item_vat_pricing_fields():
 	"""Add the reusable Sales/Purchase VAT pricing controls to Item."""
@@ -296,9 +298,14 @@ def ensure_item_vat_pricing_fields():
 		ignore_validate=True,
 	)
 	frappe.db.updatedb("Item")
+	default_vat_template = get_default_vat_template()
 	_set_field_property("custom_tax", "label", "Sales VAT Template", "Data")
 	_set_field_property("custom_tax", "reqd", "1", "Check")
 	_set_field_property("custom_purchase_tax_template", "reqd", "1", "Check")
+	if default_vat_template:
+		_set_field_property("custom_tax", "default", default_vat_template, "Data")
+		_set_field_property("custom_purchase_tax_template", "default", default_vat_template, "Data")
+		_set_empty_item_vat_templates(default_vat_template)
 	_set_field_property("custom_pricing_summary_section", "label", "Pricing Summary", "Data")
 	_set_field_property("custom_vat_pricing_section", "label", "Purchase & Sales VAT Pricing", "Data")
 	_set_field_property("custom_vat_pricing_section", "hidden", "1", "Check")
@@ -445,6 +452,34 @@ def ensure_packing_vat_pricing_fields():
 	)
 	frappe.db.updatedb("Retail Packing Detail")
 	frappe.clear_cache(doctype="Retail Packing Detail")
+
+
+def get_default_vat_template():
+	"""Return the site-specific Item Tax Template used as the default 5% VAT template."""
+	template = frappe.db.get_value("Item Tax Template", {"title": DEFAULT_VAT_TEMPLATE_TITLE}, "name")
+	if template:
+		return template
+
+	detail = frappe.qb.DocType("Item Tax Template Detail")
+	rows = (
+		frappe.qb.from_(detail)
+		.select(detail.parent)
+		.where(detail.tax_rate == 5)
+		.limit(1)
+	).run()
+	return rows[0][0] if rows else None
+
+
+def _set_empty_item_vat_templates(default_vat_template):
+	for fieldname in ("custom_tax", "custom_purchase_tax_template"):
+		frappe.db.sql(
+			f"""
+			update `tabItem`
+			set `{fieldname}` = %s
+			where coalesce(`{fieldname}`, '') = ''
+			""",
+			default_vat_template,
+		)
 
 
 def arrange_item_vat_pricing_layout():
