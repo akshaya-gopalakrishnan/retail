@@ -254,6 +254,7 @@ def ensure_item_vat_pricing_fields():
 					"label": "Purchase VAT Template",
 					"fieldtype": "Link",
 					"options": "Item Tax Template",
+					"reqd": 1,
 					"insert_after": "custom_vat_pricing_section",
 				},
 				{
@@ -296,6 +297,8 @@ def ensure_item_vat_pricing_fields():
 	)
 	frappe.db.updatedb("Item")
 	_set_field_property("custom_tax", "label", "Sales VAT Template", "Data")
+	_set_field_property("custom_tax", "reqd", "1", "Check")
+	_set_field_property("custom_purchase_tax_template", "reqd", "1", "Check")
 	_set_field_property("custom_pricing_summary_section", "label", "Pricing Summary", "Data")
 	_set_field_property("custom_vat_pricing_section", "label", "Purchase & Sales VAT Pricing", "Data")
 	_set_field_property("custom_vat_pricing_section", "hidden", "1", "Check")
