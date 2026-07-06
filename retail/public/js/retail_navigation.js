@@ -75,6 +75,16 @@
         , 'pos transaction log': { icon: 'fa fa-list', cls: 'color-accounts' }
     };
     const DESKTOP_MEDIA = '(min-width: 992px)';
+    const WIDE_TRANSACTION_DOCTYPES = new Set([
+        'Purchase Order',
+        'Purchase Receipt',
+        'Purchase Invoice',
+        'Sales Order',
+        'Delivery Note',
+        'Sales Invoice',
+        'POS Invoice',
+        'Stock Entry',
+    ]);
     const DIRECT_MAPPING = {
         'Items List': ['List', 'Item'],
         'Item Groups': ['List', 'Item Group'],
@@ -660,7 +670,7 @@
 
     // Ensure our CSS is loaded at runtime in case app_include_css wasn't picked up
     function ensureRetailCss() {
-        const href = '/assets/retail/css/retail_icons.css?v=6';
+        const href = '/assets/retail/css/retail_icons.css?v=14';
         if (document.querySelector('link[href^="/assets/retail/css/retail_icons.css"]')) return;
         const link = document.createElement('link');
         link.rel = 'stylesheet';
@@ -716,6 +726,29 @@
             .color-pos-reports { color: #ec4899 !important; }
 
             .sidebar-item-label { display: inline-block !important; vertical-align: middle !important; }
+
+            body.retail-wide-transaction-form .navbar > .container,
+            body.retail-wide-transaction-form .page-container,
+            body.retail-wide-transaction-form .layout-main,
+            body.retail-wide-transaction-form .page-body,
+            body.retail-wide-transaction-form .container,
+            body.retail-wide-transaction-form .layout-main-section-wrapper,
+            body.retail-wide-transaction-form .layout-main-section,
+            body.retail-wide-transaction-form .std-form-layout,
+            body.retail-wide-transaction-form .form-layout,
+            body.retail-wide-transaction-form .form-page {
+                max-width: none !important;
+                width: 100% !important;
+            }
+
+            body.retail-wide-transaction-form .layout-main-section-wrapper {
+                padding-left: 12px !important;
+                padding-right: 12px !important;
+            }
+
+            body.retail-wide-transaction-form .grid-body {
+                overflow-x: auto !important;
+            }
         }
         `;
         const style = document.createElement('style');
@@ -815,6 +848,50 @@
     function syncDesktopSidebarClass() {
         const hasSidebar = isDesktop() && !!document.querySelector('.layout-side-section .retail-persistent-sidebar');
         document.body.classList.toggle('retail-has-persistent-sidebar', hasSidebar);
+    }
+
+    function isWideTransactionFormRoute(route = frappe.get_route()) {
+        return route?.[0] === 'Form' && WIDE_TRANSACTION_DOCTYPES.has(route?.[1]);
+    }
+
+    function applyWideTransactionLayout() {
+        const enabled = isDesktop() && isWideTransactionFormRoute();
+        document.body.classList.toggle('retail-wide-transaction-form', enabled);
+
+        const selectors = [
+            '.navbar > .container',
+            '.page-container',
+            '.layout-main',
+            '.page-body',
+            '.container',
+            '.layout-main-section-wrapper',
+            '.layout-main-section',
+            '.std-form-layout',
+            '.form-layout',
+            '.form-page',
+        ];
+
+        selectors.forEach(selector => {
+            document.querySelectorAll(selector).forEach(element => {
+                if (enabled) {
+                    element.style.setProperty('max-width', 'none', 'important');
+                    element.style.setProperty('width', '100%', 'important');
+                } else {
+                    element.style.removeProperty('max-width');
+                    element.style.removeProperty('width');
+                }
+            });
+        });
+
+        document.querySelectorAll('.layout-main-section-wrapper').forEach(element => {
+            if (enabled) {
+                element.style.setProperty('padding-left', '12px', 'important');
+                element.style.setProperty('padding-right', '12px', 'important');
+            } else {
+                element.style.removeProperty('padding-left');
+                element.style.removeProperty('padding-right');
+            }
+        });
     }
 
     function removePersistentSidebar() {
@@ -1015,6 +1092,7 @@
         syncSidebarState();
         renderPersistentSidebar();
         syncDesktopSidebarClass();
+        applyWideTransactionLayout();
     }
 
     function scheduleSidebarEnhancements(delay = 80) {
@@ -1054,6 +1132,7 @@
         ensureWorkspaceDropIcons();
         syncSidebarState();
         renderPersistentSidebar();
+        applyWideTransactionLayout();
         observeSidebarChanges();
         scheduleRetry();
         bindSubmenuRouting();
@@ -1062,6 +1141,8 @@
             frappe.router.on('change', () => {
                 clearTimeout(routeRefreshTimer);
                 routeRefreshTimer = setTimeout(refreshSidebarEnhancements, 120);
+                setTimeout(applyWideTransactionLayout, 350);
+                setTimeout(applyWideTransactionLayout, 900);
             });
         }
 
