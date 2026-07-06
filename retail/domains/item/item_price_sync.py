@@ -33,6 +33,7 @@ def sync_simple_item_prices(doc, method=None):
 	sync_item_price(doc, "Standard Selling", _get_item_master_selling_rate(doc))
 	sync_item_price(doc, "Standard Buying", _get_item_master_buying_rate(doc))
 	sync_packing_item_prices(doc)
+	sync_item_master_purchase_rate_from_price_list(doc)
 
 
 def sync_latest_transaction_item_prices(doc, method=None):
@@ -146,8 +147,9 @@ def sync_item_price(doc, price_list, rate, uom=None):
 				duplicate,
 				"price_list_rate",
 				rate,
-				update_modified=False,
 			)
+		if price_list == "Standard Buying":
+			sync_item_master_purchase_rate_from_price_list(item_code, uom=uom)
 		return
 
 	frappe.get_doc(
@@ -159,6 +161,120 @@ def sync_item_price(doc, price_list, rate, uom=None):
 			"uom": uom,
 		}
 	).insert(ignore_permissions=True)
+	if price_list == "Standard Buying":
+		sync_item_master_purchase_rate_from_price_list(item_code, uom=uom)
+
+
+def sync_item_master_purchase_rate_from_price_list(doc, method=None, uom=None):
+	"""Copy the maintained Standard Buying price back to the Item Master cost fields."""
+	if isinstance(doc, str):
+		item_code = doc
+		stock_uom = frappe.db.get_value("Item", item_code, "stock_uom") or "Nos"
+	else:
+		item_code = doc.get("item_code") or doc.name
+		stock_uom = doc.get("stock_uom") or frappe.db.get_value("Item", item_code, "stock_uom") or "Nos"
+
+	uom = uom or stock_uom
+	if uom != stock_uom:
+		return
+
+	rate = frappe.db.get_value(
+		"Item Price",
+		{
+			"item_code": item_code,
+			"price_list": "Standard Buying",
+			"uom": stock_uom,
+		},
+		"price_list_rate",
+	)
+	rate = flt(rate)
+	if rate <= 0:
+		return
+
+	values = {"last_purchase_rate": rate}
+	if frappe.db.has_column("Item", "custom_default_purchase_rate"):
+		values["custom_default_purchase_rate"] = rate
+
+	if not frappe.flags.in_install:
+		frappe.db.set_value("Item", item_code, values, update_modified=False)
+
+
+def sync_item_master_purchase_rate_from_item_price(doc, method=None):
+	"""Refresh Item Master when a Standard Buying Item Price is edited directly."""
+	if doc.get("price_list") != "Standard Buying" or flt(doc.get("price_list_rate")) <= 0:
+		return
+
+	sync_item_master_purchase_rate_from_price_list(doc.get("item_code"), uom=doc.get("uom"))
+
+
+@frappe.whitelist()
+def get_latest_item_name_prices(item_name, uom=None):
+	"""Return latest buying/selling price-list values for an existing item name."""
+	item_name = (item_name or "").strip()
+	if not item_name:
+		return {}
+
+	item_price = frappe.qb.DocType("Item Price")
+	item = frappe.qb.DocType("Item")
+	query = (
+		frappe.qb.from_(item_price)
+		.inner_join(item)
+		.on(item.name == item_price.item_code)
+		.select(
+			item_price.item_code,
+			item_price.price_list,
+			item_price.price_list_rate,
+			item_price.custom_average_purchase_rate,
+			item_price.modified,
+			item.modified.as_("item_modified"),
+		)
+		.where(
+			(item.item_name == item_name)
+			& (item.disabled == 0)
+			& (item_price.price_list.isin(["Standard Buying", "Standard Selling"]))
+		)
+		.orderby(item_price.modified, order=frappe.qb.desc)
+		.orderby(item.modified, order=frappe.qb.desc)
+		.orderby(item_price.creation, order=frappe.qb.desc)
+		.limit(100)
+	)
+	if uom:
+		query = query.where(item_price.uom == uom)
+
+	result = {}
+	rows = query.run(as_dict=True)
+	buying_rows = sorted(
+		[row for row in rows if row.price_list == "Standard Buying"],
+		key=lambda row: (max(row.get("modified"), row.get("item_modified")), row.get("modified")),
+		reverse=True,
+	)
+	selling_rows = sorted(
+		[row for row in rows if row.price_list == "Standard Selling"],
+		key=lambda row: (row.get("modified"), row.get("item_modified")),
+		reverse=True,
+	)
+	for row in buying_rows[:1]:
+		from retail.domains.item.average_purchase_rate import get_average_purchase_rate_for_item_name
+
+		buying_rate = flt(row.price_list_rate)
+		result.update(
+			{
+				"source_item": row.item_code,
+				"buying_rate": buying_rate,
+				"average_purchase_rate": get_average_purchase_rate_for_item_name(
+					item_name, fallback_rate=flt(row.custom_average_purchase_rate) or buying_rate
+				),
+			}
+		)
+	for row in selling_rows[:1]:
+		result.update(
+			{
+				"selling_source_item": row.item_code,
+				"selling_rate": flt(row.price_list_rate),
+			}
+		)
+
+	return result
 
 
 def _get_item_master_selling_rate(doc):

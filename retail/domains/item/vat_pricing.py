@@ -303,6 +303,7 @@ def ensure_item_vat_pricing_fields():
 	_set_field_property("custom_margin", "label", "Margin", "Data")
 	_set_field_property("custom_margin_", "label", "Margin %", "Data")
 	_set_field_property("standard_rate", "hidden", "1", "Check")
+	_set_field_property("last_purchase_rate", "read_only", "1", "Check")
 	_set_field_property("custom_default_purchase_rate", "hidden", "1", "Check")
 	_delete_obsolete_item_pricing_fields()
 	arrange_item_vat_pricing_layout()

@@ -38,6 +38,7 @@
 	frappe.ui.form.on("Item", {
 		refresh(frm) {
 			setupArabicItemNameField(frm);
+			queueLastPurchaseRateLookup(frm);
 			setOpeningAveragePurchaseRate(frm, false);
 			refreshVatPrices(frm);
 			refreshPackingVatRows(frm);
@@ -46,14 +47,17 @@
 		},
 		item_name(frm) {
 			queueArabicItemNameTranslation(frm);
+			queueLastPurchaseRateLookup(frm);
 		},
 		custom_arabic_item_name(frm) {
 			frm._arabic_item_name_touched = true;
 		},
 		last_purchase_rate(frm) {
+			if (frm._setting_fetched_item_prices) return;
 			setOpeningAveragePurchaseRate(frm, true);
 		},
 		custom_default_purchase_rate(frm) {
+			if (frm._setting_fetched_item_prices) return;
 			setOpeningAveragePurchaseRate(frm, true);
 		},
 		custom_tax(frm) {
@@ -113,6 +117,70 @@
 	function setOpeningAveragePurchaseRate(frm, overwrite) {
 		if (!frm.is_new() || (!overwrite && frm.doc.custom_average_purchase_rate)) return;
 		frm.set_value("custom_average_purchase_rate", frm.doc.custom_default_purchase_rate || frm.doc.last_purchase_rate || 0);
+	}
+
+	function queueLastPurchaseRateLookup(frm) {
+		if (!frm.is_new()) return;
+
+		clearTimeout(frm._last_purchase_rate_lookup);
+		const itemName = (frm.doc.item_name || "").trim();
+		if (!itemName) {
+			clearFetchedItemPrices(frm);
+			return;
+		}
+
+		frm._last_purchase_rate_lookup = setTimeout(() => {
+			setLastPurchaseRateFromSameItemName(frm, itemName);
+		}, 350);
+	}
+
+	function setLastPurchaseRateFromSameItemName(frm, requestedItemName) {
+		if (!frm.is_new() || !requestedItemName) return;
+
+		frappe.call({
+			method: "retail.domains.item.item_price_sync.get_latest_item_name_prices",
+			args: {
+				item_name: requestedItemName,
+				uom: frm.doc.stock_uom || "Nos",
+			},
+			callback({ message }) {
+				if (!frm.is_new() || (frm.doc.item_name || "").trim() !== requestedItemName) return;
+				const prices = message || {};
+				const buyingRate = flt(prices.buying_rate);
+				const averageRate = flt(prices.average_purchase_rate);
+				const sellingRate = flt(prices.selling_rate);
+				if (!buyingRate && !sellingRate) {
+					clearFetchedItemPrices(frm);
+					return;
+				}
+
+				frm._last_purchase_rate_source = prices.source_item || prices.selling_source_item || null;
+				const updates = {};
+				if (buyingRate) {
+					updates.last_purchase_rate = buyingRate;
+					updates.custom_default_purchase_rate = buyingRate;
+					updates.custom_average_purchase_rate = averageRate || buyingRate;
+				}
+				if (sellingRate) {
+					updates.custom_sales_rate_entry = sellingRate;
+					updates.custom_sales_net_rate = sellingRate;
+					updates.custom_sales_gross_rate = sellingRate;
+					updates.standard_rate = sellingRate;
+				}
+				frm._setting_fetched_item_prices = true;
+				Promise.resolve(frappe.model.set_value("Item", frm.doc.name, updates)).then(() => {
+					frm._setting_fetched_item_prices = false;
+					refreshMargin(frm);
+				});
+			},
+		});
+	}
+
+	function clearFetchedItemPrices(frm) {
+		frm._last_purchase_rate_source = null;
+		frm.set_value("last_purchase_rate", 0);
+		frm.set_value("custom_default_purchase_rate", 0);
+		frm.set_value("custom_average_purchase_rate", 0);
 	}
 
 	function refreshVatPrices(frm, direction) {

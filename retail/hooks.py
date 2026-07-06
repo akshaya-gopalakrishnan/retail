@@ -256,11 +256,14 @@ doc_events = {
 			"retail.domains.item.vat_pricing.update_item_vat_prices",
 		],
         "on_update": [
-			"retail.domains.item.vat_pricing.sync_last_purchase_rate_from_item_master",
 			"retail.domains.item.item_price_sync.sync_simple_item_prices",
+			"retail.domains.item.item_price_sync.sync_item_master_purchase_rate_from_price_list",
 			"retail.domains.item.average_purchase_rate.sync_average_purchase_rate_from_item",
         ],
     },
+	"Item Price": {
+		"on_update": "retail.domains.item.item_price_sync.sync_item_master_purchase_rate_from_item_price",
+	},
 	"Sales Invoice": {
 		"before_naming": "retail.naming.set_transaction_naming_series",
 		"validate": [

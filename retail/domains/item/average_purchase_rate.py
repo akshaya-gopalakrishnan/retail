@@ -35,7 +35,9 @@ def sync_average_purchase_rate_from_item(doc, method=None):
 		doc = frappe.get_doc("Item", doc)
 	sync_item_average_purchase_rate(
 		doc.name,
-		fallback_rate=doc.get("custom_default_purchase_rate") or doc.get("last_purchase_rate"),
+		fallback_rate=doc.get("custom_average_purchase_rate")
+		or doc.get("custom_default_purchase_rate")
+		or doc.get("last_purchase_rate"),
 	)
 
 
@@ -67,11 +69,7 @@ def sync_item_average_purchase_rate(item_code, fallback_rate=None):
 
 
 def get_average_purchase_rate(item_code, fallback_rate=None):
-	"""Return weighted average unit cost from submitted stock purchases.
-
-	Amounts and stock quantities are both signed, so submitted purchase returns
-	reduce the source history correctly. Values are in the company base currency.
-	"""
+	"""Return weighted average unit cost from submitted stock purchases."""
 	result = frappe.db.sql(
 		"""
 			select
@@ -112,6 +110,43 @@ def get_average_purchase_rate(item_code, fallback_rate=None):
 		fallback_rate = (fallback.get("custom_default_purchase_rate") if fallback else None) or (
 			fallback.get("last_purchase_rate") if fallback else None
 		)
+	return flt(fallback_rate)
+
+
+def get_average_purchase_rate_for_item_name(item_name, fallback_rate=None):
+	"""Return weighted average unit cost across existing items with the same item name."""
+	result = frappe.db.sql(
+		"""
+			select
+				sum(base_amount) as total_amount,
+				sum(stock_qty) as total_qty
+			from (
+				select pri.base_net_amount as base_amount, pri.stock_qty
+				from `tabPurchase Receipt Item` pri
+				inner join `tabPurchase Receipt` pr on pr.name = pri.parent
+				inner join `tabItem` item on item.name = pri.item_code
+				where pr.docstatus = 1
+					and item.item_name = %(item_name)s
+
+				union all
+
+				select pii.base_net_amount as base_amount, pii.stock_qty
+				from `tabPurchase Invoice Item` pii
+				inner join `tabPurchase Invoice` pi on pi.name = pii.parent
+				inner join `tabItem` item on item.name = pii.item_code
+				where pi.docstatus = 1
+					and ifnull(pi.update_stock, 0) = 1
+					and item.item_name = %(item_name)s
+			) purchases
+		""",
+		{"item_name": item_name},
+		as_dict=True,
+	)[0]
+
+	total_qty = flt(result.total_qty)
+	if total_qty:
+		return flt(result.total_amount) / total_qty
+
 	return flt(fallback_rate)
 
 
