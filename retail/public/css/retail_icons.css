@@ -158,6 +158,11 @@
         min-width: 0 !important;
     }
 
+    body.retail-has-persistent-sidebar .navbar > .container {
+        max-width: none !important;
+        width: 100% !important;
+    }
+
     body.retail-has-persistent-sidebar.no-list-sidebar [data-page-route^="List/"] .layout-side-section,
     body.retail-has-persistent-sidebar.no-list-sidebar[data-page-route^="List/"] .layout-side-section {
         display: block !important;
@@ -167,6 +172,302 @@
     body.retail-has-persistent-sidebar.no-list-sidebar[data-page-route^="List/"] .layout-main-section-wrapper {
         flex: 1 !important;
         max-width: none !important;
+    }
+
+    body.retail-has-persistent-sidebar [data-page-route="Form/Purchase Order"] .layout-main-section-wrapper,
+    body.retail-has-persistent-sidebar [data-page-route="Form/Purchase Receipt"] .layout-main-section-wrapper,
+    body.retail-has-persistent-sidebar [data-page-route="Form/Purchase Invoice"] .layout-main-section-wrapper,
+    body.retail-has-persistent-sidebar [data-page-route="Form/Sales Order"] .layout-main-section-wrapper,
+    body.retail-has-persistent-sidebar [data-page-route="Form/Delivery Note"] .layout-main-section-wrapper,
+    body.retail-has-persistent-sidebar [data-page-route="Form/Sales Invoice"] .layout-main-section-wrapper,
+    body.retail-has-persistent-sidebar [data-page-route="Form/POS Invoice"] .layout-main-section-wrapper,
+    body.retail-has-persistent-sidebar [data-page-route="Form/Stock Entry"] .layout-main-section-wrapper {
+        flex: 1 1 auto !important;
+        max-width: none !important;
+        width: 100% !important;
+    }
+
+    body.retail-has-persistent-sidebar[data-page-route="Form/Purchase Order"] .container,
+    body.retail-has-persistent-sidebar[data-page-route="Form/Purchase Receipt"] .container,
+    body.retail-has-persistent-sidebar[data-page-route="Form/Purchase Invoice"] .container,
+    body.retail-has-persistent-sidebar[data-page-route="Form/Sales Order"] .container,
+    body.retail-has-persistent-sidebar[data-page-route="Form/Delivery Note"] .container,
+    body.retail-has-persistent-sidebar[data-page-route="Form/Sales Invoice"] .container,
+    body.retail-has-persistent-sidebar[data-page-route="Form/POS Invoice"] .container,
+    body.retail-has-persistent-sidebar[data-page-route="Form/Stock Entry"] .container,
+    body.retail-has-persistent-sidebar[data-page-route="Form/Purchase Order"] .page-body,
+    body.retail-has-persistent-sidebar[data-page-route="Form/Purchase Receipt"] .page-body,
+    body.retail-has-persistent-sidebar[data-page-route="Form/Purchase Invoice"] .page-body,
+    body.retail-has-persistent-sidebar[data-page-route="Form/Sales Order"] .page-body,
+    body.retail-has-persistent-sidebar[data-page-route="Form/Delivery Note"] .page-body,
+    body.retail-has-persistent-sidebar[data-page-route="Form/Sales Invoice"] .page-body,
+    body.retail-has-persistent-sidebar[data-page-route="Form/POS Invoice"] .page-body,
+    body.retail-has-persistent-sidebar[data-page-route="Form/Stock Entry"] .page-body,
+    body.retail-has-persistent-sidebar [data-page-route="Form/Purchase Order"] .container,
+    body.retail-has-persistent-sidebar [data-page-route="Form/Purchase Receipt"] .container,
+    body.retail-has-persistent-sidebar [data-page-route="Form/Purchase Invoice"] .container,
+    body.retail-has-persistent-sidebar [data-page-route="Form/Sales Order"] .container,
+    body.retail-has-persistent-sidebar [data-page-route="Form/Delivery Note"] .container,
+    body.retail-has-persistent-sidebar [data-page-route="Form/Sales Invoice"] .container,
+    body.retail-has-persistent-sidebar [data-page-route="Form/POS Invoice"] .container,
+    body.retail-has-persistent-sidebar [data-page-route="Form/Stock Entry"] .container,
+    body.retail-has-persistent-sidebar [data-page-route="Form/Purchase Order"] .page-body,
+    body.retail-has-persistent-sidebar [data-page-route="Form/Purchase Receipt"] .page-body,
+    body.retail-has-persistent-sidebar [data-page-route="Form/Purchase Invoice"] .page-body,
+    body.retail-has-persistent-sidebar [data-page-route="Form/Sales Order"] .page-body,
+    body.retail-has-persistent-sidebar [data-page-route="Form/Delivery Note"] .page-body,
+    body.retail-has-persistent-sidebar [data-page-route="Form/Sales Invoice"] .page-body,
+    body.retail-has-persistent-sidebar [data-page-route="Form/POS Invoice"] .page-body,
+    body.retail-has-persistent-sidebar [data-page-route="Form/Stock Entry"] .page-body {
+        max-width: none !important;
+        width: 100% !important;
+    }
+
+    body.retail-has-persistent-sidebar[data-page-route="Form/Purchase Order"] .layout-main-section-wrapper,
+    body.retail-has-persistent-sidebar[data-page-route="Form/Purchase Receipt"] .layout-main-section-wrapper,
+    body.retail-has-persistent-sidebar[data-page-route="Form/Purchase Invoice"] .layout-main-section-wrapper,
+    body.retail-has-persistent-sidebar[data-page-route="Form/Sales Order"] .layout-main-section-wrapper,
+    body.retail-has-persistent-sidebar[data-page-route="Form/Delivery Note"] .layout-main-section-wrapper,
+    body.retail-has-persistent-sidebar[data-page-route="Form/Sales Invoice"] .layout-main-section-wrapper,
+    body.retail-has-persistent-sidebar[data-page-route="Form/POS Invoice"] .layout-main-section-wrapper,
+    body.retail-has-persistent-sidebar[data-page-route="Form/Stock Entry"] .layout-main-section-wrapper,
+    body.retail-has-persistent-sidebar[data-page-route="Form/Purchase Order"] .layout-main-section,
+    body.retail-has-persistent-sidebar[data-page-route="Form/Purchase Receipt"] .layout-main-section,
+    body.retail-has-persistent-sidebar[data-page-route="Form/Purchase Invoice"] .layout-main-section,
+    body.retail-has-persistent-sidebar[data-page-route="Form/Sales Order"] .layout-main-section,
+    body.retail-has-persistent-sidebar[data-page-route="Form/Delivery Note"] .layout-main-section,
+    body.retail-has-persistent-sidebar[data-page-route="Form/Sales Invoice"] .layout-main-section,
+    body.retail-has-persistent-sidebar[data-page-route="Form/POS Invoice"] .layout-main-section,
+    body.retail-has-persistent-sidebar[data-page-route="Form/Stock Entry"] .layout-main-section,
+    body.retail-has-persistent-sidebar[data-page-route="Form/Purchase Order"] .form-layout,
+    body.retail-has-persistent-sidebar[data-page-route="Form/Purchase Receipt"] .form-layout,
+    body.retail-has-persistent-sidebar[data-page-route="Form/Purchase Invoice"] .form-layout,
+    body.retail-has-persistent-sidebar[data-page-route="Form/Sales Order"] .form-layout,
+    body.retail-has-persistent-sidebar[data-page-route="Form/Delivery Note"] .form-layout,
+    body.retail-has-persistent-sidebar[data-page-route="Form/Sales Invoice"] .form-layout,
+    body.retail-has-persistent-sidebar[data-page-route="Form/POS Invoice"] .form-layout,
+    body.retail-has-persistent-sidebar[data-page-route="Form/Stock Entry"] .form-layout {
+        max-width: none !important;
+        width: 100% !important;
+    }
+
+    body:is(
+        [data-route^="Form/Purchase Order"],
+        [data-route^="Form/Purchase Receipt"],
+        [data-route^="Form/Purchase Invoice"],
+        [data-route^="Form/Sales Order"],
+        [data-route^="Form/Delivery Note"],
+        [data-route^="Form/Sales Invoice"],
+        [data-route^="Form/POS Invoice"],
+        [data-route^="Form/Stock Entry"],
+        [data-page-route^="Form/Purchase Order"],
+        [data-page-route^="Form/Purchase Receipt"],
+        [data-page-route^="Form/Purchase Invoice"],
+        [data-page-route^="Form/Sales Order"],
+        [data-page-route^="Form/Delivery Note"],
+        [data-page-route^="Form/Sales Invoice"],
+        [data-page-route^="Form/POS Invoice"],
+        [data-page-route^="Form/Stock Entry"]
+    ) .page-container,
+    body:is(
+        [data-route^="Form/Purchase Order"],
+        [data-route^="Form/Purchase Receipt"],
+        [data-route^="Form/Purchase Invoice"],
+        [data-route^="Form/Sales Order"],
+        [data-route^="Form/Delivery Note"],
+        [data-route^="Form/Sales Invoice"],
+        [data-route^="Form/POS Invoice"],
+        [data-route^="Form/Stock Entry"],
+        [data-page-route^="Form/Purchase Order"],
+        [data-page-route^="Form/Purchase Receipt"],
+        [data-page-route^="Form/Purchase Invoice"],
+        [data-page-route^="Form/Sales Order"],
+        [data-page-route^="Form/Delivery Note"],
+        [data-page-route^="Form/Sales Invoice"],
+        [data-page-route^="Form/POS Invoice"],
+        [data-page-route^="Form/Stock Entry"]
+    ) .layout-main,
+    body:is(
+        [data-route^="Form/Purchase Order"],
+        [data-route^="Form/Purchase Receipt"],
+        [data-route^="Form/Purchase Invoice"],
+        [data-route^="Form/Sales Order"],
+        [data-route^="Form/Delivery Note"],
+        [data-route^="Form/Sales Invoice"],
+        [data-route^="Form/POS Invoice"],
+        [data-route^="Form/Stock Entry"],
+        [data-page-route^="Form/Purchase Order"],
+        [data-page-route^="Form/Purchase Receipt"],
+        [data-page-route^="Form/Purchase Invoice"],
+        [data-page-route^="Form/Sales Order"],
+        [data-page-route^="Form/Delivery Note"],
+        [data-page-route^="Form/Sales Invoice"],
+        [data-page-route^="Form/POS Invoice"],
+        [data-page-route^="Form/Stock Entry"]
+    ) .page-body,
+    body:is(
+        [data-route^="Form/Purchase Order"],
+        [data-route^="Form/Purchase Receipt"],
+        [data-route^="Form/Purchase Invoice"],
+        [data-route^="Form/Sales Order"],
+        [data-route^="Form/Delivery Note"],
+        [data-route^="Form/Sales Invoice"],
+        [data-route^="Form/POS Invoice"],
+        [data-route^="Form/Stock Entry"],
+        [data-page-route^="Form/Purchase Order"],
+        [data-page-route^="Form/Purchase Receipt"],
+        [data-page-route^="Form/Purchase Invoice"],
+        [data-page-route^="Form/Sales Order"],
+        [data-page-route^="Form/Delivery Note"],
+        [data-page-route^="Form/Sales Invoice"],
+        [data-page-route^="Form/POS Invoice"],
+        [data-page-route^="Form/Stock Entry"]
+    ) .container,
+    body:is(
+        [data-route^="Form/Purchase Order"],
+        [data-route^="Form/Purchase Receipt"],
+        [data-route^="Form/Purchase Invoice"],
+        [data-route^="Form/Sales Order"],
+        [data-route^="Form/Delivery Note"],
+        [data-route^="Form/Sales Invoice"],
+        [data-route^="Form/POS Invoice"],
+        [data-route^="Form/Stock Entry"],
+        [data-page-route^="Form/Purchase Order"],
+        [data-page-route^="Form/Purchase Receipt"],
+        [data-page-route^="Form/Purchase Invoice"],
+        [data-page-route^="Form/Sales Order"],
+        [data-page-route^="Form/Delivery Note"],
+        [data-page-route^="Form/Sales Invoice"],
+        [data-page-route^="Form/POS Invoice"],
+        [data-page-route^="Form/Stock Entry"]
+    ) .layout-main-section-wrapper,
+    body:is(
+        [data-route^="Form/Purchase Order"],
+        [data-route^="Form/Purchase Receipt"],
+        [data-route^="Form/Purchase Invoice"],
+        [data-route^="Form/Sales Order"],
+        [data-route^="Form/Delivery Note"],
+        [data-route^="Form/Sales Invoice"],
+        [data-route^="Form/POS Invoice"],
+        [data-route^="Form/Stock Entry"],
+        [data-page-route^="Form/Purchase Order"],
+        [data-page-route^="Form/Purchase Receipt"],
+        [data-page-route^="Form/Purchase Invoice"],
+        [data-page-route^="Form/Sales Order"],
+        [data-page-route^="Form/Delivery Note"],
+        [data-page-route^="Form/Sales Invoice"],
+        [data-page-route^="Form/POS Invoice"],
+        [data-page-route^="Form/Stock Entry"]
+    ) .layout-main-section,
+    body:is(
+        [data-route^="Form/Purchase Order"],
+        [data-route^="Form/Purchase Receipt"],
+        [data-route^="Form/Purchase Invoice"],
+        [data-route^="Form/Sales Order"],
+        [data-route^="Form/Delivery Note"],
+        [data-route^="Form/Sales Invoice"],
+        [data-route^="Form/POS Invoice"],
+        [data-route^="Form/Stock Entry"],
+        [data-page-route^="Form/Purchase Order"],
+        [data-page-route^="Form/Purchase Receipt"],
+        [data-page-route^="Form/Purchase Invoice"],
+        [data-page-route^="Form/Sales Order"],
+        [data-page-route^="Form/Delivery Note"],
+        [data-page-route^="Form/Sales Invoice"],
+        [data-page-route^="Form/POS Invoice"],
+        [data-page-route^="Form/Stock Entry"]
+    ) .std-form-layout,
+    body:is(
+        [data-route^="Form/Purchase Order"],
+        [data-route^="Form/Purchase Receipt"],
+        [data-route^="Form/Purchase Invoice"],
+        [data-route^="Form/Sales Order"],
+        [data-route^="Form/Delivery Note"],
+        [data-route^="Form/Sales Invoice"],
+        [data-route^="Form/POS Invoice"],
+        [data-route^="Form/Stock Entry"],
+        [data-page-route^="Form/Purchase Order"],
+        [data-page-route^="Form/Purchase Receipt"],
+        [data-page-route^="Form/Purchase Invoice"],
+        [data-page-route^="Form/Sales Order"],
+        [data-page-route^="Form/Delivery Note"],
+        [data-page-route^="Form/Sales Invoice"],
+        [data-page-route^="Form/POS Invoice"],
+        [data-page-route^="Form/Stock Entry"]
+    ) .form-layout,
+    body:is(
+        [data-route^="Form/Purchase Order"],
+        [data-route^="Form/Purchase Receipt"],
+        [data-route^="Form/Purchase Invoice"],
+        [data-route^="Form/Sales Order"],
+        [data-route^="Form/Delivery Note"],
+        [data-route^="Form/Sales Invoice"],
+        [data-route^="Form/POS Invoice"],
+        [data-route^="Form/Stock Entry"],
+        [data-page-route^="Form/Purchase Order"],
+        [data-page-route^="Form/Purchase Receipt"],
+        [data-page-route^="Form/Purchase Invoice"],
+        [data-page-route^="Form/Sales Order"],
+        [data-page-route^="Form/Delivery Note"],
+        [data-page-route^="Form/Sales Invoice"],
+        [data-page-route^="Form/POS Invoice"],
+        [data-page-route^="Form/Stock Entry"]
+    ) .form-page {
+        max-width: none !important;
+        width: 100% !important;
+    }
+
+    body:is(
+        [data-route^="Form/Purchase Order"],
+        [data-route^="Form/Purchase Receipt"],
+        [data-route^="Form/Purchase Invoice"],
+        [data-route^="Form/Sales Order"],
+        [data-route^="Form/Delivery Note"],
+        [data-route^="Form/Sales Invoice"],
+        [data-route^="Form/POS Invoice"],
+        [data-route^="Form/Stock Entry"],
+        [data-page-route^="Form/Purchase Order"],
+        [data-page-route^="Form/Purchase Receipt"],
+        [data-page-route^="Form/Purchase Invoice"],
+        [data-page-route^="Form/Sales Order"],
+        [data-page-route^="Form/Delivery Note"],
+        [data-page-route^="Form/Sales Invoice"],
+        [data-page-route^="Form/POS Invoice"],
+        [data-page-route^="Form/Stock Entry"]
+    ) .layout-main-section-wrapper {
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+    }
+
+    body.retail-has-persistent-sidebar [data-page-route="Form/Purchase Order"] .layout-main-section,
+    body.retail-has-persistent-sidebar [data-page-route="Form/Purchase Receipt"] .layout-main-section,
+    body.retail-has-persistent-sidebar [data-page-route="Form/Purchase Invoice"] .layout-main-section,
+    body.retail-has-persistent-sidebar [data-page-route="Form/Sales Order"] .layout-main-section,
+    body.retail-has-persistent-sidebar [data-page-route="Form/Delivery Note"] .layout-main-section,
+    body.retail-has-persistent-sidebar [data-page-route="Form/Sales Invoice"] .layout-main-section,
+    body.retail-has-persistent-sidebar [data-page-route="Form/POS Invoice"] .layout-main-section,
+    body.retail-has-persistent-sidebar [data-page-route="Form/Stock Entry"] .layout-main-section,
+    body.retail-has-persistent-sidebar [data-page-route="Form/Purchase Order"] .form-layout,
+    body.retail-has-persistent-sidebar [data-page-route="Form/Purchase Receipt"] .form-layout,
+    body.retail-has-persistent-sidebar [data-page-route="Form/Purchase Invoice"] .form-layout,
+    body.retail-has-persistent-sidebar [data-page-route="Form/Sales Order"] .form-layout,
+    body.retail-has-persistent-sidebar [data-page-route="Form/Delivery Note"] .form-layout,
+    body.retail-has-persistent-sidebar [data-page-route="Form/Sales Invoice"] .form-layout,
+    body.retail-has-persistent-sidebar [data-page-route="Form/POS Invoice"] .form-layout,
+    body.retail-has-persistent-sidebar [data-page-route="Form/Stock Entry"] .form-layout {
+        max-width: none !important;
+        width: 100% !important;
+    }
+
+    body.retail-has-persistent-sidebar [data-page-route="Form/Purchase Order"] .grid-body,
+    body.retail-has-persistent-sidebar [data-page-route="Form/Purchase Receipt"] .grid-body,
+    body.retail-has-persistent-sidebar [data-page-route="Form/Purchase Invoice"] .grid-body,
+    body.retail-has-persistent-sidebar [data-page-route="Form/Sales Order"] .grid-body,
+    body.retail-has-persistent-sidebar [data-page-route="Form/Delivery Note"] .grid-body,
+    body.retail-has-persistent-sidebar [data-page-route="Form/Sales Invoice"] .grid-body,
+    body.retail-has-persistent-sidebar [data-page-route="Form/POS Invoice"] .grid-body,
+    body.retail-has-persistent-sidebar [data-page-route="Form/Stock Entry"] .grid-body {
+        overflow-x: auto !important;
     }
 
     .retail-persistent-sidebar {

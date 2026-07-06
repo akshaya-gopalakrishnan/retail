@@ -32,7 +32,7 @@ required_apps = ["erpnext", "hrms"]
 # retail/retail/hooks.py
 
 app_include_css = [
-    "/assets/retail/css/retail_icons.css?v=10",
+    "/assets/retail/css/retail_icons.css?v=14",
     "/assets/retail/css/brand_themes.css?v=13",
 ]
 
