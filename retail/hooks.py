@@ -203,6 +203,7 @@ doc_events = {
 	"Purchase Order": {
 		"validate": [
 			"retail.domains.foc.apply_foc_quantities",
+			"retail.domains.purchase.order.set_vat_rates",
 			"retail.domains.purchase.order.set_balance_qty",
 		],
 		"on_submit": "retail.domains.item.item_price_sync.sync_latest_transaction_item_prices",
@@ -324,6 +325,7 @@ doc_events = {
 after_migrate = [
 	"retail.branding.apply_default_branding",
 	"retail.setup.hide_non_retail_workspaces",
+    "retail.domains.purchase.order.ensure_purchase_order_vat_rate_fields",
     "retail.domains.purchase.order.backfill_balance_qty",
     "retail.retail_app.report.damaged_and_expired_stock.damaged_and_expired_stock.ensure_report",
     "retail.retail_app.report.near_expiry_report.near_expiry_report.ensure_report",
