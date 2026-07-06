@@ -718,6 +718,14 @@ input[type="checkbox"]:checked,
 }
 
 @media (min-width: 992px) {
+    html[data-retail-brand-theme] .container,
+    html[data-retail-brand-theme] .container-sm,
+    html[data-retail-brand-theme] .container-md,
+    html[data-retail-brand-theme] .container-lg,
+    html[data-retail-brand-theme] .container-xl {
+        max-width: unset !important;
+    }
+
     body.retail-has-persistent-sidebar .layout-side-section {
         min-width: 270px !important;
         width: 270px !important;

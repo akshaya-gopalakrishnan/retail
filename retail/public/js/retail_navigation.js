@@ -660,7 +660,7 @@
 
     // Ensure our CSS is loaded at runtime in case app_include_css wasn't picked up
     function ensureRetailCss() {
-        const href = '/assets/retail/css/retail_icons.css?v=15';
+        const href = '/assets/retail/css/retail_icons.css?v=16';
         if (document.querySelector('link[href^="/assets/retail/css/retail_icons.css"]')) return;
         const link = document.createElement('link');
         link.rel = 'stylesheet';
@@ -717,6 +717,11 @@
 
             .sidebar-item-label { display: inline-block !important; vertical-align: middle !important; }
 
+            html[data-retail-brand-theme] .container,
+            html[data-retail-brand-theme] .container-sm,
+            html[data-retail-brand-theme] .container-md,
+            html[data-retail-brand-theme] .container-lg,
+            html[data-retail-brand-theme] .container-xl,
             body.retail-wide-desk .main-section,
             body.retail-wide-desk #body,
             body.retail-wide-desk .content,
@@ -862,6 +867,10 @@
             '#body',
             '.content',
             '.navbar > .container',
+            '.container-sm',
+            '.container-md',
+            '.container-lg',
+            '.container-xl',
             '.page-head',
             '.page-head .container',
             '.page-container',
