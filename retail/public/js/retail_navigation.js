@@ -75,16 +75,6 @@
         , 'pos transaction log': { icon: 'fa fa-list', cls: 'color-accounts' }
     };
     const DESKTOP_MEDIA = '(min-width: 992px)';
-    const WIDE_TRANSACTION_DOCTYPES = new Set([
-        'Purchase Order',
-        'Purchase Receipt',
-        'Purchase Invoice',
-        'Sales Order',
-        'Delivery Note',
-        'Sales Invoice',
-        'POS Invoice',
-        'Stock Entry',
-    ]);
     const DIRECT_MAPPING = {
         'Items List': ['List', 'Item'],
         'Item Groups': ['List', 'Item Group'],
@@ -670,7 +660,7 @@
 
     // Ensure our CSS is loaded at runtime in case app_include_css wasn't picked up
     function ensureRetailCss() {
-        const href = '/assets/retail/css/retail_icons.css?v=14';
+        const href = '/assets/retail/css/retail_icons.css?v=15';
         if (document.querySelector('link[href^="/assets/retail/css/retail_icons.css"]')) return;
         const link = document.createElement('link');
         link.rel = 'stylesheet';
@@ -727,26 +717,34 @@
 
             .sidebar-item-label { display: inline-block !important; vertical-align: middle !important; }
 
-            body.retail-wide-transaction-form .navbar > .container,
-            body.retail-wide-transaction-form .page-container,
-            body.retail-wide-transaction-form .layout-main,
-            body.retail-wide-transaction-form .page-body,
-            body.retail-wide-transaction-form .container,
-            body.retail-wide-transaction-form .layout-main-section-wrapper,
-            body.retail-wide-transaction-form .layout-main-section,
-            body.retail-wide-transaction-form .std-form-layout,
-            body.retail-wide-transaction-form .form-layout,
-            body.retail-wide-transaction-form .form-page {
+            body.retail-wide-desk .main-section,
+            body.retail-wide-desk #body,
+            body.retail-wide-desk .content,
+            body.retail-wide-desk .navbar > .container,
+            body.retail-wide-desk .page-head,
+            body.retail-wide-desk .page-head .container,
+            body.retail-wide-desk .page-container,
+            body.retail-wide-desk .page-content,
+            body.retail-wide-desk .page-wrapper,
+            body.retail-wide-desk .layout-main,
+            body.retail-wide-desk .page-body,
+            body.retail-wide-desk .container,
+            body.retail-wide-desk .layout-main-section-wrapper,
+            body.retail-wide-desk .layout-main-section,
+            body.retail-wide-desk .std-form-layout,
+            body.retail-wide-desk .form-layout,
+            body.retail-wide-desk .form-page {
                 max-width: none !important;
                 width: 100% !important;
             }
 
-            body.retail-wide-transaction-form .layout-main-section-wrapper {
+            body.retail-wide-desk .layout-main,
+            body.retail-wide-desk .layout-main-section-wrapper {
                 padding-left: 12px !important;
                 padding-right: 12px !important;
             }
 
-            body.retail-wide-transaction-form .grid-body {
+            body.retail-wide-desk .grid-body {
                 overflow-x: auto !important;
             }
         }
@@ -850,17 +848,25 @@
         document.body.classList.toggle('retail-has-persistent-sidebar', hasSidebar);
     }
 
-    function isWideTransactionFormRoute(route = frappe.get_route()) {
-        return route?.[0] === 'Form' && WIDE_TRANSACTION_DOCTYPES.has(route?.[1]);
+    function isWideDeskRoute(route = frappe.get_route()) {
+        return isDesktop() && Array.isArray(route) && route.length > 0;
     }
 
     function applyWideTransactionLayout() {
-        const enabled = isDesktop() && isWideTransactionFormRoute();
+        const enabled = isWideDeskRoute();
         document.body.classList.toggle('retail-wide-transaction-form', enabled);
+        document.body.classList.toggle('retail-wide-desk', enabled);
 
         const selectors = [
+            '.main-section',
+            '#body',
+            '.content',
             '.navbar > .container',
+            '.page-head',
+            '.page-head .container',
             '.page-container',
+            '.page-content',
+            '.page-wrapper',
             '.layout-main',
             '.page-body',
             '.container',
