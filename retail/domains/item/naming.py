@@ -13,6 +13,9 @@ ITEM_NAMING_SERIES = "RTL-ITEM-.YYYY.-"
 def install_item_code_defaults():
 	"""Configure Item forms so users enter a name, not a technical code."""
 	frappe.db.set_single_value("Stock Settings", "item_naming_by", "Naming Series")
+	_set_doctype_property("title_field", "item_name", "Data")
+	_set_doctype_property("show_title_field_in_link", "1", "Check")
+	_set_doctype_property("search_fields", "item_name,description,item_group,customer_code", "Data")
 	_set_field_property("naming_series", "options", ITEM_NAMING_SERIES, "Text")
 	_set_field_property("naming_series", "hidden", "1", "Check")
 	_set_field_property("item_code", "reqd", "0", "Check")
@@ -42,5 +45,22 @@ def _set_field_property(fieldname, property_name, value, property_type):
 		property_name,
 		value,
 		property_type,
+		validate_fields_for_doctype=False,
+	)
+
+
+def _set_doctype_property(property_name, value, property_type):
+	property_setter_name = f"Item-main-{property_name}"
+	if frappe.db.exists("Property Setter", property_setter_name):
+		frappe.db.set_value("Property Setter", property_setter_name, "value", value, update_modified=False)
+		return
+
+	make_property_setter(
+		"Item",
+		None,
+		property_name,
+		value,
+		property_type,
+		for_doctype=True,
 		validate_fields_for_doctype=False,
 	)
