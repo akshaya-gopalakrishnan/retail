@@ -38,8 +38,7 @@ app_include_css = [
 
 app_include_js = [
     "/assets/retail/js/retail_navigation.js?v=54",
-    "/assets/retail/js/forms/transaction_vat_rates.js?v=4",
-    "/assets/retail/js/forms/transaction_totals.js?v=3",
+    "/assets/retail/js/forms/transaction_items.js?v=1",
     "/assets/retail/js/brand_theme_switcher.js?v=8",
 ]
 
@@ -205,7 +204,7 @@ doc_events = {
 	"Purchase Order": {
 		"validate": [
 			"retail.domains.foc.apply_foc_quantities",
-			"retail.domains.purchase.order.set_vat_rates",
+			"retail.domains.transactions.vat.set_vat_rates",
 			"retail.domains.purchase.order.set_balance_qty",
 		],
 		"on_submit": "retail.domains.item.item_price_sync.sync_latest_transaction_item_prices",
@@ -216,7 +215,7 @@ doc_events = {
 		"before_naming": "retail.naming.set_transaction_naming_series",
 		"validate": [
 			"retail.domains.foc.apply_foc_quantities",
-			"retail.domains.purchase.order.set_vat_rates",
+			"retail.domains.transactions.vat.set_vat_rates",
 		],
 		"on_submit": [
 			"retail.domains.foc.add_foc_stock_ledger_entries",
@@ -239,7 +238,7 @@ doc_events = {
 		"before_naming": "retail.naming.set_transaction_naming_series",
 		"validate": [
 			"retail.domains.foc.apply_foc_quantities",
-			"retail.domains.purchase.order.set_vat_rates",
+			"retail.domains.transactions.vat.set_vat_rates",
 		],
 		"on_submit": [
 			"retail.domains.foc.add_foc_stock_ledger_entries",
@@ -277,7 +276,7 @@ doc_events = {
 		"before_naming": "retail.naming.set_transaction_naming_series",
 		"validate": [
 			"retail.domains.foc.apply_foc_quantities",
-			"retail.domains.purchase.order.set_vat_rates",
+			"retail.domains.transactions.vat.set_vat_rates",
 			"retail.domains.sales.counter.set_sales_invoice_counter_name",
 			"retail.domains.sales.invoice_totals.apply_retail_shipping_charges",
 			"retail.api.pos_sync.validate_external_reference",
@@ -293,7 +292,7 @@ doc_events = {
 	"POS Invoice": {
 		"validate": [
 			"retail.domains.foc.apply_foc_quantities",
-			"retail.domains.purchase.order.set_vat_rates",
+			"retail.domains.transactions.vat.set_vat_rates",
 			"retail.api.pos_sync.validate_external_reference",
 		],
 		"on_submit": [
@@ -307,7 +306,7 @@ doc_events = {
 		"before_naming": "retail.naming.set_transaction_naming_series",
 		"validate": [
 			"retail.domains.foc.apply_foc_quantities",
-			"retail.domains.purchase.order.set_vat_rates",
+			"retail.domains.transactions.vat.set_vat_rates",
 		],
 		"on_submit": [
 			"retail.domains.foc.add_foc_stock_ledger_entries",
@@ -319,32 +318,32 @@ doc_events = {
 	"Sales Order": {
 		"validate": [
 			"retail.domains.foc.apply_foc_quantities",
-			"retail.domains.purchase.order.set_vat_rates",
+			"retail.domains.transactions.vat.set_vat_rates",
 		],
 		"on_submit": "retail.domains.item.item_price_sync.sync_latest_transaction_item_prices",
 		"on_cancel": "retail.domains.item.item_price_sync.recalculate_transaction_item_prices",
 		"on_update_after_submit": "retail.domains.item.item_price_sync.sync_latest_transaction_item_prices",
 	},
 	"Quotation": {
-		"validate": "retail.domains.purchase.order.set_vat_rates",
+		"validate": "retail.domains.transactions.vat.set_vat_rates",
 	},
 	"Supplier Quotation": {
-		"validate": "retail.domains.purchase.order.set_vat_rates",
+		"validate": "retail.domains.transactions.vat.set_vat_rates",
 	},
 	"Material Request": {
-		"validate": "retail.domains.purchase.order.set_vat_rates",
+		"validate": "retail.domains.transactions.vat.set_vat_rates",
 	},
 	"Opportunity": {
-		"validate": "retail.domains.purchase.order.set_vat_rates",
+		"validate": "retail.domains.transactions.vat.set_vat_rates",
 	},
 	"Blanket Order": {
-		"validate": "retail.domains.purchase.order.set_vat_rates",
+		"validate": "retail.domains.transactions.vat.set_vat_rates",
 	},
 	"Subcontracting Order": {
-		"validate": "retail.domains.purchase.order.set_vat_rates",
+		"validate": "retail.domains.transactions.vat.set_vat_rates",
 	},
 	"Subcontracting Receipt": {
-		"validate": "retail.domains.purchase.order.set_vat_rates",
+		"validate": "retail.domains.transactions.vat.set_vat_rates",
 	},
 	"Stock Entry": {
 		"validate": "retail.domains.foc.apply_foc_quantities",
@@ -362,7 +361,7 @@ doc_events = {
 after_migrate = [
 	"retail.branding.apply_default_branding",
 	"retail.setup.hide_non_retail_workspaces",
-    "retail.domains.purchase.order.ensure_purchase_order_vat_rate_fields",
+    "retail.domains.transactions.vat.ensure_transaction_vat_rate_fields",
     "retail.domains.purchase.order.backfill_balance_qty",
     "retail.retail_app.report.damaged_and_expired_stock.damaged_and_expired_stock.ensure_report",
     "retail.retail_app.report.near_expiry_report.near_expiry_report.ensure_report",
