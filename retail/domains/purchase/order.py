@@ -10,6 +10,9 @@ PURCHASE_ITEM_DOCTYPES = {
 	"Purchase Receipt Item",
 	"Purchase Invoice Item",
 	"Supplier Quotation Item",
+	"Material Request Item",
+	"Subcontracting Order Item",
+	"Subcontracting Receipt Item",
 }
 
 SALES_ITEM_DOCTYPES = {
@@ -18,9 +21,14 @@ SALES_ITEM_DOCTYPES = {
 	"Sales Invoice Item",
 	"POS Invoice Item",
 	"Quotation Item",
+	"Opportunity Item",
 }
 
-VAT_RATE_ITEM_DOCTYPES = PURCHASE_ITEM_DOCTYPES | SALES_ITEM_DOCTYPES
+MIXED_ITEM_DOCTYPES = {
+	"Blanket Order Item",
+}
+
+VAT_RATE_ITEM_DOCTYPES = PURCHASE_ITEM_DOCTYPES | SALES_ITEM_DOCTYPES | MIXED_ITEM_DOCTYPES
 
 
 def set_balance_qty(doc, method=None):
@@ -43,6 +51,7 @@ def set_vat_rates(doc, method=None):
 			item.item_code,
 			child_doctype=item.doctype,
 			parent_doctype=doc.doctype,
+			transaction_type=doc.get("transaction_type"),
 			throw=True,
 		)
 		exclusive_rate = flt(item.get("rate"))
@@ -127,8 +136,14 @@ def get_purchase_item_vat_rate(item_code, throw=False):
 
 
 @frappe.whitelist()
-def get_transaction_item_vat_rate(item_code, child_doctype=None, parent_doctype=None, throw=False):
-	template_field = _get_vat_template_field(child_doctype, parent_doctype)
+def get_transaction_item_vat_rate(
+	item_code,
+	child_doctype=None,
+	parent_doctype=None,
+	transaction_type=None,
+	throw=False,
+):
+	template_field = _get_vat_template_field(child_doctype, parent_doctype, transaction_type)
 	if not template_field:
 		return 0.0
 
@@ -146,12 +161,21 @@ def get_transaction_item_vat_rate(item_code, child_doctype=None, parent_doctype=
 	return flt(get_item_tax_rate(template))
 
 
-def _get_vat_template_field(child_doctype=None, parent_doctype=None):
+def _get_vat_template_field(child_doctype=None, parent_doctype=None, transaction_type=None):
+	if child_doctype in MIXED_ITEM_DOCTYPES or parent_doctype == "Blanket Order":
+		return (
+			"custom_purchase_tax_template"
+			if transaction_type == "Purchasing"
+			else "custom_tax"
+		)
 	if child_doctype in PURCHASE_ITEM_DOCTYPES or parent_doctype in {
 		"Purchase Order",
 		"Purchase Receipt",
 		"Purchase Invoice",
 		"Supplier Quotation",
+		"Material Request",
+		"Subcontracting Order",
+		"Subcontracting Receipt",
 	}:
 		return "custom_purchase_tax_template"
 	if child_doctype in SALES_ITEM_DOCTYPES or parent_doctype in {
@@ -160,6 +184,7 @@ def _get_vat_template_field(child_doctype=None, parent_doctype=None):
 		"Sales Invoice",
 		"POS Invoice",
 		"Quotation",
+		"Opportunity",
 	}:
 		return "custom_tax"
 	return None

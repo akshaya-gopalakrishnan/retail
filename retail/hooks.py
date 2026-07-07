@@ -38,7 +38,7 @@ app_include_css = [
 
 app_include_js = [
     "/assets/retail/js/retail_navigation.js?v=53",
-    "/assets/retail/js/forms/transaction_vat_rates.js?v=1",
+    "/assets/retail/js/forms/transaction_vat_rates.js?v=2",
     "/assets/retail/js/brand_theme_switcher.js?v=8",
 ]
 
@@ -328,6 +328,21 @@ doc_events = {
 		"validate": "retail.domains.purchase.order.set_vat_rates",
 	},
 	"Supplier Quotation": {
+		"validate": "retail.domains.purchase.order.set_vat_rates",
+	},
+	"Material Request": {
+		"validate": "retail.domains.purchase.order.set_vat_rates",
+	},
+	"Opportunity": {
+		"validate": "retail.domains.purchase.order.set_vat_rates",
+	},
+	"Blanket Order": {
+		"validate": "retail.domains.purchase.order.set_vat_rates",
+	},
+	"Subcontracting Order": {
+		"validate": "retail.domains.purchase.order.set_vat_rates",
+	},
+	"Subcontracting Receipt": {
 		"validate": "retail.domains.purchase.order.set_vat_rates",
 	},
 	"Stock Entry": {

@@ -6,11 +6,16 @@
 		"Purchase Receipt Item",
 		"Purchase Invoice Item",
 		"Supplier Quotation Item",
+		"Material Request Item",
+		"Subcontracting Order Item",
+		"Subcontracting Receipt Item",
 		"Sales Order Item",
 		"Delivery Note Item",
 		"Sales Invoice Item",
 		"POS Invoice Item",
 		"Quotation Item",
+		"Opportunity Item",
+		"Blanket Order Item",
 	];
 
 	itemDoctypes.forEach((doctype) => {
@@ -34,7 +39,7 @@
 
 		row.__retail_vat_syncing = true;
 		try {
-			const vatRate = await getVatRate(row.item_code, cdt);
+			const vatRate = await getVatRate(frm, row.item_code, cdt);
 			const factor = 1 + (flt(vatRate) / 100);
 			const precision = cint(frappe.meta.get_docfield(cdt, "rate", cdn)?.precision) || 2;
 			const values = {};
@@ -56,12 +61,15 @@
 		}
 	}
 
-	async function getVatRate(itemCode, childDoctype) {
+	async function getVatRate(frm, itemCode, childDoctype) {
+		const parentDoc = frm?.doc || {};
 		const response = await frappe.call({
 			method: "retail.domains.purchase.order.get_transaction_item_vat_rate",
 			args: {
 				item_code: itemCode,
 				child_doctype: childDoctype,
+				parent_doctype: parentDoc.doctype,
+				transaction_type: parentDoc.transaction_type,
 			},
 		});
 		return flt(response.message);
