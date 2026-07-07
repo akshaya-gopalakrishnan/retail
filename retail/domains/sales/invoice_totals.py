@@ -243,6 +243,7 @@ def apply_retail_shipping_charges(doc, method=None):
 
 	_append_vat_rows(doc)
 	_append_shipping_row(doc)
+	_disable_rounded_total(doc)
 	doc.calculate_taxes_and_totals()
 
 
@@ -376,3 +377,8 @@ def _get_item_net_amount(item):
 		return flt(item.get("amount"))
 
 	return flt(item.get("qty")) * flt(item.get("rate"))
+
+
+def _disable_rounded_total(doc):
+	if doc.meta.has_field("disable_rounded_total"):
+		doc.disable_rounded_total = 1

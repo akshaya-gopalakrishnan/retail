@@ -103,13 +103,37 @@ def apply_transaction_vat_taxes(doc):
 				"charge_type": "Actual",
 				"account_head": group["account_head"],
 				"description": group["description"],
+				"category": "Total",
+				"add_deduct_tax": "Add",
+				"included_in_print_rate": 0,
 				"rate": group["rate"],
 				"tax_amount": flt(group["amount"], 2),
 				"cost_center": doc.get("cost_center"),
 			},
 		)
 
+	_disable_rounded_total(doc)
 	doc.calculate_taxes_and_totals()
+
+
+@frappe.whitelist()
+def recalculate_vat_totals_for_document(doctype, name):
+	"""Recalculate VAT rows and totals for one existing transaction document."""
+	if doctype not in VAT_TAX_DOCTYPES:
+		frappe.throw(frappe._("VAT total recalculation is not enabled for {0}.").format(doctype))
+
+	doc = frappe.get_doc(doctype, name)
+	set_vat_rates(doc)
+
+	if doc.docstatus == 1:
+		doc.flags.ignore_validate_update_after_submit = True
+
+	doc.save(ignore_permissions=True)
+	frappe.db.commit()
+	return {
+		"grand_total": doc.grand_total,
+		"total_taxes_and_charges": doc.total_taxes_and_charges,
+	}
 
 
 def _get_transaction_vat_groups(doc, tax_label):
@@ -345,3 +369,8 @@ def _get_item_exclusive_amount(item):
 def _is_managed_vat_row(row, tax_label):
 	description = (row.get("description") or "").strip()
 	return description.startswith(f"{tax_label} [")
+
+
+def _disable_rounded_total(doc):
+	if doc.meta.has_field("disable_rounded_total"):
+		doc.disable_rounded_total = 1
