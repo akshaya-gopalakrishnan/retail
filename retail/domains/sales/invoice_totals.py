@@ -14,7 +14,7 @@ VAT_DESCRIPTION_PREFIX = "Sales Tax"
 
 
 def ensure_sales_invoice_retail_totals_fields():
-	"""Add a clean Retail totals panel to Sales Invoice without changing standard fields."""
+	"""Add a clean totals panel to Sales Invoice without changing standard fields."""
 	create_custom_fields(
 		{
 			"Sales Invoice": [
@@ -33,7 +33,7 @@ def ensure_sales_invoice_retail_totals_fields():
 				},
 				{
 					"fieldname": "custom_retail_totals_section",
-					"label": "Retail Totals",
+					"label": "Totals",
 					"fieldtype": "Column Break",
 					"insert_after": "net_total",
 				},
@@ -45,7 +45,7 @@ def ensure_sales_invoice_retail_totals_fields():
 				},
 				{
 					"fieldname": "custom_retail_totals_summary",
-					"label": "Retail Totals Summary",
+					"label": "Totals Summary",
 					"fieldtype": "HTML",
 					"insert_after": "custom_retail_shipping_charges",
 				},
@@ -64,7 +64,15 @@ def _update_sales_invoice_retail_field_layout():
 		frappe.db.set_value(
 			"Custom Field",
 			"Sales Invoice-custom_retail_totals_section",
-			{"fieldtype": "Column Break", "insert_after": "net_total"},
+			{"fieldtype": "Column Break", "insert_after": "net_total", "label": "Totals"},
+			update_modified=False,
+		)
+	if frappe.db.exists("Custom Field", "Sales Invoice-custom_retail_totals_summary"):
+		frappe.db.set_value(
+			"Custom Field",
+			"Sales Invoice-custom_retail_totals_summary",
+			"label",
+			"Totals Summary",
 			update_modified=False,
 		)
 	make_property_setter(
