@@ -751,6 +751,7 @@
 
             body.retail-wide-desk .grid-body {
                 overflow-x: auto !important;
+                overflow-y: hidden !important;
             }
 
             body:not(.modal-open)[data-route^="Form/"].retail-wide-desk .form-grid:has(.awesomplete > ul:not(:empty):not([hidden])),

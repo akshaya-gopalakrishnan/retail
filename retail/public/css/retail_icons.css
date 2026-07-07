@@ -468,6 +468,7 @@
     body.retail-has-persistent-sidebar [data-page-route="Form/POS Invoice"] .grid-body,
     body.retail-has-persistent-sidebar [data-page-route="Form/Stock Entry"] .grid-body {
         overflow-x: auto !important;
+        overflow-y: hidden !important;
     }
 
     body:not(.modal-open).retail-has-persistent-sidebar [data-page-route="Form/Purchase Order"] .form-grid:has(.awesomplete > ul:not(:empty):not([hidden])),
@@ -824,6 +825,7 @@ body:has(.modal.show) [data-page-route^="Form/"] .field-area {
 
     body.retail-has-persistent-sidebar .grid-body {
         overflow-x: auto !important;
+        overflow-y: hidden !important;
     }
 
     body:not(.modal-open).retail-has-persistent-sidebar[data-page-route="Form/Purchase Order"] .form-grid:has(.awesomplete > ul:not(:empty):not([hidden])),
