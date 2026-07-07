@@ -660,7 +660,7 @@
 
     // Ensure our CSS is loaded at runtime in case app_include_css wasn't picked up
     function ensureRetailCss() {
-        const href = '/assets/retail/css/retail_icons.css?v=17';
+        const href = '/assets/retail/css/retail_icons.css?v=18';
         if (document.querySelector('link[href^="/assets/retail/css/retail_icons.css"]')) return;
         const link = document.createElement('link');
         link.rel = 'stylesheet';
@@ -753,24 +753,24 @@
                 overflow-x: auto !important;
             }
 
-            body[data-route^="Form/Purchase Order"].retail-wide-desk .form-grid,
-            body[data-route^="Form/Purchase Order"].retail-wide-desk .grid-body,
-            body[data-route^="Form/Purchase Order"].retail-wide-desk .rows,
-            body[data-route^="Form/Purchase Order"].retail-wide-desk .grid-row,
-            body[data-route^="Form/Purchase Order"].retail-wide-desk .data-row,
-            body[data-route^="Form/Purchase Order"].retail-wide-desk .grid-static-col,
-            body[data-route^="Form/Purchase Order"].retail-wide-desk .field-area {
+            body:not(.modal-open)[data-route^="Form/Purchase Order"].retail-wide-desk .form-grid,
+            body:not(.modal-open)[data-route^="Form/Purchase Order"].retail-wide-desk .grid-body,
+            body:not(.modal-open)[data-route^="Form/Purchase Order"].retail-wide-desk .rows,
+            body:not(.modal-open)[data-route^="Form/Purchase Order"].retail-wide-desk .grid-row,
+            body:not(.modal-open)[data-route^="Form/Purchase Order"].retail-wide-desk .data-row,
+            body:not(.modal-open)[data-route^="Form/Purchase Order"].retail-wide-desk .grid-static-col,
+            body:not(.modal-open)[data-route^="Form/Purchase Order"].retail-wide-desk .field-area {
                 overflow: visible !important;
             }
 
-            body[data-route^="Form/Purchase Order"].retail-wide-desk .grid-row:has(.awesomplete > ul:not(:empty)),
-            body[data-route^="Form/Purchase Order"].retail-wide-desk .grid-static-col:has(.awesomplete > ul:not(:empty)),
-            body[data-route^="Form/Purchase Order"].retail-wide-desk .frappe-control:has(.awesomplete > ul:not(:empty)) {
+            body:not(.modal-open)[data-route^="Form/Purchase Order"].retail-wide-desk .grid-row:has(.awesomplete > ul:not(:empty)),
+            body:not(.modal-open)[data-route^="Form/Purchase Order"].retail-wide-desk .grid-static-col:has(.awesomplete > ul:not(:empty)),
+            body:not(.modal-open)[data-route^="Form/Purchase Order"].retail-wide-desk .frappe-control:has(.awesomplete > ul:not(:empty)) {
                 position: relative !important;
                 z-index: 1060 !important;
             }
 
-            body[data-route^="Form/Purchase Order"].retail-wide-desk .grid-static-col .awesomplete > ul {
+            body:not(.modal-open)[data-route^="Form/Purchase Order"].retail-wide-desk .grid-static-col .awesomplete > ul {
                 max-height: 260px !important;
                 overflow-y: auto !important;
                 z-index: 1061 !important;
