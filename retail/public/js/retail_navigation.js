@@ -753,24 +753,24 @@
                 overflow-x: auto !important;
             }
 
-            body:not(.modal-open)[data-route^="Form/Purchase Order"].retail-wide-desk .form-grid,
-            body:not(.modal-open)[data-route^="Form/Purchase Order"].retail-wide-desk .grid-body,
-            body:not(.modal-open)[data-route^="Form/Purchase Order"].retail-wide-desk .rows,
-            body:not(.modal-open)[data-route^="Form/Purchase Order"].retail-wide-desk .grid-row,
-            body:not(.modal-open)[data-route^="Form/Purchase Order"].retail-wide-desk .data-row,
-            body:not(.modal-open)[data-route^="Form/Purchase Order"].retail-wide-desk .grid-static-col,
-            body:not(.modal-open)[data-route^="Form/Purchase Order"].retail-wide-desk .field-area {
+            body:not(.modal-open)[data-route^="Form/"].retail-wide-desk .form-grid:has(.awesomplete > ul:not(:empty)),
+            body:not(.modal-open)[data-route^="Form/"].retail-wide-desk .grid-body:has(.awesomplete > ul:not(:empty)),
+            body:not(.modal-open)[data-route^="Form/"].retail-wide-desk .rows:has(.awesomplete > ul:not(:empty)),
+            body:not(.modal-open)[data-route^="Form/"].retail-wide-desk .grid-row:has(.awesomplete > ul:not(:empty)),
+            body:not(.modal-open)[data-route^="Form/"].retail-wide-desk .data-row:has(.awesomplete > ul:not(:empty)),
+            body:not(.modal-open)[data-route^="Form/"].retail-wide-desk .grid-static-col:has(.awesomplete > ul:not(:empty)),
+            body:not(.modal-open)[data-route^="Form/"].retail-wide-desk .field-area:has(.awesomplete > ul:not(:empty)) {
                 overflow: visible !important;
             }
 
-            body:not(.modal-open)[data-route^="Form/Purchase Order"].retail-wide-desk .grid-row:has(.awesomplete > ul:not(:empty)),
-            body:not(.modal-open)[data-route^="Form/Purchase Order"].retail-wide-desk .grid-static-col:has(.awesomplete > ul:not(:empty)),
-            body:not(.modal-open)[data-route^="Form/Purchase Order"].retail-wide-desk .frappe-control:has(.awesomplete > ul:not(:empty)) {
+            body:not(.modal-open)[data-route^="Form/"].retail-wide-desk .grid-row:has(.awesomplete > ul:not(:empty)),
+            body:not(.modal-open)[data-route^="Form/"].retail-wide-desk .grid-static-col:has(.awesomplete > ul:not(:empty)),
+            body:not(.modal-open)[data-route^="Form/"].retail-wide-desk .frappe-control:has(.awesomplete > ul:not(:empty)) {
                 position: relative !important;
                 z-index: 1060 !important;
             }
 
-            body:not(.modal-open)[data-route^="Form/Purchase Order"].retail-wide-desk .grid-static-col .awesomplete > ul {
+            body:not(.modal-open)[data-route^="Form/"].retail-wide-desk .grid-static-col .awesomplete > ul {
                 max-height: 260px !important;
                 overflow-y: auto !important;
                 z-index: 1061 !important;

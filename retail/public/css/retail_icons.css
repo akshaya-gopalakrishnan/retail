@@ -709,6 +709,29 @@ input[type="checkbox"]:checked,
     z-index: 1051 !important;
 }
 
+body:not(.modal-open).retail-has-persistent-sidebar [data-page-route^="Form/"] .form-grid:has(.awesomplete > ul:not(:empty)),
+body:not(.modal-open).retail-has-persistent-sidebar [data-page-route^="Form/"] .grid-body:has(.awesomplete > ul:not(:empty)),
+body:not(.modal-open).retail-has-persistent-sidebar [data-page-route^="Form/"] .rows:has(.awesomplete > ul:not(:empty)),
+body:not(.modal-open).retail-has-persistent-sidebar [data-page-route^="Form/"] .grid-row:has(.awesomplete > ul:not(:empty)),
+body:not(.modal-open).retail-has-persistent-sidebar [data-page-route^="Form/"] .data-row:has(.awesomplete > ul:not(:empty)),
+body:not(.modal-open).retail-has-persistent-sidebar [data-page-route^="Form/"] .grid-static-col:has(.awesomplete > ul:not(:empty)),
+body:not(.modal-open).retail-has-persistent-sidebar [data-page-route^="Form/"] .field-area:has(.awesomplete > ul:not(:empty)) {
+    overflow: visible !important;
+}
+
+body:not(.modal-open).retail-has-persistent-sidebar [data-page-route^="Form/"] .grid-row:has(.awesomplete > ul:not(:empty)),
+body:not(.modal-open).retail-has-persistent-sidebar [data-page-route^="Form/"] .grid-static-col:has(.awesomplete > ul:not(:empty)),
+body:not(.modal-open).retail-has-persistent-sidebar [data-page-route^="Form/"] .frappe-control:has(.awesomplete > ul:not(:empty)) {
+    position: relative !important;
+    z-index: 1060 !important;
+}
+
+body:not(.modal-open).retail-has-persistent-sidebar [data-page-route^="Form/"] .grid-static-col .awesomplete > ul {
+    max-height: 260px !important;
+    overflow-y: auto !important;
+    z-index: 1061 !important;
+}
+
 /* Keep every open workspace-editor menu above later workspace blocks. */
 [data-page-route="Workspaces"] .layout-main-section.edit-mode .ce-block:has(.dropdown-list:not(.hidden)) {
     position: relative;
