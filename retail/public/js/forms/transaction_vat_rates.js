@@ -1,0 +1,69 @@
+(function () {
+	if (!window.frappe?.ui?.form) return;
+
+	const itemDoctypes = [
+		"Purchase Order Item",
+		"Purchase Receipt Item",
+		"Purchase Invoice Item",
+		"Supplier Quotation Item",
+		"Sales Order Item",
+		"Delivery Note Item",
+		"Sales Invoice Item",
+		"POS Invoice Item",
+		"Quotation Item",
+	];
+
+	itemDoctypes.forEach((doctype) => {
+		frappe.ui.form.on(doctype, {
+			item_code(frm, cdt, cdn) {
+				syncVatRates(frm, cdt, cdn, "rate");
+			},
+			rate(frm, cdt, cdn) {
+				syncVatRates(frm, cdt, cdn, "rate");
+			},
+			custom_rate_including_vat(frm, cdt, cdn) {
+				syncVatRates(frm, cdt, cdn, "inclusive");
+			},
+		});
+	});
+
+	async function syncVatRates(frm, cdt, cdn, source) {
+		const row = locals[cdt]?.[cdn];
+		if (!row || row.__retail_vat_syncing || !row.item_code) return;
+		if (row.custom_rate_including_vat === undefined) return;
+
+		row.__retail_vat_syncing = true;
+		try {
+			const vatRate = await getVatRate(row.item_code, cdt);
+			const factor = 1 + (flt(vatRate) / 100);
+			const precision = cint(frappe.meta.get_docfield(cdt, "rate", cdn)?.precision) || 2;
+			const values = {};
+
+			if (source === "inclusive") {
+				const inclusiveRate = flt(row.custom_rate_including_vat);
+				const exclusiveRate = factor ? inclusiveRate / factor : inclusiveRate;
+				values.rate = flt(exclusiveRate, precision);
+			} else {
+				const exclusiveRate = flt(row.rate);
+				if (!exclusiveRate) return;
+				values.custom_rate_including_vat = flt(exclusiveRate * factor, precision);
+			}
+
+			await frappe.model.set_value(cdt, cdn, values);
+			frm.refresh_field("items");
+		} finally {
+			if (row) row.__retail_vat_syncing = false;
+		}
+	}
+
+	async function getVatRate(itemCode, childDoctype) {
+		const response = await frappe.call({
+			method: "retail.domains.purchase.order.get_transaction_item_vat_rate",
+			args: {
+				item_code: itemCode,
+				child_doctype: childDoctype,
+			},
+		});
+		return flt(response.message);
+	}
+})();

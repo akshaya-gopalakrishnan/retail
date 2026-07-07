@@ -38,6 +38,7 @@ app_include_css = [
 
 app_include_js = [
     "/assets/retail/js/retail_navigation.js?v=51",
+    "/assets/retail/js/forms/transaction_vat_rates.js?v=1",
     "/assets/retail/js/brand_theme_switcher.js?v=8",
 ]
 
@@ -212,7 +213,10 @@ doc_events = {
 	},
 	"Purchase Receipt": {
 		"before_naming": "retail.naming.set_transaction_naming_series",
-		"validate": "retail.domains.foc.apply_foc_quantities",
+		"validate": [
+			"retail.domains.foc.apply_foc_quantities",
+			"retail.domains.purchase.order.set_vat_rates",
+		],
 		"on_submit": [
 			"retail.domains.foc.add_foc_stock_ledger_entries",
 			"retail.domains.purchase.order.sync_balance_qty_from_transaction",
@@ -232,7 +236,10 @@ doc_events = {
 	},
 	"Purchase Invoice": {
 		"before_naming": "retail.naming.set_transaction_naming_series",
-		"validate": "retail.domains.foc.apply_foc_quantities",
+		"validate": [
+			"retail.domains.foc.apply_foc_quantities",
+			"retail.domains.purchase.order.set_vat_rates",
+		],
 		"on_submit": [
 			"retail.domains.foc.add_foc_stock_ledger_entries",
 			"retail.domains.purchase.order.sync_balance_qty_from_transaction",
@@ -269,6 +276,7 @@ doc_events = {
 		"before_naming": "retail.naming.set_transaction_naming_series",
 		"validate": [
 			"retail.domains.foc.apply_foc_quantities",
+			"retail.domains.purchase.order.set_vat_rates",
 			"retail.domains.sales.counter.set_sales_invoice_counter_name",
 			"retail.domains.sales.invoice_totals.apply_retail_shipping_charges",
 			"retail.api.pos_sync.validate_external_reference",
@@ -284,6 +292,7 @@ doc_events = {
 	"POS Invoice": {
 		"validate": [
 			"retail.domains.foc.apply_foc_quantities",
+			"retail.domains.purchase.order.set_vat_rates",
 			"retail.api.pos_sync.validate_external_reference",
 		],
 		"on_submit": [
@@ -295,7 +304,10 @@ doc_events = {
     },
     "Delivery Note": {
 		"before_naming": "retail.naming.set_transaction_naming_series",
-		"validate": "retail.domains.foc.apply_foc_quantities",
+		"validate": [
+			"retail.domains.foc.apply_foc_quantities",
+			"retail.domains.purchase.order.set_vat_rates",
+		],
 		"on_submit": [
 			"retail.domains.foc.add_foc_stock_ledger_entries",
 			"retail.domains.item.item_price_sync.sync_latest_transaction_item_prices",
@@ -304,10 +316,19 @@ doc_events = {
 		"on_update_after_submit": "retail.domains.item.item_price_sync.sync_latest_transaction_item_prices",
     },
 	"Sales Order": {
-		"validate": "retail.domains.foc.apply_foc_quantities",
+		"validate": [
+			"retail.domains.foc.apply_foc_quantities",
+			"retail.domains.purchase.order.set_vat_rates",
+		],
 		"on_submit": "retail.domains.item.item_price_sync.sync_latest_transaction_item_prices",
 		"on_cancel": "retail.domains.item.item_price_sync.recalculate_transaction_item_prices",
 		"on_update_after_submit": "retail.domains.item.item_price_sync.sync_latest_transaction_item_prices",
+	},
+	"Quotation": {
+		"validate": "retail.domains.purchase.order.set_vat_rates",
+	},
+	"Supplier Quotation": {
+		"validate": "retail.domains.purchase.order.set_vat_rates",
 	},
 	"Stock Entry": {
 		"validate": "retail.domains.foc.apply_foc_quantities",
