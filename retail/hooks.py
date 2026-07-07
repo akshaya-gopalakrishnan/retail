@@ -236,6 +236,7 @@ doc_events = {
 	},
 	"Purchase Invoice": {
 		"before_naming": "retail.naming.set_transaction_naming_series",
+		"before_validate": "retail.domains.transactions.stock.set_update_stock_for_standalone_invoice",
 		"validate": [
 			"retail.domains.foc.apply_foc_quantities",
 			"retail.domains.transactions.vat.set_vat_rates",
@@ -274,6 +275,7 @@ doc_events = {
 	},
 	"Sales Invoice": {
 		"before_naming": "retail.naming.set_transaction_naming_series",
+		"before_validate": "retail.domains.transactions.stock.set_update_stock_for_standalone_invoice",
 		"validate": [
 			"retail.domains.foc.apply_foc_quantities",
 			"retail.domains.transactions.vat.set_vat_rates",
