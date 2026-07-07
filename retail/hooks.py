@@ -39,6 +39,7 @@ app_include_css = [
 app_include_js = [
     "/assets/retail/js/retail_navigation.js?v=54",
     "/assets/retail/js/forms/transaction_vat_rates.js?v=4",
+    "/assets/retail/js/forms/transaction_totals.js?v=1",
     "/assets/retail/js/brand_theme_switcher.js?v=8",
 ]
 
@@ -377,6 +378,7 @@ after_migrate = [
 	"retail.domains.item.arabic_name.ensure_item_arabic_name_field",
 	"retail.domains.item.vat_pricing.ensure_item_vat_pricing_fields",
 	"retail.domains.item.vat_pricing.backfill_item_master_last_purchase_rates",
+	"retail.domains.sales.invoice_totals.ensure_all_transaction_totals_fields",
 ]
 
 # Scheduled Tasks

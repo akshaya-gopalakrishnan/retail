@@ -11,6 +11,12 @@ from frappe.utils import flt
 
 SHIPPING_DESCRIPTION = "Shipping Charges"
 VAT_DESCRIPTION_PREFIX = "Sales Tax"
+TRANSACTION_TOTALS_DOCTYPES = (
+	"Purchase Order",
+	"Purchase Receipt",
+	"Purchase Invoice",
+	"Sales Order",
+)
 
 
 def ensure_sales_invoice_retail_totals_fields():
@@ -56,6 +62,34 @@ def ensure_sales_invoice_retail_totals_fields():
 	frappe.db.updatedb("Sales Invoice")
 	_update_sales_invoice_retail_field_layout()
 	frappe.clear_cache(doctype="Sales Invoice")
+
+
+def ensure_transaction_totals_summary_fields():
+	"""Add a neutral VAT totals summary to non-shipping sales and purchase forms."""
+	create_custom_fields(
+		{
+			doctype: [
+				{
+					"fieldname": "custom_retail_totals_section",
+					"label": "Totals",
+					"fieldtype": "Column Break",
+					"insert_after": "net_total",
+				},
+				{
+					"fieldname": "custom_retail_totals_summary",
+					"label": "Totals Summary",
+					"fieldtype": "HTML",
+					"insert_after": "custom_retail_totals_section",
+				},
+			]
+			for doctype in TRANSACTION_TOTALS_DOCTYPES
+		},
+		ignore_validate=True,
+	)
+	for doctype in TRANSACTION_TOTALS_DOCTYPES:
+		frappe.db.updatedb(doctype)
+		_update_transaction_totals_field_layout(doctype)
+		frappe.clear_cache(doctype=doctype)
 
 
 def _update_sales_invoice_retail_field_layout():
@@ -119,16 +153,68 @@ def _update_sales_invoice_retail_field_layout():
 	)
 
 
+def _update_transaction_totals_field_layout(doctype):
+	if frappe.db.exists("Custom Field", f"{doctype}-custom_retail_totals_section"):
+		frappe.db.set_value(
+			"Custom Field",
+			f"{doctype}-custom_retail_totals_section",
+			{"fieldtype": "Column Break", "insert_after": "net_total", "label": "Totals"},
+			update_modified=False,
+		)
+	if frappe.db.exists("Custom Field", f"{doctype}-custom_retail_totals_summary"):
+		frappe.db.set_value(
+			"Custom Field",
+			f"{doctype}-custom_retail_totals_summary",
+			{"insert_after": "custom_retail_totals_section", "label": "Totals Summary"},
+			update_modified=False,
+		)
+
+	for fieldname in ("total", "net_total"):
+		make_property_setter(
+			doctype,
+			fieldname,
+			"hidden",
+			1,
+			"Check",
+			validate_fields_for_doctype=False,
+		)
+
+	field_order = _get_doctype_field_order(doctype)
+	field_order = _place_after(
+		field_order,
+		"net_total",
+		["custom_retail_totals_section", "custom_retail_totals_summary"],
+	)
+
+	make_property_setter(
+		doctype,
+		None,
+		"field_order",
+		json.dumps(field_order),
+		"JSON",
+		validate_fields_for_doctype=False,
+	)
+
+
 def _get_sales_invoice_field_order():
+	return _get_doctype_field_order("Sales Invoice")
+
+
+def _get_doctype_field_order(doctype):
 	property_value = frappe.db.get_value(
 		"Property Setter",
-		{"doc_type": "Sales Invoice", "property": "field_order", "field_name": ["is", "not set"]},
+		{"doc_type": doctype, "property": "field_order", "field_name": ["is", "not set"]},
 		"value",
 	)
 	if property_value:
 		return json.loads(property_value)
 
-	return [field.fieldname for field in frappe.get_meta("Sales Invoice").fields if field.fieldname]
+	return [field.fieldname for field in frappe.get_meta(doctype).fields if field.fieldname]
+
+
+def ensure_all_transaction_totals_fields():
+	ensure_sales_invoice_retail_totals_fields()
+	ensure_transaction_totals_summary_fields()
 
 
 def _place_after(field_order, anchor, fieldnames):
