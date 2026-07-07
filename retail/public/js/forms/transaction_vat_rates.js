@@ -35,6 +35,8 @@
 		});
 	});
 
+	bindEditableGridClose();
+
 	async function syncVatRates(frm, cdt, cdn, source) {
 		const row = locals[cdt]?.[cdn];
 		if (!row || row.__retail_vat_syncing || !row.item_code) return;
@@ -66,7 +68,6 @@
 
 			if (!Object.keys(values).length) return;
 			await frappe.model.set_value(cdt, cdn, values);
-			frm.refresh_field("items");
 		} finally {
 			if (row) row.__retail_vat_syncing = false;
 		}
@@ -84,5 +85,56 @@
 			},
 		});
 		return flt(response.message);
+	}
+
+	function bindEditableGridClose() {
+		if (window.__retail_grid_close_bound) return;
+		window.__retail_grid_close_bound = true;
+
+		document.addEventListener(
+			"keydown",
+			(event) => {
+				if (event.key !== "Enter" || event.shiftKey || event.ctrlKey || event.metaKey || event.altKey) {
+					return;
+				}
+				const row = frappe.ui.form.editable_row;
+				if (!row || !row.wrapper?.get(0)?.contains(event.target)) return;
+				if (isAutocompleteOpen(event.target)) return;
+
+				setTimeout(() => closeEditableRow(row), 0);
+			},
+			true
+		);
+
+		document.addEventListener(
+			"mousedown",
+			(event) => {
+				const row = frappe.ui.form.editable_row;
+				if (!row) return;
+
+				const target = event.target;
+				if (row.wrapper?.get(0)?.contains(target)) return;
+				if (target.closest(".awesomplete, .modal, .datepicker, .flatpickr-calendar")) return;
+
+				closeEditableRow(row);
+			},
+			true
+		);
+	}
+
+	function closeEditableRow(row) {
+		if (!row) return;
+		if (row.doc?.__retail_vat_syncing) {
+			setTimeout(() => closeEditableRow(row), 50);
+			return;
+		}
+		row.toggle_editable_row(false);
+	}
+
+	function isAutocompleteOpen(target) {
+		const wrapper = target.closest(".awesomplete");
+		if (!wrapper) return false;
+		const list = wrapper.querySelector("ul");
+		return Boolean(list && list.children.length && !list.hidden);
 	}
 })();
