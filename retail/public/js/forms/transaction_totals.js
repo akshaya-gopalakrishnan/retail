@@ -49,6 +49,12 @@
 			rate(frm) {
 				renderTransactionTotals(frm);
 			},
+			custom_rate_including_vat(frm) {
+				renderTransactionTotals(frm);
+			},
+			custom_amount_including_vat(frm) {
+				renderTransactionTotals(frm);
+			},
 			amount(frm) {
 				renderTransactionTotals(frm);
 			},
@@ -94,9 +100,12 @@
 		const currency = frm.doc.currency;
 		const subtotal = getSubtotal(frm);
 		const tax = getTaxAmount(frm);
-		const total = hasEnteredValue(frm.doc.grand_total)
-			? flt(frm.doc.grand_total)
-			: subtotal + tax;
+		const inclusiveTotal = getInclusiveTotal(frm);
+		const total = hasEnteredValue(inclusiveTotal)
+			? inclusiveTotal
+			: hasEnteredValue(frm.doc.grand_total)
+				? flt(frm.doc.grand_total)
+				: subtotal + tax;
 
 		field.$wrapper.html(`
 			<style>
@@ -197,16 +206,26 @@
 	}
 
 	function getSubtotal(frm) {
-		const itemSubtotal = (frm.doc.items || []).reduce((total, row) => {
-			const amount = hasEnteredValue(row.net_amount) ? row.net_amount : row.amount;
-			if (hasEnteredValue(amount)) return total + flt(amount);
-			return total + flt(row.qty) * flt(row.rate);
+		const items = frm.doc.items || [];
+		const itemSubtotal = items.reduce((total, row) => {
+			return total + getExclusiveAmount(row);
 		}, 0);
 
+		if (items.length) return flt(itemSubtotal);
 		return flt(itemSubtotal || frm.doc.net_total || frm.doc.total || frm.doc.base_net_total || frm.doc.base_total);
 	}
 
 	function getTaxAmount(frm) {
+		const items = frm.doc.items || [];
+		const hasInclusiveAmount = items.some((row) => hasEnteredValue(getInclusiveAmount(row)));
+		const itemTax = items.reduce((total, row) => {
+			const inclusiveAmount = getInclusiveAmount(row);
+			if (!hasEnteredValue(inclusiveAmount)) return total;
+			return total + (inclusiveAmount - getExclusiveAmount(row));
+		}, 0);
+
+		if (hasInclusiveAmount) return flt(itemTax);
+
 		const rowTax = (frm.doc.taxes || []).reduce((total, row) => {
 			const amount = row.tax_amount_after_discount_amount ?? row.tax_amount;
 			return total + flt(amount);
@@ -214,6 +233,27 @@
 
 		if (rowTax) return rowTax;
 		return flt(frm.doc.total_taxes_and_charges);
+	}
+
+	function getInclusiveTotal(frm) {
+		const items = frm.doc.items || [];
+		if (!items.some((row) => hasEnteredValue(getInclusiveAmount(row)))) return null;
+		return flt(items.reduce((total, row) => total + flt(getInclusiveAmount(row)), 0));
+	}
+
+	function getInclusiveAmount(row) {
+		if (hasEnteredValue(row.custom_rate_including_vat)) {
+			return flt(row.qty) * flt(row.custom_rate_including_vat);
+		}
+		if (hasEnteredValue(row.custom_amount_including_vat)) {
+			return flt(row.custom_amount_including_vat);
+		}
+		return null;
+	}
+
+	function getExclusiveAmount(row) {
+		if (hasEnteredValue(row.rate)) return flt(row.qty) * flt(row.rate);
+		return flt(row.amount);
 	}
 
 	function getTaxLabel(frm) {

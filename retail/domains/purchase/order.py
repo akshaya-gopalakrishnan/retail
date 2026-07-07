@@ -30,6 +30,13 @@ MIXED_ITEM_DOCTYPES = {
 
 VAT_RATE_ITEM_DOCTYPES = PURCHASE_ITEM_DOCTYPES | SALES_ITEM_DOCTYPES | MIXED_ITEM_DOCTYPES
 
+VAT_TAX_DOCTYPES = {
+	"Purchase Order": "Purchase Tax",
+	"Purchase Receipt": "Purchase Tax",
+	"Purchase Invoice": "Purchase Tax",
+	"Sales Order": "Sales Tax",
+}
+
 
 def set_balance_qty(doc, method=None):
 	"""Keep each PO line's balance in sync when the order itself is saved."""
@@ -71,6 +78,73 @@ def set_vat_rates(doc, method=None):
 				flt(item.get("qty")) * flt(item.get("custom_rate_including_vat")),
 				amount_precision,
 			)
+
+	apply_transaction_vat_taxes(doc)
+
+
+def apply_transaction_vat_taxes(doc):
+	"""Mirror item VAT templates into the standard Taxes table for ERPNext totals."""
+	tax_label = VAT_TAX_DOCTYPES.get(doc.doctype)
+	if not tax_label or not doc.meta.has_field("taxes"):
+		return
+
+	doc.set(
+		"taxes",
+		[row for row in (doc.get("taxes") or []) if not _is_managed_vat_row(row, tax_label)],
+	)
+
+	for group in _get_transaction_vat_groups(doc, tax_label).values():
+		if not group["amount"]:
+			continue
+
+		doc.append(
+			"taxes",
+			{
+				"charge_type": "Actual",
+				"account_head": group["account_head"],
+				"description": group["description"],
+				"rate": group["rate"],
+				"tax_amount": flt(group["amount"], 2),
+				"cost_center": doc.get("cost_center"),
+			},
+		)
+
+	doc.calculate_taxes_and_totals()
+
+
+def _get_transaction_vat_groups(doc, tax_label):
+	groups = {}
+	for item in doc.get("items") or []:
+		if not item.get("item_code"):
+			continue
+
+		template = _get_transaction_item_vat_template(
+			item.item_code,
+			child_doctype=item.doctype,
+			parent_doctype=doc.doctype,
+			transaction_type=doc.get("transaction_type"),
+		)
+		if not template:
+			continue
+
+		exclusive_amount = _get_item_exclusive_amount(item)
+		for tax in _get_item_tax_template_details(template):
+			rate = flt(tax.tax_rate)
+			if not rate:
+				continue
+
+			key = (tax.tax_type, rate, template)
+			if key not in groups:
+				groups[key] = {
+					"account_head": tax.tax_type,
+					"rate": rate,
+					"amount": 0,
+					"description": f"{tax_label} [{template}]",
+				}
+
+			groups[key]["amount"] += exclusive_amount * rate / 100
+
+	return groups
 
 
 def sync_balance_qty_from_transaction(doc, method=None):
@@ -160,22 +234,40 @@ def get_transaction_item_vat_rate(
 	transaction_type=None,
 	throw=False,
 ):
-	template_field = _get_vat_template_field(child_doctype, parent_doctype, transaction_type)
-	if not template_field:
-		return 0.0
-
-	template = frappe.db.get_value("Item", item_code, template_field)
+	template = _get_transaction_item_vat_template(
+		item_code,
+		child_doctype=child_doctype,
+		parent_doctype=parent_doctype,
+		transaction_type=transaction_type,
+		throw=throw,
+	)
 	if not template:
-		if throw:
-			label = "Purchase VAT Template" if template_field == "custom_purchase_tax_template" else "Sales VAT Template"
-			frappe.throw(
-				frappe._("Set {0} in Item Master for item {1}.").format(label, item_code)
-			)
 		return 0.0
 
 	from retail.domains.item.vat_pricing import get_item_tax_rate
 
 	return flt(get_item_tax_rate(template))
+
+
+def _get_transaction_item_vat_template(
+	item_code,
+	child_doctype=None,
+	parent_doctype=None,
+	transaction_type=None,
+	throw=False,
+):
+	template_field = _get_vat_template_field(child_doctype, parent_doctype, transaction_type)
+	if not template_field:
+		return None
+
+	template = frappe.db.get_value("Item", item_code, template_field)
+	if not template and throw:
+		label = "Purchase VAT Template" if template_field == "custom_purchase_tax_template" else "Sales VAT Template"
+		frappe.throw(
+			frappe._("Set {0} in Item Master for item {1}.").format(label, item_code)
+		)
+
+	return template
 
 
 def _get_vat_template_field(child_doctype=None, parent_doctype=None, transaction_type=None):
@@ -232,3 +324,24 @@ def _delete_obsolete_vat_fields(doctype):
 			ignore_permissions=True,
 			force=True,
 		)
+
+
+def _get_item_tax_template_details(template):
+	return frappe.get_all(
+		"Item Tax Template Detail",
+		filters={"parent": template},
+		fields=["tax_type", "tax_rate"],
+		limit_page_length=0,
+	)
+
+
+def _get_item_exclusive_amount(item):
+	if item.get("rate") not in (None, ""):
+		return flt(item.get("qty")) * flt(item.get("rate"))
+
+	return flt(item.get("amount"))
+
+
+def _is_managed_vat_row(row, tax_label):
+	description = (row.get("description") or "").strip()
+	return description.startswith(f"{tax_label} [")
