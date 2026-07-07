@@ -470,24 +470,24 @@
         overflow-x: auto !important;
     }
 
-    body:not(.modal-open).retail-has-persistent-sidebar [data-page-route="Form/Purchase Order"] .form-grid,
-    body:not(.modal-open).retail-has-persistent-sidebar [data-page-route="Form/Purchase Order"] .grid-body,
-    body:not(.modal-open).retail-has-persistent-sidebar [data-page-route="Form/Purchase Order"] .rows,
-    body:not(.modal-open).retail-has-persistent-sidebar [data-page-route="Form/Purchase Order"] .grid-row,
-    body:not(.modal-open).retail-has-persistent-sidebar [data-page-route="Form/Purchase Order"] .data-row,
-    body:not(.modal-open).retail-has-persistent-sidebar [data-page-route="Form/Purchase Order"] .grid-static-col,
-    body:not(.modal-open).retail-has-persistent-sidebar [data-page-route="Form/Purchase Order"] .field-area {
+    body:not(.modal-open).retail-has-persistent-sidebar [data-page-route="Form/Purchase Order"] .form-grid:has(.awesomplete > ul:not(:empty):not([hidden])),
+    body:not(.modal-open).retail-has-persistent-sidebar [data-page-route="Form/Purchase Order"] .grid-body:has(.awesomplete > ul:not(:empty):not([hidden])),
+    body:not(.modal-open).retail-has-persistent-sidebar [data-page-route="Form/Purchase Order"] .rows:has(.awesomplete > ul:not(:empty):not([hidden])),
+    body:not(.modal-open).retail-has-persistent-sidebar [data-page-route="Form/Purchase Order"] .grid-row:has(.awesomplete > ul:not(:empty):not([hidden])),
+    body:not(.modal-open).retail-has-persistent-sidebar [data-page-route="Form/Purchase Order"] .data-row:has(.awesomplete > ul:not(:empty):not([hidden])),
+    body:not(.modal-open).retail-has-persistent-sidebar [data-page-route="Form/Purchase Order"] .grid-static-col:has(.awesomplete > ul:not(:empty):not([hidden])),
+    body:not(.modal-open).retail-has-persistent-sidebar [data-page-route="Form/Purchase Order"] .field-area:has(.awesomplete > ul:not(:empty):not([hidden])) {
         overflow: visible !important;
     }
 
-    body:not(.modal-open).retail-has-persistent-sidebar [data-page-route="Form/Purchase Order"] .grid-row:has(.awesomplete > ul:not(:empty)),
-    body:not(.modal-open).retail-has-persistent-sidebar [data-page-route="Form/Purchase Order"] .grid-static-col:has(.awesomplete > ul:not(:empty)),
-    body:not(.modal-open).retail-has-persistent-sidebar [data-page-route="Form/Purchase Order"] .frappe-control:has(.awesomplete > ul:not(:empty)) {
+    body:not(.modal-open).retail-has-persistent-sidebar [data-page-route="Form/Purchase Order"] .grid-row:has(.awesomplete > ul:not(:empty):not([hidden])),
+    body:not(.modal-open).retail-has-persistent-sidebar [data-page-route="Form/Purchase Order"] .grid-static-col:has(.awesomplete > ul:not(:empty):not([hidden])),
+    body:not(.modal-open).retail-has-persistent-sidebar [data-page-route="Form/Purchase Order"] .frappe-control:has(.awesomplete > ul:not(:empty):not([hidden])) {
         position: relative !important;
         z-index: 1060 !important;
     }
 
-    body:not(.modal-open).retail-has-persistent-sidebar [data-page-route="Form/Purchase Order"] .grid-static-col .awesomplete > ul {
+    body:not(.modal-open).retail-has-persistent-sidebar [data-page-route="Form/Purchase Order"] .grid-static-col .awesomplete > ul:not(:empty):not([hidden]) {
         max-height: 260px !important;
         overflow-y: auto !important;
         z-index: 1061 !important;
@@ -709,27 +709,37 @@ input[type="checkbox"]:checked,
     z-index: 1051 !important;
 }
 
-body:not(.modal-open).retail-has-persistent-sidebar [data-page-route^="Form/"] .form-grid:has(.awesomplete > ul:not(:empty)),
-body:not(.modal-open).retail-has-persistent-sidebar [data-page-route^="Form/"] .grid-body:has(.awesomplete > ul:not(:empty)),
-body:not(.modal-open).retail-has-persistent-sidebar [data-page-route^="Form/"] .rows:has(.awesomplete > ul:not(:empty)),
-body:not(.modal-open).retail-has-persistent-sidebar [data-page-route^="Form/"] .grid-row:has(.awesomplete > ul:not(:empty)),
-body:not(.modal-open).retail-has-persistent-sidebar [data-page-route^="Form/"] .data-row:has(.awesomplete > ul:not(:empty)),
-body:not(.modal-open).retail-has-persistent-sidebar [data-page-route^="Form/"] .grid-static-col:has(.awesomplete > ul:not(:empty)),
-body:not(.modal-open).retail-has-persistent-sidebar [data-page-route^="Form/"] .field-area:has(.awesomplete > ul:not(:empty)) {
+body:not(.modal-open).retail-has-persistent-sidebar [data-page-route^="Form/"] .form-grid:has(.awesomplete > ul:not(:empty):not([hidden])),
+body:not(.modal-open).retail-has-persistent-sidebar [data-page-route^="Form/"] .grid-body:has(.awesomplete > ul:not(:empty):not([hidden])),
+body:not(.modal-open).retail-has-persistent-sidebar [data-page-route^="Form/"] .rows:has(.awesomplete > ul:not(:empty):not([hidden])),
+body:not(.modal-open).retail-has-persistent-sidebar [data-page-route^="Form/"] .grid-row:has(.awesomplete > ul:not(:empty):not([hidden])),
+body:not(.modal-open).retail-has-persistent-sidebar [data-page-route^="Form/"] .data-row:has(.awesomplete > ul:not(:empty):not([hidden])),
+body:not(.modal-open).retail-has-persistent-sidebar [data-page-route^="Form/"] .grid-static-col:has(.awesomplete > ul:not(:empty):not([hidden])),
+body:not(.modal-open).retail-has-persistent-sidebar [data-page-route^="Form/"] .field-area:has(.awesomplete > ul:not(:empty):not([hidden])) {
     overflow: visible !important;
 }
 
-body:not(.modal-open).retail-has-persistent-sidebar [data-page-route^="Form/"] .grid-row:has(.awesomplete > ul:not(:empty)),
-body:not(.modal-open).retail-has-persistent-sidebar [data-page-route^="Form/"] .grid-static-col:has(.awesomplete > ul:not(:empty)),
-body:not(.modal-open).retail-has-persistent-sidebar [data-page-route^="Form/"] .frappe-control:has(.awesomplete > ul:not(:empty)) {
+body:not(.modal-open).retail-has-persistent-sidebar [data-page-route^="Form/"] .grid-row:has(.awesomplete > ul:not(:empty):not([hidden])),
+body:not(.modal-open).retail-has-persistent-sidebar [data-page-route^="Form/"] .grid-static-col:has(.awesomplete > ul:not(:empty):not([hidden])),
+body:not(.modal-open).retail-has-persistent-sidebar [data-page-route^="Form/"] .frappe-control:has(.awesomplete > ul:not(:empty):not([hidden])) {
     position: relative !important;
     z-index: 1060 !important;
 }
 
-body:not(.modal-open).retail-has-persistent-sidebar [data-page-route^="Form/"] .grid-static-col .awesomplete > ul {
+body:not(.modal-open).retail-has-persistent-sidebar [data-page-route^="Form/"] .grid-static-col .awesomplete > ul:not(:empty):not([hidden]) {
     max-height: 260px !important;
     overflow-y: auto !important;
     z-index: 1061 !important;
+}
+
+body:has(.modal.show) [data-page-route^="Form/"] .form-grid,
+body:has(.modal.show) [data-page-route^="Form/"] .grid-body,
+body:has(.modal.show) [data-page-route^="Form/"] .rows,
+body:has(.modal.show) [data-page-route^="Form/"] .grid-row,
+body:has(.modal.show) [data-page-route^="Form/"] .data-row,
+body:has(.modal.show) [data-page-route^="Form/"] .grid-static-col,
+body:has(.modal.show) [data-page-route^="Form/"] .field-area {
+    z-index: auto !important;
 }
 
 /* Keep every open workspace-editor menu above later workspace blocks. */
@@ -816,24 +826,24 @@ body:not(.modal-open).retail-has-persistent-sidebar [data-page-route^="Form/"] .
         overflow-x: auto !important;
     }
 
-    body:not(.modal-open).retail-has-persistent-sidebar[data-page-route="Form/Purchase Order"] .form-grid,
-    body:not(.modal-open).retail-has-persistent-sidebar[data-page-route="Form/Purchase Order"] .grid-body,
-    body:not(.modal-open).retail-has-persistent-sidebar[data-page-route="Form/Purchase Order"] .rows,
-    body:not(.modal-open).retail-has-persistent-sidebar[data-page-route="Form/Purchase Order"] .grid-row,
-    body:not(.modal-open).retail-has-persistent-sidebar[data-page-route="Form/Purchase Order"] .data-row,
-    body:not(.modal-open).retail-has-persistent-sidebar[data-page-route="Form/Purchase Order"] .grid-static-col,
-    body:not(.modal-open).retail-has-persistent-sidebar[data-page-route="Form/Purchase Order"] .field-area {
+    body:not(.modal-open).retail-has-persistent-sidebar[data-page-route="Form/Purchase Order"] .form-grid:has(.awesomplete > ul:not(:empty):not([hidden])),
+    body:not(.modal-open).retail-has-persistent-sidebar[data-page-route="Form/Purchase Order"] .grid-body:has(.awesomplete > ul:not(:empty):not([hidden])),
+    body:not(.modal-open).retail-has-persistent-sidebar[data-page-route="Form/Purchase Order"] .rows:has(.awesomplete > ul:not(:empty):not([hidden])),
+    body:not(.modal-open).retail-has-persistent-sidebar[data-page-route="Form/Purchase Order"] .grid-row:has(.awesomplete > ul:not(:empty):not([hidden])),
+    body:not(.modal-open).retail-has-persistent-sidebar[data-page-route="Form/Purchase Order"] .data-row:has(.awesomplete > ul:not(:empty):not([hidden])),
+    body:not(.modal-open).retail-has-persistent-sidebar[data-page-route="Form/Purchase Order"] .grid-static-col:has(.awesomplete > ul:not(:empty):not([hidden])),
+    body:not(.modal-open).retail-has-persistent-sidebar[data-page-route="Form/Purchase Order"] .field-area:has(.awesomplete > ul:not(:empty):not([hidden])) {
         overflow: visible !important;
     }
 
-    body:not(.modal-open).retail-has-persistent-sidebar[data-page-route="Form/Purchase Order"] .grid-row:has(.awesomplete > ul:not(:empty)),
-    body:not(.modal-open).retail-has-persistent-sidebar[data-page-route="Form/Purchase Order"] .grid-static-col:has(.awesomplete > ul:not(:empty)),
-    body:not(.modal-open).retail-has-persistent-sidebar[data-page-route="Form/Purchase Order"] .frappe-control:has(.awesomplete > ul:not(:empty)) {
+    body:not(.modal-open).retail-has-persistent-sidebar[data-page-route="Form/Purchase Order"] .grid-row:has(.awesomplete > ul:not(:empty):not([hidden])),
+    body:not(.modal-open).retail-has-persistent-sidebar[data-page-route="Form/Purchase Order"] .grid-static-col:has(.awesomplete > ul:not(:empty):not([hidden])),
+    body:not(.modal-open).retail-has-persistent-sidebar[data-page-route="Form/Purchase Order"] .frappe-control:has(.awesomplete > ul:not(:empty):not([hidden])) {
         position: relative !important;
         z-index: 1060 !important;
     }
 
-    body:not(.modal-open).retail-has-persistent-sidebar[data-page-route="Form/Purchase Order"] .grid-static-col .awesomplete > ul {
+    body:not(.modal-open).retail-has-persistent-sidebar[data-page-route="Form/Purchase Order"] .grid-static-col .awesomplete > ul:not(:empty):not([hidden]) {
         max-height: 260px !important;
         overflow-y: auto !important;
         z-index: 1061 !important;

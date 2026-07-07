@@ -753,27 +753,37 @@
                 overflow-x: auto !important;
             }
 
-            body:not(.modal-open)[data-route^="Form/"].retail-wide-desk .form-grid:has(.awesomplete > ul:not(:empty)),
-            body:not(.modal-open)[data-route^="Form/"].retail-wide-desk .grid-body:has(.awesomplete > ul:not(:empty)),
-            body:not(.modal-open)[data-route^="Form/"].retail-wide-desk .rows:has(.awesomplete > ul:not(:empty)),
-            body:not(.modal-open)[data-route^="Form/"].retail-wide-desk .grid-row:has(.awesomplete > ul:not(:empty)),
-            body:not(.modal-open)[data-route^="Form/"].retail-wide-desk .data-row:has(.awesomplete > ul:not(:empty)),
-            body:not(.modal-open)[data-route^="Form/"].retail-wide-desk .grid-static-col:has(.awesomplete > ul:not(:empty)),
-            body:not(.modal-open)[data-route^="Form/"].retail-wide-desk .field-area:has(.awesomplete > ul:not(:empty)) {
+            body:not(.modal-open)[data-route^="Form/"].retail-wide-desk .form-grid:has(.awesomplete > ul:not(:empty):not([hidden])),
+            body:not(.modal-open)[data-route^="Form/"].retail-wide-desk .grid-body:has(.awesomplete > ul:not(:empty):not([hidden])),
+            body:not(.modal-open)[data-route^="Form/"].retail-wide-desk .rows:has(.awesomplete > ul:not(:empty):not([hidden])),
+            body:not(.modal-open)[data-route^="Form/"].retail-wide-desk .grid-row:has(.awesomplete > ul:not(:empty):not([hidden])),
+            body:not(.modal-open)[data-route^="Form/"].retail-wide-desk .data-row:has(.awesomplete > ul:not(:empty):not([hidden])),
+            body:not(.modal-open)[data-route^="Form/"].retail-wide-desk .grid-static-col:has(.awesomplete > ul:not(:empty):not([hidden])),
+            body:not(.modal-open)[data-route^="Form/"].retail-wide-desk .field-area:has(.awesomplete > ul:not(:empty):not([hidden])) {
                 overflow: visible !important;
             }
 
-            body:not(.modal-open)[data-route^="Form/"].retail-wide-desk .grid-row:has(.awesomplete > ul:not(:empty)),
-            body:not(.modal-open)[data-route^="Form/"].retail-wide-desk .grid-static-col:has(.awesomplete > ul:not(:empty)),
-            body:not(.modal-open)[data-route^="Form/"].retail-wide-desk .frappe-control:has(.awesomplete > ul:not(:empty)) {
+            body:not(.modal-open)[data-route^="Form/"].retail-wide-desk .grid-row:has(.awesomplete > ul:not(:empty):not([hidden])),
+            body:not(.modal-open)[data-route^="Form/"].retail-wide-desk .grid-static-col:has(.awesomplete > ul:not(:empty):not([hidden])),
+            body:not(.modal-open)[data-route^="Form/"].retail-wide-desk .frappe-control:has(.awesomplete > ul:not(:empty):not([hidden])) {
                 position: relative !important;
                 z-index: 1060 !important;
             }
 
-            body:not(.modal-open)[data-route^="Form/"].retail-wide-desk .grid-static-col .awesomplete > ul {
+            body:not(.modal-open)[data-route^="Form/"].retail-wide-desk .grid-static-col .awesomplete > ul:not(:empty):not([hidden]) {
                 max-height: 260px !important;
                 overflow-y: auto !important;
                 z-index: 1061 !important;
+            }
+
+            body:has(.modal.show)[data-route^="Form/"] .form-grid,
+            body:has(.modal.show)[data-route^="Form/"] .grid-body,
+            body:has(.modal.show)[data-route^="Form/"] .rows,
+            body:has(.modal.show)[data-route^="Form/"] .grid-row,
+            body:has(.modal.show)[data-route^="Form/"] .data-row,
+            body:has(.modal.show)[data-route^="Form/"] .grid-static-col,
+            body:has(.modal.show)[data-route^="Form/"] .field-area {
+                z-index: auto !important;
             }
         }
         `;
