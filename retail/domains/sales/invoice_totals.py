@@ -18,6 +18,22 @@ TRANSACTION_TOTALS_DOCTYPES = (
 	"Sales Order",
 )
 
+STANDARD_TOTAL_FIELDS_TO_HIDE = (
+	"base_total_taxes_and_charges",
+	"taxes_and_charges_added",
+	"taxes_and_charges_deducted",
+	"total_taxes_and_charges",
+	"totals_section",
+	"base_grand_total",
+	"base_in_words",
+	"base_rounded_total",
+	"grand_total",
+	"rounded_total",
+	"disable_rounded_total",
+	"in_words",
+	"advance_paid",
+)
+
 
 def ensure_sales_invoice_retail_totals_fields():
 	"""Add a clean totals panel to Sales Invoice without changing standard fields."""
@@ -126,6 +142,7 @@ def _update_sales_invoice_retail_field_layout():
 			"Check",
 			validate_fields_for_doctype=False,
 		)
+	_hide_standard_total_fields("Sales Invoice")
 
 	field_order = _get_sales_invoice_field_order()
 	field_order = _place_after(
@@ -178,6 +195,7 @@ def _update_transaction_totals_field_layout(doctype):
 			"Check",
 			validate_fields_for_doctype=False,
 		)
+	_hide_standard_total_fields(doctype)
 
 	field_order = _get_doctype_field_order(doctype)
 	field_order = _place_after(
@@ -217,6 +235,22 @@ def ensure_all_transaction_totals_fields():
 	ensure_transaction_totals_summary_fields()
 
 
+def _hide_standard_total_fields(doctype):
+	meta = frappe.get_meta(doctype)
+	for fieldname in STANDARD_TOTAL_FIELDS_TO_HIDE:
+		if not meta.has_field(fieldname):
+			continue
+
+		make_property_setter(
+			doctype,
+			fieldname,
+			"hidden",
+			1,
+			"Check",
+			validate_fields_for_doctype=False,
+		)
+
+
 def _place_after(field_order, anchor, fieldnames):
 	ordered = [field for field in field_order if field not in fieldnames]
 	if anchor not in ordered:
@@ -245,6 +279,7 @@ def apply_retail_shipping_charges(doc, method=None):
 	_append_shipping_row(doc)
 	_disable_rounded_total(doc)
 	doc.calculate_taxes_and_totals()
+	_refresh_total_in_words(doc)
 
 
 def _append_vat_rows(doc):
@@ -382,3 +417,8 @@ def _get_item_net_amount(item):
 def _disable_rounded_total(doc):
 	if doc.meta.has_field("disable_rounded_total"):
 		doc.disable_rounded_total = 1
+
+
+def _refresh_total_in_words(doc):
+	if hasattr(doc, "set_total_in_words"):
+		doc.set_total_in_words()

@@ -114,6 +114,7 @@ def apply_transaction_vat_taxes(doc):
 
 	_disable_rounded_total(doc)
 	doc.calculate_taxes_and_totals()
+	_refresh_total_in_words(doc)
 
 
 @frappe.whitelist()
@@ -374,3 +375,8 @@ def _is_managed_vat_row(row, tax_label):
 def _disable_rounded_total(doc):
 	if doc.meta.has_field("disable_rounded_total"):
 		doc.disable_rounded_total = 1
+
+
+def _refresh_total_in_words(doc):
+	if hasattr(doc, "set_total_in_words"):
+		doc.set_total_in_words()

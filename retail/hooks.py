@@ -39,7 +39,7 @@ app_include_css = [
 app_include_js = [
     "/assets/retail/js/retail_navigation.js?v=54",
     "/assets/retail/js/forms/transaction_vat_rates.js?v=4",
-    "/assets/retail/js/forms/transaction_totals.js?v=2",
+    "/assets/retail/js/forms/transaction_totals.js?v=3",
     "/assets/retail/js/brand_theme_switcher.js?v=8",
 ]
 

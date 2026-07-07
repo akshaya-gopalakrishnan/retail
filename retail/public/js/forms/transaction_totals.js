@@ -265,7 +265,9 @@
 		if (rates.length === 1) return __("{0} [{1}%]", [formDoctypes[frm.doctype], rates[0]]);
 
 		const description = taxRows.map((row) => row.description).filter(Boolean)[0];
-		return description ? __("{0} [{1}]", [formDoctypes[frm.doctype], description]) : __(formDoctypes[frm.doctype]);
+		if (!description) return __(formDoctypes[frm.doctype]);
+		if (description.startsWith(`${formDoctypes[frm.doctype]} [`)) return __(description);
+		return __("{0} [{1}]", [formDoctypes[frm.doctype], description]);
 	}
 
 	function hasEnteredValue(value) {
