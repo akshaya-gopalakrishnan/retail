@@ -2,6 +2,7 @@
 
 import frappe
 from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
+from frappe.custom.doctype.property_setter.property_setter import make_property_setter
 from frappe.utils import flt
 
 
@@ -18,11 +19,11 @@ def set_vat_rates(doc, method=None):
 	for item in doc.get("items", []):
 		if not item.get("item_code"):
 			continue
-		if not item.meta.has_field("custom_rate_exclusive_vat"):
+		if not item.meta.has_field("custom_rate_including_vat"):
 			continue
 
 		vat_rate = get_purchase_item_vat_rate(item.item_code, throw=True)
-		exclusive_rate = flt(item.get("custom_rate_exclusive_vat"))
+		exclusive_rate = flt(item.get("rate"))
 		inclusive_rate = flt(item.get("custom_rate_including_vat"))
 
 		if inclusive_rate and not exclusive_rate:
@@ -30,15 +31,8 @@ def set_vat_rates(doc, method=None):
 
 		if exclusive_rate:
 			inclusive_rate = exclusive_rate * (1 + (vat_rate / 100))
-			item.custom_rate_exclusive_vat = flt(exclusive_rate, item.precision("rate"))
 			item.custom_rate_including_vat = flt(inclusive_rate, item.precision("rate"))
-			item.rate = item.custom_rate_exclusive_vat
-		elif item.get("rate"):
-			item.custom_rate_exclusive_vat = flt(item.rate, item.precision("rate"))
-			item.custom_rate_including_vat = flt(
-				item.custom_rate_exclusive_vat * (1 + (vat_rate / 100)),
-				item.precision("rate"),
-			)
+			item.rate = flt(exclusive_rate, item.precision("rate"))
 
 
 def sync_balance_qty_from_transaction(doc, method=None):
@@ -80,20 +74,11 @@ def ensure_purchase_order_vat_rate_fields():
 		{
 			"Purchase Order Item": [
 				{
-					"fieldname": "custom_rate_exclusive_vat",
-					"label": "Rate Exclusive VAT",
-					"fieldtype": "Currency",
-					"options": "currency",
-					"insert_after": "rate",
-					"in_list_view": 1,
-					"columns": 2,
-				},
-				{
 					"fieldname": "custom_rate_including_vat",
 					"label": "Rate Including VAT",
 					"fieldtype": "Currency",
 					"options": "currency",
-					"insert_after": "custom_rate_exclusive_vat",
+					"insert_after": "rate",
 					"in_list_view": 1,
 					"columns": 2,
 				},
@@ -101,6 +86,8 @@ def ensure_purchase_order_vat_rate_fields():
 		},
 		ignore_validate=True,
 	)
+	_set_purchase_order_item_field_property("rate", "label", "Rate Exclusive VAT", "Data")
+	_delete_obsolete_purchase_order_vat_fields()
 	frappe.db.updatedb("Purchase Order Item")
 	frappe.clear_cache(doctype="Purchase Order Item")
 
@@ -118,3 +105,29 @@ def get_purchase_item_vat_rate(item_code, throw=False):
 	from retail.domains.item.vat_pricing import get_item_tax_rate
 
 	return flt(get_item_tax_rate(template))
+
+
+def _set_purchase_order_item_field_property(fieldname, property_name, value, property_type):
+	property_setter_name = f"Purchase Order Item-{fieldname}-{property_name}"
+	if frappe.db.exists("Property Setter", property_setter_name):
+		frappe.db.set_value("Property Setter", property_setter_name, "value", value, update_modified=False)
+		return
+
+	make_property_setter(
+		"Purchase Order Item",
+		fieldname,
+		property_name,
+		value,
+		property_type,
+		validate_fields_for_doctype=False,
+	)
+
+
+def _delete_obsolete_purchase_order_vat_fields():
+	if frappe.db.exists("Custom Field", "Purchase Order Item-custom_rate_exclusive_vat"):
+		frappe.delete_doc(
+			"Custom Field",
+			"Purchase Order Item-custom_rate_exclusive_vat",
+			ignore_permissions=True,
+			force=True,
+		)

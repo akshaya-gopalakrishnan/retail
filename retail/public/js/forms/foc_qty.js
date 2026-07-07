@@ -33,9 +33,6 @@
 		rate(frm, cdt, cdn) {
 			syncPurchaseVatRates(frm, cdt, cdn, "rate");
 		},
-		custom_rate_exclusive_vat(frm, cdt, cdn) {
-			syncPurchaseVatRates(frm, cdt, cdn, "exclusive");
-		},
 		custom_rate_including_vat(frm, cdt, cdn) {
 			syncPurchaseVatRates(frm, cdt, cdn, "inclusive");
 		},
@@ -57,7 +54,7 @@
 	async function syncPurchaseVatRates(frm, cdt, cdn, source) {
 		const row = locals[cdt]?.[cdn];
 		if (!row || row.__retail_vat_syncing || !row.item_code) return;
-		if (row.custom_rate_exclusive_vat === undefined || row.custom_rate_including_vat === undefined) return;
+		if (row.custom_rate_including_vat === undefined) return;
 
 		row.__retail_vat_syncing = true;
 		try {
@@ -65,20 +62,17 @@
 			const factor = 1 + (flt(vatRate) / 100);
 			const precision = cint(frappe.meta.get_docfield(cdt, "rate", cdn)?.precision) || 2;
 			const values = {};
-			let exclusiveRate = flt(row.custom_rate_exclusive_vat);
+			let exclusiveRate = flt(row.rate);
 			let inclusiveRate = flt(row.custom_rate_including_vat);
 
 			if (source === "inclusive") {
 				inclusiveRate = flt(row.custom_rate_including_vat);
 				exclusiveRate = factor ? inclusiveRate / factor : inclusiveRate;
-				values.custom_rate_exclusive_vat = flt(exclusiveRate, precision);
-				values.rate = values.custom_rate_exclusive_vat;
+				values.rate = flt(exclusiveRate, precision);
 			} else {
-				exclusiveRate = source === "rate" ? flt(row.rate) : flt(row.custom_rate_exclusive_vat);
-				if (source === "rate" && !exclusiveRate) return;
-				values.custom_rate_exclusive_vat = flt(exclusiveRate, precision);
+				exclusiveRate = flt(row.rate);
+				if (!exclusiveRate) return;
 				values.custom_rate_including_vat = flt(exclusiveRate * factor, precision);
-				values.rate = values.custom_rate_exclusive_vat;
 			}
 
 			await frappe.model.set_value(cdt, cdn, values);
