@@ -65,6 +65,13 @@ def set_vat_rates(doc, method=None):
 			item.custom_rate_including_vat = flt(inclusive_rate, item.precision("rate"))
 			item.rate = flt(exclusive_rate, item.precision("rate"))
 
+		if item.meta.has_field("custom_amount_including_vat"):
+			amount_precision = item.precision("amount") if item.meta.has_field("amount") else item.precision("rate")
+			item.custom_amount_including_vat = flt(
+				flt(item.get("qty")) * flt(item.get("custom_rate_including_vat")),
+				amount_precision,
+			)
+
 
 def sync_balance_qty_from_transaction(doc, method=None):
 	"""Refresh affected PO lines after a receipt or stock-updating invoice."""
@@ -110,6 +117,16 @@ def ensure_purchase_order_vat_rate_fields():
 				"options": "currency",
 				"insert_after": "rate",
 				"in_list_view": 1,
+				"columns": 2,
+			},
+			{
+				"fieldname": "custom_amount_including_vat",
+				"label": "Amount Including VAT",
+				"fieldtype": "Currency",
+				"options": "currency",
+				"insert_after": "custom_rate_including_vat",
+				"in_list_view": 1,
+				"read_only": 1,
 				"columns": 2,
 			},
 		]

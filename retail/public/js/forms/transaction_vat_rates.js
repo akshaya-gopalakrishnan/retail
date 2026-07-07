@@ -26,6 +26,9 @@
 			rate(frm, cdt, cdn) {
 				syncVatRates(frm, cdt, cdn, "rate");
 			},
+			qty(frm, cdt, cdn) {
+				syncVatRates(frm, cdt, cdn, "qty");
+			},
 			custom_rate_including_vat(frm, cdt, cdn) {
 				syncVatRates(frm, cdt, cdn, "inclusive");
 			},
@@ -42,18 +45,26 @@
 			const vatRate = await getVatRate(frm, row.item_code, cdt);
 			const factor = 1 + (flt(vatRate) / 100);
 			const precision = cint(frappe.meta.get_docfield(cdt, "rate", cdn)?.precision) || 2;
+			const amountPrecision = cint(frappe.meta.get_docfield(cdt, "amount", cdn)?.precision) || precision;
 			const values = {};
+			let inclusiveRate = flt(row.custom_rate_including_vat);
 
 			if (source === "inclusive") {
-				const inclusiveRate = flt(row.custom_rate_including_vat);
 				const exclusiveRate = factor ? inclusiveRate / factor : inclusiveRate;
 				values.rate = flt(exclusiveRate, precision);
 			} else {
 				const exclusiveRate = flt(row.rate);
-				if (!exclusiveRate) return;
-				values.custom_rate_including_vat = flt(exclusiveRate * factor, precision);
+				if (exclusiveRate) {
+					inclusiveRate = flt(exclusiveRate * factor, precision);
+					values.custom_rate_including_vat = inclusiveRate;
+				}
 			}
 
+			if (row.custom_amount_including_vat !== undefined) {
+				values.custom_amount_including_vat = flt(flt(row.qty) * inclusiveRate, amountPrecision);
+			}
+
+			if (!Object.keys(values).length) return;
 			await frappe.model.set_value(cdt, cdn, values);
 			frm.refresh_field("items");
 		} finally {
