@@ -23,7 +23,7 @@ def ensure_purchase_selling_price_fields():
 					"label": "Upd SP",
 					"fieldtype": "Check",
 					"insert_after": "rate",
-					"in_list_view": 1,
+					"in_list_view": 0,
 					"columns": 1,
 				},
 				{
@@ -63,7 +63,7 @@ def ensure_purchase_selling_price_fields():
 					"options": "currency",
 					"insert_after": "custom_new_sell_incl",
 					"read_only": 1,
-					"in_list_view": 0,
+					"in_list_view": 1,
 					"columns": 1,
 				},
 				{
@@ -166,11 +166,13 @@ def get_item_selling_vat_rate(item_code):
 
 def _update_field_metadata():
 	field_updates = {
-		"custom_upd_sell_price": {"label": "Upd SP", "insert_after": "rate", "in_list_view": 1},
+		"custom_rate_including_vat": {"in_list_view": 0},
+		"custom_amount_including_vat": {"in_list_view": 0},
+		"custom_upd_sell_price": {"label": "Upd SP", "insert_after": "rate", "in_list_view": 0},
 		"custom_cur_sell_rate": {"label": "Cur SP", "insert_after": "custom_upd_sell_price", "in_list_view": 1},
 		"custom_new_sell_rate": {"label": "New SP", "insert_after": "custom_cur_sell_rate", "in_list_view": 1},
 		"custom_new_sell_incl": {"label": "SP Incl", "insert_after": "custom_new_sell_rate", "in_list_view": 1},
-		"custom_sell_margin": {"label": "Margin", "insert_after": "custom_new_sell_incl", "in_list_view": 0},
+		"custom_sell_margin": {"label": "Margin", "insert_after": "custom_new_sell_incl", "in_list_view": 1},
 		"custom_sell_margin_pct": {"label": "Mgn %", "insert_after": "custom_sell_margin", "in_list_view": 0},
 	}
 	for doctype in PURCHASE_ITEM_DOCTYPES:
