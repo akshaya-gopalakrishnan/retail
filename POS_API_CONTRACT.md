@@ -186,6 +186,14 @@ counters
 
 Use ERPNext `server_time` as the next `modified_after`; do not rely on Windows time.
 
+Item sync behavior:
+
+- `items` includes both active and disabled items.
+- .NET should upsert item rows by `item_code` / `name`.
+- If an item row has `disabled = 1`, mark the local POS item inactive/hidden and do not allow it for new sales.
+- Do not delete old local invoice rows that used this item; historical invoices must continue to display correctly.
+- `modified_after` returns only rows changed after that ERPNext server timestamp, including items that were disabled after the previous sync.
+
 Cashiers are returned from ERPNext `Employee` records. .NET must store the returned `name`/`employee` value locally and send it as `cashier_employee` in all cashier shift and invoice APIs.
 
 Recommended master sync schedule:

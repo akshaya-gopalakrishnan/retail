@@ -765,7 +765,7 @@ def _get_packing_vat_status(mode, rate, confirmed):
 def _update_margin(doc):
 	selling_net = _get_selling_net_rate(doc)
 	cost_net = _get_cost_net_rate(doc)
-	margin = selling_net - cost_net
+	margin = selling_net - cost_net if selling_net else 0
 	margin_percent = (margin / selling_net * 100) if selling_net else 0
 
 	doc.set("custom_margin", flt(margin, 2))
@@ -773,10 +773,10 @@ def _update_margin(doc):
 
 
 def _get_selling_net_rate(doc):
-	if doc.get("custom_sales_rate_entry") not in (None, ""):
+	if flt(doc.get("custom_sales_rate_entry")) > 0:
 		return flt(doc.get("custom_sales_net_rate"))
 
-	return flt(doc.get("standard_rate") or doc.get("custom_b2b"))
+	return flt(doc.get("standard_rate"))
 
 
 def _get_cost_net_rate(doc):
@@ -784,10 +784,10 @@ def _get_cost_net_rate(doc):
 		return flt(doc.get("custom_purchase_net_rate"))
 
 	return flt(
-		doc.get("custom_average_purchase_rate")
-		or doc.get("custom_default_purchase_rate")
+		doc.get("custom_default_purchase_rate")
 		or doc.get("last_purchase_rate")
 		or doc.get("valuation_rate")
+		or doc.get("custom_average_purchase_rate")
 	)
 
 

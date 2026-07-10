@@ -37,8 +37,8 @@ app_include_css = [
 ]
 
 app_include_js = [
-    "/assets/retail/js/retail_navigation.js?v=54",
-    "/assets/retail/js/forms/transaction_items.js?v=1",
+    "/assets/retail/js/retail_navigation.js?v=66",
+    "/assets/retail/js/forms/transaction_items.js?v=2",
     "/assets/retail/js/brand_theme_switcher.js?v=8",
 ]
 
@@ -100,8 +100,14 @@ doctype_list_js = {
 doctype_js = {
 	"Item": "public/js/forms/item.js",
 	"Purchase Order": "public/js/forms/foc_qty.js",
-	"Purchase Receipt": "public/js/forms/foc_qty.js",
-	"Purchase Invoice": "public/js/forms/foc_qty.js",
+	"Purchase Receipt": [
+		"public/js/forms/foc_qty.js",
+		"public/js/forms/purchase_selling_price.js",
+	],
+	"Purchase Invoice": [
+		"public/js/forms/foc_qty.js",
+		"public/js/forms/purchase_selling_price.js",
+	],
 	"Sales Order": "public/js/forms/foc_qty.js",
 	"Delivery Note": "public/js/forms/foc_qty.js",
 	"Sales Invoice": "public/js/forms/sales_invoice.js",
@@ -216,12 +222,14 @@ doc_events = {
 		"validate": [
 			"retail.domains.foc.apply_foc_quantities",
 			"retail.domains.transactions.vat.set_vat_rates",
+			"retail.domains.purchase.selling_price.set_selling_price_margins",
 		],
 		"on_submit": [
 			"retail.domains.foc.add_foc_stock_ledger_entries",
 			"retail.domains.purchase.order.sync_balance_qty_from_transaction",
 			"retail.domains.item.average_purchase_rate.sync_average_purchase_rates",
 			"retail.domains.item.item_price_sync.sync_latest_transaction_item_prices",
+			"retail.domains.purchase.selling_price.update_selected_selling_prices",
 		],
 		"on_cancel": [
 			"retail.domains.purchase.order.sync_balance_qty_from_transaction",
@@ -240,12 +248,14 @@ doc_events = {
 		"validate": [
 			"retail.domains.foc.apply_foc_quantities",
 			"retail.domains.transactions.vat.set_vat_rates",
+			"retail.domains.purchase.selling_price.set_selling_price_margins",
 		],
 		"on_submit": [
 			"retail.domains.foc.add_foc_stock_ledger_entries",
 			"retail.domains.purchase.order.sync_balance_qty_from_transaction",
 			"retail.domains.item.average_purchase_rate.sync_average_purchase_rates",
 			"retail.domains.item.item_price_sync.sync_latest_transaction_item_prices",
+			"retail.domains.purchase.selling_price.update_selected_selling_prices",
 		],
 		"on_cancel": [
 			"retail.domains.purchase.order.sync_balance_qty_from_transaction",
@@ -380,6 +390,7 @@ after_migrate = [
 	"retail.domains.item.vat_pricing.ensure_item_vat_pricing_fields",
 	"retail.domains.item.vat_pricing.backfill_item_master_last_purchase_rates",
 	"retail.domains.sales.invoice_totals.ensure_all_transaction_totals_fields",
+	"retail.domains.purchase.selling_price.ensure_purchase_selling_price_fields",
 ]
 
 # Scheduled Tasks
@@ -499,6 +510,7 @@ fixtures = [
     "Server Script",
     "Print Format",
     "Property Setter",
+    "List View Settings",
     "Custom DocPerm",
     "Workflow",
     "Workflow State",

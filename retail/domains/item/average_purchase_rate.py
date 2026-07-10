@@ -80,6 +80,8 @@ def get_average_purchase_rate(item_code, fallback_rate=None):
 				from `tabPurchase Receipt Item` pri
 				inner join `tabPurchase Receipt` pr on pr.name = pri.parent
 				where pr.docstatus = 1 and pri.item_code = %(item_code)s
+					and pri.stock_qty > 0
+					and pri.base_net_amount > 0
 
 				union all
 
@@ -89,6 +91,8 @@ def get_average_purchase_rate(item_code, fallback_rate=None):
 				where pi.docstatus = 1
 					and ifnull(pi.update_stock, 0) = 1
 					and pii.item_code = %(item_code)s
+					and pii.stock_qty > 0
+					and pii.base_net_amount > 0
 			) purchases
 		""",
 		{"item_code": item_code},
@@ -127,6 +131,8 @@ def get_average_purchase_rate_for_item_name(item_name, fallback_rate=None):
 				inner join `tabItem` item on item.name = pri.item_code
 				where pr.docstatus = 1
 					and item.item_name = %(item_name)s
+					and pri.stock_qty > 0
+					and pri.base_net_amount > 0
 
 				union all
 
@@ -137,6 +143,8 @@ def get_average_purchase_rate_for_item_name(item_name, fallback_rate=None):
 				where pi.docstatus = 1
 					and ifnull(pi.update_stock, 0) = 1
 					and item.item_name = %(item_name)s
+					and pii.stock_qty > 0
+					and pii.base_net_amount > 0
 			) purchases
 		""",
 		{"item_name": item_name},

@@ -1,0 +1,44 @@
+[
+ {
+  "allow_edit": 0,
+  "disable_auto_refresh": 0,
+  "disable_automatic_recency_filters": 0,
+  "disable_comment_count": 0,
+  "disable_count": 0,
+  "disable_sidebar_stats": 0,
+  "docstatus": 0,
+  "doctype": "List View Settings",
+  "fields": "[{\"fieldname\":\"item_name\",\"label\":\"Item Name\"},{\"fieldname\":\"status_field\",\"label\":\"Status\"},{\"fieldname\":\"custom_barcode\",\"label\":\"Barcode\"},{\"fieldname\":\"brand\",\"label\":\"Brand\"},{\"fieldname\":\"item_group\",\"label\":\"Item Group\"},{\"fieldname\":\"custom_purchase_gross_rate\",\"label\":\"Purchase Rate Including VAT\"},{\"fieldname\":\"custom_sales_gross_rate\",\"label\":\"Selling Rate Including VAT\"},{\"fieldname\":\"custom_margin\",\"label\":\"Margin\"}]",
+  "modified": "2026-07-08 17:37:44.140146",
+  "name": "Item",
+  "total_fields": "9"
+ },
+ {
+  "allow_edit": 0,
+  "disable_auto_refresh": 0,
+  "disable_automatic_recency_filters": 0,
+  "disable_comment_count": 0,
+  "disable_count": 0,
+  "disable_sidebar_stats": 0,
+  "docstatus": 0,
+  "doctype": "List View Settings",
+  "fields": "[{\"fieldname\": \"item_code\"}, {\"fieldname\": \"item_name\"}, {\"fieldname\": \"brand\"}, {\"fieldname\": \"price_list\"}, {\"fieldname\": \"price_list_rate\"}, {\"fieldname\": \"custom_average_purchase_rate\"}]",
+  "modified": "2026-07-06 09:52:45.141130",
+  "name": "Item Price",
+  "total_fields": "6"
+ },
+ {
+  "allow_edit": 0,
+  "disable_auto_refresh": 0,
+  "disable_automatic_recency_filters": 0,
+  "disable_comment_count": 0,
+  "disable_count": 0,
+  "disable_sidebar_stats": 0,
+  "docstatus": 0,
+  "doctype": "List View Settings",
+  "fields": "[{\"fieldname\":\"supplier_name\",\"label\":\"Supplier Name\"},{\"fieldname\":\"transaction_date\",\"label\":\"Date\"},{\"fieldname\":\"status_field\",\"label\":\"Status\"},{\"fieldname\":\"per_received\",\"label\":\"% Received\"},{\"fieldname\":\"per_billed\",\"label\":\"% Billed\"},{\"fieldname\":\"base_grand_total\",\"label\":\"Grand Total (Company Currency)\"},{\"fieldname\":\"advance_paid\",\"label\":\"Advance Paid\"}]",
+  "modified": "2026-07-07 15:35:35.280614",
+  "name": "Purchase Order",
+  "total_fields": "8"
+ }
+]

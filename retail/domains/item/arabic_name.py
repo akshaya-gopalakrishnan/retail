@@ -39,7 +39,7 @@ def ensure_item_arabic_name_field():
 @frappe.whitelist()
 def translate_item_name_to_arabic(text: str | None = None):
 	"""Translate an English item name into Arabic using the configured provider."""
-	if not frappe.has_permission("Item", "write"):
+	if frappe.session.user == "Guest":
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
 	text = (text or "").strip()

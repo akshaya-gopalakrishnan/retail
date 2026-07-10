@@ -50,6 +50,14 @@
 				syncVatRates(frm, cdt, cdn, "inclusive");
 				renderTransactionTotals(frm);
 			},
+			amount(frm, cdt, cdn) {
+				syncVatRates(frm, cdt, cdn, "exclusive_amount");
+				renderTransactionTotals(frm);
+			},
+			custom_amount_including_vat(frm, cdt, cdn) {
+				syncVatRates(frm, cdt, cdn, "inclusive_amount");
+				renderTransactionTotals(frm);
+			},
 		});
 	});
 
@@ -78,12 +86,6 @@
 
 	totalsItemDoctypes.forEach((doctype) => {
 		frappe.ui.form.on(doctype, {
-			custom_amount_including_vat(frm) {
-				renderTransactionTotals(frm);
-			},
-			amount(frm) {
-				renderTransactionTotals(frm);
-			},
 			net_amount(frm) {
 				renderTransactionTotals(frm);
 			},
@@ -111,26 +113,53 @@
 			const factor = 1 + (flt(vatRate) / 100);
 			const precision = cint(frappe.meta.get_docfield(cdt, "rate", cdn)?.precision) || 2;
 			const amountPrecision = cint(frappe.meta.get_docfield(cdt, "amount", cdn)?.precision) || precision;
+			const amountField = frappe.meta.get_docfield(cdt, "amount", cdn);
+			const qty = flt(row.qty);
 			const values = {};
 			let inclusiveRate = flt(row.custom_rate_including_vat);
+			let exclusiveRate = flt(row.rate);
 
 			if (source === "inclusive") {
-				const exclusiveRate = factor ? inclusiveRate / factor : inclusiveRate;
+				exclusiveRate = factor ? inclusiveRate / factor : inclusiveRate;
 				values.rate = flt(exclusiveRate, precision);
+				if (amountField) {
+					values.amount = flt(qty * exclusiveRate, amountPrecision);
+				}
+			} else if (source === "inclusive_amount") {
+				const inclusiveAmount = flt(row.custom_amount_including_vat);
+				inclusiveRate = qty ? inclusiveAmount / qty : 0;
+				exclusiveRate = factor ? inclusiveRate / factor : inclusiveRate;
+				values.custom_rate_including_vat = flt(inclusiveRate, precision);
+				values.rate = flt(exclusiveRate, precision);
+				if (amountField) {
+					values.amount = flt(qty * exclusiveRate, amountPrecision);
+				}
+			} else if (source === "exclusive_amount") {
+				const exclusiveAmount = flt(row.amount);
+				exclusiveRate = qty ? exclusiveAmount / qty : 0;
+				inclusiveRate = flt(exclusiveRate * factor, precision);
+				values.rate = flt(exclusiveRate, precision);
+				values.custom_rate_including_vat = inclusiveRate;
+				if (row.custom_amount_including_vat !== undefined) {
+					values.custom_amount_including_vat = flt(qty * inclusiveRate, amountPrecision);
+				}
 			} else {
-				const exclusiveRate = flt(row.rate);
 				if (exclusiveRate) {
 					inclusiveRate = flt(exclusiveRate * factor, precision);
 					values.custom_rate_including_vat = inclusiveRate;
 				}
+				if (amountField) {
+					values.amount = flt(qty * exclusiveRate, amountPrecision);
+				}
 			}
 
-			if (row.custom_amount_including_vat !== undefined) {
-				values.custom_amount_including_vat = flt(flt(row.qty) * inclusiveRate, amountPrecision);
+			if (source !== "inclusive_amount" && row.custom_amount_including_vat !== undefined) {
+				values.custom_amount_including_vat = flt(qty * inclusiveRate, amountPrecision);
 			}
 
 			if (!Object.keys(values).length) return;
 			await frappe.model.set_value(cdt, cdn, values);
+			renderTransactionTotals(frm);
 		} finally {
 			if (row) row.__retail_vat_syncing = false;
 		}

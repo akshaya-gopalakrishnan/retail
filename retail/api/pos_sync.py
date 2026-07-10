@@ -624,8 +624,8 @@ def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
 		"tax_config": _pos_tax_config(counter_doc),
 		"items": frappe.get_all(
 			"Item",
-			filters=[["disabled", "=", 0], *modified_filter],
-			fields=["name", "item_code", "item_name", "item_group", "stock_uom", "is_stock_item", "modified"],
+			filters=modified_filter,
+			fields=["name", "item_code", "item_name", "item_group", "stock_uom", "is_stock_item", "disabled", "modified"],
 			limit_page_length=0,
 		),
 		"item_barcodes": frappe.get_all(

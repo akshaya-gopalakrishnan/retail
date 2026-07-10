@@ -55,6 +55,15 @@ def set_vat_rates(doc, method=None):
 		)
 		exclusive_rate = flt(item.get("rate"))
 		inclusive_rate = flt(item.get("custom_rate_including_vat"))
+		qty = flt(item.get("qty"))
+		inclusive_amount = flt(item.get("custom_amount_including_vat"))
+		exclusive_amount = flt(item.get("amount"))
+
+		if inclusive_amount and not inclusive_rate and qty:
+			inclusive_rate = inclusive_amount / qty
+
+		if exclusive_amount and not exclusive_rate and qty:
+			exclusive_rate = exclusive_amount / qty
 
 		if inclusive_rate and not exclusive_rate:
 			exclusive_rate = inclusive_rate / (1 + (vat_rate / 100))
@@ -63,11 +72,13 @@ def set_vat_rates(doc, method=None):
 			inclusive_rate = exclusive_rate * (1 + (vat_rate / 100))
 			item.custom_rate_including_vat = flt(inclusive_rate, item.precision("rate"))
 			item.rate = flt(exclusive_rate, item.precision("rate"))
+			if item.meta.has_field("amount"):
+				item.amount = flt(qty * exclusive_rate, item.precision("amount"))
 
 		if item.meta.has_field("custom_amount_including_vat"):
 			amount_precision = item.precision("amount") if item.meta.has_field("amount") else item.precision("rate")
 			item.custom_amount_including_vat = flt(
-				flt(item.get("qty")) * flt(item.get("custom_rate_including_vat")),
+				qty * flt(item.get("custom_rate_including_vat")),
 				amount_precision,
 			)
 
@@ -149,7 +160,6 @@ def ensure_transaction_vat_rate_fields():
 				"options": "currency",
 				"insert_after": "custom_rate_including_vat",
 				"in_list_view": 1,
-				"read_only": 1,
 				"columns": 2,
 			},
 		]
@@ -161,6 +171,9 @@ def ensure_transaction_vat_rate_fields():
 	)
 	for item_doctype in VAT_RATE_ITEM_DOCTYPES:
 		_set_item_table_field_property(item_doctype, "rate", "label", "Rate Exclusive VAT", "Data")
+		if frappe.get_meta(item_doctype).has_field("amount"):
+			_set_item_table_field_property(item_doctype, "amount", "read_only", 0, "Check")
+		_set_custom_field_property(item_doctype, "custom_amount_including_vat", "read_only", 0)
 		_delete_obsolete_vat_fields(item_doctype)
 		frappe.db.updatedb(item_doctype)
 		frappe.clear_cache(doctype=item_doctype)
@@ -297,6 +310,12 @@ def _set_item_table_field_property(doctype, fieldname, property_name, value, pro
 		property_type,
 		validate_fields_for_doctype=False,
 	)
+
+
+def _set_custom_field_property(doctype, fieldname, property_name, value):
+	field_name = f"{doctype}-{fieldname}"
+	if frappe.db.exists("Custom Field", field_name):
+		frappe.db.set_value("Custom Field", field_name, property_name, value, update_modified=False)
 
 
 def _delete_obsolete_vat_fields(doctype):

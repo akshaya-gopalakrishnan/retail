@@ -38,6 +38,7 @@
 	frappe.ui.form.on("Item", {
 		refresh(frm) {
 			setupArabicItemNameField(frm);
+			addArabicTranslationButton(frm);
 			queueLastPurchaseRateLookup(frm);
 			setOpeningAveragePurchaseRate(frm, false);
 			refreshVatPrices(frm);
@@ -49,7 +50,13 @@
 			queueArabicItemNameTranslation(frm);
 			queueLastPurchaseRateLookup(frm);
 		},
+		item_code(frm) {
+			queueArabicItemNameTranslation(frm);
+		},
 		custom_arabic_item_name(frm) {
+			const currentArabic = (frm.doc[arabicItemNameField] || "").trim();
+			const lastAutoValue = (frm._arabic_item_name_auto_value || "").trim();
+			if (frm._setting_arabic_item_name || currentArabic === lastAutoValue) return;
 			frm._arabic_item_name_touched = true;
 		},
 		last_purchase_rate(frm) {
@@ -191,6 +198,7 @@
 		const fields = vatPriceFields[direction];
 		const entry = frm.doc[fields.entry];
 		if (entry === undefined || entry === null || entry === "") return;
+		if (flt(entry) <= 0) return;
 
 		frappe.call({
 			method: "retail.domains.item.vat_pricing.get_item_tax_rate",
@@ -207,7 +215,8 @@
 					[fields.vat]: flt(vat, 2), [fields.gross]: flt(gross, 2),
 				};
 				if (direction === "purchase") updates.last_purchase_rate = flt(net, 2);
-				Promise.resolve(frappe.model.set_value("Item", frm.doc.name, updates)).then(() => refreshMargin(frm));
+				Promise.resolve(setValuesIfChanged(frm.doc, "Item", frm.doc.name, updates))
+					.then(() => refreshMargin(frm));
 			},
 		});
 	}
@@ -421,6 +430,31 @@
 		if (!field) return;
 		frm._arabic_item_name_auto_value = frm._arabic_item_name_auto_value || "";
 		if (field.$input) field.$input.attr("dir", "rtl").css("text-align", "right");
+		addArabicFieldButton(frm);
+		if (!frm.doc[arabicItemNameField]) queueArabicItemNameTranslation(frm);
+	}
+
+	function addArabicTranslationButton(frm) {
+		if (!frm.fields_dict[arabicItemNameField]) return;
+		frm.add_custom_button(__("Translate Arabic"), () => {
+			frm._arabic_item_name_touched = false;
+			translateArabicItemName(frm, true);
+		}, __("Retail"));
+	}
+
+	function addArabicFieldButton(frm) {
+		const field = frm.fields_dict[arabicItemNameField];
+		if (!field || field._arabic_translate_button_added || !field.$wrapper) return;
+		field._arabic_translate_button_added = true;
+
+		const button = $(`<button class="btn btn-xs btn-default" type="button" style="margin-top: 6px;">
+			${__("Translate Arabic")}
+		</button>`);
+		button.on("click", () => {
+			frm._arabic_item_name_touched = false;
+			translateArabicItemName(frm, true);
+		});
+		field.$wrapper.append(button);
 	}
 
 	function queueArabicItemNameTranslation(frm) {
@@ -432,12 +466,19 @@
 		}, arabicTranslationDelay);
 	}
 
-	function translateArabicItemName(frm) {
-		const sourceText = (frm.doc.item_name || "").trim();
+	function translateArabicItemName(frm, showFeedback = false) {
+		const sourceText = getArabicTranslationSource(frm);
 		const currentArabic = (frm.doc[arabicItemNameField] || "").trim();
 		const lastAutoValue = (frm._arabic_item_name_auto_value || "").trim();
 		const manuallyChanged = frm._arabic_item_name_touched && currentArabic && currentArabic !== lastAutoValue;
-		if (!sourceText || manuallyChanged) return;
+		if (!sourceText) {
+			if (showFeedback) frappe.show_alert({ message: __("Enter Item Name first"), indicator: "orange" });
+			return;
+		}
+		if (manuallyChanged) {
+			if (showFeedback) frappe.show_alert({ message: __("Arabic name was manually changed"), indicator: "orange" });
+			return;
+		}
 
 		frm._arabic_item_name_source = sourceText;
 		frappe.call({
@@ -445,7 +486,7 @@
 			args: { text: sourceText },
 			freeze: false,
 			callback: ({ message }) => {
-				if (!message || frm._arabic_item_name_source !== (frm.doc.item_name || "").trim()) return;
+				if (!message || frm._arabic_item_name_source !== getArabicTranslationSource(frm)) return;
 				if (message.configured === false) {
 					showArabicTranslationConfigOnce(frm);
 					return;
@@ -458,9 +499,18 @@
 
 				frm._arabic_item_name_auto_value = message.translated_text;
 				frm._arabic_item_name_touched = false;
-				frm.set_value(arabicItemNameField, message.translated_text);
+				frm._setting_arabic_item_name = true;
+				Promise.resolve(frm.set_value(arabicItemNameField, message.translated_text)).finally(() => {
+					frm._setting_arabic_item_name = false;
+				});
+				if (showFeedback) frappe.show_alert({ message: __("Arabic translated"), indicator: "green" });
 			},
+			error: () => showArabicTranslationErrorOnce(frm),
 		});
+	}
+
+	function getArabicTranslationSource(frm) {
+		return (frm.doc.item_name || frm.doc.item_code || "").trim();
 	}
 
 	function showArabicTranslationConfigOnce(frm) {
@@ -478,22 +528,33 @@
 	function refreshMargin(frm) {
 		const sellingNet = getSellingNetRate(frm);
 		const costNet = getCostNetRate(frm);
-		const margin = sellingNet - costNet;
+		const margin = sellingNet ? sellingNet - costNet : 0;
 		const marginPercent = sellingNet ? (margin / sellingNet) * 100 : 0;
 
-		frappe.model.set_value("Item", frm.doc.name, {
+		setValuesIfChanged(frm.doc, "Item", frm.doc.name, {
 			custom_margin: flt(margin, 2),
 			custom_margin_: flt(marginPercent, 3),
 		});
 	}
 
+	function setValuesIfChanged(doc, doctype, name, values) {
+		const changed = {};
+		Object.keys(values || {}).forEach((fieldname) => {
+			const current = doc ? doc[fieldname] : undefined;
+			const next = values[fieldname];
+			if (flt(current) !== flt(next) && current !== next) {
+				changed[fieldname] = next;
+			}
+		});
+		if (!Object.keys(changed).length) return Promise.resolve();
+		return frappe.model.set_value(doctype, name, changed);
+	}
+
 	function getSellingNetRate(frm) {
-		if (frm.doc.custom_sales_rate_entry !== undefined
-			&& frm.doc.custom_sales_rate_entry !== null
-			&& frm.doc.custom_sales_rate_entry !== "") {
+		if (flt(frm.doc.custom_sales_rate_entry) > 0) {
 			return flt(frm.doc.custom_sales_net_rate);
 		}
-		return flt(frm.doc.standard_rate || frm.doc.custom_b2b);
+		return flt(frm.doc.standard_rate);
 	}
 
 	function getCostNetRate(frm) {
@@ -503,10 +564,10 @@
 			return flt(frm.doc.custom_purchase_net_rate);
 		}
 		return flt(
-			frm.doc.custom_average_purchase_rate
-			|| frm.doc.custom_default_purchase_rate
+			frm.doc.custom_default_purchase_rate
 			|| frm.doc.last_purchase_rate
 			|| frm.doc.valuation_rate
+			|| frm.doc.custom_average_purchase_rate
 		);
 	}
 

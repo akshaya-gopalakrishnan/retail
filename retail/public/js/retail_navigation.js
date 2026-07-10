@@ -2,6 +2,9 @@
     const DEBUG = false;
     const debugLog = (...args) => DEBUG && console.log(...args);
     debugLog('retail_navigation: script loaded', {host: window.location.host, readyState: document.readyState});
+    const OPEN_WORK_STORAGE_KEY = 'retail_open_work_tabs_v3';
+    const OPEN_WORK_MAX_TABS = 15;
+    const OPEN_WORK_TTL_MS = 12 * 60 * 60 * 1000;
     const ICON_MAP = {
         'home': { icon: 'fa fa-home', cls: 'color-settings' },
         'items': { icon: 'fa fa-cubes', cls: 'color-items' },
@@ -786,6 +789,200 @@
             body:has(.modal.show)[data-route^="Form/"] .field-area {
                 z-index: auto !important;
             }
+
+            .retail-open-work {
+                position: fixed;
+                right: 10px;
+                top: 112px;
+                width: 48px;
+                max-height: calc(100vh - 132px);
+                background: rgba(255, 255, 255, 0.95);
+                border: 1px solid var(--border-color);
+                border-radius: 8px;
+                box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+                display: flex;
+                flex-direction: column;
+                height: calc(100vh - 132px);
+                overflow: hidden;
+                pointer-events: auto;
+                transition: width 160ms ease;
+                z-index: 2000;
+            }
+
+            .retail-open-work:hover,
+            .retail-open-work:focus-within {
+                width: 248px;
+            }
+
+            .retail-open-work__head {
+                align-items: center;
+                display: flex;
+                gap: 8px;
+                min-height: 42px;
+                padding: 8px 10px;
+                border-bottom: 1px solid var(--border-color);
+                font-weight: 600;
+                white-space: nowrap;
+            }
+
+            .retail-open-work__count {
+                align-items: center;
+                background: var(--blue-50);
+                border-radius: 999px;
+                color: var(--blue-700);
+                display: inline-flex;
+                font-size: 12px;
+                height: 22px;
+                justify-content: center;
+                min-width: 22px;
+            }
+
+            .retail-open-work__title {
+                opacity: 0;
+                transition: opacity 120ms ease;
+            }
+
+            .retail-open-work:hover .retail-open-work__title,
+            .retail-open-work:focus-within .retail-open-work__title {
+                opacity: 1;
+            }
+
+            .retail-open-work__list {
+                display: block;
+                flex: 1 1 auto;
+                height: 100%;
+                max-height: none;
+                min-height: 0;
+                overscroll-behavior: contain;
+                overflow-y: scroll;
+                overflow-x: hidden;
+                padding: 6px;
+                scrollbar-width: thin;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .retail-open-work__item {
+                align-items: center;
+                background: transparent;
+                border: 0;
+                border-radius: 6px;
+                color: var(--text-color);
+                cursor: pointer;
+                display: grid;
+                gap: 8px;
+                grid-template-columns: 28px 10px 1fr 24px;
+                min-height: 36px;
+                padding: 4px;
+                text-align: left;
+                text-decoration: none;
+                width: 100%;
+            }
+
+            .retail-open-work__item + .retail-open-work__item {
+                margin-top: 4px;
+            }
+
+            .retail-open-work__item:hover,
+            .retail-open-work__item.is-active {
+                background: var(--control-bg);
+            }
+
+            .retail-open-work__abbr {
+                align-items: center;
+                background: var(--gray-100);
+                border-radius: 6px;
+                color: var(--text-muted);
+                display: inline-flex;
+                font-size: 11px;
+                font-weight: 700;
+                height: 28px;
+                justify-content: center;
+                width: 28px;
+            }
+
+            .retail-open-work__item.is-active .retail-open-work__abbr {
+                background: var(--blue-100);
+                color: var(--blue-700);
+            }
+
+            .retail-open-work__status-dot {
+                align-self: center;
+                border-radius: 50%;
+                display: inline-block;
+                height: 8px;
+                opacity: 0.95;
+                width: 8px;
+            }
+
+            .retail-open-work__status-dot.is-not-saved {
+                background: #ef4444;
+            }
+
+            .retail-open-work__status-dot.is-saved {
+                background: #f97316;
+            }
+
+            .retail-open-work__status-dot.is-final {
+                background: #22c55e;
+            }
+
+            .retail-open-work__status-dot.is-page {
+                background: #94a3b8;
+            }
+
+            .retail-open-work__label {
+                min-width: 0;
+                opacity: 0;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                transition: opacity 120ms ease;
+                white-space: nowrap;
+            }
+
+            .retail-open-work:hover .retail-open-work__label,
+            .retail-open-work:focus-within .retail-open-work__label {
+                opacity: 1;
+            }
+
+            .retail-open-work__close {
+                align-items: center;
+                background: transparent;
+                border: 0;
+                border-radius: 6px;
+                color: var(--text-muted);
+                cursor: pointer;
+                display: inline-flex;
+                height: 24px;
+                justify-content: center;
+                opacity: 0;
+                width: 24px;
+            }
+
+            .retail-open-work:hover .retail-open-work__close,
+            .retail-open-work:focus-within .retail-open-work__close {
+                opacity: 1;
+            }
+
+            .retail-open-work__status {
+                border-top: 1px solid var(--border-color);
+                color: var(--text-muted);
+                font-size: 11px;
+                opacity: 0;
+                overflow: hidden;
+                padding: 6px 10px;
+                text-overflow: ellipsis;
+                transition: opacity 120ms ease;
+                white-space: nowrap;
+            }
+
+            .retail-open-work:hover .retail-open-work__status,
+            .retail-open-work:focus-within .retail-open-work__status {
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 991px) {
+            .retail-open-work { display: none !important; }
         }
         `;
         const style = document.createElement('style');
@@ -941,6 +1138,211 @@
                 element.style.removeProperty('padding-right');
             }
         });
+    }
+
+    function readOpenWorkTabs() {
+        try {
+            const tabs = JSON.parse(sessionStorage.getItem(OPEN_WORK_STORAGE_KEY) || '[]');
+            const cutoff = Date.now() - OPEN_WORK_TTL_MS;
+            const validTabs = Array.isArray(tabs)
+                ? tabs.filter(tab => tab?.key && Array.isArray(tab.route) && (tab.updated_at || 0) >= cutoff)
+                : [];
+            const seen = new Set();
+            return validTabs.filter(tab => {
+                if (seen.has(tab.key)) return false;
+                seen.add(tab.key);
+                return true;
+            });
+        } catch (error) {
+            return [];
+        }
+    }
+
+    function writeOpenWorkTabs(tabs) {
+        sessionStorage.setItem(OPEN_WORK_STORAGE_KEY, JSON.stringify(tabs.slice(0, OPEN_WORK_MAX_TABS)));
+    }
+
+    function getCurrentWorkTab() {
+        const route = frappe.get_route();
+        if (!Array.isArray(route) || !route.length) return null;
+        const view = route[0];
+        if (!['Form', 'List', 'query-report'].includes(view)) return null;
+
+        const doctype = route[1] || view;
+        const name = route[2] || '';
+        const doc = view === 'Form' ? cur_frm?.doc : null;
+        const routeParts = route.filter(part => typeof part !== 'object');
+        const key = doc?.__islocal ? `Form/${doctype}/__new__` : routeParts.join('/');
+        const title = doc?.__islocal
+            ? `New ${doctype}`
+            : (doc?.title || doc?.supplier_name || doc?.customer_name || doc?.item_name || name || doctype);
+
+        return {
+            key,
+            route: routeParts,
+            label: view === 'List' ? doctype : title,
+            type: doctype,
+            status: getCurrentWorkStatus(view, doc),
+            updated_at: Date.now(),
+        };
+    }
+
+    function getCurrentWorkStatus(view, doc) {
+        if (view !== 'Form' || !doc) return 'page';
+        if (cur_frm?.is_dirty?.()) return 'not_saved';
+        if (doc.docstatus === 1) return 'final';
+        if (doc.docstatus === 0) return 'saved';
+        return 'page';
+    }
+
+    function getWorkStatusClass(status) {
+        return {
+            not_saved: 'is-not-saved',
+            saved: 'is-saved',
+            final: 'is-final',
+            page: 'is-page',
+        }[status] || 'is-page';
+    }
+
+    function getWorkStatusLabel(status) {
+        return {
+            not_saved: __('Not saved'),
+            saved: __('Saved'),
+            final: __('Final'),
+            page: __('Page'),
+        }[status] || __('Page');
+    }
+
+    function upsertCurrentWorkTab() {
+        const tab = getCurrentWorkTab();
+        if (!tab) return;
+
+        const tabs = readOpenWorkTabs();
+        const existingIndex = tabs.findIndex(existing => existing.key === tab.key);
+        if (existingIndex >= 0) {
+            tabs[existingIndex] = { ...tabs[existingIndex], ...tab };
+        } else {
+            tabs.unshift(tab);
+        }
+        writeOpenWorkTabs(tabs);
+        renderOpenWorkTabs();
+    }
+
+    function closeOpenWorkTab(key) {
+        writeOpenWorkTabs(readOpenWorkTabs().filter(tab => tab.key !== key));
+        renderOpenWorkTabs();
+    }
+
+    function openWorkTab(tab) {
+        if (!tab?.route?.length) return;
+
+        try {
+            frappe.route_options = null;
+            frappe.route_hash = null;
+            frappe.set_route(...tab.route);
+        } catch (error) {
+            window.location.href = getOpenWorkHref(tab.route);
+        }
+    }
+
+    function getOpenWorkHref(route) {
+        try {
+            return frappe.router.make_url(frappe.router.convert_from_standard_route(route));
+        } catch (error) {
+            return `/app/${route.map(part => encodeURIComponent(String(part))).join('/')}`;
+        }
+    }
+
+    function getWorkAbbr(tab) {
+        const source = tab.type || tab.label || '';
+        return source
+            .split(/\s+/)
+            .filter(Boolean)
+            .slice(0, 2)
+            .map(word => word[0])
+            .join('')
+            .toUpperCase() || 'W';
+    }
+
+    function escapeAttribute(value) {
+        return String(value || '')
+            .replace(/&/g, '&amp;')
+            .replace(/"/g, '&quot;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+    }
+
+    function ensureOpenWorkPanel() {
+        if (!isDesktop()) return null;
+        let panel = document.querySelector('.retail-open-work');
+        if (panel) return panel;
+
+        panel = document.createElement('aside');
+        panel.className = 'retail-open-work';
+        panel.setAttribute('aria-label', __('Open Work'));
+        document.body.appendChild(panel);
+        return panel;
+    }
+
+    function handleOpenWorkPointer(event) {
+        const closeButton = event.target.closest('.retail-open-work__close');
+        if (closeButton) {
+            if (!closeButton.closest('.retail-open-work')) return;
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation?.();
+            closeOpenWorkTab(closeButton.dataset.key);
+            return;
+        }
+
+        const item = event.target.closest('.retail-open-work__item');
+        if (!item || !item.closest('.retail-open-work')) return;
+
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation?.();
+        const tab = readOpenWorkTabs().find(entry => entry.key === item.dataset.key);
+        openWorkTab(tab);
+    }
+
+    function bindOpenWorkEvents() {
+        if (window.__retailOpenWorkEventsBound) return;
+        window.__retailOpenWorkEventsBound = true;
+        document.addEventListener('pointerdown', handleOpenWorkPointer, true);
+    }
+
+    function renderOpenWorkTabs() {
+        const tabs = readOpenWorkTabs();
+        if (!tabs.length) {
+            document.querySelector('.retail-open-work')?.remove();
+            return;
+        }
+
+        const panel = ensureOpenWorkPanel();
+        if (!panel) return;
+
+        const currentKey = getCurrentWorkTab()?.key;
+        const status = panel.dataset.status || __('Recent Tabs');
+        panel.innerHTML = `
+            <div class="retail-open-work__head">
+                <span class="retail-open-work__count">${tabs.length}</span>
+                <span class="retail-open-work__title">${__('Open Work')}</span>
+            </div>
+            <div class="retail-open-work__list">
+                ${tabs.map(tab => `
+                    <a class="retail-open-work__item ${tab.key === currentKey ? 'is-active' : ''}"
+                        href="${escapeAttribute(getOpenWorkHref(tab.route))}"
+                        data-key="${escapeAttribute(tab.key)}" title="${escapeAttribute(tab.label)}">
+                        <span class="retail-open-work__abbr">${escapeHtml(getWorkAbbr(tab))}</span>
+                        <span class="retail-open-work__status-dot ${getWorkStatusClass(tab.status)}"
+                            title="${escapeAttribute(getWorkStatusLabel(tab.status))}"></span>
+                        <span class="retail-open-work__label">${escapeHtml(tab.label)}</span>
+                        <span class="retail-open-work__close" data-key="${escapeAttribute(tab.key)}" title="${__('Close')}">×</span>
+                    </a>
+                `).join('')}
+            </div>
+            <div class="retail-open-work__status">${escapeHtml(status)}</div>
+        `;
     }
 
     function removePersistentSidebar() {
@@ -1142,6 +1544,7 @@
         renderPersistentSidebar();
         syncDesktopSidebarClass();
         applyWideTransactionLayout();
+        upsertCurrentWorkTab();
     }
 
     function scheduleSidebarEnhancements(delay = 80) {
@@ -1151,7 +1554,11 @@
 
     function observeSidebarChanges() {
         const observer = new MutationObserver(mutations => {
-            if (mutations.some(m => m.addedNodes.length || m.removedNodes.length)) {
+            if (mutations.some(m => {
+                if (!(m.target instanceof Element)) return false;
+                if (m.target.closest('.retail-open-work')) return false;
+                return m.addedNodes.length || m.removedNodes.length;
+            })) {
                 debugLog('retail_navigation: sidebar DOM mutated, reapplying icons');
                 scheduleSidebarEnhancements();
             }
@@ -1182,9 +1589,11 @@
         syncSidebarState();
         renderPersistentSidebar();
         applyWideTransactionLayout();
+        upsertCurrentWorkTab();
         observeSidebarChanges();
         scheduleRetry();
         bindSubmenuRouting();
+        bindOpenWorkEvents();
 
         if (window.frappe?.router?.on) {
             frappe.router.on('change', () => {
@@ -1192,11 +1601,13 @@
                 routeRefreshTimer = setTimeout(refreshSidebarEnhancements, 120);
                 setTimeout(applyWideTransactionLayout, 350);
                 setTimeout(applyWideTransactionLayout, 900);
+                setTimeout(upsertCurrentWorkTab, 350);
             });
         }
 
         window.matchMedia(DESKTOP_MEDIA).addEventListener('change', () => {
             refreshSidebarEnhancements();
+            renderOpenWorkTabs();
         });
     }
 
