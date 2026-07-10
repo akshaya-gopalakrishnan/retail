@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import frappe
 from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
+from frappe.custom.doctype.property_setter.property_setter import make_property_setter
 from frappe.utils import flt
 
 from retail.domains.item.item_price_sync import sync_item_price
@@ -82,6 +83,7 @@ def ensure_purchase_selling_price_fields():
 	)
 
 	_update_field_metadata()
+	_update_standard_grid_metadata()
 	for doctype in PURCHASE_ITEM_DOCTYPES:
 		frappe.db.updatedb(doctype)
 		frappe.clear_cache(doctype=doctype)
@@ -180,6 +182,38 @@ def _update_field_metadata():
 			custom_field = f"{doctype}-{fieldname}"
 			if frappe.db.exists("Custom Field", custom_field):
 				frappe.db.set_value("Custom Field", custom_field, values, update_modified=False)
+
+
+def _update_standard_grid_metadata():
+	field_updates = {
+		"item_code": {"in_list_view": 1, "columns": 1},
+		"qty": {"in_list_view": 1, "columns": 1},
+		"rejected_qty": {"in_list_view": 1, "columns": 1},
+		"rate": {"in_list_view": 1, "columns": 1},
+	}
+	for doctype in PURCHASE_ITEM_DOCTYPES:
+		for fieldname, values in field_updates.items():
+			if not frappe.get_meta(doctype).has_field(fieldname):
+				continue
+			for property_name, value in values.items():
+				property_type = "Check" if property_name == "in_list_view" else "Int"
+				_set_property(doctype, fieldname, property_name, value, property_type)
+
+
+def _set_property(doctype, fieldname, property_name, value, property_type):
+	property_setter = f"{doctype}-{fieldname}-{property_name}"
+	if frappe.db.exists("Property Setter", property_setter):
+		frappe.db.set_value("Property Setter", property_setter, "value", value, update_modified=False)
+		return
+
+	make_property_setter(
+		doctype,
+		fieldname,
+		property_name,
+		value,
+		property_type,
+		validate_fields_for_doctype=False,
+	)
 
 
 def _set_inclusive_selling_rate(row):
