@@ -3,7 +3,6 @@
     const debugLog = (...args) => DEBUG && console.log(...args);
     debugLog('retail_navigation: script loaded', {host: window.location.host, readyState: document.readyState});
     const OPEN_WORK_STORAGE_KEY = 'retail_open_work_tabs_v3';
-    const OPEN_WORK_MAX_TABS = 15;
     const OPEN_WORK_TTL_MS = 12 * 60 * 60 * 1000;
     const ICON_MAP = {
         'home': { icon: 'fa fa-home', cls: 'color-settings' },
@@ -284,6 +283,7 @@
     let routeRefreshTimer = null;
     let sidebarRenderRetryCount = 0;
     let workspaceCustomCardsPatched = false;
+    let openWorkClearedRouteKey = null;
 
     function normalizeText(text) {
         return (text || '')
@@ -816,8 +816,9 @@
 
             .retail-open-work__head {
                 align-items: center;
-                display: flex;
+                display: grid;
                 gap: 8px;
+                grid-template-columns: 28px 1fr 28px;
                 min-height: 42px;
                 padding: 8px 10px;
                 border-bottom: 1px solid var(--border-color);
@@ -845,6 +846,32 @@
             .retail-open-work:hover .retail-open-work__title,
             .retail-open-work:focus-within .retail-open-work__title {
                 opacity: 1;
+            }
+
+            .retail-open-work__clear {
+                align-items: center;
+                background: transparent;
+                border: 0;
+                border-radius: 6px;
+                color: var(--text-muted);
+                cursor: pointer;
+                display: inline-flex;
+                font-size: 16px;
+                height: 28px;
+                justify-content: center;
+                opacity: 0;
+                width: 28px;
+            }
+
+            .retail-open-work:hover .retail-open-work__clear,
+            .retail-open-work:focus-within .retail-open-work__clear {
+                opacity: 1;
+            }
+
+            .retail-open-work__clear:hover,
+            .retail-open-work__close:hover {
+                background: var(--control-bg);
+                color: var(--text-color);
             }
 
             .retail-open-work__list {
@@ -1159,7 +1186,7 @@
     }
 
     function writeOpenWorkTabs(tabs) {
-        sessionStorage.setItem(OPEN_WORK_STORAGE_KEY, JSON.stringify(tabs.slice(0, OPEN_WORK_MAX_TABS)));
+        sessionStorage.setItem(OPEN_WORK_STORAGE_KEY, JSON.stringify(tabs));
     }
 
     function getCurrentWorkTab() {
@@ -1216,6 +1243,8 @@
     function upsertCurrentWorkTab() {
         const tab = getCurrentWorkTab();
         if (!tab) return;
+        if (openWorkClearedRouteKey === tab.key) return;
+        openWorkClearedRouteKey = null;
 
         const tabs = readOpenWorkTabs();
         const existingIndex = tabs.findIndex(existing => existing.key === tab.key);
@@ -1229,7 +1258,17 @@
     }
 
     function closeOpenWorkTab(key) {
+        const currentKey = getCurrentWorkTab()?.key;
+        if (key === currentKey) {
+            openWorkClearedRouteKey = key;
+        }
         writeOpenWorkTabs(readOpenWorkTabs().filter(tab => tab.key !== key));
+        renderOpenWorkTabs();
+    }
+
+    function closeAllOpenWorkTabs() {
+        openWorkClearedRouteKey = getCurrentWorkTab()?.key || null;
+        sessionStorage.removeItem(OPEN_WORK_STORAGE_KEY);
         renderOpenWorkTabs();
     }
 
@@ -1285,6 +1324,16 @@
     }
 
     function handleOpenWorkPointer(event) {
+        const clearButton = event.target.closest('.retail-open-work__clear');
+        if (clearButton) {
+            if (!clearButton.closest('.retail-open-work')) return;
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation?.();
+            closeAllOpenWorkTabs();
+            return;
+        }
+
         const closeButton = event.target.closest('.retail-open-work__close');
         if (closeButton) {
             if (!closeButton.closest('.retail-open-work')) return;
@@ -1327,6 +1376,7 @@
             <div class="retail-open-work__head">
                 <span class="retail-open-work__count">${tabs.length}</span>
                 <span class="retail-open-work__title">${__('Open Work')}</span>
+                <button class="retail-open-work__clear" type="button" title="${__('Close All')}" aria-label="${__('Close All')}">x</button>
             </div>
             <div class="retail-open-work__list">
                 ${tabs.map(tab => `
