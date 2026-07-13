@@ -1,0 +1,35 @@
+{
+ "charts": [],
+ "content": "[{\"id\":\"hdr_supplier_quotations\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Supplier Quotations</span>\",\"col\":12}},{\"id\":\"ql_supplier_quotations\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Supplier Quotations\",\"col\":4}}]",
+ "creation": "2026-07-13 00:00:00.000000",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "quotation",
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "Supplier Quotations",
+ "links": [],
+ "modified": "2026-07-13 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Retail-app",
+ "name": "Supplier Quotations",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "Purchases",
+ "public": 1,
+ "quick_lists": [
+  {
+   "document_type": "Supplier Quotation",
+   "label": "Supplier Quotations",
+   "quick_list_filter": "[]"
+  }
+ ],
+ "roles": [],
+ "sequence_id": 36.2,
+ "shortcuts": [],
+ "title": "Supplier Quotations"
+}
