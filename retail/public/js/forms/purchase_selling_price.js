@@ -7,8 +7,13 @@
 	parentDoctypes.forEach((doctype) => {
 		frappe.ui.form.on(doctype, {
 			refresh(frm) {
+				toggleSellPriceColumns(frm);
 				addSellPriceButtons(frm);
 				refreshAllRows(frm);
+			},
+			custom_allow_selling_price(frm) {
+				toggleSellPriceColumns(frm);
+				return setAllSellPriceUpdates(frm, frm.doc.custom_allow_selling_price ? 1 : 0);
 			},
 			before_submit(frm) {
 				confirmSellPriceUpdates(frm);
@@ -19,6 +24,7 @@
 	itemDoctypes.forEach((doctype) => {
 		frappe.ui.form.on(doctype, {
 			item_code(frm, cdt, cdn) {
+				enableRowSellPriceWhenAllowed(frm, cdt, cdn);
 				fetchCurrentSellingRate(frm, cdt, cdn);
 			},
 			uom(frm, cdt, cdn) {
@@ -59,6 +65,7 @@
 	function addSellPriceButtons(frm) {
 		if (!parentDoctypes.includes(frm.doctype) || frm.doc.docstatus !== 0) return;
 		if (!hasSellPriceFields(frm)) return;
+		if (!frm.doc.custom_allow_selling_price) return;
 
 		frm.add_custom_button(__("Tick All"), () => setAllSellPriceUpdates(frm, 1), __("Sell Price"));
 		frm.add_custom_button(__("Untick All"), () => setAllSellPriceUpdates(frm, 0), __("Sell Price"));
@@ -69,8 +76,30 @@
 		return Boolean(grid?.fields_map?.custom_upd_sell_price);
 	}
 
+	function toggleSellPriceColumns(frm) {
+		if (!hasSellPriceFields(frm)) return;
+
+		const show = Boolean(frm.doc.custom_allow_selling_price);
+		const fields = [
+			"custom_cur_sell_rate",
+			"custom_new_sell_rate",
+			"custom_new_sell_incl",
+			"custom_sell_margin",
+		];
+
+		fields.forEach((fieldname) => {
+			frm.fields_dict.items.grid.update_docfield_property(fieldname, "hidden", !show);
+		});
+		frm.fields_dict.items.grid.update_docfield_property("custom_new_sell_rate", "read_only", !show);
+		frm.fields_dict.items.grid.update_docfield_property("custom_new_sell_rate", "depends_on", "");
+		frm.fields_dict.items.grid.update_docfield_property("custom_new_sell_incl", "read_only", !show);
+		frm.fields_dict.items.grid.update_docfield_property("custom_new_sell_incl", "depends_on", "");
+		frm.refresh_field("items");
+	}
+
 	function refreshAllRows(frm) {
 		if (!hasSellPriceFields(frm)) return;
+		if (!frm.doc.custom_allow_selling_price) return;
 		(frm.doc.items || []).forEach((row) => {
 			if (row.item_code && !flt(row.custom_cur_sell_rate)) {
 				fetchCurrentSellingRate(frm, row.doctype, row.name);
@@ -96,6 +125,14 @@
 			updateMargin(frm, row.doctype, row.name);
 		}
 		frm.refresh_field("items");
+	}
+
+	function enableRowSellPriceWhenAllowed(frm, cdt, cdn) {
+		const row = locals[cdt]?.[cdn];
+		if (!row?.item_code || !frm.doc.custom_allow_selling_price) return;
+		if (!row.custom_upd_sell_price) {
+			frappe.model.set_value(cdt, cdn, "custom_upd_sell_price", 1);
+		}
 	}
 
 	async function fetchCurrentSellingRate(frm, cdt, cdn) {
@@ -185,9 +222,12 @@
 
 	function confirmSellPriceUpdates(frm) {
 		if (frm.__retail_sell_price_confirmed) return;
+		if (!frm.doc.custom_allow_selling_price) return;
 
 		const rows = (frm.doc.items || []).filter(
-			(row) => row.custom_upd_sell_price && flt(row.custom_new_sell_rate) > 0
+			(row) => row.custom_upd_sell_price
+				&& flt(row.custom_new_sell_rate) > 0
+				&& flt(row.custom_new_sell_rate) !== flt(row.custom_cur_sell_rate)
 		);
 		if (!rows.length) return;
 

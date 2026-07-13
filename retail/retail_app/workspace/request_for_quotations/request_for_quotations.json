@@ -1,0 +1,35 @@
+{
+ "charts": [],
+ "content": "[{\"id\":\"hdr_request_for_quotations\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Request for Quotations</span>\",\"col\":12}},{\"id\":\"ql_request_for_quotations\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Request for Quotations\",\"col\":4}}]",
+ "creation": "2026-07-13 00:00:00.000000",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "question",
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "Request for Quotations",
+ "links": [],
+ "modified": "2026-07-13 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Retail-app",
+ "name": "Request for Quotations",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "Purchases",
+ "public": 1,
+ "quick_lists": [
+  {
+   "document_type": "Request for Quotation",
+   "label": "Request for Quotations",
+   "quick_list_filter": "[]"
+  }
+ ],
+ "roles": [],
+ "sequence_id": 36.2,
+ "shortcuts": [],
+ "title": "Request for Quotations"
+}

@@ -20,6 +20,21 @@ def ensure_purchase_selling_price_fields():
 		{
 			doctype: [
 				{
+					"fieldname": "custom_allow_selling_price",
+					"label": "Allow Selling Price",
+					"fieldtype": "Check",
+					"insert_after": "set_warehouse",
+					"print_hide": 1,
+				},
+			]
+			for doctype in PURCHASE_DOCTYPES
+		},
+		ignore_validate=True,
+	)
+	create_custom_fields(
+		{
+			doctype: [
+				{
 					"fieldname": "custom_upd_sell_price",
 					"label": "Upd SP",
 					"fieldtype": "Check",
@@ -43,7 +58,6 @@ def ensure_purchase_selling_price_fields():
 					"fieldtype": "Currency",
 					"options": "currency",
 					"insert_after": "custom_cur_sell_rate",
-					"depends_on": "eval:doc.custom_upd_sell_price",
 					"in_list_view": 1,
 					"columns": 1,
 				},
@@ -53,7 +67,6 @@ def ensure_purchase_selling_price_fields():
 					"fieldtype": "Currency",
 					"options": "currency",
 					"insert_after": "custom_new_sell_rate",
-					"depends_on": "eval:doc.custom_upd_sell_price",
 					"in_list_view": 1,
 					"columns": 1,
 				},
@@ -92,6 +105,8 @@ def ensure_purchase_selling_price_fields():
 def set_selling_price_margins(doc, method=None):
 	if doc.doctype not in PURCHASE_DOCTYPES:
 		return
+	if not flt(doc.get("custom_allow_selling_price")):
+		return
 
 	for row in doc.get("items") or []:
 		if not row.meta.has_field("custom_new_sell_rate"):
@@ -112,6 +127,8 @@ def set_selling_price_margins(doc, method=None):
 def update_selected_selling_prices(doc, method=None):
 	if doc.doctype not in PURCHASE_DOCTYPES:
 		return
+	if not flt(doc.get("custom_allow_selling_price")):
+		return
 
 	for row in doc.get("items") or []:
 		if not row.meta.has_field("custom_upd_sell_price"):
@@ -119,6 +136,8 @@ def update_selected_selling_prices(doc, method=None):
 		if not flt(row.get("custom_upd_sell_price")):
 			continue
 		if not row.get("item_code") or flt(row.get("custom_new_sell_rate")) <= 0:
+			continue
+		if flt(row.get("custom_new_sell_rate")) == flt(row.get("custom_cur_sell_rate")):
 			continue
 
 		sync_item_price(
@@ -167,13 +186,35 @@ def get_item_selling_vat_rate(item_code):
 
 
 def _update_field_metadata():
+	for doctype in PURCHASE_DOCTYPES:
+		custom_field = f"{doctype}-custom_allow_selling_price"
+		if frappe.db.exists("Custom Field", custom_field):
+			frappe.db.set_value(
+				"Custom Field",
+				custom_field,
+				{"label": "Allow Selling Price", "insert_after": "set_warehouse", "print_hide": 1},
+				update_modified=False,
+			)
+
 	field_updates = {
 		"custom_rate_including_vat": {"in_list_view": 0},
 		"custom_amount_including_vat": {"in_list_view": 0},
 		"custom_upd_sell_price": {"label": "Upd SP", "insert_after": "rate", "in_list_view": 0},
 		"custom_cur_sell_rate": {"label": "Cur SP", "insert_after": "custom_upd_sell_price", "in_list_view": 1},
-		"custom_new_sell_rate": {"label": "New SP", "insert_after": "custom_cur_sell_rate", "in_list_view": 1},
-		"custom_new_sell_incl": {"label": "SP Incl", "insert_after": "custom_new_sell_rate", "in_list_view": 1},
+		"custom_new_sell_rate": {
+			"label": "New SP",
+			"insert_after": "custom_cur_sell_rate",
+			"in_list_view": 1,
+			"depends_on": "",
+			"read_only": 0,
+		},
+		"custom_new_sell_incl": {
+			"label": "SP Incl",
+			"insert_after": "custom_new_sell_rate",
+			"in_list_view": 1,
+			"depends_on": "",
+			"read_only": 0,
+		},
 		"custom_sell_margin": {"label": "Margin", "insert_after": "custom_new_sell_incl", "in_list_view": 1},
 		"custom_sell_margin_pct": {"label": "Mgn %", "insert_after": "custom_sell_margin", "in_list_view": 0},
 	}

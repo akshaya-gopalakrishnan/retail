@@ -1,0 +1,35 @@
+{
+ "charts": [],
+ "content": "[{\"id\":\"hdr_quotations\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Quotations</span>\",\"col\":12}},{\"id\":\"ql_quotations\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Quotations\",\"col\":4}}]",
+ "creation": "2026-07-13 00:00:00.000000",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "quotation",
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "Quotations",
+ "links": [],
+ "modified": "2026-07-13 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Retail-app",
+ "name": "Quotations",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "Sales",
+ "public": 1,
+ "quick_lists": [
+  {
+   "document_type": "Quotation",
+   "label": "Quotations",
+   "quick_list_filter": "[]"
+  }
+ ],
+ "roles": [],
+ "sequence_id": 8.5,
+ "shortcuts": [],
+ "title": "Quotations"
+}
