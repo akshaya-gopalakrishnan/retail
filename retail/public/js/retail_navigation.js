@@ -39,6 +39,8 @@
         'price lists': { icon: 'fa fa-tags', cls: 'color-items' },
         'brands': { icon: 'fa fa-bookmark', cls: 'color-items' },
         'customers': { icon: 'fa fa-users', cls: 'color-sales' },
+        'quotation': { icon: 'fa fa-file-text-o', cls: 'color-sales' },
+        'quotations': { icon: 'fa fa-file-text-o', cls: 'color-sales' },
         'sales orders': { icon: 'fa fa-shopping-cart', cls: 'color-sales' },
         'sales invoices': { icon: 'fa fa-file-text', cls: 'color-sales' },
         'sales returns': { icon: 'fa fa-undo', cls: 'color-sales' },
