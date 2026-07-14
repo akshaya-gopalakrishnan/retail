@@ -33,7 +33,8 @@ required_apps = ["erpnext", "hrms"]
 
 app_include_css = [
     "/assets/retail/css/retail_icons.css?v=21",
-    "/assets/retail/css/brand_themes.css?v=13",
+    "/assets/retail/css/brand_themes.css?v=14",
+    "/assets/retail/css/workspace_glass.css?v=5",
 ]
 
 app_include_js = [
@@ -100,6 +101,8 @@ doctype_list_js = {
 }
 doctype_js = {
 	"Item": "public/js/forms/item.js",
+	"Item Price": "public/js/forms/item_price_rate_update.js",
+	"Retail Item Rate Audit": "public/js/forms/retail_item_rate_audit.js",
 	"Purchase Order": "public/js/forms/foc_qty.js",
 	"Purchase Receipt": [
 		"public/js/forms/foc_qty.js",
@@ -277,8 +280,8 @@ doc_events = {
 		],
         "on_update": [
 			"retail.domains.item.item_price_sync.sync_simple_item_prices",
-			"retail.domains.item.item_price_sync.sync_item_master_purchase_rate_from_price_list",
 			"retail.domains.item.average_purchase_rate.sync_average_purchase_rate_from_item",
+			"retail.domains.item.rate_audit.audit_item_master_rate_change",
         ],
     },
 	"Item Price": {
@@ -389,6 +392,7 @@ after_migrate = [
 	"retail.domains.item.packing_rate.ensure_packing_purchase_rate_script",
 	"retail.domains.item.arabic_name.ensure_item_arabic_name_field",
 	"retail.domains.item.vat_pricing.ensure_item_vat_pricing_fields",
+	"retail.domains.item.rate_audit.ensure_rate_audit_setup",
 	"retail.domains.item.vat_pricing.backfill_item_master_last_purchase_rates",
 	"retail.domains.sales.invoice_totals.ensure_all_transaction_totals_fields",
 	"retail.domains.purchase.selling_price.ensure_purchase_selling_price_fields",

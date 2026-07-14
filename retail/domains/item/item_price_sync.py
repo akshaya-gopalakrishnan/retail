@@ -33,7 +33,6 @@ def sync_simple_item_prices(doc, method=None):
 	sync_item_price(doc, "Standard Selling", _get_item_master_selling_rate(doc))
 	sync_item_price(doc, "Standard Buying", _get_item_master_buying_rate(doc))
 	sync_packing_item_prices(doc)
-	sync_item_master_purchase_rate_from_price_list(doc)
 
 
 def sync_latest_transaction_item_prices(doc, method=None):
@@ -93,8 +92,6 @@ def _recalculate_side_item_prices(
 				rate = fallback_getter(item)
 			sync_item_price({"item_code": item_code}, price_list, rate, uom=uom)
 
-		if doc.doctype in BUYING_DOCTYPES:
-			sync_item_master_purchase_rates_from_latest_transaction(item_code, uom)
 
 
 def sync_transaction_item_prices(doc, standard_price_list, document_price_list=None):
@@ -113,8 +110,6 @@ def sync_transaction_item_prices(doc, standard_price_list, document_price_list=N
 		for price_list in price_lists:
 			sync_item_price(row, price_list, rate, uom=row.get("uom"))
 
-		if doc.doctype in BUYING_DOCTYPES:
-			sync_item_master_purchase_rates_from_transaction_row(row)
 
 
 def sync_packing_item_prices(doc):
@@ -159,10 +154,6 @@ def sync_item_price(doc, price_list, rate, uom=None):
 				"price_list_rate",
 				rate,
 			)
-		if price_list == "Standard Buying":
-			sync_item_master_purchase_rate_from_price_list(item_code, uom=uom)
-		elif price_list == "Standard Selling":
-			sync_item_master_selling_rate_from_price_list(item_code, uom=uom)
 		return
 
 	frappe.get_doc(
@@ -174,10 +165,7 @@ def sync_item_price(doc, price_list, rate, uom=None):
 			"uom": uom,
 		}
 	).insert(ignore_permissions=True)
-	if price_list == "Standard Buying":
-		sync_item_master_purchase_rate_from_price_list(item_code, uom=uom)
-	elif price_list == "Standard Selling":
-		sync_item_master_selling_rate_from_price_list(item_code, uom=uom)
+	return
 
 
 def sync_item_master_purchase_rate_from_price_list(doc, method=None, uom=None):
@@ -400,14 +388,12 @@ def _get_latest_submitted_buying_row(item_code, uom):
 
 
 def sync_item_master_purchase_rate_from_item_price(doc, method=None):
-	"""Refresh Item Master when Standard Item Prices are edited directly."""
-	if flt(doc.get("price_list_rate")) <= 0:
-		return
+	"""Item Price edits no longer update Item Master silently.
 
-	if doc.get("price_list") == "Standard Buying":
-		sync_item_master_purchase_rate_from_price_list(doc.get("item_code"), uom=doc.get("uom"))
-	elif doc.get("price_list") == "Standard Selling":
-		sync_item_master_selling_rate_from_price_list(doc.get("item_code"), uom=doc.get("uom"))
+	Use the controlled Retail button/API in retail.domains.item.rate_audit
+	so updates are permission-gated and audited.
+	"""
+	return
 
 
 @frappe.whitelist()

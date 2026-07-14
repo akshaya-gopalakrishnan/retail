@@ -9,6 +9,7 @@
 			refresh(frm) {
 				toggleSellPriceColumns(frm);
 				addSellPriceButtons(frm);
+				addItemRateUpdateButton(frm);
 				refreshAllRows(frm);
 			},
 			custom_allow_selling_price(frm) {
@@ -69,6 +70,99 @@
 
 		frm.add_custom_button(__("Tick All"), () => setAllSellPriceUpdates(frm, 1), __("Sell Price"));
 		frm.add_custom_button(__("Untick All"), () => setAllSellPriceUpdates(frm, 0), __("Sell Price"));
+	}
+
+	function addItemRateUpdateButton(frm) {
+		if (!parentDoctypes.includes(frm.doctype) || frm.doc.docstatus !== 1) return;
+		frm.add_custom_button(__("Update Item Master Rates"), () => updateItemMasterRates(frm), __("Retail"));
+	}
+
+	async function updateItemMasterRates(frm) {
+		const preview = (await frappe.call({
+			method: "retail.domains.item.rate_audit.get_purchase_document_rate_preview",
+			args: {
+				source_doctype: frm.doctype,
+				source_name: frm.doc.name,
+			},
+		})).message || [];
+
+		if (!preview.length) {
+			frappe.msgprint(__("No Item Master purchase rate changes found."));
+			return;
+		}
+
+		const dialog = new frappe.ui.Dialog({
+			title: __("Update Item Master Purchase Rates"),
+			size: "extra-large",
+			fields: [
+				{ fieldtype: "HTML", fieldname: "preview_html" },
+			],
+			primary_action_label: __("Confirm Update"),
+			primary_action: async () => {
+				const selectedRows = getSelectedPreviewRows(dialog);
+				if (!selectedRows.length) {
+					frappe.msgprint(__("Select at least one item row."));
+					return;
+				}
+				const result = await frappe.call({
+					method: "retail.domains.item.rate_audit.apply_purchase_document_rate_updates",
+					args: {
+						source_doctype: frm.doctype,
+						source_name: frm.doc.name,
+						source_rows: selectedRows,
+					},
+					freeze: true,
+					freeze_message: __("Updating Item Master Rates"),
+				});
+				dialog.hide();
+				frappe.show_alert({
+					message: __("Updated {0} Item Master rate(s)", [(result.message || []).length]),
+					indicator: "green",
+				});
+			},
+		});
+
+		dialog.fields_dict.preview_html.$wrapper.html(getPreviewHtml(preview));
+		dialog.show();
+	}
+
+	function getSelectedPreviewRows(dialog) {
+		return dialog.fields_dict.preview_html.$wrapper
+			.find("input[data-source-row]:checked")
+			.map((_, input) => input.dataset.sourceRow)
+			.get();
+	}
+
+	function getPreviewHtml(rows) {
+		const body = rows.map((row) => `
+			<tr>
+				<td><input type="checkbox" data-source-row="${escapeHtml(row.source_row)}" checked></td>
+				<td>${escapeHtml(row.item_code)}</td>
+				<td>${escapeHtml(row.uom || "")}</td>
+				<td class="text-right">${format_currency(row.old_net_rate)}</td>
+				<td class="text-right">${format_currency(row.new_net_rate)}</td>
+				<td class="text-right">${format_currency(row.new_gross_rate)}</td>
+			</tr>
+		`).join("");
+
+		return `
+			<p class="text-muted">
+				${__("This will change official Item Master purchase rates for future packing and pricing calculations. The action is audited with your user name.")}
+			</p>
+			<table class="table table-bordered">
+				<thead>
+					<tr>
+						<th style="width: 40px"></th>
+						<th>${__("Item")}</th>
+						<th>${__("UOM")}</th>
+						<th class="text-right">${__("Old Excl. VAT")}</th>
+						<th class="text-right">${__("New Excl. VAT")}</th>
+						<th class="text-right">${__("New Incl. VAT")}</th>
+					</tr>
+				</thead>
+				<tbody>${body}</tbody>
+			</table>
+		`;
 	}
 
 	function hasSellPriceFields(frm) {
@@ -239,5 +333,12 @@
 				frm.savesubmit();
 			}
 		);
+	}
+
+	function escapeHtml(value) {
+		if (frappe.utils?.escape_html) return frappe.utils.escape_html(String(value || ""));
+		return String(value || "").replace(/[&<>"']/g, (char) => ({
+			"&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;",
+		})[char]);
 	}
 })();

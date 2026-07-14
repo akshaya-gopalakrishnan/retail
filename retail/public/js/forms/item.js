@@ -37,6 +37,7 @@
 
 	frappe.ui.form.on("Item", {
 		refresh(frm) {
+			setDefaultVatIncludes(frm);
 			setupArabicItemNameField(frm);
 			addArabicTranslationButton(frm);
 			queueLastPurchaseRateLookup(frm);
@@ -69,16 +70,16 @@
 		},
 		custom_tax(frm) {
 			refreshVatPrices(frm, "sales");
-			refreshPackingVatRows(frm, "selling");
+			refreshPackingFromItemRates(frm, "selling");
 		},
 		custom_purchase_tax_template(frm) {
 			refreshVatPrices(frm, "purchase");
-			refreshPackingVatRows(frm, "purchase");
+			refreshPackingFromItemRates(frm, "purchase");
 		},
-		custom_sales_rate_entry(frm) { refreshVatPrices(frm, "sales"); },
-		custom_sales_rate_includes_vat(frm) { refreshVatPrices(frm, "sales"); },
-		custom_purchase_rate_entry(frm) { refreshVatPrices(frm, "purchase"); },
-		custom_purchase_rate_includes_vat(frm) { refreshVatPrices(frm, "purchase"); },
+		custom_sales_rate_entry(frm) { refreshVatPrices(frm, "sales").then(() => refreshPackingFromItemRates(frm, "selling")); },
+		custom_sales_rate_includes_vat(frm) { refreshVatPrices(frm, "sales").then(() => refreshPackingFromItemRates(frm, "selling")); },
+		custom_purchase_rate_entry(frm) { refreshVatPrices(frm, "purchase").then(() => refreshPackingFromItemRates(frm, "purchase")); },
+		custom_purchase_rate_includes_vat(frm) { refreshVatPrices(frm, "purchase").then(() => refreshPackingFromItemRates(frm, "purchase")); },
 		custom_average_purchase_rate(frm) { refreshMargin(frm); },
 		custom_b2b(frm) { refreshMargin(frm); },
 		validate(frm) { removeEmptyBarcodeRows(frm); },
@@ -88,11 +89,27 @@
 	frappe.ui.form.on("Retail Packing Detail", {
 		purchase_rate(frm, cdt, cdn) {
 			resetPackingVatConfirmation(cdt, cdn, "purchase");
-			refreshPackingVatRow(frm, cdt, cdn, "purchase");
+			refreshPackingVatRow(frm, cdt, cdn, "purchase", "entry").then(() => updateItemRateFromPacking(frm, cdt, cdn, "purchase", "entry"));
 		},
 		selling_rate(frm, cdt, cdn) {
 			resetPackingVatConfirmation(cdt, cdn, "selling");
-			refreshPackingVatRow(frm, cdt, cdn, "selling");
+			refreshPackingVatRow(frm, cdt, cdn, "selling", "entry").then(() => updateItemRateFromPacking(frm, cdt, cdn, "selling", "entry"));
+		},
+		purchase_net_rate(frm, cdt, cdn) {
+			resetPackingVatConfirmation(cdt, cdn, "purchase");
+			refreshPackingVatRow(frm, cdt, cdn, "purchase", "net").then(() => updateItemRateFromPacking(frm, cdt, cdn, "purchase", "net"));
+		},
+		purchase_gross_rate(frm, cdt, cdn) {
+			resetPackingVatConfirmation(cdt, cdn, "purchase");
+			refreshPackingVatRow(frm, cdt, cdn, "purchase", "gross").then(() => updateItemRateFromPacking(frm, cdt, cdn, "purchase", "gross"));
+		},
+		selling_net_rate(frm, cdt, cdn) {
+			resetPackingVatConfirmation(cdt, cdn, "selling");
+			refreshPackingVatRow(frm, cdt, cdn, "selling", "net").then(() => updateItemRateFromPacking(frm, cdt, cdn, "selling", "net"));
+		},
+		selling_gross_rate(frm, cdt, cdn) {
+			resetPackingVatConfirmation(cdt, cdn, "selling");
+			refreshPackingVatRow(frm, cdt, cdn, "selling", "gross").then(() => updateItemRateFromPacking(frm, cdt, cdn, "selling", "gross"));
 		},
 		purchase_vat_mode(frm, cdt, cdn) {
 			resetPackingVatConfirmation(cdt, cdn, "purchase");
@@ -117,9 +134,21 @@
 			refreshPackingVatRow(frm, cdt, cdn, "selling");
 		},
 		custom_retail_packing_detail_add(frm, cdt, cdn) {
-			refreshPackingVatRow(frm, cdt, cdn);
+			setPackingRowFromItemRates(frm, cdt, cdn).then(() => refreshPackingVatRow(frm, cdt, cdn));
+		},
+		conversion_factor(frm, cdt, cdn) {
+			setPackingRowFromItemRates(frm, cdt, cdn).then(() => refreshPackingVatRow(frm, cdt, cdn));
 		},
 	});
+
+	function setDefaultVatIncludes(frm) {
+		if (!frm.is_new() || frm._retail_vat_defaults_applied) return;
+		frm._retail_vat_defaults_applied = true;
+		const updates = {};
+		if (!cint(frm.doc.custom_purchase_rate_includes_vat)) updates.custom_purchase_rate_includes_vat = 1;
+		if (!cint(frm.doc.custom_sales_rate_includes_vat)) updates.custom_sales_rate_includes_vat = 1;
+		if (Object.keys(updates).length) frm.set_value(updates);
+	}
 
 	function setOpeningAveragePurchaseRate(frm, overwrite) {
 		if (!frm.is_new() || (!overwrite && frm.doc.custom_average_purchase_rate)) return;
@@ -191,7 +220,8 @@
 	}
 
 	function refreshVatPrices(frm, direction) {
-		(direction ? [direction] : ["sales", "purchase"]).forEach((side) => calculateVatPrice(frm, side));
+		const work = (direction ? [direction] : ["sales", "purchase"]).map((side) => calculateVatPrice(frm, side));
+		return Promise.all(work);
 	}
 
 	function calculateVatPrice(frm, direction) {
@@ -200,7 +230,7 @@
 		if (entry === undefined || entry === null || entry === "") return;
 		if (flt(entry) <= 0) return;
 
-		frappe.call({
+		return frappe.call({
 			method: "retail.domains.item.vat_pricing.get_item_tax_rate",
 			args: { template: frm.doc[fields.template] },
 			callback: ({ message }) => {
@@ -241,31 +271,51 @@
 		});
 	}
 
-	function refreshPackingVatRow(frm, cdt, cdn, direction) {
+	function refreshPackingVatRow(frm, cdt, cdn, direction, sourceField) {
 		const row = locals[cdt]?.[cdn];
 		if (!row) return Promise.resolve();
 
 		const sides = direction ? [direction] : ["purchase", "selling"];
-		return Promise.all(sides.map((side) => calculatePackingVatSide(frm, cdt, cdn, side)))
+		return Promise.all(sides.map((side) => calculatePackingVatSide(frm, cdt, cdn, side, sourceField)))
 			.then(() => setPackingMargin(cdt, cdn));
 	}
 
-	function calculatePackingVatSide(frm, cdt, cdn, direction) {
+	function calculatePackingVatSide(frm, cdt, cdn, direction, sourceField) {
 		const row = locals[cdt]?.[cdn];
 		const fields = packingVatFields[direction];
 		if (!row || !fields || row[fields.entry] === undefined) return Promise.resolve();
 
 		return getTemplateVatRate(frm, frm.doc[fields.template]).then((defaultRate) => {
-			const entered = flt(row[fields.entry]);
+			let entered = flt(row[fields.entry]);
 			const rate = hasEnteredValue(row[fields.rate]) ? flt(row[fields.rate]) : flt(defaultRate);
-			const mode = row[fields.mode] || "Excluding VAT";
-			const inclusive = mode === "Including VAT";
-			const net = inclusive && rate ? entered / (1 + rate / 100) : entered;
-			const vat = inclusive ? entered - net : net * rate / 100;
-			const gross = inclusive ? entered : net + vat;
+			let mode = row[fields.mode] || getDefaultPackingVatMode(frm, direction);
+			let net;
+			let gross;
+			let vat;
+			const divisor = 1 + rate / 100;
+
+			if (sourceField === "net") {
+				net = flt(row[fields.net]);
+				vat = net * rate / 100;
+				gross = net + vat;
+				mode = "Excluding VAT";
+				entered = net;
+			} else if (sourceField === "gross") {
+				gross = flt(row[fields.gross]);
+				net = rate && divisor ? gross / divisor : gross;
+				vat = gross - net;
+				mode = "Including VAT";
+				entered = gross;
+			} else {
+				const inclusive = mode === "Including VAT";
+				net = inclusive && rate ? entered / divisor : entered;
+				vat = inclusive ? entered - net : net * rate / 100;
+				gross = inclusive ? entered : net + vat;
+			}
 			const status = getPackingVatStatus(mode, rate, row[fields.confirmed]);
 
 			return frappe.model.set_value(cdt, cdn, {
+				[fields.entry]: flt(entered, 2),
 				[fields.mode]: mode,
 				[fields.rate]: flt(rate, 3),
 				[fields.net]: flt(net, 2),
@@ -274,6 +324,98 @@
 				[fields.status]: status,
 			});
 		});
+	}
+
+	function refreshPackingFromItemRates(frm, direction) {
+		if (!Array.isArray(frm.doc.custom_retail_packing_detail)) return Promise.resolve();
+		const work = [];
+		(frm.doc.custom_retail_packing_detail || []).forEach((row) => {
+			work.push(setPackingRowFromItemRates(frm, row.doctype, row.name, direction));
+		});
+		return Promise.all(work).then(() => refreshPackingVatRows(frm, direction));
+	}
+
+	function setPackingRowFromItemRates(frm, cdt, cdn, direction) {
+		const row = locals[cdt]?.[cdn];
+		if (!row || row.__retail_syncing_from_item) return Promise.resolve();
+
+		const sides = direction ? [direction] : ["purchase", "selling"];
+		const updates = {};
+		sides.forEach((side) => {
+			const fields = packingVatFields[side];
+			const state = getItemRateState(frm, side);
+			const factor = flt(row.conversion_factor || 1) || 1;
+			const mode = getDefaultPackingVatMode(frm, side);
+			const net = state.net * factor;
+			const gross = state.gross * factor;
+			updates[fields.mode] = mode;
+			updates[fields.entry] = flt(mode === "Including VAT" ? gross : net, 2);
+			updates[fields.net] = flt(net, 2);
+			updates[fields.vat] = flt(gross - net, 2);
+			updates[fields.gross] = flt(gross, 2);
+		});
+
+		row.__retail_syncing_from_item = true;
+		return frappe.model.set_value(cdt, cdn, updates).finally(() => {
+			row.__retail_syncing_from_item = false;
+		});
+	}
+
+	function updateItemRateFromPacking(frm, cdt, cdn, direction, sourceField) {
+		const row = locals[cdt]?.[cdn];
+		const fields = packingVatFields[direction];
+		if (!row || row.__retail_syncing_from_item || row.__retail_updating_item_rate) return Promise.resolve();
+
+		const factor = flt(row.conversion_factor || 1) || 1;
+		const rowNet = sourceField === "gross" || sourceField === "entry" ? flt(row[fields.net]) : flt(row[fields.net]);
+		const rowGross = sourceField === "net" || sourceField === "entry" ? flt(row[fields.gross]) : flt(row[fields.gross]);
+		if (rowNet <= 0 || factor <= 0) return Promise.resolve();
+
+		const net = flt(rowNet / factor, 2);
+		const gross = flt(rowGross / factor, 2);
+		const updates = direction === "purchase"
+			? {
+				custom_purchase_rate_entry: gross,
+				custom_purchase_rate_includes_vat: 1,
+				custom_purchase_net_rate: net,
+				custom_purchase_vat_amount: flt(gross - net, 2),
+				custom_purchase_gross_rate: gross,
+				custom_default_purchase_rate: net,
+				last_purchase_rate: net,
+			}
+			: {
+				custom_sales_rate_entry: gross,
+				custom_sales_rate_includes_vat: 1,
+				custom_sales_net_rate: net,
+				custom_sales_vat_amount: flt(gross - net, 2),
+				custom_sales_gross_rate: gross,
+				standard_rate: net,
+			};
+
+		row.__retail_updating_item_rate = true;
+		return frm.set_value(updates).then(() => {
+			refreshMargin(frm);
+			return refreshPackingFromItemRates(frm, direction);
+		}).finally(() => {
+			row.__retail_updating_item_rate = false;
+		});
+	}
+
+	function getItemRateState(frm, direction) {
+		const prefix = direction === "purchase" ? "custom_purchase" : "custom_sales";
+		const fallbackNet = direction === "purchase"
+			? flt(frm.doc.custom_default_purchase_rate || frm.doc.last_purchase_rate)
+			: flt(frm.doc.standard_rate);
+		const net = flt(frm.doc[`${prefix}_net_rate`] || fallbackNet);
+		const gross = flt(frm.doc[`${prefix}_gross_rate`] || net);
+		return { net, gross };
+	}
+
+	function getDefaultPackingVatMode(frm, direction) {
+		const inclusiveField = direction === "purchase"
+			? "custom_purchase_rate_includes_vat"
+			: "custom_sales_rate_includes_vat";
+		return cint(frm.doc[inclusiveField]) ? "Including VAT" : "Excluding VAT";
 	}
 
 	function setPackingMargin(cdt, cdn) {

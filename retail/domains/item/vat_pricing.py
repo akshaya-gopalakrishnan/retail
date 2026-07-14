@@ -227,7 +227,7 @@ def ensure_item_vat_pricing_fields():
 					"fieldname": "custom_sales_rate_includes_vat",
 					"label": "Selling Rate Includes VAT",
 					"fieldtype": "Check",
-					"default": "0",
+					"default": "1",
 					"insert_after": "custom_sales_rate_entry",
 				},
 				{
@@ -269,7 +269,7 @@ def ensure_item_vat_pricing_fields():
 					"fieldname": "custom_purchase_rate_includes_vat",
 					"label": "Purchase Rate Includes VAT",
 					"fieldtype": "Check",
-					"default": "0",
+					"default": "1",
 					"insert_after": "custom_purchase_rate_entry",
 				},
 				{
@@ -302,6 +302,8 @@ def ensure_item_vat_pricing_fields():
 	_set_field_property("custom_tax", "label", "Sales VAT Template", "Data")
 	_set_field_property("custom_tax", "reqd", "1", "Check")
 	_set_field_property("custom_purchase_tax_template", "reqd", "1", "Check")
+	_set_field_property("custom_purchase_rate_includes_vat", "default", "1", "Check")
+	_set_field_property("custom_sales_rate_includes_vat", "default", "1", "Check")
 	if default_vat_template:
 		_set_field_property("custom_tax", "default", default_vat_template, "Data")
 		_set_field_property("custom_purchase_tax_template", "default", default_vat_template, "Data")
@@ -375,7 +377,7 @@ def ensure_packing_vat_pricing_fields():
 					"fieldname": "purchase_net_rate",
 					"label": "Purchase Rate Excl. VAT",
 					"fieldtype": "Currency",
-					"read_only": 1,
+					"read_only": 0,
 					"insert_after": "purchase_vat_confirmed",
 				},
 				{
@@ -389,7 +391,7 @@ def ensure_packing_vat_pricing_fields():
 					"fieldname": "purchase_gross_rate",
 					"label": "Purchase Rate Incl. VAT",
 					"fieldtype": "Currency",
-					"read_only": 1,
+					"read_only": 0,
 					"insert_after": "purchase_vat_amount",
 				},
 				{
@@ -422,7 +424,7 @@ def ensure_packing_vat_pricing_fields():
 					"fieldname": "selling_net_rate",
 					"label": "Selling Rate Excl. VAT",
 					"fieldtype": "Currency",
-					"read_only": 1,
+					"read_only": 0,
 					"insert_after": "selling_vat_confirmed",
 				},
 				{
@@ -436,7 +438,7 @@ def ensure_packing_vat_pricing_fields():
 					"fieldname": "selling_gross_rate",
 					"label": "Selling Rate Incl. VAT",
 					"fieldtype": "Currency",
-					"read_only": 1,
+					"read_only": 0,
 					"insert_after": "selling_vat_amount",
 				},
 				{
@@ -451,6 +453,8 @@ def ensure_packing_vat_pricing_fields():
 		ignore_validate=True,
 	)
 	frappe.db.updatedb("Retail Packing Detail")
+	for fieldname in ("purchase_net_rate", "purchase_gross_rate", "selling_net_rate", "selling_gross_rate"):
+		_set_custom_field_value("Retail Packing Detail", fieldname, "read_only", 0)
 	frappe.clear_cache(doctype="Retail Packing Detail")
 
 
@@ -814,3 +818,9 @@ def _set_field_property(fieldname, property_name, value, property_type):
 	make_property_setter(
 		"Item", fieldname, property_name, value, property_type, validate_fields_for_doctype=False
 	)
+
+
+def _set_custom_field_value(doctype, fieldname, property_name, value):
+	name = f"{doctype}-{fieldname}"
+	if frappe.db.exists("Custom Field", name):
+		frappe.db.set_value("Custom Field", name, property_name, value, update_modified=False)

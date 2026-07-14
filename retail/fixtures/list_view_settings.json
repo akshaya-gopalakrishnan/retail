@@ -9,9 +9,9 @@
   "docstatus": 0,
   "doctype": "List View Settings",
   "fields": "[{\"fieldname\": \"item_name\", \"label\": \"Item Name\"}, {\"fieldname\": \"status_field\", \"label\": \"Status\"}, {\"fieldname\": \"brand\", \"label\": \"Brand\"}, {\"fieldname\": \"item_group\", \"label\": \"Item Group\"}, {\"fieldname\": \"custom_purchase_gross_rate\", \"label\": \"Purchase Rate Incl. VAT\"}, {\"fieldname\": \"custom_sales_gross_rate\", \"label\": \"Selling Rate Incl. VAT\"}, {\"fieldname\": \"custom_margin\", \"label\": \"Margin\"}]",
-  "modified": "2026-07-10 10:42:28.547872",
+  "modified": "2026-07-11 08:49:38.877374",
   "name": "Item",
-  "total_fields": "7"
+  "total_fields": "8"
  },
  {
   "allow_edit": 0,
@@ -23,7 +23,7 @@
   "docstatus": 0,
   "doctype": "List View Settings",
   "fields": "[{\"fieldname\": \"item_code\"}, {\"fieldname\": \"item_name\"}, {\"fieldname\": \"brand\"}, {\"fieldname\": \"price_list\"}, {\"fieldname\": \"price_list_rate\"}, {\"fieldname\": \"custom_average_purchase_rate\"}]",
-  "modified": "2026-07-06 09:52:45.141130",
+  "modified": "2026-07-10 11:39:17.707382",
   "name": "Item Price",
   "total_fields": "6"
  },
@@ -40,5 +40,19 @@
   "modified": "2026-07-07 15:35:35.280614",
   "name": "Purchase Order",
   "total_fields": "8"
+ },
+ {
+  "allow_edit": 0,
+  "disable_auto_refresh": 0,
+  "disable_automatic_recency_filters": 0,
+  "disable_comment_count": 0,
+  "disable_count": 0,
+  "disable_sidebar_stats": 0,
+  "docstatus": 0,
+  "doctype": "List View Settings",
+  "fields": "[{\"label\":\"Title\",\"fieldname\":\"title\"},{\"type\":\"Status\",\"label\":\"Status\",\"fieldname\":\"status_field\"},{\"label\":\"Grand Total\",\"fieldname\":\"grand_total\"}]",
+  "modified": "2026-07-11 09:00:08.761067",
+  "name": "Delivery Note",
+  "total_fields": "4"
  }
 ]
