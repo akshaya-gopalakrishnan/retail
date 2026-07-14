@@ -33,7 +33,8 @@ required_apps = ["erpnext", "hrms"]
 
 app_include_css = [
     "/assets/retail/css/retail_icons.css?v=21",
-    "/assets/retail/css/brand_themes.css?v=13",
+    "/assets/retail/css/brand_themes.css?v=14",
+    "/assets/retail/css/workspace_glass.css?v=5",
 ]
 
 app_include_js = [
