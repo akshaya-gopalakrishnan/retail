@@ -63,6 +63,7 @@
 .color-sales    { color: #3b82f6 !important; } /* Blue */
 .color-purchase { color: #8b5cf6 !important; } /* Purple */
 .color-stock    { color: #f97316 !important; } /* Orange */
+.color-manufacturing { color: #0f766e !important; } /* Teal */
 .color-accounts { color: #10b981 !important; } /* Green */
 .color-settings { color: #64748b !important; } /* Slate */
 .color-hr { color: #8b5cf6 !important; } /* Purple */
@@ -117,6 +118,7 @@
     .color-sales    { color: #3b82f6 !important; } /* Blue */
     .color-purchase { color: #8b5cf6 !important; } /* Purple */
     .color-stock    { color: #f97316 !important; } /* Orange */
+    .color-manufacturing { color: #0f766e !important; } /* Teal */
     .color-accounts { color: #10b981 !important; } /* Green */
     .color-settings { color: #64748b !important; } /* Slate */
     .color-hr { color: #8b5cf6 !important; }
