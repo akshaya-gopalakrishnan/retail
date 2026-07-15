@@ -521,34 +521,6 @@ fixtures = [
     "Workflow State",
     "Workflow Action Master",
     {
-        "dt": "Dashboard Chart",
-        "filters": [
-            [
-                "name",
-                "in",
-                (
-                    "Retail Top Selling Products",
-                    "Retail Sales by Counter",
-                    "Retail Sales Trend 7 Days",
-                ),
-            ]
-        ],
-    },
-    {
-        "dt": "Dashboard Chart Source",
-        "filters": [
-            [
-                "name",
-                "in",
-                (
-                    "Retail Top Selling Products",
-                    "Retail Sales by Counter",
-                    "Retail Sales Trend 7 Days",
-                ),
-            ]
-        ],
-    },
-    {
         "dt": "Number Card",
         "filters": [
             [
