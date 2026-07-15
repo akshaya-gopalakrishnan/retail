@@ -8,6 +8,7 @@
 		frappe.ui.form.on(doctype, {
 			refresh(frm) {
 				toggleSellPriceColumns(frm);
+				alignAllowSellingPrice(frm);
 				addSellPriceButtons(frm);
 				addItemRateUpdateButton(frm);
 				refreshAllRows(frm);
@@ -178,8 +179,10 @@
 			"custom_cur_sell_rate",
 			"custom_new_sell_rate",
 			"custom_new_sell_incl",
-			"custom_sell_margin",
 		];
+		if (frm.doctype !== "Purchase Receipt") {
+			fields.push("custom_sell_margin");
+		}
 
 		fields.forEach((fieldname) => {
 			frm.fields_dict.items.grid.update_docfield_property(fieldname, "hidden", !show);
@@ -188,7 +191,28 @@
 		frm.fields_dict.items.grid.update_docfield_property("custom_new_sell_rate", "depends_on", "");
 		frm.fields_dict.items.grid.update_docfield_property("custom_new_sell_incl", "read_only", !show);
 		frm.fields_dict.items.grid.update_docfield_property("custom_new_sell_incl", "depends_on", "");
+		if (frm.doctype === "Purchase Receipt") {
+			frm.fields_dict.items.grid.update_docfield_property("custom_sell_margin", "hidden", true);
+		}
 		frm.refresh_field("items");
+	}
+
+	function alignAllowSellingPrice(frm) {
+		const field = frm.fields_dict.custom_allow_selling_price;
+		if (!field?.$wrapper) return;
+
+		field.$wrapper.addClass("retail-allow-selling-price-right");
+		if (document.getElementById("retail-allow-selling-price-style")) return;
+
+		$(`<style id="retail-allow-selling-price-style">
+			.retail-allow-selling-price-right .checkbox {
+				display: flex;
+				justify-content: flex-end;
+			}
+			.retail-allow-selling-price-right .checkbox label {
+				margin-right: 0;
+			}
+		</style>`).appendTo(document.head);
 	}
 
 	function refreshAllRows(frm) {
@@ -255,7 +279,9 @@
 		if (!row || row.__retail_sell_price_syncing || row.custom_new_sell_incl === undefined) return;
 
 		const exclusiveRate = flt(row.custom_new_sell_rate || row.custom_cur_sell_rate);
-		const vatRate = await getSellingVatRate(row.item_code);
+		const vatRate = await getSellingVatRate(frm, row);
+		if (!locals[cdt]?.[cdn] || locals[cdt][cdn].item_code !== row.item_code) return;
+
 		row.__retail_sell_price_syncing = true;
 		try {
 			await frappe.model.set_value(cdt, cdn, {
@@ -271,7 +297,9 @@
 		if (!row || row.__retail_sell_price_syncing || row.custom_new_sell_incl === undefined) return;
 
 		const inclusiveRate = flt(row.custom_new_sell_incl);
-		const vatRate = await getSellingVatRate(row.item_code);
+		const vatRate = await getSellingVatRate(frm, row);
+		if (!locals[cdt]?.[cdn] || locals[cdt][cdn].item_code !== row.item_code) return;
+
 		const divisor = 1 + vatRate / 100;
 		row.__retail_sell_price_syncing = true;
 		try {
@@ -283,19 +311,40 @@
 		}
 	}
 
-	async function getSellingVatRate(itemCode) {
+	async function getSellingVatRate(frm, row) {
+		const itemCode = row?.item_code;
 		if (!itemCode) return 0;
-		window.__retail_purchase_sell_vat = window.__retail_purchase_sell_vat || {};
-		if (window.__retail_purchase_sell_vat[itemCode] !== undefined) {
-			return flt(window.__retail_purchase_sell_vat[itemCode]);
-		}
 
 		const response = await frappe.call({
 			method: "retail.domains.purchase.selling_price.get_item_selling_vat_rate",
 			args: { item_code: itemCode },
 		});
-		window.__retail_purchase_sell_vat[itemCode] = flt(response.message);
-		return flt(response.message);
+		return flt(response.message) || getPurchaseFormVatRate(frm, row);
+	}
+
+	function getPurchaseFormVatRate(frm, row) {
+		const taxRate = getRowItemTaxRate(row);
+		if (taxRate) return taxRate;
+
+		const rates = (frm.doc.taxes || []).map((tax) => flt(tax.rate)).filter((rate) => rate);
+		const uniqueRates = [...new Set(rates)];
+		if (uniqueRates.length === 1) return uniqueRates[0];
+
+		const amount = flt(row?.amount || row?.net_amount || flt(row?.qty) * flt(row?.rate));
+		const taxAmount = flt(frm.doc.total_taxes_and_charges);
+		return amount && taxAmount ? flt((taxAmount / amount) * 100, 3) : 0;
+	}
+
+	function getRowItemTaxRate(row) {
+		if (!row?.item_tax_rate) return 0;
+
+		try {
+			const rates = Object.values(JSON.parse(row.item_tax_rate)).map((rate) => flt(rate)).filter((rate) => rate);
+			const uniqueRates = [...new Set(rates)];
+			return uniqueRates.length === 1 ? uniqueRates[0] : 0;
+		} catch (e) {
+			return 0;
+		}
 	}
 
 	function updateMargin(frm, cdt, cdn) {
@@ -303,7 +352,7 @@
 		if (!row || row.custom_new_sell_rate === undefined) return;
 
 		const sellingRate = flt(row.custom_new_sell_rate || row.custom_cur_sell_rate);
-		const purchaseRate = flt(row.net_rate || row.rate);
+		const purchaseRate = flt(row.rate || row.net_rate);
 		const margin = sellingRate ? sellingRate - purchaseRate : 0;
 		const marginPercent = sellingRate ? (margin / sellingRate) * 100 : 0;
 

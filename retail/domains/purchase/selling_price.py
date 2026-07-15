@@ -6,12 +6,20 @@ from frappe.custom.doctype.property_setter.property_setter import make_property_
 from frappe.utils import flt
 
 from retail.domains.item.item_price_sync import sync_item_price
-from retail.domains.item.vat_pricing import get_item_tax_rate
+from retail.domains.item.vat_pricing import get_default_vat_template, get_item_tax_rate
 
 
 PURCHASE_DOCTYPES = ("Purchase Receipt", "Purchase Invoice")
 PURCHASE_ITEM_DOCTYPES = ("Purchase Receipt Item", "Purchase Invoice Item")
 SELLING_PRICE_LIST = "Standard Selling"
+ALLOW_SELLING_PRICE_INSERT_AFTER = {
+	"Purchase Receipt": "supplier_warehouse",
+	"Purchase Invoice": "is_subcontracted",
+}
+ALLOW_SELLING_PRICE_DEFAULT = {
+	"Purchase Receipt": "1",
+	"Purchase Invoice": None,
+}
 
 
 def ensure_purchase_selling_price_fields():
@@ -23,7 +31,8 @@ def ensure_purchase_selling_price_fields():
 					"fieldname": "custom_allow_selling_price",
 					"label": "Allow Selling Price",
 					"fieldtype": "Check",
-					"insert_after": "set_warehouse",
+					"insert_after": ALLOW_SELLING_PRICE_INSERT_AFTER[doctype],
+					"default": ALLOW_SELLING_PRICE_DEFAULT[doctype],
 					"print_hide": 1,
 				},
 			]
@@ -181,7 +190,11 @@ def get_item_selling_vat_rate(item_code):
 	if not item_code:
 		return 0
 
-	template = frappe.db.get_value("Item", item_code, "custom_tax")
+	template = (
+		frappe.db.get_value("Item", item_code, "custom_tax")
+		or frappe.db.get_value("Item", item_code, "custom_purchase_tax_template")
+		or get_default_vat_template()
+	)
 	return flt(get_item_tax_rate(template)) if template else 0
 
 
@@ -192,12 +205,17 @@ def _update_field_metadata():
 			frappe.db.set_value(
 				"Custom Field",
 				custom_field,
-				{"label": "Allow Selling Price", "insert_after": "set_warehouse", "print_hide": 1},
+				{
+					"label": "Allow Selling Price",
+					"insert_after": ALLOW_SELLING_PRICE_INSERT_AFTER[doctype],
+					"default": ALLOW_SELLING_PRICE_DEFAULT[doctype],
+					"print_hide": 1,
+				},
 				update_modified=False,
 			)
 
 	field_updates = {
-		"custom_rate_including_vat": {"in_list_view": 0},
+		"custom_rate_including_vat": {"in_list_view": 1},
 		"custom_amount_including_vat": {"in_list_view": 0},
 		"custom_upd_sell_price": {"label": "Upd SP", "insert_after": "rate", "in_list_view": 0},
 		"custom_cur_sell_rate": {"label": "Cur SP", "insert_after": "custom_upd_sell_price", "in_list_view": 1},
@@ -229,16 +247,42 @@ def _update_standard_grid_metadata():
 	field_updates = {
 		"item_code": {"in_list_view": 1, "columns": 1},
 		"qty": {"in_list_view": 1, "columns": 1},
+		"custom_foc_qty": {"in_list_view": 1, "columns": 1},
+		"rate": {"in_list_view": 1, "columns": 1},
+		"custom_rate_including_vat": {"in_list_view": 1, "columns": 1},
+		"amount": {"in_list_view": 1, "columns": 1},
+		"custom_cur_sell_rate": {"in_list_view": 1, "columns": 1},
+		"custom_new_sell_rate": {"in_list_view": 1, "columns": 1},
+		"custom_new_sell_incl": {"in_list_view": 1, "columns": 1},
+		"custom_sell_margin": {"in_list_view": 1, "columns": 1},
+	}
+	receipt_only_field_updates = {
+		"item_code": {"in_list_view": 1, "columns": 1},
+		"qty": {"in_list_view": 1, "columns": 1},
 		"rejected_qty": {"in_list_view": 1, "columns": 1},
 		"rate": {"in_list_view": 1, "columns": 1},
 	}
 	for doctype in PURCHASE_ITEM_DOCTYPES:
-		for fieldname, values in field_updates.items():
+		doctype_updates = dict(field_updates)
+		if doctype == "Purchase Receipt Item":
+			doctype_updates.update(receipt_only_field_updates)
+			doctype_updates["custom_sell_margin"] = {"in_list_view": 0, "columns": 1}
+
+		for fieldname, values in doctype_updates.items():
 			if not frappe.get_meta(doctype).has_field(fieldname):
 				continue
 			for property_name, value in values.items():
 				property_type = "Check" if property_name == "in_list_view" else "Int"
 				_set_property(doctype, fieldname, property_name, value, property_type)
+
+	_clear_purchase_grid_settings()
+
+
+def _clear_purchase_grid_settings():
+	frappe.db.sql(
+		"delete from `__UserSettings` where doctype in %(doctypes)s",
+		{"doctypes": PURCHASE_DOCTYPES},
+	)
 
 
 def _set_property(doctype, fieldname, property_name, value, property_type):
@@ -286,7 +330,7 @@ def _set_exclusive_selling_rate(row):
 
 def _set_margin_values(row):
 	new_selling_rate = flt(row.get("custom_new_sell_rate") or row.get("custom_cur_sell_rate"))
-	purchase_rate = flt(row.get("net_rate") or row.get("rate"))
+	purchase_rate = flt(row.get("rate") or row.get("net_rate"))
 	margin = new_selling_rate - purchase_rate if new_selling_rate else 0
 	margin_pct = (margin / new_selling_rate * 100) if new_selling_rate else 0
 
