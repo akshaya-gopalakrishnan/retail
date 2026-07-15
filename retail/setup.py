@@ -2,6 +2,7 @@ import frappe
 
 
 RETAIL_WORKSPACE_MODULE = "Retail-app"
+VISIBLE_RETAIL_WORKSPACES = {"Manufacturing"}
 
 
 def hide_non_retail_workspaces():
@@ -25,5 +26,14 @@ def hide_non_retail_workspaces():
 			update_modified=False,
 		)
 
-	if updates:
+	for workspace_name in VISIBLE_RETAIL_WORKSPACES:
+		if frappe.db.exists("Workspace", workspace_name):
+			frappe.db.set_value(
+				"Workspace",
+				workspace_name,
+				{"public": 1, "is_hidden": 0},
+				update_modified=False,
+			)
+
+	if updates or VISIBLE_RETAIL_WORKSPACES:
 		frappe.clear_cache()

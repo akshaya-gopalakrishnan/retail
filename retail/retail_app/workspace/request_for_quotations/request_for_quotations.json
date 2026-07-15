@@ -29,7 +29,11 @@
   }
  ],
  "roles": [],
+<<<<<<< HEAD
  "sequence_id": 36.2,
+=======
+ "sequence_id": 36.1,
+>>>>>>> glass-workspace-only
  "shortcuts": [],
  "title": "Request for Quotations"
 }

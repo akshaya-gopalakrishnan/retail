@@ -29,7 +29,11 @@
   }
  ],
  "roles": [],
+<<<<<<< HEAD
  "sequence_id": 36.3,
+=======
+ "sequence_id": 36.2,
+>>>>>>> glass-workspace-only
  "shortcuts": [],
  "title": "Supplier Quotations"
 }

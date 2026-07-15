@@ -18,6 +18,28 @@
         'leaves': { icon: 'fa fa-calendar', cls: 'color-hr-leaves' },
         'purchases': { icon: 'fa fa-cart-arrow-down', cls: 'color-purchase' },
         'stocks': { icon: 'fa fa-archive', cls: 'color-stock' },
+        'manufacturing': { icon: 'fa fa-industry', cls: 'color-manufacturing' },
+        'bom': { icon: 'fa fa-sitemap', cls: 'color-manufacturing' },
+        'production plan': { icon: 'fa fa-calendar-check-o', cls: 'color-manufacturing' },
+        'work orders': { icon: 'fa fa-tasks', cls: 'color-manufacturing' },
+        'job cards': { icon: 'fa fa-id-card-o', cls: 'color-manufacturing' },
+        'stock entries': { icon: 'fa fa-exchange', cls: 'color-manufacturing' },
+        'quality inspection': { icon: 'fa fa-check-square-o', cls: 'color-manufacturing' },
+        'manufacturing reports': { icon: 'fa fa-line-chart', cls: 'color-manufacturing' },
+        'manufacturing setup': { icon: 'fa fa-cogs', cls: 'color-manufacturing' },
+        'operations': { icon: 'fa fa-cogs', cls: 'color-manufacturing' },
+        'workstations': { icon: 'fa fa-building-o', cls: 'color-manufacturing' },
+        'routing': { icon: 'fa fa-code-fork', cls: 'color-manufacturing' },
+        'bom creator': { icon: 'fa fa-plus-square-o', cls: 'color-manufacturing' },
+        'manufacturing settings': { icon: 'fa fa-sliders', cls: 'color-manufacturing' },
+        'bom stock report': { icon: 'fa fa-bar-chart', cls: 'color-manufacturing' },
+        'work order stock report': { icon: 'fa fa-bar-chart', cls: 'color-manufacturing' },
+        'open work orders': { icon: 'fa fa-folder-open-o', cls: 'color-manufacturing' },
+        'work orders in progress': { icon: 'fa fa-spinner', cls: 'color-manufacturing' },
+        'completed work orders': { icon: 'fa fa-check-circle-o', cls: 'color-manufacturing' },
+        'work order summary': { icon: 'fa fa-list-alt', cls: 'color-manufacturing' },
+        'job card summary': { icon: 'fa fa-list-alt', cls: 'color-manufacturing' },
+        'production analytics': { icon: 'fa fa-area-chart', cls: 'color-manufacturing' },
         'accounts': { icon: 'fa fa-university', cls: 'color-accounts' },
         'reports': { icon: 'fa fa-bar-chart', cls: 'color-accounts' },
         'settings': { icon: 'fa fa-cog', cls: 'color-settings' },
@@ -130,6 +152,25 @@
         'Purchase Invoices': ['List', 'Purchase Invoice'],
         'Purchase Bills': ['List', 'Purchase Invoice'],
         'Purchase Returns': ['List', 'Purchase Receipt', { is_return: 1 }],
+        'BOM': ['List', 'BOM'],
+        'Production Plan': ['List', 'Production Plan'],
+        'Work Orders': ['List', 'Work Order'],
+        'Job Cards': ['List', 'Job Card'],
+        'Stock Entries': ['List', 'Stock Entry'],
+        'Quality Inspection': ['List', 'Quality Inspection'],
+        'BOM Stock Report': ['query-report', 'BOM Stock Report'],
+        'Work Order Stock Report': ['query-report', 'Work Order Stock Report'],
+        'Open Work Orders': ['query-report', 'Open Work Orders'],
+        'Work Orders in Progress': ['query-report', 'Work Orders in Progress'],
+        'Completed Work Orders': ['query-report', 'Completed Work Orders'],
+        'Work Order Summary': ['query-report', 'Work Order Summary'],
+        'Job Card Summary': ['query-report', 'Job Card Summary'],
+        'Production Analytics': ['query-report', 'Production Analytics'],
+        'Operations': ['List', 'Operation'],
+        'Workstations': ['List', 'Workstation'],
+        'Routing': ['List', 'Routing'],
+        'BOM Creator': ['List', 'BOM Creator'],
+        'Manufacturing Settings': ['Form', 'Manufacturing Settings', 'Manufacturing Settings'],
         'Warehouses': ['List', 'Warehouse'],
         'Stock Adjustments': ['List', 'Stock Entry'],
         'Stock Take': ['List', 'Stock Reconciliation'],
@@ -172,6 +213,16 @@
         'Purchase Order': 'Purchases',
         'Purchase Receipt': 'Purchases',
         'Purchase Invoice': 'Purchases',
+        'BOM': 'Manufacturing',
+        'Production Plan': 'Manufacturing',
+        'Work Order': 'Manufacturing',
+        'Job Card': 'Manufacturing',
+        'Quality Inspection': 'Manufacturing',
+        'Operation': 'Manufacturing',
+        'Workstation': 'Manufacturing',
+        'Routing': 'Manufacturing',
+        'BOM Creator': 'Manufacturing',
+        'Manufacturing Settings': 'Manufacturing',
         'Warehouse': 'Stocks',
         'Stock Entry': 'Stocks',
         'Stock Reconciliation': 'Stocks',
@@ -212,6 +263,16 @@
         'Purchase Order': 'Purchase Orders',
         'Purchase Receipt': 'Purchase Receipts',
         'Purchase Invoice': 'Purchase Invoices',
+        'BOM': 'BOM',
+        'Production Plan': 'Production Plan',
+        'Work Order': 'Work Orders',
+        'Job Card': 'Job Cards',
+        'Quality Inspection': 'Quality Inspection',
+        'Operation': 'Manufacturing Setup',
+        'Workstation': 'Manufacturing Setup',
+        'Routing': 'Manufacturing Setup',
+        'BOM Creator': 'Manufacturing Setup',
+        'Manufacturing Settings': 'Manufacturing Setup',
         'Warehouse': 'Warehouses',
         'Stock Entry': 'Stock Adjustments',
         'Stock Reconciliation': 'Stock Take',
@@ -274,6 +335,27 @@
         'Purchase Invoices': 'Purchases',
         'Purchase Bills': 'Purchases',
         'Purchase Returns': 'Purchases',
+        'BOM': 'Manufacturing',
+        'Production Plan': 'Manufacturing',
+        'Work Orders': 'Manufacturing',
+        'Job Cards': 'Manufacturing',
+        'Stock Entries': 'Manufacturing',
+        'Quality Inspection': 'Manufacturing',
+        'Manufacturing Reports': 'Manufacturing',
+        'Manufacturing Setup': 'Manufacturing',
+        'BOM Stock Report': 'Manufacturing',
+        'Work Order Stock Report': 'Manufacturing',
+        'Open Work Orders': 'Manufacturing',
+        'Work Orders in Progress': 'Manufacturing',
+        'Completed Work Orders': 'Manufacturing',
+        'Work Order Summary': 'Manufacturing',
+        'Job Card Summary': 'Manufacturing',
+        'Production Analytics': 'Manufacturing',
+        'Operations': 'Manufacturing',
+        'Workstations': 'Manufacturing',
+        'Routing': 'Manufacturing',
+        'BOM Creator': 'Manufacturing',
+        'Manufacturing Settings': 'Manufacturing',
         'Warehouses': 'Stocks',
         'Stock Adjustments': 'Stocks',
         'Stock Take': 'Stocks',
@@ -290,6 +372,25 @@
         'Branding': 'Settings',
         'System Rules': 'Settings'
     });
+    const ROUTE_ALIAS_TO_CHILD = Object.freeze({
+        'BOM Stock Report': 'Manufacturing Reports',
+        'Work Order Stock Report': 'Manufacturing Reports',
+        'Open Work Orders': 'Manufacturing Reports',
+        'Work Orders in Progress': 'Manufacturing Reports',
+        'Completed Work Orders': 'Manufacturing Reports',
+        'Work Order Summary': 'Manufacturing Reports',
+        'Job Card Summary': 'Manufacturing Reports',
+        'Production Analytics': 'Manufacturing Reports',
+        'Operations': 'Manufacturing Setup',
+        'Workstations': 'Manufacturing Setup',
+        'Routing': 'Manufacturing Setup',
+        'BOM Creator': 'Manufacturing Setup',
+        'Manufacturing Settings': 'Manufacturing Setup'
+    });
+    const WORKSPACE_ROUTE_NAMES = Object.freeze({
+        'Manufacturing Reports': 'MFG Reports',
+        'Manufacturing Setup': 'MFG Setup'
+    });
     const TOP_LEVEL_WORKSPACES = new Set([
         'Home',
         'Items',
@@ -297,6 +398,7 @@
         'POS',
         'Purchases',
         'Stocks',
+        'Manufacturing',
         'Accounts',
         'Reports',
         'Settings'
@@ -436,6 +538,36 @@
         ));
     }
 
+    const SIDEBAR_CONTEXT_KEY = 'retail_sidebar_context_v1';
+
+    function getStoredSidebarChild(matches, visibleLabels) {
+        let stored = null;
+        try {
+            stored = JSON.parse(sessionStorage.getItem(SIDEBAR_CONTEXT_KEY) || 'null');
+        } catch (e) {
+            stored = null;
+        }
+
+        const child = stored?.child;
+        if (!child || !visibleLabels.has(child)) return null;
+
+        const matchLabels = new Set(matches.map(([label]) => label));
+        const aliasMatches = matches.some(([label]) => ROUTE_ALIAS_TO_CHILD[label] === child);
+        return matchLabels.has(child) || aliasMatches ? child : null;
+    }
+
+    function rememberSidebarContext(label) {
+        const child = ROUTE_ALIAS_TO_CHILD[label] || (CHILD_TO_PARENT[label] ? label : null);
+        const main = child ? CHILD_TO_PARENT[child] : (TOP_LEVEL_WORKSPACES.has(label) ? label : null);
+        if (!main) return;
+
+        try {
+            sessionStorage.setItem(SIDEBAR_CONTEXT_KEY, JSON.stringify({ main, child, ts: Date.now() }));
+        } catch (e) {
+            // Ignore private-mode storage errors; normal route matching still works.
+        }
+    }
+
     function getMappedChildFromRoute(route, filters) {
         const currentParts = getRouteParts(route);
         const visibleLabels = getVisibleSidebarLabels();
@@ -446,7 +578,18 @@
                 && targetFiltersMatch(filters, getTargetFilters(target))
             ));
 
-        return matches.find(([label]) => visibleLabels.has(label))?.[0] || matches[0]?.[0];
+        const storedChild = getStoredSidebarChild(matches, visibleLabels);
+        if (storedChild) return storedChild;
+
+        const visibleMatch = matches.find(([label]) => visibleLabels.has(label))?.[0];
+        if (visibleMatch) return visibleMatch;
+
+        const aliasMatch = matches
+            .map(([label]) => ROUTE_ALIAS_TO_CHILD[label])
+            .find(child => child && visibleLabels.has(child));
+        if (aliasMatch) return aliasMatch;
+
+        return matches[0] ? ROUTE_ALIAS_TO_CHILD[matches[0][0]] || matches[0][0] : null;
     }
 
     function getTargetUrl(target) {
@@ -575,8 +718,8 @@
         return waitForRoute();
     }
 
-    function getWorkspaceUrl(title, isPublic = true) {
-        const slug = frappe.router.slug(title);
+    function getWorkspaceUrl(workspaceName, isPublic = true) {
+        const slug = frappe.router.slug(workspaceName);
         return `/app/${isPublic ? slug : `private/${slug}`}`;
     }
 
@@ -669,6 +812,17 @@
             return { main: title, child: '' };
         }
 
+        const workspaceSlug = frappe.router.slug(
+            route?.[0] === 'private' ? route?.[1] || '' : route?.[0] || ''
+        );
+        const workspaceTitle = frappe.workspaces?.[workspaceSlug]?.title;
+        if (workspaceTitle) {
+            if (CHILD_TO_PARENT[workspaceTitle]) {
+                return { main: CHILD_TO_PARENT[workspaceTitle], child: workspaceTitle };
+            }
+            return { main: workspaceTitle, child: '' };
+        }
+
         if (view === 'list' || view === 'form') {
             const doctype = route[1];
             let child = DOCTYPE_TO_CHILD[doctype];
@@ -687,7 +841,7 @@
 
     // Ensure our CSS is loaded at runtime in case app_include_css wasn't picked up
     function ensureRetailCss() {
-        const href = '/assets/retail/css/retail_icons.css?v=18';
+        const href = '/assets/retail/css/retail_icons.css?v=22';
         if (document.querySelector('link[href^="/assets/retail/css/retail_icons.css"]')) return;
         const link = document.createElement('link');
         link.rel = 'stylesheet';
@@ -1435,6 +1589,11 @@
         return host;
     }
 
+    function getWorkspaceName(container) {
+        const label = getItemLabel(container);
+        return container?.getAttribute('item-workspace-name') || WORKSPACE_ROUTE_NAMES[label] || label;
+    }
+
     function bindSubmenuRouting() {
         document.addEventListener('click', event => {
             if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
@@ -1451,6 +1610,7 @@
                 event.stopPropagation();
                 event.stopImmediatePropagation();
 
+                rememberSidebarContext(label);
                 Promise.resolve(routeToTarget(target)).then(() => {
                     syncSidebarState();
                     scheduleRetry();
@@ -1459,17 +1619,13 @@
             }
 
             if (parent) {
-                const targetUrl = getAnchorAppUrl(anchor);
-                if (!targetUrl) return;
-
                 event.preventDefault();
                 event.stopPropagation();
                 event.stopImmediatePropagation();
 
-                routeToUrl(targetUrl).then(() => {
-                    syncSidebarState();
-                    scheduleRetry();
-                });
+                rememberSidebarContext(label);
+                frappe.route_options = null;
+                frappe.set_route(getWorkspaceUrl(getWorkspaceName(container), true).replace(/^\/app\//, ''));
                 return;
             }
 
@@ -1477,7 +1633,8 @@
 
             event.preventDefault();
             frappe.route_options = null;
-            frappe.set_route(getWorkspaceUrl(label, true).replace(/^\/app\//, ''));
+            rememberSidebarContext(label);
+            frappe.set_route(getWorkspaceUrl(getWorkspaceName(container), true).replace(/^\/app\//, ''));
         }, true);
     }
 
@@ -1491,8 +1648,12 @@
                 anchor?.setAttribute('href', getTargetUrl(target));
                 anchor?.setAttribute('data-retail-direct-link', '1');
                 setAnchorRouteTarget(anchor, target);
+            } else if (CHILD_TO_PARENT[label]) {
+                anchor?.setAttribute('href', getWorkspaceUrl(getWorkspaceName(container), true));
+                anchor?.setAttribute('data-retail-direct-link', '1');
+                anchor?.removeAttribute('data-retail-route-target');
             } else if (TOP_LEVEL_WORKSPACES.has(label)) {
-                anchor?.setAttribute('href', getWorkspaceUrl(label, true));
+                anchor?.setAttribute('href', getWorkspaceUrl(getWorkspaceName(container), true));
                 anchor?.setAttribute('data-retail-direct-link', '1');
                 anchor?.removeAttribute('data-retail-route-target');
             }
@@ -1503,13 +1664,14 @@
         const title = item.title;
         const children = pages.filter(page => page.parent_page === title);
         const target = DIRECT_MAPPING[title];
-        const href = target ? getTargetUrl(target) : getWorkspaceUrl(title, item.public);
+        const href = target ? getTargetUrl(target) : getWorkspaceUrl(item.name || title, item.public);
         const routeTargetAttribute = target
             ? ` data-retail-route-target="${escapeHtml(JSON.stringify(target))}"`
             : '';
         const container = document.createElement('div');
         container.className = 'sidebar-item-container retail-sidebar-item';
         container.setAttribute('item-name', title);
+        container.setAttribute('item-workspace-name', item.name || title);
         container.setAttribute('item-parent', item.parent_page || '');
         container.setAttribute('item-public', item.public || 0);
         container.setAttribute('item-is-hidden', item.is_hidden || 0);
