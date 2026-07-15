@@ -32,21 +32,13 @@ required_apps = ["erpnext", "hrms"]
 # retail/retail/hooks.py
 
 app_include_css = [
-<<<<<<< HEAD
-    "/assets/retail/css/retail_icons.css?v=21",
-=======
     "/assets/retail/css/retail_icons.css?v=22",
->>>>>>> glass-workspace-only
     "/assets/retail/css/brand_themes.css?v=14",
     "/assets/retail/css/workspace_glass.css?v=5",
 ]
 
 app_include_js = [
-<<<<<<< HEAD
-    "/assets/retail/js/retail_navigation.js?v=69",
-=======
     "/assets/retail/js/retail_navigation.js?v=72",
->>>>>>> glass-workspace-only
     "/assets/retail/js/forms/transaction_items.js?v=2",
     "/assets/retail/js/brand_theme_switcher.js?v=8",
     "/assets/retail/js/reports/gross_profit_item_filter.js?v=1",

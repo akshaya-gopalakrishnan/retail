@@ -9,11 +9,7 @@
    "label": "Top Suppliers"
   }
  ],
-<<<<<<< HEAD
- "content": "[{\"id\":\"hdr_purchases\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Purchases</span>\",\"col\":12}},{\"id\":\"sc_supplier\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Supplier\",\"col\":3}},{\"id\":\"sc_material_request\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Material Request\",\"col\":3}},{\"id\":\"sc_request_for_quotation\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Request for Quotation\",\"col\":3}},{\"id\":\"sc_supplier_quotation\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Supplier Quotation\",\"col\":3}},{\"id\":\"sc_purchase_order\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Purchase Order\",\"col\":3}},{\"id\":\"sc_purchase_receipt\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Purchase Receipt\",\"col\":3}},{\"id\":\"sc_purchase_invoice\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Purchase Invoice\",\"col\":3}},{\"id\":\"sc_purchase_return\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Purchase Return\",\"col\":3}},{\"id\":\"sc_purchase_register\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Purchase Register\",\"col\":3}},{\"id\":\"sc_accounts_payable\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Accounts Payable\",\"col\":3}},{\"id\":\"sc_supplier_wise_returns\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Supplier Wise Returns\",\"col\":3}},{\"id\":\"sp_purchases_charts\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"chart_purchase_order_trends\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Purchase Order Trends\",\"col\":6}},{\"id\":\"chart_top_suppliers\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Top Suppliers\",\"col\":6}},{\"id\":\"sp_purchases_cards\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"card_buying_flow\",\"type\":\"card\",\"data\":{\"card_name\":\"Buying Flow\",\"col\":4}},{\"id\":\"card_suppliers\",\"type\":\"card\",\"data\":{\"card_name\":\"Suppliers\",\"col\":4}},{\"id\":\"card_purchase_reports\",\"type\":\"card\",\"data\":{\"card_name\":\"Purchase Reports\",\"col\":4}}]",
-=======
  "content": "[{\"id\":\"hdr_purchases\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Purchases</span>\",\"col\":12}},{\"id\":\"sc_supplier\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Supplier\",\"col\":3}},{\"id\":\"sc_request_for_quotation\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Request for Quotation\",\"col\":3}},{\"id\":\"sc_supplier_quotation\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Supplier Quotation\",\"col\":3}},{\"id\":\"sc_material_request\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Material Request\",\"col\":3}},{\"id\":\"sc_purchase_order\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Purchase Order\",\"col\":3}},{\"id\":\"sc_purchase_receipt\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Purchase Receipt\",\"col\":3}},{\"id\":\"sc_purchase_invoice\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Purchase Invoice\",\"col\":3}},{\"id\":\"sc_purchase_return\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Purchase Return\",\"col\":3}},{\"id\":\"sc_purchase_register\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Purchase Register\",\"col\":3}},{\"id\":\"sc_accounts_payable\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Accounts Payable\",\"col\":3}},{\"id\":\"sc_supplier_wise_returns\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Supplier Wise Returns\",\"col\":3}},{\"id\":\"sp_purchases_charts\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"chart_purchase_order_trends\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Purchase Order Trends\",\"col\":6}},{\"id\":\"chart_top_suppliers\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Top Suppliers\",\"col\":6}},{\"id\":\"sp_purchases_cards\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"card_buying_flow\",\"type\":\"card\",\"data\":{\"card_name\":\"Buying Flow\",\"col\":4}},{\"id\":\"card_suppliers\",\"type\":\"card\",\"data\":{\"card_name\":\"Suppliers\",\"col\":4}},{\"id\":\"card_purchase_reports\",\"type\":\"card\",\"data\":{\"card_name\":\"Purchase Reports\",\"col\":4}}]",
->>>>>>> glass-workspace-only
  "creation": "2026-06-20 09:14:11.873200",
  "custom_blocks": [],
  "docstatus": 0,
@@ -233,17 +229,6 @@
   {
    "color": "Blue",
    "doc_view": "List",
-<<<<<<< HEAD
-   "label": "Material Request",
-   "link_to": "Material Request",
-   "stats_filter": "[]",
-   "type": "DocType"
-  },
-  {
-   "color": "Blue",
-   "doc_view": "List",
-=======
->>>>>>> glass-workspace-only
    "label": "Request for Quotation",
    "link_to": "Request for Quotation",
    "stats_filter": "[]",
@@ -260,8 +245,6 @@
   {
    "color": "Blue",
    "doc_view": "List",
-<<<<<<< HEAD
-=======
    "label": "Material Request",
    "link_to": "Material Request",
    "stats_filter": "[]",
@@ -270,7 +253,6 @@
   {
    "color": "Blue",
    "doc_view": "List",
->>>>>>> glass-workspace-only
    "label": "Purchase Order",
    "link_to": "Purchase Order",
    "stats_filter": "[]",
