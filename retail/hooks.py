@@ -378,6 +378,7 @@ doc_events = {
 after_migrate = [
 	"retail.branding.apply_default_branding",
 	"retail.setup.hide_non_retail_workspaces",
+	"retail.setup.ensure_print_languages",
     "retail.domains.transactions.vat.ensure_transaction_vat_rate_fields",
     "retail.domains.purchase.order.backfill_balance_qty",
     "retail.retail_app.report.damaged_and_expired_stock.damaged_and_expired_stock.ensure_report",
