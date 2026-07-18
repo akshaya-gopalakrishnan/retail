@@ -121,7 +121,7 @@ def install_retail_defaults():
 	from retail.setup import hide_non_retail_workspaces
 	from retail.domains.foc import ensure_foc_fields
 	from retail.domains.sales.counter import ensure_counter_display_field
-	from retail.domains.sales.invoice_totals import ensure_sales_invoice_retail_totals_fields
+	from retail.domains.sales.invoice_totals import remove_custom_transaction_totals_fields
 	from retail.domains.item.naming import install_item_code_defaults
 	from retail.domains.item.item_price_sync import (
 		disable_legacy_item_price_scripts,
@@ -133,6 +133,7 @@ def install_retail_defaults():
 		ensure_item_vat_pricing_fields,
 		ensure_packing_vat_pricing_fields,
 	)
+	from retail.retail_app.report.item_family_list.item_family_list import ensure_setup as ensure_item_family_list
 
 	apply_default_branding()
 	hide_non_retail_workspaces()
@@ -140,7 +141,7 @@ def install_retail_defaults():
 	install_list_titles()
 	ensure_foc_fields()
 	ensure_counter_display_field()
-	ensure_sales_invoice_retail_totals_fields()
+	remove_custom_transaction_totals_fields()
 	install_item_code_defaults()
 	disable_legacy_item_price_scripts()
 	ensure_standard_purchase_rate_field()
@@ -148,6 +149,7 @@ def install_retail_defaults():
 	ensure_packing_purchase_rate_script()
 	ensure_item_vat_pricing_fields()
 	ensure_packing_vat_pricing_fields()
+	ensure_item_family_list()
 
 
 def set_transaction_naming_series(doc, method=None):

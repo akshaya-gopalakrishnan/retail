@@ -34,7 +34,11 @@ VAT_TAX_DOCTYPES = {
 	"Purchase Order": "Purchase Tax",
 	"Purchase Receipt": "Purchase Tax",
 	"Purchase Invoice": "Purchase Tax",
+	"Sales Invoice": "Sales Tax",
 	"Sales Order": "Sales Tax",
+	"Delivery Note": "Sales Tax",
+	"POS Invoice": "Sales Tax",
+	"Quotation": "Sales Tax",
 }
 
 
@@ -51,6 +55,7 @@ def set_vat_rates(doc, method=None):
 			child_doctype=item.doctype,
 			parent_doctype=doc.doctype,
 			transaction_type=doc.get("transaction_type"),
+			item_tax_template=item.get("item_tax_template"),
 			throw=True,
 		)
 		exclusive_rate = flt(item.get("rate"))
@@ -96,21 +101,19 @@ def apply_transaction_vat_taxes(doc):
 		[row for row in (doc.get("taxes") or []) if not _is_managed_vat_row(row, tax_label)],
 	)
 
+	_apply_item_vat_tax_rates(doc)
 	for group in _get_transaction_vat_groups(doc, tax_label).values():
-		if not group["amount"]:
-			continue
 
 		doc.append(
 			"taxes",
 			{
-				"charge_type": "Actual",
+				"charge_type": "On Net Total",
 				"account_head": group["account_head"],
 				"description": group["description"],
 				"category": "Total",
 				"add_deduct_tax": "Add",
 				"included_in_print_rate": 0,
-				"rate": group["rate"],
-				"tax_amount": flt(group["amount"], 2),
+				"rate": 0,
 				"cost_center": doc.get("cost_center"),
 			},
 		)
@@ -118,6 +121,35 @@ def apply_transaction_vat_taxes(doc):
 	_disable_rounded_total(doc)
 	doc.calculate_taxes_and_totals()
 	_refresh_total_in_words(doc)
+
+
+@frappe.whitelist()
+def get_transaction_vat_tax_rows(doc):
+	"""Return managed VAT rows for live ERPNext totals calculation."""
+	doc = frappe.get_doc(frappe.parse_json(doc))
+	tax_label = VAT_TAX_DOCTYPES.get(doc.doctype)
+	if not tax_label or not doc.meta.has_field("taxes"):
+		return {"tax_rows": [], "item_tax_rates": {}}
+
+	rows = []
+	for group in _get_transaction_vat_groups(doc, tax_label).values():
+		rows.append(
+			{
+				"charge_type": "On Net Total",
+				"account_head": group["account_head"],
+				"description": group["description"],
+				"category": "Total",
+				"add_deduct_tax": "Add",
+				"included_in_print_rate": 0,
+				"rate": 0,
+				"cost_center": doc.get("cost_center"),
+			}
+		)
+
+	return {
+		"tax_rows": rows,
+		"item_tax_rates": _get_item_vat_tax_rates(doc),
+	}
 
 
 @frappe.whitelist()
@@ -194,6 +226,7 @@ def get_transaction_item_vat_rate(
 	child_doctype=None,
 	parent_doctype=None,
 	transaction_type=None,
+	item_tax_template=None,
 	throw=False,
 ):
 	template = _get_transaction_item_vat_template(
@@ -201,6 +234,7 @@ def get_transaction_item_vat_rate(
 		child_doctype=child_doctype,
 		parent_doctype=parent_doctype,
 		transaction_type=transaction_type,
+		item_tax_template=item_tax_template,
 		throw=throw,
 	)
 	if not template:
@@ -222,28 +256,57 @@ def _get_transaction_vat_groups(doc, tax_label):
 			child_doctype=item.doctype,
 			parent_doctype=doc.doctype,
 			transaction_type=doc.get("transaction_type"),
+			item_tax_template=item.get("item_tax_template"),
 		)
 		if not template:
 			continue
 
-		exclusive_amount = _get_item_exclusive_amount(item)
 		for tax in _get_item_tax_template_details(template):
 			rate = flt(tax.tax_rate)
 			if not rate:
 				continue
 
-			key = (tax.tax_type, rate, template)
+			key = tax.tax_type
 			if key not in groups:
 				groups[key] = {
 					"account_head": tax.tax_type,
-					"rate": rate,
-					"amount": 0,
-					"description": f"{tax_label} [{template}]",
+					"description": f"{tax_label} [{tax.tax_type}]",
 				}
 
-			groups[key]["amount"] += exclusive_amount * rate / 100
-
 	return groups
+
+
+def _apply_item_vat_tax_rates(doc):
+	for item in doc.get("items") or []:
+		if item.meta.has_field("item_tax_rate"):
+			item.item_tax_rate = frappe.as_json(_get_vat_tax_rate_map_for_item(doc, item))
+
+
+def _get_item_vat_tax_rates(doc):
+	rates = {}
+	for item in doc.get("items") or []:
+		if not item.get("name"):
+			continue
+		rates[item.name] = frappe.as_json(_get_vat_tax_rate_map_for_item(doc, item))
+	return rates
+
+
+def _get_vat_tax_rate_map_for_item(doc, item):
+	template = _get_transaction_item_vat_template(
+		item.item_code,
+		child_doctype=item.doctype,
+		parent_doctype=doc.doctype,
+		transaction_type=doc.get("transaction_type"),
+		item_tax_template=item.get("item_tax_template"),
+	)
+	if not template:
+		return {}
+
+	return {
+		tax.tax_type: flt(tax.tax_rate)
+		for tax in _get_item_tax_template_details(template)
+		if flt(tax.tax_rate)
+	}
 
 
 def _get_transaction_item_vat_template(
@@ -251,8 +314,12 @@ def _get_transaction_item_vat_template(
 	child_doctype=None,
 	parent_doctype=None,
 	transaction_type=None,
+	item_tax_template=None,
 	throw=False,
 ):
+	if item_tax_template:
+		return item_tax_template
+
 	template_field = _get_vat_template_field(child_doctype, parent_doctype, transaction_type)
 	if not template_field:
 		return None

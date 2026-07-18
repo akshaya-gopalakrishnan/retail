@@ -32,14 +32,15 @@ required_apps = ["erpnext", "hrms"]
 # retail/retail/hooks.py
 
 app_include_css = [
-    "/assets/retail/css/retail_icons.css?v=22",
+    "/assets/retail/css/retail_icons.css?v=23",
     "/assets/retail/css/brand_themes.css?v=14",
     "/assets/retail/css/workspace_glass.css?v=5",
 ]
 
 app_include_js = [
-    "/assets/retail/js/retail_navigation.js?v=72",
-    "/assets/retail/js/forms/transaction_items.js?v=2",
+    "/assets/retail/js/retail_navigation.js?v=76",
+    "/assets/retail/js/local_draft_recovery.js?v=12",
+    "/assets/retail/js/forms/transaction_items.js?v=12",
     "/assets/retail/js/brand_theme_switcher.js?v=8",
     "/assets/retail/js/reports/gross_profit_item_filter.js?v=1",
 ]
@@ -380,6 +381,7 @@ after_migrate = [
     "retail.domains.transactions.vat.ensure_transaction_vat_rate_fields",
     "retail.domains.purchase.order.backfill_balance_qty",
     "retail.retail_app.report.damaged_and_expired_stock.damaged_and_expired_stock.ensure_report",
+    "retail.retail_app.report.item_family_list.item_family_list.ensure_setup",
     "retail.retail_app.report.near_expiry_report.near_expiry_report.ensure_report",
 	"retail.retail_app.report.negative_stock_report.negative_stock_report.ensure_report",
 	"retail.domains.item.average_purchase_rate.backfill_average_purchase_rates",
@@ -513,13 +515,48 @@ fixtures = [
     "Custom Field",
     "Client Script",
     "Server Script",
-    "Print Format",
+    {
+        "dt": "Print Format",
+        "filters": [
+            [
+                "name",
+                "in",
+                (
+                    "ppppppppppppppppppppp",
+                ),
+            ]
+        ],
+    },
+    {
+        "dt": "Letter Head",
+        "filters": [
+            [
+                "name",
+                "in",
+                (
+                    "Arab Scale Letter Head - Standard",
+                ),
+            ]
+        ],
+    },
     "Property Setter",
     "List View Settings",
     "Custom DocPerm",
     "Workflow",
     "Workflow State",
     "Workflow Action Master",
+    {
+        "dt": "Page",
+        "filters": [
+            [
+                "name",
+                "in",
+                (
+                    "retail-item-family-l",
+                ),
+            ]
+        ],
+    },
     {
         "dt": "Number Card",
         "filters": [
@@ -557,6 +594,7 @@ fixtures = [
                     "Delivery Notes",
                     "Home",
                     "Item Groups",
+                    "Item Family List",
                     "Items",
                     "Items List",
                     "Journal Entries",

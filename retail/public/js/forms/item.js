@@ -88,26 +88,32 @@
 
 	frappe.ui.form.on("Retail Packing Detail", {
 		purchase_rate(frm, cdt, cdn) {
+			if (isPackingRowProgrammaticUpdate(cdt, cdn)) return;
 			resetPackingVatConfirmation(cdt, cdn, "purchase");
 			refreshPackingVatRow(frm, cdt, cdn, "purchase", "entry").then(() => updateItemRateFromPacking(frm, cdt, cdn, "purchase", "entry"));
 		},
 		selling_rate(frm, cdt, cdn) {
+			if (isPackingRowProgrammaticUpdate(cdt, cdn)) return;
 			resetPackingVatConfirmation(cdt, cdn, "selling");
 			refreshPackingVatRow(frm, cdt, cdn, "selling", "entry").then(() => updateItemRateFromPacking(frm, cdt, cdn, "selling", "entry"));
 		},
 		purchase_net_rate(frm, cdt, cdn) {
+			if (isPackingRowProgrammaticUpdate(cdt, cdn)) return;
 			resetPackingVatConfirmation(cdt, cdn, "purchase");
 			refreshPackingVatRow(frm, cdt, cdn, "purchase", "net").then(() => updateItemRateFromPacking(frm, cdt, cdn, "purchase", "net"));
 		},
 		purchase_gross_rate(frm, cdt, cdn) {
+			if (isPackingRowProgrammaticUpdate(cdt, cdn)) return;
 			resetPackingVatConfirmation(cdt, cdn, "purchase");
 			refreshPackingVatRow(frm, cdt, cdn, "purchase", "gross").then(() => updateItemRateFromPacking(frm, cdt, cdn, "purchase", "gross"));
 		},
 		selling_net_rate(frm, cdt, cdn) {
+			if (isPackingRowProgrammaticUpdate(cdt, cdn)) return;
 			resetPackingVatConfirmation(cdt, cdn, "selling");
 			refreshPackingVatRow(frm, cdt, cdn, "selling", "net").then(() => updateItemRateFromPacking(frm, cdt, cdn, "selling", "net"));
 		},
 		selling_gross_rate(frm, cdt, cdn) {
+			if (isPackingRowProgrammaticUpdate(cdt, cdn)) return;
 			resetPackingVatConfirmation(cdt, cdn, "selling");
 			refreshPackingVatRow(frm, cdt, cdn, "selling", "gross").then(() => updateItemRateFromPacking(frm, cdt, cdn, "selling", "gross"));
 		},
@@ -258,7 +264,7 @@
 		}, __("Retail"));
 	}
 
-	function refreshPackingVatRows(frm, direction) {
+	function refreshPackingVatRows(frm, direction, skipGridRefresh) {
 		if (!Array.isArray(frm.doc.custom_retail_packing_detail)) return Promise.resolve();
 
 		const work = [];
@@ -266,7 +272,7 @@
 			work.push(refreshPackingVatRow(frm, row.doctype, row.name, direction));
 		});
 		return Promise.all(work).then(() => {
-			frm.refresh_field("custom_retail_packing_detail");
+			if (!skipGridRefresh) frm.refresh_field("custom_retail_packing_detail");
 			return null;
 		});
 	}
@@ -314,7 +320,7 @@
 			}
 			const status = getPackingVatStatus(mode, rate, row[fields.confirmed]);
 
-			return frappe.model.set_value(cdt, cdn, {
+			return setPackingValuesWithoutReentry(row, cdt, cdn, {
 				[fields.entry]: flt(entered, 2),
 				[fields.mode]: mode,
 				[fields.rate]: flt(rate, 3),
@@ -356,7 +362,7 @@
 		});
 
 		row.__retail_syncing_from_item = true;
-		return frappe.model.set_value(cdt, cdn, updates).finally(() => {
+		return setPackingValuesWithoutReentry(row, cdt, cdn, updates).finally(() => {
 			row.__retail_syncing_from_item = false;
 		});
 	}
@@ -395,9 +401,21 @@
 		row.__retail_updating_item_rate = true;
 		return frm.set_value(updates).then(() => {
 			refreshMargin(frm);
-			return refreshPackingFromItemRates(frm, direction);
+			return refreshPackingVatRows(frm, direction, true);
 		}).finally(() => {
 			row.__retail_updating_item_rate = false;
+		});
+	}
+
+	function isPackingRowProgrammaticUpdate(cdt, cdn) {
+		const row = locals[cdt]?.[cdn];
+		return !!(row?.__retail_calculating_vat || row?.__retail_syncing_from_item || row?.__retail_updating_item_rate);
+	}
+
+	function setPackingValuesWithoutReentry(row, cdt, cdn, values) {
+		row.__retail_calculating_vat = true;
+		return frappe.model.set_value(cdt, cdn, values).finally(() => {
+			row.__retail_calculating_vat = false;
 		});
 	}
 

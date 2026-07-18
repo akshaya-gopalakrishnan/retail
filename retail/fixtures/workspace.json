@@ -7180,5 +7180,31 @@
   "sequence_id": 8.0,
   "shortcuts": [],
   "title": "POS Branch Day Closings"
+ },
+ {
+  "charts": [],
+  "content": "[]",
+  "custom_blocks": [],
+  "docstatus": 0,
+  "doctype": "Workspace",
+  "for_user": null,
+  "hide_custom": 0,
+  "icon": null,
+  "indicator_color": "green",
+  "is_hidden": 0,
+  "label": "Item Family List",
+  "links": [],
+  "modified": "2026-07-16 16:51:23.613341",
+  "module": "Retail-app",
+  "name": "Item Family List",
+  "number_cards": [],
+  "parent_page": "Items",
+  "public": 1,
+  "quick_lists": [],
+  "restrict_to_domain": null,
+  "roles": [],
+  "sequence_id": 3.5,
+  "shortcuts": [],
+  "title": "Item Family List"
  }
 ]

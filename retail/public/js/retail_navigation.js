@@ -57,6 +57,7 @@
         'purchase returns': { icon: 'fa fa-undo', cls: 'color-purchase' },
         'suppliers': { icon: 'fa fa-building', cls: 'color-purchase' },
         'items list': { icon: 'fa fa-cubes', cls: 'color-items' },
+        'item family list': { icon: 'fa fa-sitemap', cls: 'color-items' },
         'item groups': { icon: 'fa fa-th-large', cls: 'color-items' },
         'price lists': { icon: 'fa fa-tags', cls: 'color-items' },
         'brands': { icon: 'fa fa-bookmark', cls: 'color-items' },
@@ -107,6 +108,7 @@
     const DESKTOP_MEDIA = '(min-width: 992px)';
     const DIRECT_MAPPING = {
         'Items List': ['List', 'Item'],
+        'Item Family List': ['retail-item-family-l'],
         'Item Groups': ['List', 'Item Group'],
         'Price Lists': ['List', 'Item Price'],
         'Brands': ['List', 'Brand'],
@@ -463,6 +465,10 @@
         );
     }
 
+    function isItemFamilyPageRoute(route = frappe.get_route()) {
+        return Array.isArray(route) && route[0] === 'retail-item-family-l';
+    }
+
     function suppressCustomDocumentCards() {
         const workspacePrototype = frappe.views?.Workspace?.prototype;
         if (!workspacePrototype || workspaceCustomCardsPatched) return !!workspacePrototype;
@@ -800,6 +806,10 @@
         const filters = getRouteFilters(route);
         const mappedChild = getMappedChildFromRoute(route, filters);
 
+        if (isItemFamilyPageRoute(route)) {
+            return { main: 'Items', child: 'Item Family List' };
+        }
+
         if (mappedChild) {
             return { main: CHILD_TO_PARENT[mappedChild] || DOCTYPE_TO_WORKSPACE[route?.[1]], child: mappedChild };
         }
@@ -928,34 +938,6 @@
             body.retail-wide-desk .layout-main-section-wrapper {
                 padding-left: 12px !important;
                 padding-right: 12px !important;
-            }
-
-            body.retail-wide-desk .grid-body {
-                overflow-x: auto !important;
-                overflow-y: hidden !important;
-            }
-
-            body:not(.modal-open)[data-route^="Form/"].retail-wide-desk .form-grid:has(.awesomplete > ul:not(:empty):not([hidden])),
-            body:not(.modal-open)[data-route^="Form/"].retail-wide-desk .grid-body:has(.awesomplete > ul:not(:empty):not([hidden])),
-            body:not(.modal-open)[data-route^="Form/"].retail-wide-desk .rows:has(.awesomplete > ul:not(:empty):not([hidden])),
-            body:not(.modal-open)[data-route^="Form/"].retail-wide-desk .grid-row:has(.awesomplete > ul:not(:empty):not([hidden])),
-            body:not(.modal-open)[data-route^="Form/"].retail-wide-desk .data-row:has(.awesomplete > ul:not(:empty):not([hidden])),
-            body:not(.modal-open)[data-route^="Form/"].retail-wide-desk .grid-static-col:has(.awesomplete > ul:not(:empty):not([hidden])),
-            body:not(.modal-open)[data-route^="Form/"].retail-wide-desk .field-area:has(.awesomplete > ul:not(:empty):not([hidden])) {
-                overflow: visible !important;
-            }
-
-            body:not(.modal-open)[data-route^="Form/"].retail-wide-desk .grid-row:has(.awesomplete > ul:not(:empty):not([hidden])),
-            body:not(.modal-open)[data-route^="Form/"].retail-wide-desk .grid-static-col:has(.awesomplete > ul:not(:empty):not([hidden])),
-            body:not(.modal-open)[data-route^="Form/"].retail-wide-desk .frappe-control:has(.awesomplete > ul:not(:empty):not([hidden])) {
-                position: relative !important;
-                z-index: 1060 !important;
-            }
-
-            body:not(.modal-open)[data-route^="Form/"].retail-wide-desk .grid-static-col .awesomplete > ul:not(:empty):not([hidden]) {
-                max-height: 260px !important;
-                overflow-y: auto !important;
-                z-index: 1061 !important;
             }
 
             body:has(.modal.show)[data-route^="Form/"] .form-grid,
@@ -1371,6 +1353,16 @@
         const route = frappe.get_route();
         if (!Array.isArray(route) || !route.length) return null;
         const view = route[0];
+        if (isItemFamilyPageRoute(route)) {
+            return {
+                key: route.join('/'),
+                route: route.filter(part => typeof part !== 'object'),
+                label: 'Item Family List',
+                type: 'Item Family List',
+                status: 'page',
+                updated_at: Date.now(),
+            };
+        }
         if (!['Form', 'List', 'query-report'].includes(view)) return null;
 
         const doctype = route[1] || view;
@@ -1724,7 +1716,7 @@
     }
 
     function renderPersistentSidebar() {
-        if (isWorkspaceRoute(frappe.get_route())) {
+        if (isWorkspaceRoute(frappe.get_route()) && !isItemFamilyPageRoute()) {
             removePersistentSidebar();
             syncDesktopSidebarClass();
             return;
@@ -1747,7 +1739,7 @@
         }
 
         getSidebarItems().then(items => {
-            if (isWorkspaceRoute(frappe.get_route())) {
+            if (isWorkspaceRoute(frappe.get_route()) && !isItemFamilyPageRoute()) {
                 removePersistentSidebar();
                 return;
             }
@@ -1815,9 +1807,28 @@
         });
     }
 
+    function redirectItemFamilyListRoute() {
+        const route = frappe.get_route();
+        if (!Array.isArray(route) || !route.length) return false;
+
+        const view = String(route[0] || '').toLowerCase();
+        const title = decodeURIComponent(String(route[route[1] === 'private' ? 2 : 1] || ''));
+        const slug = frappe.router.slug(title || route[0] || '');
+        const isOldItemFamilyRoute =
+            (view === 'query-report' && title === 'Item Family List') ||
+            ((view === 'workspaces' || view === 'workspace') && title === 'Item Family List') ||
+            slug === 'item-family-list';
+
+        if (!isOldItemFamilyRoute) return false;
+
+        frappe.set_route('retail-item-family-l');
+        return true;
+    }
+
     function init() {
         ensureRetailCss();
         injectRetailInlineCss();
+        redirectItemFamilyListRoute();
         waitForWorkspaceModule();
         applyDirectLinks();
         applyIcons();
@@ -1833,6 +1844,7 @@
 
         if (window.frappe?.router?.on) {
             frappe.router.on('change', () => {
+                redirectItemFamilyListRoute();
                 clearTimeout(routeRefreshTimer);
                 routeRefreshTimer = setTimeout(refreshSidebarEnhancements, 120);
                 setTimeout(applyWideTransactionLayout, 350);

@@ -1,0 +1,38 @@
+[
+ {
+  "content": null,
+  "docstatus": 0,
+  "doctype": "Page",
+  "icon": "fa fa-sitemap",
+  "modified": "2026-07-16 17:11:07.351927",
+  "module": "Retail-app",
+  "name": "retail-item-family-l",
+  "page_name": "retail-item-family-l",
+  "restrict_to_domain": null,
+  "roles": [
+   {
+    "parent": "retail-item-family-l",
+    "parentfield": "roles",
+    "parenttype": "Page",
+    "role": "Stock User"
+   },
+   {
+    "parent": "retail-item-family-l",
+    "parentfield": "roles",
+    "parenttype": "Page",
+    "role": "Stock Manager"
+   },
+   {
+    "parent": "retail-item-family-l",
+    "parentfield": "roles",
+    "parenttype": "Page",
+    "role": "Sales User"
+   }
+  ],
+  "script": null,
+  "standard": "Yes",
+  "style": null,
+  "system_page": 0,
+  "title": "Item Family List"
+ }
+]

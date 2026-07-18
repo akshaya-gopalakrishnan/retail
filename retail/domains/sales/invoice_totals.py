@@ -4,7 +4,6 @@ import json
 
 import frappe
 from frappe import _
-from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 from frappe.custom.doctype.property_setter.property_setter import make_property_setter
 from frappe.utils import flt
 
@@ -18,94 +17,62 @@ TRANSACTION_TOTALS_DOCTYPES = (
 	"Sales Order",
 )
 
+ALL_TOTALS_DOCTYPES = (
+	"Purchase Order",
+	"Purchase Receipt",
+	"Purchase Invoice",
+	"Sales Order",
+	"Sales Invoice",
+	"Delivery Note",
+	"POS Invoice",
+	"Quotation",
+)
+
+CUSTOM_TOTALS_FIELDS = (
+	"custom_retail_totals_section",
+	"custom_retail_totals_summary",
+)
+
+SALES_INVOICE_TOTALS_FIELDS = CUSTOM_TOTALS_FIELDS + ("custom_retail_shipping_charges",)
+
+STANDARD_TAX_FIELDS_TO_HIDE = (
+	"taxes_section",
+	"taxes_charges_section",
+	"taxes_and_charges",
+	"taxes",
+)
+
 STANDARD_TOTAL_FIELDS_TO_HIDE = (
 	"base_total_taxes_and_charges",
 	"taxes_and_charges_added",
 	"taxes_and_charges_deducted",
-	"total_taxes_and_charges",
-	"totals_section",
-	"base_grand_total",
 	"base_in_words",
 	"base_rounded_total",
-	"grand_total",
-	"rounded_total",
-	"disable_rounded_total",
 	"in_words",
 	"advance_paid",
 )
 
+STANDARD_TOTAL_FIELDS_TO_SHOW = (
+	"total",
+	"net_total",
+	"total_taxes_and_charges",
+	"totals",
+	"totals_section",
+	"base_grand_total",
+	"grand_total",
+	"rounded_total",
+	"disable_rounded_total",
+)
+
 
 def ensure_sales_invoice_retail_totals_fields():
-	"""Add a clean totals panel to Sales Invoice without changing standard fields."""
-	create_custom_fields(
-		{
-			"Sales Invoice": [
-				{
-					"fieldname": "custom_retail_sales_person",
-					"label": "Sales Man",
-					"fieldtype": "Link",
-					"options": "Sales Person",
-					"insert_after": "column_break_14",
-				},
-				{
-					"fieldname": "custom_retail_delivery_person",
-					"label": "Delivery Person",
-					"fieldtype": "Data",
-					"insert_after": "custom_retail_sales_person",
-				},
-				{
-					"fieldname": "custom_retail_totals_section",
-					"label": "Totals",
-					"fieldtype": "Column Break",
-					"insert_after": "net_total",
-				},
-				{
-					"fieldname": "custom_retail_shipping_charges",
-					"label": "Shipping Charges",
-					"fieldtype": "Currency",
-					"insert_after": "custom_retail_totals_section",
-				},
-				{
-					"fieldname": "custom_retail_totals_summary",
-					"label": "Totals Summary",
-					"fieldtype": "HTML",
-					"insert_after": "custom_retail_shipping_charges",
-				},
-			],
-		},
-		ignore_validate=True,
-	)
-	frappe.db.updatedb("Sales Invoice")
-	_update_sales_invoice_retail_field_layout()
-	frappe.clear_cache(doctype="Sales Invoice")
+	"""Deprecated: restore ERPNext's standard totals section."""
+	remove_custom_transaction_totals_fields()
 
 
 def ensure_transaction_totals_summary_fields():
-	"""Add a neutral VAT totals summary to non-shipping sales and purchase forms."""
-	create_custom_fields(
-		{
-			doctype: [
-				{
-					"fieldname": "custom_retail_totals_section",
-					"label": "Totals",
-					"fieldtype": "Column Break",
-					"insert_after": "net_total",
-				},
-				{
-					"fieldname": "custom_retail_totals_summary",
-					"label": "Totals Summary",
-					"fieldtype": "HTML",
-					"insert_after": "custom_retail_totals_section",
-				},
-			]
-			for doctype in TRANSACTION_TOTALS_DOCTYPES
-		},
-		ignore_validate=True,
-	)
-	for doctype in TRANSACTION_TOTALS_DOCTYPES:
-		frappe.db.updatedb(doctype)
-		_update_transaction_totals_field_layout(doctype)
-		frappe.clear_cache(doctype=doctype)
+	"""Deprecated: restore ERPNext's standard totals section."""
+	remove_custom_transaction_totals_fields()
 
 
 def _update_sales_invoice_retail_field_layout():
@@ -231,13 +198,34 @@ def _get_doctype_field_order(doctype):
 
 
 def ensure_all_transaction_totals_fields():
-	ensure_sales_invoice_retail_totals_fields()
-	ensure_transaction_totals_summary_fields()
+	remove_custom_transaction_totals_fields()
+
+
+def remove_custom_transaction_totals_fields():
+	"""Restore ERPNext totals as the only totals UI/calculation surface."""
+	for doctype in ALL_TOTALS_DOCTYPES:
+		fields_to_remove = (
+			SALES_INVOICE_TOTALS_FIELDS if doctype == "Sales Invoice" else CUSTOM_TOTALS_FIELDS
+		)
+		for fieldname in fields_to_remove:
+			custom_field = f"{doctype}-{fieldname}"
+			if frappe.db.exists("Custom Field", custom_field):
+				frappe.delete_doc(
+					"Custom Field",
+					custom_field,
+					ignore_permissions=True,
+					force=True,
+				)
+
+		_apply_standard_totals_layout(doctype)
+		_remove_fields_from_field_order(doctype, fields_to_remove)
+		frappe.db.updatedb(doctype)
+		frappe.clear_cache(doctype=doctype)
 
 
 def _hide_standard_total_fields(doctype):
 	meta = frappe.get_meta(doctype)
-	for fieldname in STANDARD_TOTAL_FIELDS_TO_HIDE:
+	for fieldname in (*STANDARD_TAX_FIELDS_TO_HIDE, *STANDARD_TOTAL_FIELDS_TO_HIDE):
 		if not meta.has_field(fieldname):
 			continue
 
@@ -251,6 +239,98 @@ def _hide_standard_total_fields(doctype):
 		)
 
 
+def _apply_standard_totals_layout(doctype):
+	meta = frappe.get_meta(doctype)
+	for fieldname in (*STANDARD_TAX_FIELDS_TO_HIDE, *STANDARD_TOTAL_FIELDS_TO_HIDE):
+		if not meta.has_field(fieldname):
+			continue
+
+		make_property_setter(
+			doctype,
+			fieldname,
+			"hidden",
+			1,
+			"Check",
+			validate_fields_for_doctype=False,
+		)
+
+	for fieldname in STANDARD_TOTAL_FIELDS_TO_SHOW:
+		if not meta.has_field(fieldname):
+			continue
+
+		make_property_setter(
+			doctype,
+			fieldname,
+			"hidden",
+			0,
+			"Check",
+			validate_fields_for_doctype=False,
+		)
+
+	if meta.has_field("total_taxes_and_charges"):
+		make_property_setter(
+			doctype,
+			"total_taxes_and_charges",
+			"label",
+			"VAT",
+			"Data",
+			validate_fields_for_doctype=False,
+		)
+		_place_total_taxes_before_grand_total(doctype)
+
+	if meta.has_field("disable_rounded_total"):
+		make_property_setter(
+			doctype,
+			"disable_rounded_total",
+			"default",
+			1,
+			"Check",
+			validate_fields_for_doctype=False,
+		)
+
+
+def _place_total_taxes_before_grand_total(doctype):
+	field_order = _get_doctype_field_order(doctype)
+	field_order = [field for field in field_order if field != "total_taxes_and_charges"]
+	anchor = "grand_total"
+	if anchor in field_order:
+		field_order.insert(field_order.index(anchor), "total_taxes_and_charges")
+	else:
+		field_order.append("total_taxes_and_charges")
+
+	make_property_setter(
+		doctype,
+		None,
+		"field_order",
+		json.dumps(field_order),
+		"JSON",
+		validate_fields_for_doctype=False,
+	)
+
+
+def _remove_fields_from_field_order(doctype, fieldnames):
+	property_setter = frappe.db.get_value(
+		"Property Setter",
+		{"doc_type": doctype, "property": "field_order", "field_name": ["is", "not set"]},
+		"name",
+	)
+	if not property_setter:
+		return
+
+	field_order = _get_doctype_field_order(doctype)
+	cleaned = [field for field in field_order if field not in fieldnames]
+	if cleaned == field_order:
+		return
+
+	frappe.db.set_value(
+		"Property Setter",
+		property_setter,
+		"value",
+		json.dumps(cleaned),
+		update_modified=False,
+	)
+
+
 def _place_after(field_order, anchor, fieldnames):
 	ordered = [field for field in field_order if field not in fieldnames]
 	if anchor not in ordered:
@@ -262,8 +342,9 @@ def _place_after(field_order, anchor, fieldnames):
 
 
 def apply_retail_shipping_charges(doc, method=None):
-	"""Mirror friendly retail VAT/shipping values into ERPNext's standard Taxes table."""
-	if not doc.meta.has_field("custom_retail_shipping_charges"):
+	"""Apply the legacy shipping row only when the old custom field exists."""
+	has_shipping_field = doc.meta.has_field("custom_retail_shipping_charges")
+	if not has_shipping_field:
 		return
 
 	doc.set(
@@ -271,11 +352,10 @@ def apply_retail_shipping_charges(doc, method=None):
 		[
 			row
 			for row in (doc.get("taxes") or [])
-			if not _is_shipping_row(row) and not _is_managed_vat_row(row)
+			if not _is_shipping_row(row)
 		],
 	)
 
-	_append_vat_rows(doc)
 	_append_shipping_row(doc)
 	_disable_rounded_total(doc)
 	doc.calculate_taxes_and_totals()
