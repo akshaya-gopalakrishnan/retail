@@ -23,7 +23,7 @@
   "docstatus": 0,
   "doctype": "List View Settings",
   "fields": "[{\"fieldname\": \"item_name\", \"label\": \"Item Name\"}, {\"fieldname\": \"status_field\", \"label\": \"Status\"}, {\"fieldname\": \"brand\", \"label\": \"Brand\"}, {\"fieldname\": \"item_group\", \"label\": \"Item Group\"}, {\"fieldname\": \"custom_purchase_gross_rate\", \"label\": \"Purchase Rate Incl. VAT\"}, {\"fieldname\": \"custom_sales_gross_rate\", \"label\": \"Selling Rate Incl. VAT\"}, {\"fieldname\": \"custom_margin\", \"label\": \"Margin\"}]",
-  "modified": "2026-07-17 13:08:23.550595",
+  "modified": "2026-07-18 09:32:24.401546",
   "name": "Item",
   "total_fields": "7"
  },
@@ -37,7 +37,7 @@
   "docstatus": 0,
   "doctype": "List View Settings",
   "fields": "[{\"fieldname\": \"item_code\"}, {\"fieldname\": \"item_name\"}, {\"fieldname\": \"brand\"}, {\"fieldname\": \"price_list\"}, {\"fieldname\": \"price_list_rate\"}, {\"fieldname\": \"custom_average_purchase_rate\"}]",
-  "modified": "2026-07-17 13:08:22.886179",
+  "modified": "2026-07-18 09:32:23.650020",
   "name": "Item Price",
   "total_fields": "6"
  },
