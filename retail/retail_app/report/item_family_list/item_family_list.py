@@ -64,7 +64,7 @@ def ensure_page():
 		)
 		return
 
-	frappe.get_doc(
+	page = frappe.get_doc(
 		{
 			"doctype": "Page",
 			"name": "retail-item-family-l",
@@ -75,7 +75,15 @@ def ensure_page():
 			"icon": "fa fa-sitemap",
 			"roles": [{"role": "Stock User"}, {"role": "Stock Manager"}, {"role": "Sales User"}],
 		}
-	).insert(ignore_permissions=True)
+	)
+	page.flags.do_not_update_json = True
+
+	previous_developer_mode = getattr(frappe.conf, "developer_mode", 0)
+	frappe.conf.developer_mode = 1
+	try:
+		page.insert(ignore_permissions=True)
+	finally:
+		frappe.conf.developer_mode = previous_developer_mode
 
 
 def ensure_workspace():

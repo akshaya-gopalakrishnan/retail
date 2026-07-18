@@ -546,18 +546,6 @@ fixtures = [
     "Workflow State",
     "Workflow Action Master",
     {
-        "dt": "Page",
-        "filters": [
-            [
-                "name",
-                "in",
-                (
-                    "retail-item-family-l",
-                ),
-            ]
-        ],
-    },
-    {
         "dt": "Number Card",
         "filters": [
             [
