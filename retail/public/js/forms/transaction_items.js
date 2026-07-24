@@ -114,7 +114,6 @@
 		frappe.ui.form.on(doctype, {
 			refresh(frm) {
 				placeVatFieldBeforeGrandTotal(frm);
-				queueVatTaxRowsSync(frm);
 			},
 			company(frm) {
 				queueVatTaxRowsSync(frm);
@@ -202,6 +201,8 @@
 	}
 
 	async function syncVatRates(frm, cdt, cdn, source) {
+		if (!isEditableDraft(frm)) return;
+
 		const row = locals[cdt]?.[cdn];
 		if (!row || row.__retail_vat_syncing || !row.item_code) return;
 		if (!frappe.meta.get_docfield(cdt, "custom_rate_including_vat", cdn)) return;
@@ -279,9 +280,14 @@
 		return Boolean(
 			frm?.doc
 			&& liveVatFormDoctypes[frm.doc.doctype]
+			&& isEditableDraft(frm)
 			&& frm.fields_dict?.taxes
 			&& Array.isArray(frm.doc.items)
 		);
+	}
+
+	function isEditableDraft(frm) {
+		return cint(frm?.doc?.docstatus) === 0;
 	}
 
 	async function syncVatTaxRows(frm) {

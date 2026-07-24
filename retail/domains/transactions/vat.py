@@ -113,13 +113,14 @@ def apply_transaction_vat_taxes(doc):
 				"category": "Total",
 				"add_deduct_tax": "Add",
 				"included_in_print_rate": 0,
-				"rate": 0,
+				"rate": group["rate"],
 				"cost_center": doc.get("cost_center"),
 			},
 		)
 
 	_disable_rounded_total(doc)
 	doc.calculate_taxes_and_totals()
+	_apply_explicit_vat_totals(doc, tax_label)
 	_refresh_total_in_words(doc)
 
 
@@ -141,7 +142,7 @@ def get_transaction_vat_tax_rows(doc):
 				"category": "Total",
 				"add_deduct_tax": "Add",
 				"included_in_print_rate": 0,
-				"rate": 0,
+				"rate": group["rate"],
 				"cost_center": doc.get("cost_center"),
 			}
 		)
@@ -271,7 +272,13 @@ def _get_transaction_vat_groups(doc, tax_label):
 				groups[key] = {
 					"account_head": tax.tax_type,
 					"description": f"{tax_label} [{tax.tax_type}]",
+					"rates": set(),
 				}
+			groups[key]["rates"].add(rate)
+
+	for group in groups.values():
+		rates = group.pop("rates", set())
+		group["rate"] = rates.pop() if len(rates) == 1 else 0
 
 	return groups
 
@@ -280,6 +287,59 @@ def _apply_item_vat_tax_rates(doc):
 	for item in doc.get("items") or []:
 		if item.meta.has_field("item_tax_rate"):
 			item.item_tax_rate = frappe.as_json(_get_vat_tax_rate_map_for_item(doc, item))
+
+
+def _apply_explicit_vat_totals(doc, tax_label):
+	"""Keep managed VAT totals stable after ERPNext recalculates the document."""
+	if not doc.get("taxes"):
+		return
+
+	vat_amounts = {}
+	for item in doc.get("items") or []:
+		if not item.get("item_code"):
+			continue
+
+		template = _get_transaction_item_vat_template(
+			item.item_code,
+			child_doctype=item.doctype,
+			parent_doctype=doc.doctype,
+			transaction_type=doc.get("transaction_type"),
+			item_tax_template=item.get("item_tax_template"),
+		)
+		if not template:
+			continue
+
+		net_amount = flt(item.get("net_amount") or item.get("amount"))
+		for tax in _get_item_tax_template_details(template):
+			rate = flt(tax.tax_rate)
+			if rate:
+				vat_amounts[tax.tax_type] = flt(vat_amounts.get(tax.tax_type)) + flt(net_amount * rate / 100)
+
+	total_vat = 0
+	running_total = flt(doc.get("net_total") or doc.get("total"))
+	for tax in doc.get("taxes") or []:
+		if not _is_managed_vat_row(tax, tax_label):
+			continue
+
+		amount = flt(vat_amounts.get(tax.account_head), tax.precision("tax_amount"))
+		total_vat += amount
+		running_total += amount
+		tax.tax_amount = amount
+		tax.tax_amount_after_discount_amount = amount
+		tax.base_tax_amount = amount
+		tax.base_tax_amount_after_discount_amount = amount
+		tax.total = running_total
+		tax.base_total = running_total
+
+	if total_vat:
+		doc.total_taxes_and_charges = flt(total_vat, doc.precision("total_taxes_and_charges"))
+		doc.base_total_taxes_and_charges = doc.total_taxes_and_charges
+		doc.taxes_and_charges_added = doc.total_taxes_and_charges
+		doc.base_taxes_and_charges_added = doc.total_taxes_and_charges
+		doc.taxes_and_charges_deducted = 0
+		doc.base_taxes_and_charges_deducted = 0
+		doc.grand_total = flt(flt(doc.get("net_total") or doc.get("total")) + doc.total_taxes_and_charges, doc.precision("grand_total"))
+		doc.base_grand_total = doc.grand_total
 
 
 def _get_item_vat_tax_rates(doc):

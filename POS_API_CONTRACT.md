@@ -66,6 +66,8 @@ TerminalId = T001
 ApiKey/ApiSecret = API credentials of pos.karama.api@company.com
 ```
 
+ERPNext is the printer assignment master. .NET should pull `printer_name` from the counter master data and use the matching local Windows printer for that terminal.
+
 Cashier is not the API user. Cashier is selected/login inside .NET POS as an ERPNext `Employee`.
 
 ```text
@@ -158,6 +160,7 @@ Returns server time and counter mapping:
   "cost_center": "Main - N",
   "counter": "Karama-C001",
   "terminal_id": "T001",
+  "printer_name": "Receipt Printer 1",
   "server_time": "2026-06-25 12:00:00"
 }
 ```
@@ -189,12 +192,29 @@ Use ERPNext `server_time` as the next `modified_after`; do not rely on Windows t
 Item sync behavior:
 
 - `items` includes both active and disabled items.
+- `items` includes audit fields: `created_by`, `created_on`, `modified_by`, `modified_on`. The existing `modified` field is still returned for incremental sync compatibility.
+- `items` includes POS item flags: `is_scalable_item`, `scale_barcode_type`, and `is_open_price`. `is_scalable_item` comes from Item's `custom_scale_item`; `is_open_price` comes from Item's `custom_is_open_price`.
+- `scale_barcode_type` values are `PRICE`, `WEIGHT`, `QUANTITY`, or `WEIGHT+UPRICE`.
 - .NET should upsert item rows by `item_code` / `name`.
 - If an item row has `disabled = 1`, mark the local POS item inactive/hidden and do not allow it for new sales.
 - Do not delete old local invoice rows that used this item; historical invoices must continue to display correctly.
 - `modified_after` returns only rows changed after that ERPNext server timestamp, including items that were disabled after the previous sync.
 
-Cashiers are returned from ERPNext `Employee` records. .NET must store the returned `name`/`employee` value locally and send it as `cashier_employee` in all cashier shift and invoice APIs.
+Cashiers are returned from ERPNext `Employee` records. .NET should store the returned `name` value locally and send it as `cashier_employee` in all cashier shift and invoice APIs. For compatibility, ERPNext also accepts the cashier's `employee`, `employee_number`, `attendance_device_id`, `user_id`, or `cell_number` and resolves it to the Employee document name.
+
+`designation` is returned from Employee and is also exposed as `operator_group`, for example Cashier, Waiter, Delivery Person, or Supervisor.
+
+For cashier login, .NET should use `login_id` from the cashier row. ERPNext does not send passwords or raw quick PINs in master sync.
+
+Cashier rows include `quick_pin_hash` and `quick_pin_salt` when configured. For offline login, hash the entered PIN as SHA256 of `{quick_pin_salt}:{entered_pin}` and compare with `quick_pin_hash`. Online verification is also available through `verify_cashier_quick_pin`.
+
+System Manager can set/reset a cashier PIN with `set_cashier_quick_pin`.
+
+ERPNext UI setup:
+
+- On `Employee`, enable `Allow POS Login`, select `POS Login User`, and enter `Set POS Quick PIN`.
+- On `User`, enable `Allow POS Login`, select `POS Cashier Employee`, and enter `Set POS Quick PIN`.
+- Both forms update the same Employee POS login hash/salt. The raw PIN is never stored.
 
 Recommended master sync schedule:
 
@@ -488,6 +508,59 @@ POST /api/method/retail.api.pos_sync.upsert_customer
 
 Matching is by `external_customer_id`.
 
+### Customer Balance Pull
+
+```text
+GET /api/method/retail.api.pos_sync.get_customer_balances?company=nesto&from_date=2026-01-01&to_date=2026-07-22&include_zero_balance=1
+```
+
+Use this API when .NET needs customer-wise contact and ledger balance data.
+
+Query parameters:
+
+| Parameter | Required | Notes |
+|---|---|---|
+| `company` | Yes, unless the site has only one company | ERPNext Company name |
+| `from_date` | No | Defaults to fiscal year start date |
+| `to_date` | No | Defaults to ERPNext server date |
+| `customer` | No | ERPNext Customer ID for one customer only |
+| `include_zero_balance` | No | Send `1` to include active customers with no ledger balance/activity |
+
+Response:
+
+```json
+{
+  "status": "Success",
+  "company": "nesto",
+  "from_date": "2026-01-01",
+  "to_date": "2026-07-22",
+  "count": 1,
+  "data": [
+    {
+      "customer": "CUST-0001",
+      "customer_name": "Customer Name",
+      "email": "customer@example.com",
+      "phone": "9715XXXXXXXX",
+      "opening_balance": 1000.0,
+      "transaction_amount": 500.0,
+      "payment_amount": 300.0,
+      "current_balance": 1200.0,
+      "address": "Dubai, UAE",
+      "address_id": "ADDR-0001"
+    }
+  ]
+}
+```
+
+Amount fields are calculated from ERPNext Customer Ledger Summary:
+
+| API field | Meaning |
+|---|---|
+| `opening_balance` | Balance before `from_date` |
+| `transaction_amount` | Customer invoiced/debit amount for the selected date range |
+| `payment_amount` | Customer paid/credit amount for the selected date range |
+| `current_balance` | Closing balance up to `to_date` |
+
 ### Warehouse Stock Snapshot
 
 ```text
@@ -501,6 +574,8 @@ POST /api/method/retail.api.pos_sync.get_warehouse_stock_snapshot
   "item_codes": ["ITEM-001"]
 }
 ```
+
+Returned stock rows include both `actual_qty` and `current_stock`; .NET can use `current_stock` for the POS item stock display.
 
 Stock snapshot is advisory. ERPNext still validates at invoice submission.
 

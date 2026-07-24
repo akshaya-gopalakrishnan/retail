@@ -3,7 +3,7 @@
     const ATTRIBUTE = "data-retail-brand-theme";
     const DEFAULT_THEME = "executive-navy";
     const BRAND_NAME = "CELESTA ERP";
-    const APP_ICON = "/assets/retail/images/celesta-app-icon.svg?v=1";
+    const APP_ICON = "/assets/retail/images/business-suite-app-icon.svg?v=3";
 
     function getTheme() {
         try {
@@ -31,7 +31,7 @@
             const logo = head.querySelector(".app-logo");
             if (logo) {
                 logo.src = APP_ICON;
-                logo.alt = "Celesta";
+                logo.alt = "CELESTA ERP";
             }
 
             const title = head.querySelector("h4");

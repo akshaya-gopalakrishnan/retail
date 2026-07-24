@@ -1,10 +1,10 @@
 app_name = "retail"
-app_title = "Retail"
+app_title = "CELESTA ERP"
 app_publisher = "Arab Scale"
-app_description = "Retail Application"
+app_description = "CELESTA ERP Application"
 app_email = "akshayagopal1@gmail.com"
 app_license = "mit"
-app_logo_url = "/assets/retail/images/celesta-app-icon.svg"
+app_logo_url = "/assets/retail/images/business-suite-app-icon.svg"
 
 # Apps
 # ------------------
@@ -38,9 +38,10 @@ app_include_css = [
 ]
 
 app_include_js = [
-    "/assets/retail/js/retail_navigation.js?v=76",
-    "/assets/retail/js/local_draft_recovery.js?v=12",
-    "/assets/retail/js/forms/transaction_items.js?v=12",
+    "/assets/retail/js/retail_navigation.js?v=82",
+    "/assets/retail/js/local_draft_recovery.js?v=28",
+    "/assets/retail/js/forms/transaction_items.js?v=14",
+    "/assets/retail/js/zebra_label_bulk_print.js?v=3",
     "/assets/retail/js/brand_theme_switcher.js?v=8",
     "/assets/retail/js/reports/gross_profit_item_filter.js?v=1",
 ]
@@ -48,18 +49,20 @@ app_include_js = [
 # include js, css files in header of web template
 web_include_css = [
     "/assets/retail/css/brand_themes.css?v=11",
-    "/assets/retail/css/website_branding.css?v=13",
+    "/assets/retail/css/website_branding.css?v=15",
 ]
 
 web_include_js = [
-    "/assets/retail/js/website_branding.js?v=2",
+    "/assets/retail/js/website_branding.js?v=4",
 ]
 
 website_context = {
-    "brand_html": '<img src="/assets/retail/images/celesta-app-icon.svg?v=1" class="retail-web-brand-icon" alt="Celesta"><span class="retail-web-brand">CELESTA</span>',
-    "favicon": "/assets/retail/images/celesta-app-icon.svg?v=1",
-    "splash_image": "/assets/retail/images/retail-logo.svg?v=2",
+    "brand_html": '<img src="/assets/retail/images/business-suite-app-icon.svg?v=3" class="retail-web-brand-icon" alt="CELESTA ERP"><span class="retail-web-brand">CELESTA</span>',
+    "favicon": "/assets/retail/images/business-suite-app-icon.svg?v=3",
+    "splash_image": "/assets/retail/images/retail-logo.svg?v=4",
 }
+
+setup_wizard_complete = "retail.demo_data.setup_demo"
 
 # include custom scss in every website theme (without file extension ".scss")
 # website_theme_scss = "retail/public/scss/website"
@@ -93,7 +96,10 @@ doctype_list_js = {
 	"Stock Entry": "public/js/hide_transaction_id_list.js",
 	"Material Request": "public/js/hide_transaction_id_list.js",
 	"Customer": "public/js/hide_transaction_id_list.js",
-	"Item": "public/js/hide_transaction_id_list.js",
+	"Item": [
+		"public/js/hide_transaction_id_list.js",
+		"public/js/item_list_zebra_labels.js",
+	],
 	"Supplier": "public/js/hide_transaction_id_list.js",
 	"Serial and Batch Bundle": "public/js/hide_transaction_id_list.js",
 	"Bin": "public/js/hide_transaction_id_list.js",
@@ -101,6 +107,8 @@ doctype_list_js = {
 	"Counter": "public/js/hide_transaction_id_list.js",
 }
 doctype_js = {
+	"Employee": "public/js/forms/pos_login.js",
+	"User": "public/js/forms/pos_login.js",
 	"Item": "public/js/forms/item.js",
 	"Item Price": "public/js/forms/item_price_rate_update.js",
 	"Retail Item Rate Audit": "public/js/forms/retail_item_rate_audit.js",
@@ -212,12 +220,21 @@ after_install = "retail.naming.install_retail_defaults"
 # Hook on document methods and events
 
 doc_events = {
+	"Employee": {
+		"validate": "retail.pos_login.apply_employee_pos_login",
+		"on_update": "retail.pos_login.sync_employee_pos_user",
+	},
+	"User": {
+		"validate": "retail.pos_login.apply_user_pos_login",
+		"after_insert": "retail.grid_view_settings.apply_default_grid_view_settings_for_user",
+	},
 	"Purchase Order": {
 		"validate": [
 			"retail.domains.foc.apply_foc_quantities",
 			"retail.domains.transactions.vat.set_vat_rates",
 			"retail.domains.purchase.order.set_balance_qty",
 		],
+		"before_save": "retail.domains.transactions.vat.set_vat_rates",
 		"on_submit": "retail.domains.item.item_price_sync.sync_latest_transaction_item_prices",
 		"on_cancel": "retail.domains.item.item_price_sync.recalculate_transaction_item_prices",
 		"on_update_after_submit": "retail.domains.item.item_price_sync.sync_latest_transaction_item_prices",
@@ -377,7 +394,6 @@ doc_events = {
 
 after_migrate = [
 	"retail.branding.apply_default_branding",
-	"retail.setup.hide_non_retail_workspaces",
 	"retail.setup.ensure_print_languages",
     "retail.domains.transactions.vat.ensure_transaction_vat_rate_fields",
     "retail.domains.purchase.order.backfill_balance_qty",
@@ -394,6 +410,8 @@ after_migrate = [
 	"retail.domains.item.packing_sync.disable_legacy_uom_barcode_script",
 	"retail.domains.item.packing_rate.ensure_packing_purchase_rate_script",
 	"retail.domains.item.arabic_name.ensure_item_arabic_name_field",
+	"retail.domains.item.pos_flags.ensure_item_pos_flags",
+	"retail.grid_view_settings.install_default_grid_view_settings",
 	"retail.domains.item.vat_pricing.ensure_item_vat_pricing_fields",
 	"retail.domains.item.rate_audit.ensure_rate_audit_setup",
 	"retail.domains.item.vat_pricing.backfill_item_master_last_purchase_rates",
@@ -516,36 +534,20 @@ fixtures = [
     "Custom Field",
     "Client Script",
     "Server Script",
-    {
-        "dt": "Print Format",
-        "filters": [
-            [
-                "name",
-                "in",
-                (
-                    "ppppppppppppppppppppp",
-                ),
-            ]
-        ],
-    },
-    {
-        "dt": "Letter Head",
-        "filters": [
-            [
-                "name",
-                "in",
-                (
-                    "Arab Scale Letter Head - Standard",
-                ),
-            ]
-        ],
-    },
     "Property Setter",
+    "Print Format",
     "List View Settings",
     "Custom DocPerm",
     "Workflow",
     "Workflow State",
     "Workflow Action Master",
+    "Workspace",
+    {
+        "dt": "Zebra Label Format",
+        "filters": [
+            ["name", "in", ("Shelf Label", "Barcode Label")]
+        ],
+    },
     {
         "dt": "Number Card",
         "filters": [
@@ -561,77 +563,6 @@ fixtures = [
                     "Return Amount Today",
                     "Damage Amount Today",
                     "Cash in Hand Today",
-                ),
-            ]
-        ],
-    },
-    {
-        "dt": "Workspace",
-        "filters": [
-            [
-                "name",
-                "in",
-                (
-                    "Accounts",
-                    "Accounts Payable",
-                    "Accounts Receivable",
-                    "Bank Accounts",
-                    "Branding",
-                    "Brands",
-                    "Business Profile",
-                    "Customers",
-                    "Delivery Notes",
-                    "Home",
-                    "Item Groups",
-                    "Item Family List",
-                    "Items",
-                    "Items List",
-                    "Journal Entries",
-                    "Manufacturing",
-                    "Manufacturing Reports",
-                    "Manufacturing Setup",
-                    "Material Requests",
-                    "MFG BOM",
-                    "MFG Job Cards",
-                    "MFG Production Plan",
-                    "MFG Quality Inspection",
-                    "MFG Reports",
-                    "MFG Setup",
-                    "MFG Stock Entries",
-                    "MFG Work Orders",
-                    "Payments",
-                    "Price Lists",
-                    "Purchase Invoices",
-                    "Purchase Orders",
-                    "Purchase Receipts",
-                    "Purchase Returns",
-                    "Purchases",
-                    "POS",
-                    "POS Branch Day Closings",
-                    "POS Cashier Shifts",
-                    "POS Closing Entries",
-                    "POS Counter Sessions",
-                    "POS Counters",
-                    "POS Invoices",
-                    "POS Opening Entries",
-                    "POS Profiles",
-                    "POS Reports",
-                    "POS Sync Logs",
-                    "Reports",
-                    "Sales",
-                    "Sales Invoices",
-                    "Sales Orders",
-                    "Sales Returns",
-                    "Serials & Batches",
-                    "Settings",
-                    "Stock Adjustments",
-                    "Stock Status",
-                    "Stock Take",
-                    "Stocks",
-                    "Suppliers",
-                    "System Rules",
-                    "Taxes",
-                    "Warehouses",
                 ),
             ]
         ],

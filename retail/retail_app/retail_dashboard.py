@@ -112,6 +112,45 @@ def get_profit_summary(posting_date):
 	)[0]
 
 
+def get_latest_sales_posting_date(from_date=None, to_date=None):
+	conditions = ["docstatus = 1"]
+	values = {}
+
+	if from_date:
+		conditions.append("posting_date >= %(from_date)s")
+		values["from_date"] = from_date
+
+	if to_date:
+		conditions.append("posting_date <= %(to_date)s")
+		values["to_date"] = to_date
+
+	latest_date = frappe.db.sql(
+		f"""
+		select max(posting_date)
+		from `tabSales Invoice`
+		where {" and ".join(conditions)}
+		""",
+		values,
+	)
+	latest_date = latest_date[0][0] if latest_date else None
+
+	return getdate(latest_date) if latest_date else None
+
+
+def get_chart_period(days=7):
+	end_date = get_today()
+	start_date = end_date - timedelta(days=days - 1)
+
+	if get_latest_sales_posting_date(start_date, end_date):
+		return start_date, end_date
+
+	latest_sales_date = get_latest_sales_posting_date()
+	if latest_sales_date:
+		return latest_sales_date - timedelta(days=days - 1), latest_sales_date
+
+	return start_date, end_date
+
+
 @frappe.whitelist()
 @cache_source
 def get_top_selling_products(
@@ -125,7 +164,7 @@ def get_top_selling_products(
 	time_interval=None,
 	heatmap_year=None,
 ):
-	start_date = get_today() - timedelta(days=6)
+	start_date, end_date = get_chart_period()
 	rows = frappe.db.sql(
 		"""
 		select
@@ -142,7 +181,7 @@ def get_top_selling_products(
 		order by net_qty desc, sii.item_name asc
 		limit 10
 		""",
-		{"from_date": start_date, "to_date": get_today()},
+		{"from_date": start_date, "to_date": end_date},
 		as_dict=True,
 	)
 	return build_bar_chart(rows, "item_name", "net_qty", _("Qty Sold"))
@@ -161,6 +200,7 @@ def get_sales_by_counter(
 	time_interval=None,
 	heatmap_year=None,
 ):
+	posting_date = get_latest_sales_posting_date(get_today(), get_today()) or get_latest_sales_posting_date() or get_today()
 	rows = frappe.db.sql(
 		"""
 		select
@@ -181,7 +221,7 @@ def get_sales_by_counter(
 		having net_sales != 0
 		order by net_sales desc
 		""",
-		{"posting_date": get_today(), "no_counter": _("No Counter")},
+		{"posting_date": posting_date, "no_counter": _("No Counter")},
 		as_dict=True,
 	)
 	return build_bar_chart(rows, "counter", "net_sales", _("Net Sales"))
@@ -200,8 +240,7 @@ def get_sales_trend_7_days(
 	time_interval=None,
 	heatmap_year=None,
 ):
-	end_date = get_today()
-	start_date = end_date - timedelta(days=6)
+	start_date, end_date = get_chart_period()
 	rows = frappe.db.sql(
 		"""
 		select

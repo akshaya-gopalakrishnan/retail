@@ -43,7 +43,7 @@ retail.ItemFamilyList = class ItemFamilyList {
 	constructor(page) {
 		this.page = page;
 		this.filters = {};
-		this.selected_items = new Set();
+		this.selected_items = new Map();
 		this.visible_columns = this.get_saved_columns();
 		this.column_widths = this.get_saved_widths();
 		this.current_families = [];
@@ -107,8 +107,18 @@ retail.ItemFamilyList = class ItemFamilyList {
 
 	make_actions() {
 		this.page.set_primary_action(__("Add Item"), () => frappe.new_doc("Item"), "add");
+		this.page.add_inner_button(__("Print Zebra Labels"), () => this.show_zebra_print_dialog());
 		this.page.add_inner_button(__("List Settings"), () => this.show_list_settings());
 		this.page.add_action_icon("refresh", () => this.refresh());
+	}
+
+	show_zebra_print_dialog() {
+		retail.zebra.open_bulk_print_dialog({
+			source: "item_family_list",
+			source_label: __("Item Family List"),
+			get_selected_items: () => Array.from(this.selected_items.values()),
+			get_filters: () => this.get_filter_values(),
+		});
 	}
 
 	make_body() {
@@ -292,22 +302,22 @@ retail.ItemFamilyList = class ItemFamilyList {
 		this.$body.on("change", ".retail-family-select-all", (event) => {
 			const checked = event.currentTarget.checked;
 			this.$tbody.find(".family-checkbox").each((index, checkbox) => {
-				const item_code = checkbox.dataset.itemCode;
 				checkbox.checked = checked;
+				const key = get_selection_key(checkbox);
 				if (checked) {
-					this.selected_items.add(item_code);
+					this.selected_items.set(key, get_checkbox_selection(checkbox));
 				} else {
-					this.selected_items.delete(item_code);
+					this.selected_items.delete(key);
 				}
 			});
 			this.update_selection_state();
 		});
 		this.$body.on("change", ".family-checkbox", (event) => {
-			const item_code = event.currentTarget.dataset.itemCode;
+			const key = get_selection_key(event.currentTarget);
 			if (event.currentTarget.checked) {
-				this.selected_items.add(item_code);
+				this.selected_items.set(key, get_checkbox_selection(event.currentTarget));
 			} else {
-				this.selected_items.delete(item_code);
+				this.selected_items.delete(key);
 			}
 			this.update_selection_state();
 		});
@@ -360,7 +370,7 @@ retail.ItemFamilyList = class ItemFamilyList {
 
 	update_selection_state() {
 		this.$tbody.find(".family-checkbox").each((index, checkbox) => {
-			checkbox.checked = this.selected_items.has(checkbox.dataset.itemCode);
+			checkbox.checked = this.selected_items.has(get_selection_key(checkbox));
 			$(checkbox).closest("tr").toggleClass("selected", checkbox.checked);
 		});
 		const total = this.$tbody.find(".family-checkbox").length;
@@ -372,7 +382,7 @@ retail.ItemFamilyList = class ItemFamilyList {
 
 	update_count(selected, total) {
 		const selected_text = selected ? ` | ${selected} ${__("Selected")}` : "";
-		this.$count.text(`${total} ${__("Items")}${selected_text}`);
+		this.$count.text(`${total} ${__("Rows")}${selected_text}`);
 	}
 
 	get_colspan() {
@@ -390,7 +400,9 @@ retail.ItemFamilyList = class ItemFamilyList {
 		return `
 			<tr class="family-row" data-item-code="${escape_html(family.item_code)}">
 				<td class="select-col">
-					<input class="family-checkbox" type="checkbox" data-item-code="${escape_html(family.item_code)}">
+					<input class="family-checkbox" type="checkbox"
+						data-item-code="${escape_html(family.item_code)}"
+						data-row-type="item">
 				</td>
 				${this.render_cells(family, null, "family", serial)}
 			</tr>
@@ -400,7 +412,14 @@ retail.ItemFamilyList = class ItemFamilyList {
 	render_packing_row(family, packing) {
 		return `
 			<tr class="packing-row" data-item-code="${escape_html(family.item_code)}">
-				<td class="select-col"></td>
+				<td class="select-col">
+					<input class="family-checkbox" type="checkbox"
+						data-item-code="${escape_html(family.item_code)}"
+						data-row-type="packing"
+						data-packing-idx="${escape_html(packing.idx)}"
+						data-packing-uom="${escape_html(packing.uom)}"
+						data-packing-barcode="${escape_html(packing.barcode)}">
+				</td>
 				${this.render_cells(family, packing, "packing", "")}
 			</tr>
 		`;
@@ -418,8 +437,11 @@ retail.ItemFamilyList = class ItemFamilyList {
 		const values = {
 			serial: is_packing ? "" : serial,
 			item: is_packing
-				? `<span class="packing-name">${escape_html(row.uom || "")}</span>
-					<div class="packing-parent">${__("Packing of")} ${escape_html(family.item_code)}</div>`
+				? `<span class="packing-name">${escape_html(family.item_name || family.item_code)}</span>
+					<div class="packing-parent">
+						${escape_html(family.item_code)}
+						${row.uom ? ` - ${__("Packing")}: ${escape_html(row.uom)}` : ""}
+					</div>`
 				: `<a class="family-link" href="/app/item/${encodeURIComponent(family.item_code)}">
 						${escape_html(family.item_name || family.item_code)}
 					</a>
@@ -488,6 +510,28 @@ function qty(value) {
 function converted_qty(value, conversion_factor) {
 	const factor = flt(conversion_factor);
 	return factor ? flt(value) / factor : flt(value);
+}
+
+function get_selection_key(checkbox) {
+	return [
+		checkbox.dataset.itemCode || "",
+		checkbox.dataset.rowType || "item",
+		checkbox.dataset.packingIdx || "",
+		checkbox.dataset.packingBarcode || "",
+	].join("::");
+}
+
+function get_checkbox_selection(checkbox) {
+	const selection = {
+		item_code: checkbox.dataset.itemCode,
+		row_type: checkbox.dataset.rowType || "item",
+	};
+	if (selection.row_type === "packing") {
+		selection.packing_idx = cint(checkbox.dataset.packingIdx);
+		selection.uom = checkbox.dataset.packingUom || "";
+		selection.barcode = checkbox.dataset.packingBarcode || "";
+	}
+	return selection;
 }
 
 function escape_html(value) {

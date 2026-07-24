@@ -1,35 +1,35 @@
 {
  "charts": [
   {
-   "chart_name": "Retail Top Selling Products",
-   "label": "Retail Top Selling Products"
+   "chart_name": "Top Selling Products",
+   "label": "Top Selling Products"
   },
   {
-   "chart_name": "Retail Sales by Counter",
-   "label": "Retail Sales by Counter"
+   "chart_name": "Sales by Counter",
+   "label": "Sales by Counter"
   },
   {
-   "chart_name": "Retail Sales Trend 7 Days",
-   "label": "Retail Sales Trend 7 Days"
+   "chart_name": "Sales Trend 7 Days",
+   "label": "Sales Trend 7 Days"
   }
  ],
- "content": "[{\"id\":\"hdr_owner_dashboard\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Dashboard</span>\",\"col\":12}},{\"id\":\"nc_todays_sales\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Today's Sales\",\"col\":3}},{\"id\":\"nc_todays_profit\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Today's Profit\",\"col\":3}},{\"id\":\"nc_invoice_count_today\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Invoice Count Today\",\"col\":3}},{\"id\":\"nc_return_amount_today\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Return Amount Today\",\"col\":3}},{\"id\":\"nc_low_stock_items\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Low Stock Items\",\"col\":3}},{\"id\":\"nc_out_of_stock_items\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Out of Stock Items\",\"col\":3}},{\"id\":\"nc_damage_amount_today\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Damage Amount Today\",\"col\":3}},{\"id\":\"nc_cash_in_hand_today\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Cash in Hand Today\",\"col\":3}},{\"id\":\"sp_owner_dashboard_1\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"chart_retail_top_selling_products\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Retail Top Selling Products\",\"col\":4}},{\"id\":\"chart_retail_sales_by_counter\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Retail Sales by Counter\",\"col\":4}},{\"id\":\"chart_retail_sales_trend_7_days\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Retail Sales Trend 7 Days\",\"col\":4}},{\"id\":\"sp_owner_dashboard_2\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"sc_daily_sales_summary\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Daily Sales Summary\",\"col\":3}},{\"id\":\"sc_daily_transaction_log\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Daily Transaction Log\",\"col\":3}},{\"id\":\"sc_low_stock_reorder_report\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Low Stock Reorder Report\",\"col\":3}},{\"id\":\"sc_fast_moving_items\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Fast Moving Items\",\"col\":3}},{\"id\":\"sc_slow_moving_items\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Slow Moving Items\",\"col\":3}},{\"id\":\"sc_stock_adjustment_history\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Stock Adjustment History\",\"col\":3}},{\"id\":\"sc_cashier_wise_damage\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Cashier Wise Damage\",\"col\":3}},{\"id\":\"sc_reports\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Reports\",\"col\":3}}]",
+ "content": "[{\"id\":\"hdr_owner_dashboard\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Dashboard</span>\",\"col\":12}},{\"id\":\"nc_todays_sales\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Today's Sales\",\"col\":3}},{\"id\":\"nc_todays_profit\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Today's Profit\",\"col\":3}},{\"id\":\"nc_invoice_count_today\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Invoice Count Today\",\"col\":3}},{\"id\":\"nc_return_amount_today\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Return Amount Today\",\"col\":3}},{\"id\":\"nc_low_stock_items\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Low Stock Items\",\"col\":3}},{\"id\":\"nc_out_of_stock_items\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Out of Stock Items\",\"col\":3}},{\"id\":\"nc_damage_amount_today\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Damage Amount Today\",\"col\":3}},{\"id\":\"nc_cash_in_hand_today\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Cash in Hand Today\",\"col\":3}},{\"id\":\"sp_owner_dashboard_1\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"chart_retail_top_selling_products\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Top Selling Products\",\"col\":4}},{\"id\":\"chart_retail_sales_by_counter\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Sales by Counter\",\"col\":4}},{\"id\":\"chart_retail_sales_trend_7_days\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Sales Trend 7 Days\",\"col\":4}},{\"id\":\"sp_owner_dashboard_2\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"sc_daily_sales_summary\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Daily Sales Summary\",\"col\":3}},{\"id\":\"sc_daily_transaction_log\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Daily Transaction Log\",\"col\":3}},{\"id\":\"sc_low_stock_reorder_report\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Low Stock Reorder Report\",\"col\":3}},{\"id\":\"sc_fast_moving_items\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Fast Moving Items\",\"col\":3}},{\"id\":\"sc_slow_moving_items\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Slow Moving Items\",\"col\":3}},{\"id\":\"sc_stock_adjustment_history\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Stock Adjustment History\",\"col\":3}},{\"id\":\"sc_cashier_wise_damage\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Cashier Wise Damage\",\"col\":3}},{\"id\":\"sc_reports\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Reports\",\"col\":3}}]",
  "creation": "2026-06-13 11:35:00.711179",
  "custom_blocks": [],
  "docstatus": 0,
  "doctype": "Workspace",
  "for_user": "",
  "hide_custom": 0,
- "icon": "getting-started",
+ "icon": "home",
  "idx": 0,
  "indicator_color": "",
  "is_hidden": 0,
- "label": "Home",
+ "label": "Business Home",
  "links": [],
  "modified": "2026-06-20 10:03:28.953786",
  "modified_by": "Administrator",
  "module": "Retail-app",
- "name": "Home",
+ "name": "Business Home",
  "number_cards": [
   {
    "label": "Today's Sales",
@@ -136,5 +136,5 @@
    "url": "/app/reports"
   }
  ],
- "title": "Home"
+ "title": "Business Home"
 }

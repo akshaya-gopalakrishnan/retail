@@ -9,7 +9,7 @@
    "label": "Oldest Items"
   }
  ],
- "content": "[{\"id\":\"hdr_items\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Items</span>\",\"col\":12}},{\"id\":\"nc_total_active_items\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total Active Items\",\"col\":4}},{\"id\":\"nc_low_stock_items\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Low Stock Items\",\"col\":4}},{\"id\":\"nc_out_of_stock_items\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Out of Stock Items\",\"col\":4}},{\"id\":\"sc_items\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Items\",\"col\":3}},{\"id\":\"sc_item_groups\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Item Groups\",\"col\":3}},{\"id\":\"sc_brands\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Brands\",\"col\":3}},{\"id\":\"sc_item_prices\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Item Prices\",\"col\":3}},{\"id\":\"sc_price_lists\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Price Lists\",\"col\":3}},{\"id\":\"sc_units_of_measure\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Units of Measure\",\"col\":3}},{\"id\":\"sp_items_charts\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"chart_item_wise_annual_sales\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Item-wise Annual Sales\",\"col\":6}},{\"id\":\"chart_oldest_items\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Oldest Items\",\"col\":6}},{\"id\":\"sp_items_cards\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"card_item_masters\",\"type\":\"card\",\"data\":{\"card_name\":\"Item Masters\",\"col\":4}},{\"id\":\"card_retail_stock_signals\",\"type\":\"card\",\"data\":{\"card_name\":\"Retail Stock Signals\",\"col\":4}},{\"id\":\"card_item_reports\",\"type\":\"card\",\"data\":{\"card_name\":\"Item Reports\",\"col\":4}}]",
+ "content": "[{\"id\":\"hdr_items\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Items</span>\",\"col\":12}},{\"id\":\"nc_total_active_items\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total Active Items\",\"col\":4}},{\"id\":\"nc_low_stock_items\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Low Stock Items\",\"col\":4}},{\"id\":\"nc_out_of_stock_items\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Out of Stock Items\",\"col\":4}},{\"id\":\"sc_items\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Items\",\"col\":3}},{\"id\":\"sc_item_groups\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Item Groups\",\"col\":3}},{\"id\":\"sc_brands\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Brands\",\"col\":3}},{\"id\":\"sc_item_prices\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Item Prices\",\"col\":3}},{\"id\":\"sc_price_lists\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Price Lists\",\"col\":3}},{\"id\":\"sc_units_of_measure\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Units of Measure\",\"col\":3}},{\"id\":\"sp_items_charts\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"chart_item_wise_annual_sales\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Item-wise Annual Sales\",\"col\":6}},{\"id\":\"chart_oldest_items\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Oldest Items\",\"col\":6}},{\"id\":\"sp_items_cards\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"card_item_masters\",\"type\":\"card\",\"data\":{\"card_name\":\"Item Masters\",\"col\":4}},{\"id\":\"card_retail_stock_signals\",\"type\":\"card\",\"data\":{\"card_name\":\"Stock Signals\",\"col\":4}},{\"id\":\"card_item_reports\",\"type\":\"card\",\"data\":{\"card_name\":\"Item Reports\",\"col\":4}}]",
  "creation": "2026-06-11 16:49:23.406524",
  "custom_blocks": [],
  "docstatus": 0,
@@ -94,7 +94,7 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Retail Stock Signals",
+   "label": "Stock Signals",
    "link_count": 3,
    "link_type": "DocType",
    "onboard": 0,
@@ -137,7 +137,7 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Item Reports",
-   "link_count": 4,
+   "link_count": 6,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -161,6 +161,42 @@
    "link_to": "Stock Ledger",
    "link_type": "Report",
    "onboard": 0,
+   "report_ref_doctype": "Item",
+   "type": "Link"
+  },
+  {
+   "dependencies": null,
+   "description": null,
+   "hidden": 0,
+   "icon": null,
+   "is_query_report": 1,
+   "label": "Packing Stock Balance",
+   "link_count": 0,
+   "link_to": "Packing Stock Balance",
+   "link_type": "Report",
+   "onboard": 0,
+   "only_for": null,
+   "parent": "Items",
+   "parentfield": "links",
+   "parenttype": "Workspace",
+   "report_ref_doctype": "Item",
+   "type": "Link"
+  },
+  {
+   "dependencies": null,
+   "description": null,
+   "hidden": 0,
+   "icon": null,
+   "is_query_report": 1,
+   "label": "Packing Stock Ledger",
+   "link_count": 0,
+   "link_to": "Packing Stock Ledger",
+   "link_type": "Report",
+   "onboard": 0,
+   "only_for": null,
+   "parent": "Items",
+   "parentfield": "links",
+   "parenttype": "Workspace",
    "report_ref_doctype": "Item",
    "type": "Link"
   },
@@ -211,7 +247,7 @@
  "quick_lists": [],
  "restrict_to_domain": "",
  "roles": [],
- "sequence_id": 2.0,
+ "sequence_id": 2,
  "shortcuts": [
   {
    "color": "Blue",

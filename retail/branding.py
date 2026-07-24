@@ -2,9 +2,10 @@ import frappe
 
 
 BRAND_NAME = "CELESTA ERP"
-LOGO_URL = "/assets/retail/images/retail-logo.svg?v=2"
-FAVICON_URL = "/assets/retail/images/celesta-app-icon.svg?v=1"
-APP_LOGO_URL = "/assets/retail/images/celesta-app-icon.svg"
+HEADER_BRAND_NAME = "CELESTA"
+LOGO_URL = "/assets/retail/images/retail-logo.svg?v=4"
+FAVICON_URL = "/assets/retail/images/business-suite-app-icon.svg?v=3"
+APP_LOGO_URL = "/assets/retail/images/business-suite-app-icon.svg?v=3"
 
 
 def apply_default_branding():
@@ -13,7 +14,7 @@ def apply_default_branding():
     website_settings.app_logo = APP_LOGO_URL
     website_settings.splash_image = LOGO_URL
     website_settings.favicon = FAVICON_URL
-    website_settings.brand_html = '<img src="/assets/retail/images/celesta-app-icon.svg?v=1" class="retail-web-brand-icon" alt="Celesta"><span class="retail-web-brand">CELESTA</span>'
+    website_settings.brand_html = f'<img src="/assets/retail/images/business-suite-app-icon.svg?v=3" class="retail-web-brand-icon" alt="{BRAND_NAME}"><span class="retail-web-brand">{HEADER_BRAND_NAME}</span>'
     website_settings.footer_logo = LOGO_URL
     website_settings.footer_powered = f'Powered by <span class="text-muted">{BRAND_NAME}</span>'
     website_settings.copyright = BRAND_NAME

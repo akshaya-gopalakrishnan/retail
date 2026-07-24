@@ -2,7 +2,7 @@
  "docstatus": 0,
  "doctype": "Dashboard Chart Source",
  "module": "Retail-app",
- "name": "Retail Top Selling Products",
- "source_name": "Retail Top Selling Products",
+ "name": "Sales by Counter",
+ "source_name": "Sales by Counter",
  "timeseries": 0
 }

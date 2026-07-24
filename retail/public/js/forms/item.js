@@ -46,6 +46,7 @@
 			refreshPackingVatRows(frm);
 			refreshMargin(frm);
 			addPackingVatButton(frm);
+			addZebraLabelButton(frm);
 		},
 		item_name(frm) {
 			queueArabicItemNameTranslation(frm);
@@ -86,6 +87,106 @@
 		before_save(frm) { removeEmptyBarcodeRows(frm); },
 	});
 
+	function addZebraLabelButton(frm) {
+		if (frm.is_new()) return;
+		frm.add_custom_button(__("Print Zebra Label"), () => showZebraLabelDialog(frm), __("Retail"));
+	}
+
+	async function showZebraLabelDialog(frm) {
+		const defaultFormat = await getDefaultZebraLabelFormat();
+		const dialog = new frappe.ui.Dialog({
+			title: __("Print Zebra Label"),
+			fields: [
+				{
+					fieldname: "label_format",
+					label: __("Label Format"),
+					fieldtype: "Link",
+					options: "Zebra Label Format",
+					reqd: 1,
+					default: defaultFormat,
+					get_query: () => ({ filters: { enabled: 1, reference_doctype: "Item" } }),
+				},
+				{
+					fieldname: "copies",
+					label: __("Copies"),
+					fieldtype: "Int",
+					default: 1,
+					reqd: 1,
+				},
+				{
+					fieldname: "price",
+					label: __("Price"),
+					fieldtype: "Currency",
+					default: frm.doc.standard_rate || frm.doc.custom_sales_gross_rate || frm.doc.custom_sales_rate_entry || 0,
+				},
+				{
+					fieldname: "currency",
+					label: __("Currency"),
+					fieldtype: "Data",
+					default: "AED",
+				},
+				{
+					fieldname: "preview",
+					fieldtype: "HTML",
+				},
+				{
+					fieldname: "rendered_zpl",
+					label: __("Rendered ZPL"),
+					fieldtype: "Code",
+					options: "ZPL",
+					read_only: 1,
+				},
+			],
+			primary_action_label: __("Print"),
+			primary_action: async (values) => {
+				await frappe.call({
+					method: "retail.retail_app.doctype.zebra_label_format.zebra_label_format.print_label",
+					args: {
+						label_format: values.label_format,
+						item: frm.doc.name,
+						copies: values.copies,
+						price: values.price,
+						currency: values.currency,
+					},
+					freeze: true,
+					freeze_message: __("Sending to Zebra printer"),
+				});
+				dialog.hide();
+				frappe.show_alert({ message: __("Sent to Zebra printer"), indicator: "green" });
+			},
+			secondary_action_label: __("Preview"),
+			secondary_action: () => previewZebraLabelDialog(frm, dialog),
+		});
+
+		dialog.show();
+		await previewZebraLabelDialog(frm, dialog);
+	}
+
+	async function getDefaultZebraLabelFormat() {
+		const { message } = await frappe.call({
+			method: "retail.retail_app.doctype.zebra_label_format.zebra_label_format.get_default_format",
+			args: { label_type: "Barcode Label" },
+		});
+		return message;
+	}
+
+	async function previewZebraLabelDialog(frm, dialog) {
+		const values = dialog.get_values();
+		if (!values?.label_format) return;
+		const { message } = await frappe.call({
+			method: "retail.retail_app.doctype.zebra_label_format.zebra_label_format.render_label",
+			args: {
+				label_format: values.label_format,
+				item: frm.doc.name,
+				copies: values.copies,
+				price: values.price,
+				currency: values.currency,
+			},
+		});
+		dialog.fields_dict.preview.$wrapper.html(message.preview_html);
+		dialog.set_value("rendered_zpl", message.zpl);
+	}
+
 	frappe.ui.form.on("Retail Packing Detail", {
 		purchase_rate(frm, cdt, cdn) {
 			if (isPackingRowProgrammaticUpdate(cdt, cdn)) return;
@@ -95,7 +196,7 @@
 		selling_rate(frm, cdt, cdn) {
 			if (isPackingRowProgrammaticUpdate(cdt, cdn)) return;
 			resetPackingVatConfirmation(cdt, cdn, "selling");
-			refreshPackingVatRow(frm, cdt, cdn, "selling", "entry").then(() => updateItemRateFromPacking(frm, cdt, cdn, "selling", "entry"));
+			refreshPackingVatRow(frm, cdt, cdn, "selling", "entry");
 		},
 		purchase_net_rate(frm, cdt, cdn) {
 			if (isPackingRowProgrammaticUpdate(cdt, cdn)) return;
@@ -110,12 +211,12 @@
 		selling_net_rate(frm, cdt, cdn) {
 			if (isPackingRowProgrammaticUpdate(cdt, cdn)) return;
 			resetPackingVatConfirmation(cdt, cdn, "selling");
-			refreshPackingVatRow(frm, cdt, cdn, "selling", "net").then(() => updateItemRateFromPacking(frm, cdt, cdn, "selling", "net"));
+			refreshPackingVatRow(frm, cdt, cdn, "selling", "net");
 		},
 		selling_gross_rate(frm, cdt, cdn) {
 			if (isPackingRowProgrammaticUpdate(cdt, cdn)) return;
 			resetPackingVatConfirmation(cdt, cdn, "selling");
-			refreshPackingVatRow(frm, cdt, cdn, "selling", "gross").then(() => updateItemRateFromPacking(frm, cdt, cdn, "selling", "gross"));
+			refreshPackingVatRow(frm, cdt, cdn, "selling", "gross");
 		},
 		purchase_vat_mode(frm, cdt, cdn) {
 			resetPackingVatConfirmation(cdt, cdn, "purchase");
@@ -289,7 +390,8 @@
 	function calculatePackingVatSide(frm, cdt, cdn, direction, sourceField) {
 		const row = locals[cdt]?.[cdn];
 		const fields = packingVatFields[direction];
-		if (!row || !fields || row[fields.entry] === undefined) return Promise.resolve();
+		if (!row || !fields) return Promise.resolve();
+		if (!sourceField && row[fields.entry] === undefined) return Promise.resolve();
 
 		return getTemplateVatRate(frm, frm.doc[fields.template]).then((defaultRate) => {
 			let entered = flt(row[fields.entry]);
@@ -334,6 +436,7 @@
 
 	function refreshPackingFromItemRates(frm, direction) {
 		if (!Array.isArray(frm.doc.custom_retail_packing_detail)) return Promise.resolve();
+		if (direction === "selling") return refreshPackingVatRows(frm, direction);
 		const work = [];
 		(frm.doc.custom_retail_packing_detail || []).forEach((row) => {
 			work.push(setPackingRowFromItemRates(frm, row.doctype, row.name, direction));
@@ -345,7 +448,8 @@
 		const row = locals[cdt]?.[cdn];
 		if (!row || row.__retail_syncing_from_item) return Promise.resolve();
 
-		const sides = direction ? [direction] : ["purchase", "selling"];
+		const sides = direction ? [direction] : ["purchase"];
+		if (!sides.includes("purchase")) return Promise.resolve();
 		const updates = {};
 		sides.forEach((side) => {
 			const fields = packingVatFields[side];
@@ -371,6 +475,7 @@
 		const row = locals[cdt]?.[cdn];
 		const fields = packingVatFields[direction];
 		if (!row || row.__retail_syncing_from_item || row.__retail_updating_item_rate) return Promise.resolve();
+		if (direction === "selling") return Promise.resolve();
 
 		const factor = flt(row.conversion_factor || 1) || 1;
 		const rowNet = sourceField === "gross" || sourceField === "entry" ? flt(row[fields.net]) : flt(row[fields.net]);

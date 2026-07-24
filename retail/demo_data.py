@@ -6,14 +6,25 @@ import frappe
 from frappe.utils import add_days, flt, getdate, now, now_datetime, nowdate, nowtime, today
 
 
-DEMO_PREFIX = "RETAIL-DEMO"
-DEMO_COMPANY = "Celesta Demo Retail LLC"
-DEMO_ABBR = "CDR"
-DEMO_CUSTOMER = "Retail Demo Customer"
-DEMO_SUPPLIER = "Retail Demo Supplier"
-DEMO_BRANCH = "Retail Demo Branch"
-DEMO_POS_PROFILE = "Retail Demo POS Profile"
+DEMO_PREFIX = "BUSINESS-DEMO"
+DEMO_COMPANY = "CELESTA ERP Demo LLC"
+DEMO_ABBR = "BSD"
+DEMO_CUSTOMER = "Business Demo Customer"
+DEMO_SUPPLIER = "Business Demo Supplier"
+DEMO_BRANCH = "Business Demo Branch"
+DEMO_POS_PROFILE = "Business Demo POS Profile"
 DEMO_POS_COUNTER = f"{DEMO_BRANCH}-COUNTER-1"
+DEMO_GROUP = "Business Demo"
+DEMO_BRAND = "Business Demo"
+
+
+def setup_demo(args=None):
+	"""Run Retail demo seeding when ERPNext setup wizard demo data is selected."""
+	args = args or {}
+	if not args.get("setup_demo"):
+		return
+
+	frappe.enqueue(seed_full_demo_data, enqueue_after_commit=True, at_front=True)
 
 
 def _first_existing(doctype, filters=None, fieldname="name", order_by=None):
@@ -57,7 +68,7 @@ def _get_company():
 			"company_name": DEMO_COMPANY,
 			"timezone": "Asia/Dubai",
 			"company_abbr": DEMO_ABBR,
-			"industry": "Retail",
+			"industry": "Distribution",
 			"country": "United Arab Emirates",
 			"fy_start_date": f"{current_year}-01-01",
 			"fy_end_date": f"{current_year}-12-31",
@@ -163,18 +174,28 @@ def _ensure_mode_of_payment(mode, company, account):
 	return doc.name
 
 
+def _default_item_tax_template(company):
+	abbr = _company_abbr(company)
+	return (
+		frappe.db.exists("Item Tax Template", f"UAE VAT 5% - {abbr}")
+		or frappe.db.get_value("Item Tax Template", {"title": "UAE VAT 5%", "company": company}, "name")
+		or frappe.db.get_value("Item Tax Template", {"company": company}, "name", order_by="modified desc")
+	)
+
+
 def _ensure_masters(company):
 	currency = _default_currency(company)
 	warehouse = _default_warehouse(company)
 	display_warehouse = _second_warehouse(company)
 	cost_center = _default_cost_center(company)
+	item_tax_template = _default_item_tax_template(company)
 
 	for doctype, name, values in (
-		("Item Group", "Retail Demo", {"item_group_name": "Retail Demo", "parent_item_group": "All Item Groups", "is_group": 0}),
-		("Brand", "Celesta Demo", {"brand": "Celesta Demo"}),
-		("Customer Group", "Retail Demo", {"customer_group_name": "Retail Demo", "parent_customer_group": "All Customer Groups", "is_group": 0}),
-		("Supplier Group", "Retail Demo", {"supplier_group_name": "Retail Demo", "parent_supplier_group": "All Supplier Groups", "is_group": 0}),
-		("Territory", "Retail Demo", {"territory_name": "Retail Demo", "parent_territory": "All Territories", "is_group": 0}),
+		("Item Group", DEMO_GROUP, {"item_group_name": DEMO_GROUP, "parent_item_group": "All Item Groups", "is_group": 0}),
+		("Brand", DEMO_BRAND, {"brand": DEMO_BRAND}),
+		("Customer Group", DEMO_GROUP, {"customer_group_name": DEMO_GROUP, "parent_customer_group": "All Customer Groups", "is_group": 0}),
+		("Supplier Group", DEMO_GROUP, {"supplier_group_name": DEMO_GROUP, "parent_supplier_group": "All Supplier Groups", "is_group": 0}),
+		("Territory", DEMO_GROUP, {"territory_name": DEMO_GROUP, "parent_territory": "All Territories", "is_group": 0}),
 	):
 		_insert_if_missing(doctype, name, values)
 
@@ -184,8 +205,8 @@ def _ensure_masters(company):
 		{
 			"customer_name": DEMO_CUSTOMER,
 			"customer_type": "Individual",
-			"customer_group": "Retail Demo",
-			"territory": "Retail Demo",
+			"customer_group": DEMO_GROUP,
+			"territory": DEMO_GROUP,
 			"default_currency": currency,
 		},
 	).name
@@ -194,7 +215,7 @@ def _ensure_masters(company):
 		DEMO_SUPPLIER,
 		{
 			"supplier_name": DEMO_SUPPLIER,
-			"supplier_group": "Retail Demo",
+			"supplier_group": DEMO_GROUP,
 			"supplier_type": "Company",
 			"country": frappe.db.get_value("Company", company, "country") or "United Arab Emirates",
 			"default_currency": currency,
@@ -219,6 +240,7 @@ def _ensure_masters(company):
 			"counter": counter,
 			"cash_mode": _cash,
 			"card_mode": _card,
+			"item_tax_template": item_tax_template,
 		}
 	)
 
@@ -229,8 +251,8 @@ def _ensure_item(code, item_name, barcode, rate, ctx):
 	doc = frappe.new_doc("Item")
 	doc.item_code = code
 	doc.item_name = item_name
-	doc.item_group = "Retail Demo"
-	doc.brand = "Celesta Demo"
+	doc.item_group = DEMO_GROUP
+	doc.brand = DEMO_BRAND
 	doc.stock_uom = "Nos"
 	doc.is_stock_item = 1
 	doc.is_sales_item = 1
@@ -240,6 +262,10 @@ def _ensure_item(code, item_name, barcode, rate, ctx):
 	doc.last_purchase_rate = rate * 0.62
 	if doc.meta.has_field("custom_barcode"):
 		doc.custom_barcode = barcode
+	if ctx.item_tax_template:
+		for fieldname in ("custom_purchase_tax_template", "custom_tax"):
+			if doc.meta.has_field(fieldname):
+				doc.set(fieldname, ctx.item_tax_template)
 	doc.append(
 		"item_defaults",
 		{
@@ -502,10 +528,11 @@ def _ensure_sales_flow(ctx, items, pos_profile):
 		ret.set("payments", [])
 		ret.paid_amount = 0
 		ret.base_paid_amount = 0
-		for row in ret.items[1:]:
-			row.qty = 0
 		if ret.items:
+			if len(ret.items) > 1:
+				ret.set("items", [ret.items[0]])
 			ret.items[0].qty = -1
+			ret.items[0].stock_qty = -abs(ret.items[0].conversion_factor or 1)
 		ret.insert(ignore_permissions=True)
 		_submit_once(ret)
 

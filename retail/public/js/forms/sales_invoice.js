@@ -7,6 +7,10 @@
 		},
 		refresh(frm) {
 			keepCompanyVisible(frm);
+			restoreStandardDraftAction(frm);
+		},
+		after_save(frm) {
+			restoreStandardDraftAction(frm, true);
 		},
 	});
 
@@ -27,6 +31,26 @@
 		setTimeout(showCompany, 250);
 	}
 
+	function restoreStandardDraftAction(frm, forceClean = false) {
+		if (!frm || cint(frm.doc?.docstatus) !== 0 || frm.doc?.__islocal) return;
+
+		const savedAt = Date.now();
+		[100, 500, 1200, 2500].forEach((delay) => {
+			setTimeout(() => {
+				if (!frm || cint(frm.doc?.docstatus) !== 0 || frm.doc?.__islocal) return;
+				if (frm.__retail_local_draft_last_user_event_at > savedAt) return;
+
+				if (forceClean) {
+					frm.doc.__unsaved = 0;
+				}
+				if (!frm.doc.__unsaved) {
+					frm.toolbar?.set_primary_action?.(false);
+					frm.toolbar?.show_title_as_dirty?.();
+				}
+			}, delay);
+		});
+	}
+
 	frappe.ui.form.on("Sales Invoice Item", {
 		qty(frm, cdt, cdn) {
 			updateFocQty(frm, cdt, cdn);
@@ -44,6 +68,8 @@
 		if (!row || row.custom_total_stock_qty === undefined) return;
 
 		const totalQty = flt(row.qty) + flt(row.custom_foc_qty);
+		if (flt(row.custom_total_stock_qty) === totalQty) return;
+
 		const values = {
 			custom_total_stock_qty: totalQty,
 		};

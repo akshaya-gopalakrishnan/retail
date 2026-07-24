@@ -2,7 +2,8 @@ import frappe
 
 
 RETAIL_WORKSPACE_MODULE = "Retail-app"
-VISIBLE_RETAIL_WORKSPACES = {"Manufacturing"}
+HIDDEN_STANDARD_WORKSPACES = {"Home"}
+VISIBLE_RETAIL_WORKSPACES = {"Business Home", "Manufacturing"}
 RETAIL_PRINT_LANGUAGES = {
 	"ar": "Arabic",
 	"hi": "Hindi",
@@ -17,7 +18,7 @@ def hide_non_retail_workspaces():
 
 	updates = []
 	for workspace in frappe.get_all("Workspace", fields=["name", "module", "public", "is_hidden"]):
-		if workspace.module == RETAIL_WORKSPACE_MODULE:
+		if workspace.module == RETAIL_WORKSPACE_MODULE and workspace.name not in HIDDEN_STANDARD_WORKSPACES:
 			continue
 
 		if workspace.public or not workspace.is_hidden:

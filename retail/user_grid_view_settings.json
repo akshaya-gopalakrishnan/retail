@@ -1,0 +1,214 @@
+{
+  "Item": {
+    "Retail Packing Detail": [
+      {
+        "columns": 2,
+        "fieldname": "barcode"
+      },
+      {
+        "columns": 1,
+        "fieldname": "uom"
+      },
+      {
+        "columns": 1,
+        "fieldname": "conversion_factor"
+      },
+      {
+        "columns": 2,
+        "fieldname": "purchase_net_rate"
+      },
+      {
+        "columns": 1,
+        "fieldname": "purchase_gross_rate"
+      },
+      {
+        "columns": 2,
+        "fieldname": "selling_net_rate"
+      },
+      {
+        "columns": 1,
+        "fieldname": "selling_gross_rate"
+      }
+    ]
+  },
+  "Promotional Scheme": {
+    "Promotional Scheme Product Discount": [
+      {
+        "columns": 1,
+        "fieldname": "min_qty"
+      },
+      {
+        "columns": 1,
+        "fieldname": "max_qty"
+      },
+      {
+        "columns": 1,
+        "fieldname": "min_amount"
+      },
+      {
+        "columns": 1,
+        "fieldname": "max_amount"
+      },
+      {
+        "columns": 2,
+        "fieldname": "free_item"
+      },
+      {
+        "columns": 1,
+        "fieldname": "free_qty"
+      },
+      {
+        "columns": 3,
+        "fieldname": "rule_description"
+      }
+    ]
+  },
+  "Purchase Order": {
+    "Purchase Order Item": [
+      {
+        "columns": 2,
+        "fieldname": "item_code"
+      },
+      {
+        "columns": 1,
+        "fieldname": "uom"
+      },
+      {
+        "columns": 1,
+        "fieldname": "schedule_date"
+      },
+      {
+        "columns": 1,
+        "fieldname": "qty"
+      },
+      {
+        "columns": 1,
+        "fieldname": "custom_foc_qty"
+      },
+      {
+        "columns": 1,
+        "fieldname": "custom_total_stock_qty"
+      },
+      {
+        "columns": 1,
+        "fieldname": "custom_rate_including_vat"
+      },
+      {
+        "columns": 1,
+        "fieldname": "rate"
+      },
+      {
+        "columns": 1,
+        "fieldname": "amount"
+      }
+    ]
+  },
+  "Sales Invoice": {
+    "Sales Invoice Item": [
+      {
+        "columns": 2,
+        "fieldname": "item_code"
+      },
+      {
+        "columns": 2,
+        "fieldname": "item_name"
+      },
+      {
+        "columns": 2,
+        "fieldname": "qty"
+      },
+      {
+        "columns": 1,
+        "fieldname": "custom_foc_qty"
+      },
+      {
+        "columns": 1,
+        "fieldname": "rate"
+      },
+      {
+        "columns": 1,
+        "fieldname": "custom_rate_including_vat"
+      },
+      {
+        "columns": 1,
+        "fieldname": "amount"
+      }
+    ]
+  },
+  "Sales Order": {
+    "Sales Order Item": [
+      {
+        "columns": 1,
+        "fieldname": "item_code"
+      },
+      {
+        "columns": 1,
+        "fieldname": "item_name"
+      },
+      {
+        "columns": 1,
+        "fieldname": "delivery_date"
+      },
+      {
+        "columns": 1,
+        "fieldname": "qty"
+      },
+      {
+        "columns": 1,
+        "fieldname": "custom_foc_qty"
+      },
+      {
+        "columns": 1,
+        "fieldname": "custom_total_stock_qty"
+      },
+      {
+        "columns": 1,
+        "fieldname": "rate"
+      },
+      {
+        "columns": 1,
+        "fieldname": "custom_rate_including_vat"
+      },
+      {
+        "columns": 1,
+        "fieldname": "amount"
+      },
+      {
+        "columns": 1,
+        "fieldname": "custom_amount_including_vat"
+      }
+    ]
+  },
+  "Stock Entry": {
+    "Stock Entry Detail": [
+      {
+        "columns": 2,
+        "fieldname": "s_warehouse"
+      },
+      {
+        "columns": 2,
+        "fieldname": "t_warehouse"
+      },
+      {
+        "columns": 2,
+        "fieldname": "item_name"
+      },
+      {
+        "columns": 1,
+        "fieldname": "item_code"
+      },
+      {
+        "columns": 1,
+        "fieldname": "qty"
+      },
+      {
+        "columns": 1,
+        "fieldname": "custom_foc_qty"
+      },
+      {
+        "columns": 1,
+        "fieldname": "custom_total_stock_qty"
+      }
+    ]
+  }
+}

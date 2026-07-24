@@ -108,5 +108,16 @@
   "name": "Purchase Order Balance Quantity",
   "script": "frappe.ui.form.on(\"Purchase Order Item\", {\n\tqty(frm, cdt, cdn) {\n\t\tset_balance_qty(cdt, cdn);\n\t},\n\treceived_qty(frm, cdt, cdn) {\n\t\tset_balance_qty(cdt, cdn);\n\t}\n});\n\nfunction set_balance_qty(cdt, cdn) {\n\tconst row = locals[cdt][cdn];\n\tfrappe.model.set_value(cdt, cdn, \"balance_qty\", flt(row.qty) - flt(row.received_qty));\n}",
   "view": "Form"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Item",
+  "enabled": 1,
+  "modified": "2026-07-23 12:56:02.345004",
+  "module": null,
+  "name": "Hide Item Arabic Translate Button",
+  "script": "frappe.ui.form.on(\"Item\", {\n\trefresh(frm) {\n\t\thide_item_arabic_translate_button(frm);\n\t\tsetTimeout(() => hide_item_arabic_translate_button(frm), 0);\n\t}\n});\n\nfunction hide_item_arabic_translate_button(frm) {\n\tconst label = __(\"Translate Arabic\");\n\tfrm.remove_custom_button(label, __(\"Retail\"));\n\n\tconst field = frm.fields_dict.custom_arabic_item_name;\n\tif (!field || !field.$wrapper) return;\n\n\tfield.$wrapper.find(\"button\").filter(function () {\n\t\tconst text = ($(this).text() || \"\").trim();\n\t\treturn text === label || text === \"Translate Arabic\";\n\t}).remove();\n}\n",
+  "view": "Form"
  }
 ]

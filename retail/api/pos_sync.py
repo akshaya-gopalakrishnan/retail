@@ -3,7 +3,13 @@ import json
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import cint, flt, now_datetime
+from frappe.utils import cint, flt, getdate, now_datetime, nowdate
+
+from erpnext.accounts.report.customer_ledger_summary.customer_ledger_summary import (
+	PartyLedgerSummaryReport,
+)
+
+from retail.pos_login import hash_quick_pin, make_quick_pin_hash, validate_quick_pin
 
 
 SYNC_SOURCE = "Offline POS"
@@ -187,9 +193,24 @@ def _cashier_employee(payload, required=False):
 		if required:
 			frappe.throw(_("cashier_employee is required."))
 		return None
-	if not frappe.db.exists("Employee", employee):
+	employee_name = _resolve_employee_identifier(employee)
+	if not employee_name:
 		frappe.throw(_("Cashier Employee {0} was not found.").format(employee))
-	return employee
+	return employee_name
+
+
+def _resolve_employee_identifier(employee):
+	if frappe.db.exists("Employee", employee):
+		return employee
+
+	employee_meta = frappe.get_meta("Employee")
+	for fieldname in ("employee", "employee_number", "attendance_device_id", "user_id", "cell_number"):
+		if not employee_meta.has_field(fieldname):
+			continue
+		employee_name = frappe.db.get_value("Employee", {fieldname: employee}, "name")
+		if employee_name:
+			return employee_name
+	return None
 
 
 def _business_date(payload):
@@ -552,7 +573,16 @@ def _cashier_master_rows(branch=None, modified_after=None):
 		filters.append(["modified", ">", modified_after])
 
 	fields = ["name", "employee", "employee_name", "status", "modified"]
-	for fieldname in ("branch", "company", "designation", "cell_number", "user_id"):
+	for fieldname in (
+		"branch",
+		"company",
+		"designation",
+		"cell_number",
+		"user_id",
+		"pos_login_enabled",
+		"pos_quick_pin_hash",
+		"pos_quick_pin_salt",
+	):
 		if frappe.get_meta("Employee").has_field(fieldname):
 			fields.append(fieldname)
 
@@ -564,7 +594,18 @@ def _cashier_master_rows(branch=None, modified_after=None):
 	)
 	if branch and frappe.get_meta("Employee").has_field("branch"):
 		rows = [row for row in rows if not row.get("branch") or row.get("branch") == branch]
+	for row in rows:
+		row.login_id = row.get("user_id") or row.get("employee") or row.get("name")
+		row.operator_group = row.get("designation")
+		row.quick_pin_hash = row.get("pos_quick_pin_hash")
+		row.quick_pin_salt = row.get("pos_quick_pin_salt")
+		if "pos_login_enabled" in row and not cint(row.get("pos_login_enabled")):
+			row.disabled = 1
 	return rows
+
+
+def _hash_quick_pin(quick_pin, salt):
+	return hash_quick_pin(quick_pin, salt)
 
 
 def _validate_vat(doc, payload):
@@ -602,6 +643,7 @@ def health_check(branch=None, counter_code=None):
 				"cost_center": counter_doc.cost_center,
 				"counter": counter_doc.name,
 				"terminal_id": counter_doc.terminal_id,
+				"printer_name": counter_doc.get("printer_name"),
 			}
 		)
 	return response
@@ -616,18 +658,35 @@ def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
 	modified_after = payload.get("modified_after")
 	counter_doc = _counter(branch, counter_code)
 	modified_filter = [["modified", ">", modified_after]] if modified_after else []
-
+	items = frappe.get_all(
+		"Item",
+		filters=modified_filter,
+		fields=[
+			"name",
+			"item_code",
+			"item_name",
+			"custom_arabic_item_name as arabic_item_name",
+			"item_group",
+			"stock_uom",
+			"is_stock_item",
+			"custom_scale_item as is_scalable_item",
+			"custom_scale_barcode_type as scale_barcode_type",
+			"custom_is_open_price as is_open_price",
+			"disabled",
+			"owner as created_by",
+			"creation as created_on",
+			"modified_by",
+			"modified",
+			"modified as modified_on",
+		],
+		limit_page_length=0,
+	)
 	return {
 		"status": "Success",
 		"server_time": now_datetime(),
 		"counter": counter_doc.as_dict(),
 		"tax_config": _pos_tax_config(counter_doc),
-		"items": frappe.get_all(
-			"Item",
-			filters=modified_filter,
-			fields=["name", "item_code", "item_name", "item_group", "stock_uom", "is_stock_item", "disabled", "modified"],
-			limit_page_length=0,
-		),
+		"items": items,
 		"item_barcodes": frappe.get_all(
 			"Item Barcode",
 			filters=modified_filter,
@@ -664,11 +723,60 @@ def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
 				"counter_code",
 				"counter_name",
 				"terminal_id",
+				"printer_name",
 				"pos_profile",
 			],
 			limit_page_length=0,
 		),
 	}
+
+
+@frappe.whitelist()
+def set_cashier_quick_pin(data=None, **kwargs):
+	_assert_pos_user()
+	if "System Manager" not in frappe.get_roles():
+		frappe.throw(_("Only System Manager can set cashier quick PIN."))
+	payload = _as_dict(data, **kwargs)
+	employee = payload.get("cashier_employee") or payload.get("employee")
+	quick_pin = payload.get("quick_pin")
+	if not employee or not frappe.db.exists("Employee", employee):
+		frappe.throw(_("Cashier Employee is required."))
+	validate_quick_pin(quick_pin)
+	if not frappe.get_meta("Employee").has_field("pos_quick_pin_hash"):
+		frappe.throw(_("POS quick PIN fields are not installed. Run migration."))
+	salt, pin_hash = make_quick_pin_hash(quick_pin)
+	frappe.db.set_value(
+		"Employee",
+		employee,
+		{
+			"pos_login_enabled": 1,
+			"pos_quick_pin_salt": salt,
+			"pos_quick_pin_hash": pin_hash,
+		},
+	)
+	return {"status": "Success", "cashier_employee": employee}
+
+
+@frappe.whitelist()
+def verify_cashier_quick_pin(data=None, **kwargs):
+	_assert_pos_user()
+	payload = _as_dict(data, **kwargs)
+	employee = payload.get("cashier_employee") or payload.get("employee")
+	quick_pin = payload.get("quick_pin")
+	if not employee or not quick_pin:
+		frappe.throw(_("cashier_employee and quick_pin are required."))
+	if not frappe.get_meta("Employee").has_field("pos_quick_pin_hash"):
+		frappe.throw(_("POS quick PIN fields are not installed. Run migration."))
+	row = frappe.db.get_value(
+		"Employee",
+		employee,
+		["status", "pos_login_enabled", "pos_quick_pin_salt", "pos_quick_pin_hash"],
+		as_dict=True,
+	)
+	if not row or row.status != "Active" or not cint(row.pos_login_enabled):
+		return {"status": "Failed", "verified": 0}
+	verified = _hash_quick_pin(str(quick_pin), row.pos_quick_pin_salt) == row.pos_quick_pin_hash
+	return {"status": "Success" if verified else "Failed", "verified": 1 if verified else 0, "cashier_employee": employee}
 
 
 @frappe.whitelist()
@@ -1400,6 +1508,117 @@ def upsert_customer(data=None, **kwargs):
 	return _run("Customer Upsert", payload, handler)
 
 
+def _default_company():
+	companies = frappe.get_all("Company", pluck="name", limit=2)
+	if len(companies) == 1:
+		return companies[0]
+	return None
+
+
+def _customer_balance_details(customers=None):
+	filters = {"disabled": 0}
+	if customers:
+		filters["name"] = ["in", customers]
+
+	rows = frappe.get_all(
+		"Customer",
+		filters=filters,
+		fields=[
+			"name",
+			"customer_name",
+			"email_id",
+			"mobile_no",
+			"customer_primary_address",
+			"primary_address",
+		],
+		order_by="customer_name asc",
+	)
+
+	return {row.name: row for row in rows}
+
+
+def _customer_ledger_rows(company, from_date, to_date, customer=None):
+	filters = frappe._dict(
+		{
+			"company": company,
+			"from_date": getdate(from_date),
+			"to_date": getdate(to_date),
+			"party": customer,
+		}
+	)
+	args = {
+		"party_type": "Customer",
+		"naming_by": ["Selling Settings", "cust_master_name"],
+	}
+
+	_, rows = PartyLedgerSummaryReport(filters).run(args)
+	return {row.party: row for row in rows}
+
+
+def _format_customer_balance(customer, ledger=None):
+	ledger = ledger or frappe._dict()
+
+	return {
+		"customer": customer.name,
+		"customer_name": customer.customer_name,
+		"email": customer.email_id,
+		"phone": customer.mobile_no,
+		"opening_balance": flt(ledger.get("opening_balance")),
+		"transaction_amount": flt(ledger.get("invoiced_amount")),
+		"payment_amount": flt(ledger.get("paid_amount")),
+		"current_balance": flt(ledger.get("closing_balance")),
+		"address": customer.primary_address,
+		"address_id": customer.customer_primary_address,
+	}
+
+
+@frappe.whitelist()
+def get_customer_balances(
+	company=None,
+	from_date=None,
+	to_date=None,
+	customer=None,
+	include_zero_balance=0,
+):
+	_assert_pos_user()
+
+	company = company or _default_company()
+	if not company:
+		frappe.throw(_("Company is required."))
+
+	from_date = from_date or frappe.db.get_default("year_start_date") or nowdate()
+	to_date = to_date or nowdate()
+	include_zero_balance = cint(include_zero_balance)
+
+	if getdate(from_date) > getdate(to_date):
+		frappe.throw(_("From Date must be before To Date"))
+
+	if customer and not frappe.db.exists("Customer", customer):
+		frappe.throw(_("Customer {0} was not found.").format(customer))
+
+	ledger_by_customer = _customer_ledger_rows(company, from_date, to_date, customer=customer)
+	customer_filter = [customer] if customer else None
+	if not customer_filter and not include_zero_balance:
+		customer_filter = ledger_by_customer.keys()
+
+	customers = _customer_balance_details(customer_filter)
+	data = []
+	for customer_name, customer_row in customers.items():
+		ledger = ledger_by_customer.get(customer_name)
+		if not include_zero_balance and not ledger:
+			continue
+		data.append(_format_customer_balance(customer_row, ledger))
+
+	return {
+		"status": "Success",
+		"company": company,
+		"from_date": str(getdate(from_date)),
+		"to_date": str(getdate(to_date)),
+		"count": len(data),
+		"data": data,
+	}
+
+
 @frappe.whitelist()
 def get_warehouse_stock_snapshot(data=None, **kwargs):
 	_assert_pos_user()
@@ -1413,7 +1632,21 @@ def get_warehouse_stock_snapshot(data=None, **kwargs):
 		"status": "Success",
 		"warehouse": counter_doc.warehouse,
 		"generated_at": now_datetime(),
-		"stock": frappe.get_all("Bin", filters, ["item_code", "actual_qty", "reserved_qty", "projected_qty", "stock_value", "modified"], limit_page_length=0),
+		"stock": frappe.get_all(
+			"Bin",
+			filters,
+			[
+				"item_code",
+				"actual_qty",
+				"actual_qty as current_stock",
+				"reserved_qty",
+				"projected_qty",
+				"stock_value",
+				"modified",
+				"modified as modified_on",
+			],
+			limit_page_length=0,
+		),
 	}
 
 

@@ -6,6 +6,7 @@
     const OPEN_WORK_TTL_MS = 12 * 60 * 60 * 1000;
     const ICON_MAP = {
         'home': { icon: 'fa fa-home', cls: 'color-settings' },
+        'business home': { icon: 'fa fa-home', cls: 'color-settings' },
         'items': { icon: 'fa fa-cubes', cls: 'color-items' },
         'sales': { icon: 'fa fa-shopping-cart', cls: 'color-sales' },
         'pos': { icon: 'fa fa-desktop', cls: 'color-sales' },
@@ -390,11 +391,12 @@
         'Manufacturing Settings': 'Manufacturing Setup'
     });
     const WORKSPACE_ROUTE_NAMES = Object.freeze({
+        'Home': 'Business Home',
         'Manufacturing Reports': 'MFG Reports',
         'Manufacturing Setup': 'MFG Setup'
     });
     const TOP_LEVEL_WORKSPACES = new Set([
-        'Home',
+        'Business Home',
         'Items',
         'Sales',
         'POS',
@@ -412,6 +414,53 @@
     let sidebarRenderRetryCount = 0;
     let workspaceCustomCardsPatched = false;
     let openWorkClearedRouteKey = null;
+
+    function redirectStandardHomeToBusinessHome() {
+        const route = frappe.get_route?.() || [];
+        const routeName = route[0] === 'private' ? route[1] : route[0];
+        if (frappe.router.slug(routeName || '') !== 'home') return false;
+
+        const target = getWorkspaceUrl('Business Home', true).replace(/^\/app\//, '');
+        if (route.join('/') === target) return false;
+
+        frappe.set_route(target);
+        return true;
+    }
+
+    function bindNavbarHomeToBusinessHome() {
+        const businessHomeUrl = getWorkspaceUrl('Business Home', true);
+        const businessHomeRoute = businessHomeUrl.replace(/^\/app\//, '');
+
+        document.querySelectorAll('.navbar .navbar-home').forEach((link) => {
+            if (link.tagName === 'A') {
+                link.setAttribute('href', businessHomeUrl);
+            }
+        });
+
+        if (!window.__retail_business_home_navbar_bound) {
+            window.__retail_business_home_navbar_bound = true;
+            document.addEventListener('click', (event) => {
+                const homeLink = event.target?.closest?.('.navbar .navbar-home');
+                if (!homeLink) return;
+
+                event.preventDefault();
+                event.stopPropagation();
+                event.stopImmediatePropagation?.();
+                frappe.set_route(businessHomeRoute);
+            }, true);
+        }
+
+        if (!window.jQuery) return;
+
+        $(document)
+            .off('click.retailBusinessHome', '.navbar .navbar-home')
+            .on('click.retailBusinessHome', '.navbar .navbar-home', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                frappe.set_route(businessHomeRoute);
+                return false;
+            });
+    }
 
     function normalizeText(text) {
         return (text || '')
@@ -1207,6 +1256,17 @@
         });
     }
 
+    function hideStandardHomeSidebarItems() {
+        document.querySelectorAll('.sidebar-item-container').forEach(container => {
+            const label = getItemLabel(container);
+            const workspaceName = container.getAttribute('item-workspace-name') || label;
+            if (label !== 'Home' && workspaceName !== 'Home') return;
+
+            container.classList.add('hidden');
+            container.style.display = 'none';
+        });
+    }
+
     function setDropIcon(container, open) {
         const use = container
             ?.querySelector(':scope > .desk-sidebar-item .drop-icon use');
@@ -1745,12 +1805,12 @@
             }
             if (host.querySelector('.retail-persistent-sidebar')) return;
 
-            const visibleItems = items.filter(item => !item.is_hidden);
+            const visibleItems = items.filter(item => !item.is_hidden && (item.title || item.name) !== 'Home');
             const publicItems = visibleItems.filter(item => item.public);
             const roots = publicItems.filter(item => !item.parent_page);
             const wrapper = document.createElement('div');
             wrapper.className = 'retail-persistent-sidebar standard-sidebar-section nested-container';
-            wrapper.dataset.title = 'Retail';
+            wrapper.dataset.title = 'CELESTA';
 
             roots.forEach(item => wrapper.appendChild(buildSidebarItem(item, publicItems)));
             host.prepend(wrapper);
@@ -1765,6 +1825,7 @@
     }
 
     function refreshSidebarEnhancements() {
+        hideStandardHomeSidebarItems();
         applyDirectLinks();
         applyIcons();
         ensureWorkspaceDropIcons();
@@ -1828,6 +1889,8 @@
     function init() {
         ensureRetailCss();
         injectRetailInlineCss();
+        bindNavbarHomeToBusinessHome();
+        redirectStandardHomeToBusinessHome();
         redirectItemFamilyListRoute();
         waitForWorkspaceModule();
         applyDirectLinks();
@@ -1844,6 +1907,7 @@
 
         if (window.frappe?.router?.on) {
             frappe.router.on('change', () => {
+                if (redirectStandardHomeToBusinessHome()) return;
                 redirectItemFamilyListRoute();
                 clearTimeout(routeRefreshTimer);
                 routeRefreshTimer = setTimeout(refreshSidebarEnhancements, 120);

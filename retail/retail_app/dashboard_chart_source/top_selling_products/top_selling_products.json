@@ -2,7 +2,7 @@
  "docstatus": 0,
  "doctype": "Dashboard Chart Source",
  "module": "Retail-app",
- "name": "Retail Sales Trend 7 Days",
- "source_name": "Retail Sales Trend 7 Days",
+ "name": "Top Selling Products",
+ "source_name": "Top Selling Products",
  "timeseries": 0
 }

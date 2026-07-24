@@ -1,6 +1,6 @@
 frappe.provide("frappe.dashboards.chart_sources");
 
-frappe.dashboards.chart_sources["Retail Sales Trend 7 Days"] = {
+frappe.dashboards.chart_sources["Sales Trend 7 Days"] = {
 	method: "retail.retail_app.retail_dashboard.get_sales_trend_7_days",
 	filters: [],
 };

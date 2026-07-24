@@ -134,7 +134,7 @@ body[data-path="login"] .for-email-login::before {
     align-self: stretch;
     background:
         linear-gradient(135deg, rgba(11, 31, 58, 0.10), rgba(14, 165, 233, 0.08)),
-        url("/assets/retail/images/celesta-login-banner.svg") center / contain no-repeat;
+        url("/assets/retail/images/business-suite-login-banner.svg?v=3") center / contain no-repeat;
     background-color: #f5fbff;
     content: "";
     grid-area: banner;

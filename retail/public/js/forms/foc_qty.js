@@ -31,6 +31,8 @@
 		if (!row || row.custom_total_stock_qty === undefined) return;
 
 		const totalQty = flt(row.qty) + flt(row.custom_foc_qty);
+		if (flt(row.custom_total_stock_qty) === totalQty) return;
+
 		const values = {
 			custom_total_stock_qty: totalQty,
 		};
