@@ -1,0 +1,26 @@
+{
+ "actions": [],
+ "creation": "2026-07-25 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "output_label",
+  "source_field"
+ ],
+ "fields": [
+  {"fieldname": "output_label", "fieldtype": "Data", "in_list_view": 1, "label": "Output Label", "reqd": 1},
+  {"fieldname": "source_field", "fieldtype": "Select", "in_list_view": 1, "label": "Source Field", "options": "plu\nbarcode\nitem_name\nprice\nunit\nshelf_days\nitem_code\nuom\nprefix\nbarcode_type", "reqd": 1}
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-07-25 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Retail-app",
+ "name": "Scale Export Template Column",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

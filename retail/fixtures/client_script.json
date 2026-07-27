@@ -62,7 +62,7 @@
   "modified": "2026-05-21 23:36:16.339315",
   "module": null,
   "name": "generate unique scale barcode",
-  "script": "frappe.ui.form.on('Item', {\r\n\r\n    custom_scale_item: function(frm) {\r\n\r\n        if (frm.doc.custom_scale_item) {\r\n\r\n            if (!frm.doc.custom_barcode) {\r\n\r\n                let prefix = \"21\";\r\n                let rand = Math.floor(10000 + Math.random() * 90000);\r\n\r\n                frm.set_value(\r\n                    'custom_barcode',\r\n                    prefix + rand\r\n                );\r\n            }\r\n        }\r\n    }\r\n\r\n});",
+  "script": "frappe.ui.form.on('Item', {\r\n\r\n    custom_scale_item: function(frm) {\r\n\r\n        if (frm.doc.custom_scale_item) {\r\n\r\n            if (!frm.doc.custom_barcode) {\r\n\r\n                let prefix = \"99\";\r\n                let rand = Math.floor(10000 + Math.random() * 90000);\r\n\r\n                frm.set_value(\r\n                    'custom_barcode',\r\n                    prefix + rand\r\n                );\r\n            }\r\n        }\r\n    }\r\n\r\n});",
   "view": "Form"
  },
  {

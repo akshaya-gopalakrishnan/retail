@@ -103,6 +103,50 @@
       }
     ]
   },
+  "Purchase Receipt": {
+    "Purchase Receipt Item": [
+      {
+        "columns": 1,
+        "fieldname": "item_code"
+      },
+      {
+        "columns": 1,
+        "fieldname": "qty"
+      },
+      {
+        "columns": 1,
+        "fieldname": "custom_foc_qty"
+      },
+      {
+        "columns": 1,
+        "fieldname": "custom_total_stock_qty"
+      },
+      {
+        "columns": 1,
+        "fieldname": "rejected_qty"
+      },
+      {
+        "columns": 1,
+        "fieldname": "rate"
+      },
+      {
+        "columns": 1,
+        "fieldname": "custom_rate_including_vat"
+      },
+      {
+        "columns": 1,
+        "fieldname": "custom_cur_sell_rate"
+      },
+      {
+        "columns": 1,
+        "fieldname": "custom_new_sell_rate"
+      },
+      {
+        "columns": 1,
+        "fieldname": "custom_new_sell_incl"
+      }
+    ]
+  },
   "Sales Invoice": {
     "Sales Invoice Item": [
       {

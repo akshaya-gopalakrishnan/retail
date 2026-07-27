@@ -47,6 +47,7 @@
 			refreshMargin(frm);
 			addPackingVatButton(frm);
 			addZebraLabelButton(frm);
+			setScaleItemDefaults(frm);
 		},
 		item_name(frm) {
 			queueArabicItemNameTranslation(frm);
@@ -83,9 +84,23 @@
 		custom_purchase_rate_includes_vat(frm) { refreshVatPrices(frm, "purchase").then(() => refreshPackingFromItemRates(frm, "purchase")); },
 		custom_average_purchase_rate(frm) { refreshMargin(frm); },
 		custom_b2b(frm) { refreshMargin(frm); },
+		is_scale_item(frm) { setScaleItemDefaults(frm); },
+		custom_scale_item(frm) { setScaleItemDefaults(frm); },
 		validate(frm) { removeEmptyBarcodeRows(frm); },
 		before_save(frm) { removeEmptyBarcodeRows(frm); },
 	});
+
+	function setScaleItemDefaults(frm) {
+		if (!(cint(frm.doc.is_scale_item) || cint(frm.doc.custom_scale_item))) return;
+		const updates = {};
+		if (!frm.doc.scale_enabled) updates.scale_enabled = 1;
+		if (!frm.doc.scale_prefix) updates.scale_prefix = "99";
+		if (!frm.doc.scale_barcode_type) updates.scale_barcode_type = "WEIGHT";
+		if (!frm.doc.scale_uom && frm.doc.stock_uom) updates.scale_uom = frm.doc.stock_uom;
+		if (!frm.doc.scale_format) updates.scale_format = "Prefix 99 - 2-5-5";
+		if (!frm.doc.scale_unit_code) updates.scale_unit_code = "1";
+		if (Object.keys(updates).length) frm.set_value(updates);
+	}
 
 	function addZebraLabelButton(frm) {
 		if (frm.is_new()) return;

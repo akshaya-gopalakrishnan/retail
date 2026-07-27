@@ -294,6 +294,7 @@ doc_events = {
 		"before_naming": "retail.domains.item.naming.set_automatic_item_code",
 		"validate": [
 			"retail.domains.item.packing_sync.sync_uoms_and_barcodes",
+			"retail.domains.item.scale_item_validation.validate_scale_item",
 			"retail.domains.item.vat_pricing.update_item_vat_prices",
 		],
         "on_update": [
@@ -411,6 +412,9 @@ after_migrate = [
 	"retail.domains.item.packing_rate.ensure_packing_purchase_rate_script",
 	"retail.domains.item.arabic_name.ensure_item_arabic_name_field",
 	"retail.domains.item.pos_flags.ensure_item_pos_flags",
+	"retail.domains.item.scale_item_validation.ensure_scale_item_setup",
+	"retail.retail_app.doctype.scale_barcode_format.scale_barcode_format.ensure_default_scale_barcode_format",
+	"retail.domains.item.scale_export_service.ensure_default_scale_export_template",
 	"retail.grid_view_settings.install_default_grid_view_settings",
 	"retail.domains.item.vat_pricing.ensure_item_vat_pricing_fields",
 	"retail.domains.item.rate_audit.ensure_rate_audit_setup",
