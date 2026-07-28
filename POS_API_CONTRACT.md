@@ -180,6 +180,7 @@ counter
 tax_config
 items
 item_barcodes
+packing_details
 item_prices
 customers
 cashiers
@@ -196,9 +197,12 @@ Item sync behavior:
 - `items` includes POS item flags: `is_scalable_item`, `scale_barcode_type`, and `is_open_price`. `is_scalable_item` comes from Item's `custom_scale_item`; `is_open_price` comes from Item's `custom_is_open_price`.
 - `scale_barcode_type` values are `PRICE`, `WEIGHT`, `QUANTITY`, or `WEIGHT+UPRICE`.
 - .NET should upsert item rows by `item_code` / `name`.
+- `packing_details` returns Item's `Retail Packing Detail` child rows from `custom_retail_packing_detail`.
+- .NET should upsert packing rows by `name` or by `item_code + idx`, and link each packing row to its parent item using `item_code`.
+- Packing rows include `barcode`, `barcode_type`, `uom`, `conversion_factor`, purchase/selling rates, VAT split fields, `packing_margin`, and `modified`.
 - If an item row has `disabled = 1`, mark the local POS item inactive/hidden and do not allow it for new sales.
 - Do not delete old local invoice rows that used this item; historical invoices must continue to display correctly.
-- `modified_after` returns only rows changed after that ERPNext server timestamp, including items that were disabled after the previous sync.
+- `modified_after` returns only rows changed after that ERPNext server timestamp, including items that were disabled after the previous sync and packing rows changed after the previous sync.
 
 Cashiers are returned from ERPNext `Employee` records. .NET should store the returned `name` value locally and send it as `cashier_employee` in all cashier shift and invoice APIs. For compatibility, ERPNext also accepts the cashier's `employee`, `employee_number`, `attendance_device_id`, `user_id`, or `cell_number` and resolves it to the Employee document name.
 

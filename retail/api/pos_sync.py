@@ -794,6 +794,12 @@ def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
 	modified_after = payload.get("modified_after")
 	counter_doc = _counter(branch, counter_code)
 	modified_filter = [["modified", ">", modified_after]] if modified_after else []
+	packing_filters = [
+		["parenttype", "=", "Item"],
+		["parentfield", "=", "custom_retail_packing_detail"],
+	]
+	if modified_after:
+		packing_filters.append(["modified", ">", modified_after])
 	items = frappe.get_all(
 		"Item",
 		filters=modified_filter,
@@ -836,6 +842,31 @@ def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
 			"Item Barcode",
 			filters=modified_filter,
 			fields=["parent as item_code", "barcode", "uom", "modified"],
+			limit_page_length=0,
+		),
+		"packing_details": frappe.get_all(
+			"Retail Packing Detail",
+			filters=packing_filters,
+			fields=[
+				"name",
+				"parent as item_code",
+				"idx",
+				"barcode",
+				"barcode_type",
+				"uom",
+				"conversion_factor",
+				"purchase_rate",
+				"selling_rate",
+				"purchase_net_rate",
+				"purchase_vat_amount",
+				"purchase_gross_rate",
+				"selling_net_rate",
+				"selling_vat_amount",
+				"selling_gross_rate",
+				"packing_margin",
+				"modified",
+			],
+			order_by="parent asc, idx asc",
 			limit_page_length=0,
 		),
 		"item_prices": frappe.get_all(
