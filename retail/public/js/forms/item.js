@@ -86,20 +86,48 @@
 		custom_b2b(frm) { refreshMargin(frm); },
 		is_scale_item(frm) { setScaleItemDefaults(frm); },
 		custom_scale_item(frm) { setScaleItemDefaults(frm); },
+		custom_scale_barcode_type(frm) { syncInternalScaleType(frm); },
 		validate(frm) { removeEmptyBarcodeRows(frm); },
 		before_save(frm) { removeEmptyBarcodeRows(frm); },
 	});
 
 	function setScaleItemDefaults(frm) {
-		if (!(cint(frm.doc.is_scale_item) || cint(frm.doc.custom_scale_item))) return;
+		if (!cint(frm.doc.custom_scale_item)) {
+			const updates = {};
+			if (cint(frm.doc.is_scale_item)) updates.is_scale_item = 0;
+			if (cint(frm.doc.scale_enabled)) updates.scale_enabled = 0;
+			if (Object.keys(updates).length) frm.set_value(updates);
+			return;
+		}
 		const updates = {};
-		if (!frm.doc.scale_enabled) updates.scale_enabled = 1;
-		if (!frm.doc.scale_prefix) updates.scale_prefix = "99";
-		if (!frm.doc.scale_barcode_type) updates.scale_barcode_type = "WEIGHT";
-		if (!frm.doc.scale_uom && frm.doc.stock_uom) updates.scale_uom = frm.doc.stock_uom;
-		if (!frm.doc.scale_format) updates.scale_format = "Prefix 99 - 2-5-5";
-		if (!frm.doc.scale_unit_code) updates.scale_unit_code = "1";
+		if (!frm.doc.custom_barcode) updates.custom_barcode = generateScaleItemBarcode();
+		if (!frm.doc.custom_scale_barcode_type) updates.custom_scale_barcode_type = "Weight";
+		updates.is_scale_item = 1;
+		updates.scale_enabled = 1;
+		updates.scale_barcode_type = normalizeScaleBarcodeType(
+			updates.custom_scale_barcode_type || frm.doc.custom_scale_barcode_type
+		);
 		if (Object.keys(updates).length) frm.set_value(updates);
+	}
+
+	function syncInternalScaleType(frm) {
+		if (!cint(frm.doc.custom_scale_item)) return;
+		const normalized = normalizeScaleBarcodeType(frm.doc.custom_scale_barcode_type);
+		if (normalized && frm.doc.scale_barcode_type !== normalized) {
+			frm.set_value("scale_barcode_type", normalized);
+		}
+	}
+
+	function normalizeScaleBarcodeType(value) {
+		const normalized = String(value || "").trim().toUpperCase().replace(/ /g, "_");
+		if (normalized === "WEIGHT+UNIT_PRICE") return "WEIGHT";
+		return normalized || "WEIGHT";
+	}
+
+	function generateScaleItemBarcode() {
+		const timestampPart = String(Date.now()).slice(-8);
+		const randomPart = String(Math.floor(Math.random() * 100)).padStart(2, "0");
+		return `99${timestampPart}${randomPart}`;
 	}
 
 	function addZebraLabelButton(frm) {

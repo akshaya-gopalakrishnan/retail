@@ -21,38 +21,15 @@ def validate_scale_item(doc, method=None):
 	if not is_scale_item(doc):
 		return
 
-	if not cint(doc.get("scale_enabled")):
-		doc.scale_enabled = 1
-	if not doc.get("scale_prefix"):
-		doc.scale_prefix = DEFAULT_SCALE_PREFIX
 	if not doc.get("scale_barcode_type") and doc.get("custom_scale_barcode_type"):
 		doc.scale_barcode_type = normalize_barcode_type(doc.custom_scale_barcode_type)
-	if not doc.get("scale_uom"):
-		doc.scale_uom = doc.get("stock_uom")
-	if not doc.get("scale_format"):
-		doc.scale_format = DEFAULT_SCALE_FORMAT
-
-	required = {
-		"scale_plu_number": _("PLU Number"),
-		"scale_prefix": _("Scale Prefix"),
-		"scale_barcode_type": _("Scale Barcode Type"),
-		"scale_uom": _("Scale UOM"),
-		"scale_format": _("Scale Format"),
-	}
-	for fieldname, label in required.items():
-		if not doc.get(fieldname):
-			frappe.throw(_("{0} is mandatory for scale items.").format(label))
-
-	doc.scale_plu_number = clean_digits(doc.scale_plu_number, "PLU Number")
-	doc.scale_prefix = clean_digits(doc.scale_prefix, "Scale Prefix")
-	if doc.scale_prefix != DEFAULT_SCALE_PREFIX:
-		frappe.throw(_("Scale Prefix must be {0}.").format(DEFAULT_SCALE_PREFIX))
+	if not doc.get("custom_scale_barcode_type") and doc.get("scale_barcode_type"):
+		doc.custom_scale_barcode_type = doc.scale_barcode_type.title().replace("_", " ")
+	if not doc.get("scale_barcode_type"):
+		doc.scale_barcode_type = "WEIGHT"
 
 	if doc.scale_barcode_type not in ("WEIGHT", "PRICE", "QUANTITY"):
 		frappe.throw(_("Scale Barcode Type must be WEIGHT, PRICE, or QUANTITY."))
-
-	validate_unique_enabled_plu(doc)
-	validate_static_barcode_not_dynamic(doc)
 
 
 def validate_unique_enabled_plu(doc):
@@ -113,21 +90,22 @@ def ensure_scale_item_fields():
 					"label": "Is Scale Item",
 					"fieldtype": "Check",
 					"insert_after": "custom_scale_barcode_type",
+					"hidden": 1,
 				},
 				{
 					"fieldname": "scale_enabled",
 					"label": "Scale Enabled",
 					"fieldtype": "Check",
 					"default": "1",
-					"depends_on": "eval:doc.is_scale_item || doc.custom_scale_item",
 					"insert_after": "is_scale_item",
+					"hidden": 1,
 				},
 				{
 					"fieldname": "scale_plu_number",
 					"label": "PLU Number",
 					"fieldtype": "Data",
-					"depends_on": "eval:doc.is_scale_item || doc.custom_scale_item",
 					"insert_after": "scale_enabled",
+					"hidden": 1,
 					"in_standard_filter": 1,
 				},
 				{
@@ -135,8 +113,8 @@ def ensure_scale_item_fields():
 					"label": "Scale Prefix",
 					"fieldtype": "Data",
 					"default": DEFAULT_SCALE_PREFIX,
-					"depends_on": "eval:doc.is_scale_item || doc.custom_scale_item",
 					"insert_after": "scale_plu_number",
+					"hidden": 1,
 				},
 				{
 					"fieldname": "scale_barcode_type",
@@ -144,23 +122,23 @@ def ensure_scale_item_fields():
 					"fieldtype": "Select",
 					"options": "\nWEIGHT\nPRICE\nQUANTITY",
 					"default": "WEIGHT",
-					"depends_on": "eval:doc.is_scale_item || doc.custom_scale_item",
 					"insert_after": "scale_prefix",
+					"hidden": 1,
 				},
 				{
 					"fieldname": "scale_uom",
 					"label": "Scale UOM",
 					"fieldtype": "Link",
 					"options": "UOM",
-					"depends_on": "eval:doc.is_scale_item || doc.custom_scale_item",
 					"insert_after": "scale_barcode_type",
+					"hidden": 1,
 				},
 				{
 					"fieldname": "scale_expiry_days",
 					"label": "Scale Expiry Days",
 					"fieldtype": "Int",
-					"depends_on": "eval:doc.is_scale_item || doc.custom_scale_item",
 					"insert_after": "scale_uom",
+					"hidden": 1,
 				},
 				{
 					"fieldname": "scale_format",
@@ -168,16 +146,16 @@ def ensure_scale_item_fields():
 					"fieldtype": "Link",
 					"options": "Scale Barcode Format",
 					"default": DEFAULT_SCALE_FORMAT,
-					"depends_on": "eval:doc.is_scale_item || doc.custom_scale_item",
 					"insert_after": "scale_expiry_days",
+					"hidden": 1,
 				},
 				{
 					"fieldname": "scale_unit_code",
 					"label": "Scale Unit Code",
 					"fieldtype": "Data",
 					"default": "1",
-					"depends_on": "eval:doc.is_scale_item || doc.custom_scale_item",
 					"insert_after": "scale_format",
+					"hidden": 1,
 				},
 			],
 		},

@@ -194,8 +194,9 @@ Item sync behavior:
 
 - `items` includes both active and disabled items.
 - `items` includes audit fields: `created_by`, `created_on`, `modified_by`, `modified_on`. The existing `modified` field is still returned for incremental sync compatibility.
-- `items` includes POS item flags: `is_scalable_item`, `scale_barcode_type`, and `is_open_price`. `is_scalable_item` comes from Item's `custom_scale_item`; `is_open_price` comes from Item's `custom_is_open_price`.
-- `scale_barcode_type` values are `PRICE`, `WEIGHT`, `QUANTITY`, or `WEIGHT+UPRICE`.
+- `items` includes POS item flags: `is_scalable_item`, `scale_barcode_type`, and `is_open_price`. `is_scalable_item` comes from Item's `Scale Item`; `scale_barcode_type` comes from Item's `Scale Barcode Type`; `is_open_price` comes from Item's `Open Price`.
+- .NET should use only `is_scalable_item` and `scale_barcode_type` for scale-item handling. ERPNext does not send PLU, prefix, scale UOM, scale format, or scale unit code in POS master sync.
+- `scale_barcode_type` values are `Price`, `Weight`, or `Quantity`.
 - .NET should upsert item rows by `item_code` / `name`.
 - `packing_details` returns Item's `Retail Packing Detail` child rows from `custom_retail_packing_detail`.
 - .NET should upsert packing rows by `name` or by `item_code + idx`, and link each packing row to its parent item using `item_code`.
