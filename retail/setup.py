@@ -5,6 +5,7 @@ from frappe.custom.doctype.property_setter.property_setter import make_property_
 RETAIL_WORKSPACE_MODULE = "Retail-app"
 HIDDEN_STANDARD_WORKSPACES = {"Home"}
 VISIBLE_RETAIL_WORKSPACES = {"Business Home", "Manufacturing"}
+DEFAULT_RETAIL_WORKSPACE = "Business Home"
 DEFAULT_PRINT_FORMATS = {
 	"Sales Invoice": "Sales Invoice - Copy",
 	"Delivery Note": "Delivery Note- Copy",
@@ -39,12 +40,10 @@ def hide_non_retail_workspaces():
 
 	for workspace_name in VISIBLE_RETAIL_WORKSPACES:
 		if frappe.db.exists("Workspace", workspace_name):
-			frappe.db.set_value(
-				"Workspace",
-				workspace_name,
-				{"public": 1, "is_hidden": 0},
-				update_modified=False,
-			)
+			values = {"public": 1, "is_hidden": 0}
+			if workspace_name == DEFAULT_RETAIL_WORKSPACE:
+				values["sequence_id"] = 0
+			frappe.db.set_value("Workspace", workspace_name, values, update_modified=False)
 
 	if updates or VISIBLE_RETAIL_WORKSPACES:
 		frappe.clear_cache()
