@@ -175,6 +175,7 @@ def _run(sync_type, payload, handler):
 				or response.get("return_invoice")
 				or response.get("pos_opening_entry")
 				or response.get("pos_closing_entry")
+				or response.get("cash_movement")
 				or response.get("cashier_shift")
 				or response.get("counter_session")
 			),
@@ -301,8 +302,142 @@ def _expected_cash_for_shift(cashier_shift):
 			""",
 			(cashier_shift,),
 		)[0][0]
+		)
+	movements = _cash_movement_totals_for_shift(cashier_shift)
+	return opening_amount + cash_sales + movements.cash_in - movements.cash_out
+
+
+def _cash_movement_totals_for_shift(cashier_shift):
+	totals = frappe._dict(cash_in=0, cash_out=0)
+	if not cashier_shift or not frappe.db.table_exists("POS Cash Movement"):
+		return totals
+	rows = frappe.db.sql(
+		"""
+		select movement_type, sum(amount) as amount
+		from `tabPOS Cash Movement`
+		where docstatus != 2 and cashier_shift = %s
+		group by movement_type
+		""",
+		(cashier_shift,),
+		as_dict=True,
 	)
-	return opening_amount + cash_sales
+	for row in rows:
+		if row.movement_type == "Cash In":
+			totals.cash_in = flt(row.amount)
+		elif row.movement_type == "Cash Out":
+			totals.cash_out = flt(row.amount)
+	return totals
+
+
+def _refresh_cashier_shift_cash_totals(cashier_shift):
+	if not cashier_shift:
+		return frappe._dict(cash_in=0, cash_out=0, expected_cash=0)
+	movements = _cash_movement_totals_for_shift(cashier_shift)
+	expected_cash = _expected_cash_for_shift(cashier_shift)
+	values = {
+		"expected_cash": expected_cash,
+	}
+	if frappe.db.has_column("POS Cashier Shift", "cash_in_amount"):
+		values["cash_in_amount"] = movements.cash_in
+	if frappe.db.has_column("POS Cashier Shift", "cash_out_amount"):
+		values["cash_out_amount"] = movements.cash_out
+	frappe.db.set_value("POS Cashier Shift", cashier_shift, values, update_modified=False)
+	return frappe._dict(cash_in=movements.cash_in, cash_out=movements.cash_out, expected_cash=expected_cash)
+
+
+def _normalize_cash_movement_type(payload):
+	movement_type = payload.get("movement_type") or payload.get("type") or payload.get("transaction_type")
+	if movement_type:
+		normalized = str(movement_type).strip().lower().replace("_", " ").replace("-", " ")
+		if normalized in ("cash in", "cashin", "in", "cash add", "cash received"):
+			return "Cash In"
+		if normalized in ("cash out", "cashout", "out", "petty cash", "expense", "cash used"):
+			return "Cash Out"
+		if normalized == "ps payment cashin cashout":
+			action = str(payload.get("action") or payload.get("direction") or "").strip().lower()
+			if action in ("in", "cash in", "cashin"):
+				return "Cash In"
+			if action in ("out", "cash out", "cashout", "expense", "petty cash"):
+				return "Cash Out"
+
+	amount = flt(payload.get("amount"))
+	if amount < 0:
+		return "Cash Out"
+	if amount > 0:
+		return "Cash In"
+	frappe.throw(_("movement_type is required for cash movement."))
+
+
+def _movement_amount(payload):
+	amount = abs(flt(payload.get("amount")))
+	if amount <= 0:
+		frappe.throw(_("amount is required and must be greater than zero."))
+	return amount
+
+
+@frappe.whitelist()
+def create_pos_cash_movement(data=None, **kwargs):
+	_assert_pos_user()
+	payload = _as_dict(data, **kwargs)
+
+	def handler():
+		previous = _previous_success(payload.external_pos_reference)
+		if previous and previous.response_json:
+			response = json.loads(previous.response_json)
+			response["status"] = "Duplicate"
+			return response
+
+		existing = _existing_doc("POS Cash Movement", payload.external_pos_reference)
+		if existing:
+			return {"status": "Duplicate", "cash_movement": existing.name}
+
+		counter_doc = _counter(payload.get("branch"), payload.get("counter_code"))
+		cashier_employee, cashier_shift, counter_session = _validate_active_counter_session(payload, counter_doc)
+		movement_type = _normalize_cash_movement_type(payload)
+		amount = _movement_amount(payload)
+		doc = frappe.get_doc(
+			{
+				"doctype": "POS Cash Movement",
+				"external_pos_reference": payload.external_pos_reference,
+				"branch": counter_doc.branch,
+				"counter": counter_doc.name,
+				"counter_code": counter_doc.counter_code,
+				"terminal_id": payload.get("pos_terminal_id") or counter_doc.terminal_id,
+				"cashier_employee": cashier_employee,
+				"cashier_shift": cashier_shift,
+				"counter_session": counter_session,
+				"movement_type": movement_type,
+				"amount": amount,
+				"posting_datetime": (
+					payload.get("posting_datetime")
+					or payload.get("transaction_datetime")
+					or payload.get("pos_local_created_at")
+					or now_datetime()
+				),
+				"description": payload.get("description") or payload.get("reason") or payload.get("remarks"),
+				"expense_account": payload.get("expense_account"),
+				"source_account": payload.get("source_account"),
+				"device_api_user": frappe.session.user,
+			}
+		)
+		doc.insert(ignore_permissions=True)
+		totals = _refresh_cashier_shift_cash_totals(cashier_shift)
+		return {
+			"status": "Success",
+			"cash_movement": doc.name,
+			"cashier_shift": cashier_shift,
+			"counter_session": counter_session,
+			"movement_type": movement_type,
+			"amount": amount,
+			"cash_in_amount": totals.cash_in,
+			"cash_out_amount": totals.cash_out,
+			"expected_cash": totals.expected_cash,
+		}
+
+	return _run("Cash Movement", payload, handler)
+
+
+sync_cash_movement = create_pos_cash_movement
 
 
 def _mark_offline_fields(doc, counter_doc=None, cashier_employee=None, cashier_shift=None, counter_session=None):
@@ -579,6 +714,7 @@ def _cashier_master_rows(branch=None, modified_after=None):
 		"designation",
 		"cell_number",
 		"user_id",
+		"employee_number",
 		"pos_login_enabled",
 		"pos_quick_pin_hash",
 		"pos_quick_pin_salt",
@@ -595,7 +731,7 @@ def _cashier_master_rows(branch=None, modified_after=None):
 	if branch and frappe.get_meta("Employee").has_field("branch"):
 		rows = [row for row in rows if not row.get("branch") or row.get("branch") == branch]
 	for row in rows:
-		row.login_id = row.get("user_id") or row.get("employee") or row.get("name")
+		row.login_id = row.get("employee_number") or row.get("employee") or row.get("name")
 		row.operator_group = row.get("designation")
 		row.quick_pin_hash = row.get("pos_quick_pin_hash")
 		row.quick_pin_salt = row.get("pos_quick_pin_salt")
@@ -1317,21 +1453,23 @@ def close_cashier_shift(data=None, **kwargs):
 		)
 
 		closing_amount = _cash_amount(payload.get("closing_balances"), "closing_amount")
+		movements = _cash_movement_totals_for_shift(shift.name)
 		expected_cash = _expected_cash_for_shift(shift.name)
-		_db_set_values(
-			shift,
-			{
-				"status": "Closed",
-				"closing_time": payload.get("closed_at") or now_datetime(),
-				"expected_cash": expected_cash,
-				"closing_amount": closing_amount,
-				"variance": closing_amount - expected_cash,
-				"external_close_reference": payload.external_pos_reference,
-				"current_counter": None,
-				"current_counter_session": None,
-			},
-			update_modified=False,
-		)
+		values = {
+			"status": "Closed",
+			"closing_time": payload.get("closed_at") or now_datetime(),
+			"expected_cash": expected_cash,
+			"closing_amount": closing_amount,
+			"variance": closing_amount - expected_cash,
+			"external_close_reference": payload.external_pos_reference,
+			"current_counter": None,
+			"current_counter_session": None,
+		}
+		if frappe.db.has_column("POS Cashier Shift", "cash_in_amount"):
+			values["cash_in_amount"] = movements.cash_in
+		if frappe.db.has_column("POS Cashier Shift", "cash_out_amount"):
+			values["cash_out_amount"] = movements.cash_out
+		_db_set_values(shift, values, update_modified=False)
 		return {"status": "Success", "cashier_shift": shift.name, "pos_closing_entries": closing_names}
 
 	return _run("Shift Closing", payload, handler)

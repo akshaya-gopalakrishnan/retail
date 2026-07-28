@@ -59,14 +59,19 @@ class POSBranchDayClosing(Document):
 
 		open_shift_count = 0
 		total_sales = total_expected = total_counted = total_variance = total_invoices = 0
+		total_cash_in = total_cash_out = 0
 		for shift in shifts:
 			sales = sales_by_shift.get(shift.name, {})
 			if shift.status != "Closed":
 				open_shift_count += 1
+			cash_in_amount = flt(shift.get("cash_in_amount"))
+			cash_out_amount = flt(shift.get("cash_out_amount"))
 			expected_cash = flt(shift.expected_cash)
 			closing_amount = flt(shift.closing_amount)
 			variance = flt(shift.variance)
 			total_sales += flt(sales.get("sales_total"))
+			total_cash_in += cash_in_amount
+			total_cash_out += cash_out_amount
 			total_expected += expected_cash
 			total_counted += closing_amount
 			total_variance += variance
@@ -81,6 +86,8 @@ class POSBranchDayClosing(Document):
 					"opening_time": shift.opening_time,
 					"closing_time": shift.closing_time,
 					"opening_amount": shift.opening_amount,
+					"cash_in_amount": cash_in_amount,
+					"cash_out_amount": cash_out_amount,
 					"expected_cash": expected_cash,
 					"closing_amount": closing_amount,
 					"variance": variance,
@@ -102,6 +109,8 @@ class POSBranchDayClosing(Document):
 		)
 		self.total_invoice_count = total_invoices
 		self.total_sales = total_sales
+		self.total_cash_in = total_cash_in
+		self.total_cash_out = total_cash_out
 		self.total_expected_cash = total_expected
 		self.total_closing_cash = total_counted
 		self.total_variance = total_variance
@@ -122,6 +131,8 @@ def _get_cashier_shifts(branch, business_date):
 			"opening_time",
 			"closing_time",
 			"opening_amount",
+			"cash_in_amount",
+			"cash_out_amount",
 			"expected_cash",
 			"closing_amount",
 			"variance",

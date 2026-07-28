@@ -3581,7 +3581,7 @@
   "property": "in_list_view",
   "property_type": "Check",
   "row_name": null,
-  "value": "0"
+  "value": "1"
  },
  {
   "default_value": null,
@@ -4781,7 +4781,7 @@
   "property": "default_print_format",
   "property_type": "Data",
   "row_name": null,
-  "value": "Delivery Note"
+  "value": "Delivery Note- Copy"
  },
  {
   "default_value": null,

@@ -1,9 +1,14 @@
 import frappe
+from frappe.custom.doctype.property_setter.property_setter import make_property_setter
 
 
 RETAIL_WORKSPACE_MODULE = "Retail-app"
 HIDDEN_STANDARD_WORKSPACES = {"Home"}
 VISIBLE_RETAIL_WORKSPACES = {"Business Home", "Manufacturing"}
+DEFAULT_PRINT_FORMATS = {
+	"Sales Invoice": "Sales Invoice - Copy",
+	"Delivery Note": "Delivery Note- Copy",
+}
 RETAIL_PRINT_LANGUAGES = {
 	"ar": "Arabic",
 	"hi": "Hindi",
@@ -43,6 +48,54 @@ def hide_non_retail_workspaces():
 
 	if updates or VISIBLE_RETAIL_WORKSPACES:
 		frappe.clear_cache()
+
+
+def clear_url_shortcut_link_targets():
+	"""URL workspace shortcuts must not carry Dynamic Link targets."""
+	if not frappe.db.table_exists("Workspace Shortcut"):
+		return
+
+	frappe.db.sql(
+		"""
+		UPDATE `tabWorkspace Shortcut`
+		SET link_to = NULL
+		WHERE type = 'URL' AND link_to IS NOT NULL
+		"""
+	)
+
+
+def ensure_default_print_formats():
+	"""Keep Retail print formats as defaults after fixture sync and upgrades."""
+	if not frappe.db.table_exists("Print Format") or not frappe.db.table_exists("Property Setter"):
+		return
+
+	for doctype, print_format in DEFAULT_PRINT_FORMATS.items():
+		if not frappe.db.exists("Print Format", print_format):
+			continue
+
+		property_setter = f"{doctype}-main-default_print_format"
+		if frappe.db.exists("Property Setter", property_setter):
+			frappe.db.set_value(
+				"Property Setter",
+				property_setter,
+				"value",
+				print_format,
+				update_modified=False,
+			)
+			continue
+
+		make_property_setter(
+			doctype,
+			"main",
+			"default_print_format",
+			print_format,
+			"Data",
+			for_doctype=True,
+			validate_fields_for_doctype=False,
+		)
+
+	for doctype in DEFAULT_PRINT_FORMATS:
+		frappe.clear_cache(doctype=doctype)
 
 
 def ensure_print_languages():

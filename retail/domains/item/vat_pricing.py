@@ -597,7 +597,7 @@ def _set_item_pricing_field_order():
 def ensure_item_pricing_list_view():
 	"""Show customer-facing VAT-inclusive prices in the Item list."""
 	for fieldname, in_list_view in {
-		"last_purchase_rate": "0",
+		"last_purchase_rate": "1",
 		"standard_rate": "0",
 		"custom_purchase_gross_rate": "1",
 		"custom_sales_gross_rate": "1",

@@ -47,6 +47,8 @@ function hide_raw_total_fields(frm) {
 		"totals_section",
 		"total_invoice_count",
 		"total_sales",
+		"total_cash_in",
+		"total_cash_out",
 		"total_expected_cash",
 		"total_closing_cash",
 		"total_variance",

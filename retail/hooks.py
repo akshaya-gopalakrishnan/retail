@@ -395,6 +395,9 @@ doc_events = {
 
 after_migrate = [
 	"retail.branding.apply_default_branding",
+	"retail.setup.hide_non_retail_workspaces",
+	"retail.setup.clear_url_shortcut_link_targets",
+	"retail.setup.ensure_default_print_formats",
 	"retail.setup.ensure_print_languages",
     "retail.domains.transactions.vat.ensure_transaction_vat_rate_fields",
     "retail.domains.purchase.order.backfill_balance_qty",

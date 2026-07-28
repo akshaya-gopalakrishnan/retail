@@ -332,6 +332,47 @@ POST /api/method/retail.api.pos_sync.resume_cashier_shift
 
 Response returns the active/new `counter_session` and `pos_opening_entry`. Use those values on the next invoices.
 
+### Cash In / Cash Out
+
+Use this for petty cash, counter expenses, cash taken from the drawer, or cash added to the drawer. Do not send these rows as POS invoice payments.
+
+```text
+POST /api/method/retail.api.pos_sync.create_pos_cash_movement
+```
+
+```json
+{
+  "external_pos_reference": "KARAMA-C001-T001-CASHOUT-20260625-000010",
+  "branch": "Karama",
+  "counter_code": "C001",
+  "pos_terminal_id": "T001",
+  "cashier_employee": "HR-EMP-00001",
+  "cashier_shift": "POS-CSH-2026-00001",
+  "counter_session": "POS-CSES-2026-00001",
+  "movement_type": "Cash Out",
+  "amount": 100,
+  "description": "Petty cash expense"
+}
+```
+
+`movement_type` must be `Cash In` or `Cash Out`. ERPNext stores the row cashier-wise against `cashier_shift` and `counter_session`. The `description` is stored as the POS reason/description.
+
+Response:
+
+```json
+{
+  "status": "Success",
+  "cash_movement": "POS-CMOV-2026-00001",
+  "cashier_shift": "POS-CSH-2026-00001",
+  "counter_session": "POS-CSES-2026-00001",
+  "movement_type": "Cash Out",
+  "amount": 100,
+  "cash_in_amount": 0,
+  "cash_out_amount": 100,
+  "expected_cash": 350
+}
+```
+
 ### Close Cashier Shift
 
 ```text
@@ -352,7 +393,7 @@ POST /api/method/retail.api.pos_sync.close_cashier_shift
 ERPNext calculates:
 
 ```text
-expected_cash = opening cash + synced cash POS invoice payments
+expected_cash = opening cash + synced cash POS invoice payments + cash in - cash out
 variance = closing cash - expected cash
 ```
 
@@ -726,6 +767,7 @@ resume_cashier_shift
 close_cashier_shift
 create_pos_invoice
 create_pos_return_invoice
+create_pos_cash_movement
 make_branch_day_closing
 submit_branch_day_closing
 cancel_branch_day_closing
@@ -855,6 +897,29 @@ LocalInvoiceId
 ModeOfPayment
 Amount
 ReferenceNo
+```
+
+Cash movement rows:
+
+```text
+CashMovementLocalId
+ExternalPosReference
+Branch
+CounterCode
+TerminalId
+BusinessDate
+CashierEmployee
+CashierShiftLocalId
+ErpCashierShift
+ErpCounterSession
+MovementType
+Amount
+Description
+CreatedAt
+SyncStatus
+ErpDocumentName
+LastError
+SyncedAt
 ```
 
 ### Local Sync Queue
