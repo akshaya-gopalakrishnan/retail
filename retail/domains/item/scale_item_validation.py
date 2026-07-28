@@ -11,6 +11,7 @@ from frappe.utils import cint
 DEFAULT_SCALE_PREFIX = "99"
 DEFAULT_SCALE_FORMAT = "Prefix 99 - 2-5-5"
 LEGACY_SCALE_BARCODE_SCRIPT = "generate unique scale barcode"
+VISIBLE_SCALE_TYPE_OPTIONS = "Price\nWeight\nQuantity"
 
 
 def is_scale_item(doc) -> bool:
@@ -77,8 +78,25 @@ def normalize_barcode_type(value):
 
 
 def ensure_scale_item_setup():
+	ensure_visible_scale_fields()
 	ensure_scale_item_fields()
 	disable_legacy_scale_barcode_script()
+
+
+def ensure_visible_scale_fields():
+	if frappe.db.exists("Custom Field", "Item-custom_scale_item"):
+		frappe.db.set_value("Custom Field", "Item-custom_scale_item", "hidden", 0, update_modified=False)
+	if frappe.db.exists("Custom Field", "Item-custom_scale_barcode_type"):
+		frappe.db.set_value(
+			"Custom Field",
+			"Item-custom_scale_barcode_type",
+			{
+				"hidden": 0,
+				"options": VISIBLE_SCALE_TYPE_OPTIONS,
+				"depends_on": "eval:doc.custom_scale_item == 1",
+			},
+			update_modified=False,
+		)
 
 
 def ensure_scale_item_fields():
@@ -143,8 +161,7 @@ def ensure_scale_item_fields():
 				{
 					"fieldname": "scale_format",
 					"label": "Scale Format",
-					"fieldtype": "Link",
-					"options": "Scale Barcode Format",
+					"fieldtype": "Data",
 					"default": DEFAULT_SCALE_FORMAT,
 					"insert_after": "scale_expiry_days",
 					"hidden": 1,
