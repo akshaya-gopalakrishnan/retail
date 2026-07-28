@@ -161,7 +161,8 @@ def ensure_scale_item_fields():
 				{
 					"fieldname": "scale_format",
 					"label": "Scale Format",
-					"fieldtype": "Data",
+					"fieldtype": "Link",
+					"options": "Scale Barcode Format",
 					"default": DEFAULT_SCALE_FORMAT,
 					"insert_after": "scale_expiry_days",
 					"hidden": 1,
