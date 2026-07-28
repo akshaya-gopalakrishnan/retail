@@ -548,7 +548,12 @@ fixtures = [
     "Workflow",
     "Workflow State",
     "Workflow Action Master",
-    "Workspace",
+    {
+        "dt": "Workspace",
+        "filters": [
+            ["module", "=", "Retail-app"]
+        ],
+    },
     {
         "dt": "Zebra Label Format",
         "filters": [
