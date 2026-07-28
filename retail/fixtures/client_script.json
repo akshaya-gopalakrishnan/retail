@@ -2,17 +2,6 @@
  {
   "docstatus": 0,
   "doctype": "Client Script",
-  "dt": "Workspace",
-  "enabled": 0,
-  "modified": "2026-06-04 16:06:21.366666",
-  "module": "Retail-app",
-  "name": "Items List&Customers",
-  "script": "frappe.ui.form.on('Workspace', {\r\n    refresh: function(frm) {\r\n        // If the user clicks 'Items List', jump to the real Item List\r\n        if (frm.doc.name == \"Items List\") {\r\n            frappe.set_route(\"List\", \"Item\");\r\n        }\r\n        // If the user clicks 'Customers', jump to real Customer List\r\n        if (frm.doc.name == \"Customers\") {\r\n            frappe.set_route(\"List\", \"Customer\");\r\n        }\r\n        // Add more 'if' blocks here for Sales Invoices, Suppliers, etc.\r\n    }\r\n});",
-  "view": "Form"
- },
- {
-  "docstatus": 0,
-  "doctype": "Client Script",
   "dt": "Sales Invoice",
   "enabled": 1,
   "modified": "2026-05-21 15:18:42.228939",
@@ -36,55 +25,11 @@
   "docstatus": 0,
   "doctype": "Client Script",
   "dt": "Item",
-  "enabled": 0,
-  "modified": "2026-06-30 12:00:00",
-  "module": "Retail-app",
-  "name": "Margin",
-  "script": "(function () {\n\tfrappe.ui.form.on(\"Item\", {\n\t\trefresh(frm) { set_margin_amount(frm); },\n\t\tstandard_rate(frm) { set_margin_amount(frm); },\n\t\tcustom_sales_net_rate(frm) { set_margin_amount(frm); },\n\t\tcustom_sales_rate_entry(frm) { set_margin_amount(frm); },\n\t\tcustom_b2b(frm) { set_margin_amount(frm); },\n\t\tlast_purchase_rate(frm) { set_margin_amount(frm); },\n\t\tvaluation_rate(frm) { set_margin_amount(frm); },\n\t\tcustom_default_purchase_rate(frm) { set_margin_amount(frm); },\n\t\tcustom_average_purchase_rate(frm) { set_margin_amount(frm); },\n\t\tcustom_purchase_net_rate(frm) { set_margin_amount(frm); },\n\t\tcustom_purchase_rate_entry(frm) { set_margin_amount(frm); },\n\t});\n\n\tfunction set_margin_amount(frm) {\n\t\tconst selling_net = get_selling_net_rate(frm);\n\t\tconst cost_net = get_cost_net_rate(frm);\n\t\tfrm.set_value(\"custom_margin\", flt(selling_net - cost_net, 2));\n\t}\n\n\tfunction get_selling_net_rate(frm) {\n\t\tif (has_entered_value(frm.doc.custom_sales_rate_entry)) {\n\t\t\treturn flt(frm.doc.custom_sales_net_rate);\n\t\t}\n\t\treturn flt(frm.doc.standard_rate || frm.doc.custom_b2b);\n\t}\n\n\tfunction get_cost_net_rate(frm) {\n\t\tif (has_entered_value(frm.doc.custom_purchase_rate_entry)) {\n\t\t\treturn flt(frm.doc.custom_purchase_net_rate);\n\t\t}\n\t\treturn flt(\n\t\t\tfrm.doc.custom_average_purchase_rate\n\t\t\t|| frm.doc.custom_default_purchase_rate\n\t\t\t|| frm.doc.last_purchase_rate\n\t\t\t|| frm.doc.valuation_rate\n\t\t);\n\t}\n\n\tfunction has_entered_value(value) {\n\t\treturn value !== undefined && value !== null && value !== \"\";\n\t}\n})();",
-  "view": "Form"
- },
- {
-  "docstatus": 0,
-  "doctype": "Client Script",
-  "dt": "Item",
-  "enabled": 0,
-  "modified": "2026-06-30 12:00:00",
-  "module": "Retail-app",
-  "name": "Margin %",
-  "script": "(function () {\n\tfrappe.ui.form.on(\"Item\", {\n\t\trefresh(frm) { set_margin_percent(frm); },\n\t\tstandard_rate(frm) { set_margin_percent(frm); },\n\t\tcustom_sales_net_rate(frm) { set_margin_percent(frm); },\n\t\tcustom_sales_rate_entry(frm) { set_margin_percent(frm); },\n\t\tcustom_b2b(frm) { set_margin_percent(frm); },\n\t\tlast_purchase_rate(frm) { set_margin_percent(frm); },\n\t\tvaluation_rate(frm) { set_margin_percent(frm); },\n\t\tcustom_default_purchase_rate(frm) { set_margin_percent(frm); },\n\t\tcustom_average_purchase_rate(frm) { set_margin_percent(frm); },\n\t\tcustom_purchase_net_rate(frm) { set_margin_percent(frm); },\n\t\tcustom_purchase_rate_entry(frm) { set_margin_percent(frm); },\n\t});\n\n\tfunction set_margin_percent(frm) {\n\t\tconst selling_net = get_selling_net_rate(frm);\n\t\tconst margin = selling_net - get_cost_net_rate(frm);\n\t\tfrm.set_value(\"custom_margin_\", selling_net ? flt((margin / selling_net) * 100, 3) : 0);\n\t}\n\n\tfunction get_selling_net_rate(frm) {\n\t\tif (has_entered_value(frm.doc.custom_sales_rate_entry)) {\n\t\t\treturn flt(frm.doc.custom_sales_net_rate);\n\t\t}\n\t\treturn flt(frm.doc.standard_rate || frm.doc.custom_b2b);\n\t}\n\n\tfunction get_cost_net_rate(frm) {\n\t\tif (has_entered_value(frm.doc.custom_purchase_rate_entry)) {\n\t\t\treturn flt(frm.doc.custom_purchase_net_rate);\n\t\t}\n\t\treturn flt(\n\t\t\tfrm.doc.custom_average_purchase_rate\n\t\t\t|| frm.doc.custom_default_purchase_rate\n\t\t\t|| frm.doc.last_purchase_rate\n\t\t\t|| frm.doc.valuation_rate\n\t\t);\n\t}\n\n\tfunction has_entered_value(value) {\n\t\treturn value !== undefined && value !== null && value !== \"\";\n\t}\n})();",
-  "view": "Form"
- },
- {
-  "docstatus": 0,
-  "doctype": "Client Script",
-  "dt": "Item",
-  "enabled": 1,
-  "modified": "2026-05-21 23:36:16.339315",
-  "module": null,
-  "name": "generate unique scale barcode",
-  "script": "frappe.ui.form.on('Item', {\r\n\r\n    custom_scale_item: function(frm) {\r\n\r\n        if (frm.doc.custom_scale_item) {\r\n\r\n            if (!frm.doc.custom_barcode) {\r\n\r\n                let prefix = \"99\";\r\n                let rand = Math.floor(10000 + Math.random() * 90000);\r\n\r\n                frm.set_value(\r\n                    'custom_barcode',\r\n                    prefix + rand\r\n                );\r\n            }\r\n        }\r\n    }\r\n\r\n});",
-  "view": "Form"
- },
- {
-  "docstatus": 0,
-  "doctype": "Client Script",
-  "dt": "Item",
   "enabled": 1,
   "modified": "2026-05-22 15:32:45.248551",
   "module": null,
   "name": "Uncheck Warranty Box",
   "script": "frappe.ui.form.on('Item', {\r\n    custom_warranty: function(frm) {\r\n        if (!frm.doc.custom_warranty) {\r\n            frm.set_value('custom_in_months', null);\r\n        }\r\n    }\r\n});",
-  "view": "Form"
- },
- {
-  "docstatus": 0,
-  "doctype": "Client Script",
-  "dt": "Item",
-  "enabled": 0,
-  "modified": "2026-06-11 12:47:08.059848",
-  "module": null,
-  "name": "Item fetch last purchase rate from same name",
-  "script": "frappe.ui.form.on(\"Item\", {\n    item_name(frm) {\n        queue_last_purchase_rate_lookup(frm);\n    },\n\n    refresh(frm) {\n        if (frm.is_new() && frm.doc.item_name) {\n            queue_last_purchase_rate_lookup(frm);\n        }\n    }\n});\n\nfunction queue_last_purchase_rate_lookup(frm) {\n    if (!frm.is_new()) {\n        return;\n    }\n\n    clearTimeout(frm._last_purchase_rate_lookup);\n\n    const item_name = (frm.doc.item_name || \"\").trim();\n    if (!item_name) {\n        frm._last_purchase_rate_source = null;\n        frm.dashboard.clear_headline();\n        frm.set_value(\"last_purchase_rate\", 0);\n        return;\n    }\n\n    frm._last_purchase_rate_lookup = setTimeout(() => {\n        set_last_purchase_rate_from_same_item_name(frm, item_name);\n    }, 350);\n}\n\nfunction set_last_purchase_rate_from_same_item_name(frm, requested_item_name) {\n    if (!frm.is_new() || !requested_item_name) {\n        return;\n    }\n\n    frappe.db.get_list(\"Item\", {\n        fields: [\"name\", \"item_name\", \"last_purchase_rate\", \"standard_rate\"],\n        filters: {\n            item_name: requested_item_name,\n            disabled: 0\n        },\n        order_by: \"modified desc\",\n        limit: 1\n    }).then((items) => {\n        const current_item_name = (frm.doc.item_name || \"\").trim();\n        if (current_item_name !== requested_item_name) {\n            return;\n        }\n\n        if (!items.length || !flt(items[0].last_purchase_rate)) {\n            frm._last_purchase_rate_source = null;\n            frm.dashboard.clear_headline();\n            frm.set_value(\"last_purchase_rate\", 0);\n            return;\n        }\n\n        frm.set_value(\"last_purchase_rate\", items[0].last_purchase_rate);\n\n        if (frm._last_purchase_rate_source !== items[0].name) {\n            frm._last_purchase_rate_source = items[0].name;\n            frm.dashboard.clear_headline();\n            frm.dashboard.set_headline(__(\"Last purchase rate fetched from existing Item {0}\", [items[0].name]));\n        }\n    });\n}",
   "view": "Form"
  },
  {
