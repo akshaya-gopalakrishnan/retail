@@ -120,7 +120,7 @@
 
 	function normalizeScaleBarcodeType(value) {
 		const normalized = String(value || "").trim().toUpperCase().replace(/ /g, "_");
-		if (normalized === "WEIGHT+UNIT_PRICE") return "WEIGHT";
+		if (normalized === "WEIGHT+UNIT_PRICE" || normalized === "WEIGHT+UNITPRICE") return "WEIGHT";
 		return normalized || "WEIGHT";
 	}
 

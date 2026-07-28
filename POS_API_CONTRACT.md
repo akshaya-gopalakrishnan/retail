@@ -197,7 +197,7 @@ Item sync behavior:
 - `items` includes POS item flags: `is_scalable_item`, `scale_barcode_type`, `is_open_price`, and `is_fast_plu_item`. `is_scalable_item` comes from Item's `Scale Item`; `scale_barcode_type` comes from Item's `Scale Barcode Type`; `is_open_price` comes from Item's `Open Price`; `is_fast_plu_item` comes from Item's `Fast PLU Item`.
 - .NET should show an item in the fast PLU item list when `is_fast_plu_item = 1`.
 - .NET should use only `is_scalable_item` and `scale_barcode_type` for scale-item handling. ERPNext does not send PLU, prefix, scale UOM, scale format, or scale unit code in POS master sync.
-- `scale_barcode_type` values are `Price`, `Weight`, or `Quantity`.
+- `scale_barcode_type` values are `Price`, `Weight`, `Quantity`, or `Weight+UnitPrice`.
 - .NET should upsert item rows by `item_code` / `name`.
 - `packing_details` returns Item's `Retail Packing Detail` child rows from `custom_retail_packing_detail`.
 - .NET should upsert packing rows by `name` or by `item_code + idx`, and link each packing row to its parent item using `item_code`.
