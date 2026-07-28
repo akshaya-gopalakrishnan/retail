@@ -363,12 +363,15 @@ POST /api/method/retail.api.pos_sync.create_pos_cash_movement
 
 `movement_type` must be `Cash In` or `Cash Out`. ERPNext stores the row cashier-wise against `cashier_shift` and `counter_session`. The `description` is stored as the POS reason/description.
 
+`cash_movement` in the response is the ERPNext unique document ID. `external_pos_reference` is the POS/.NET unique transaction ID echoed back for local reconciliation and duplicate handling.
+
 Response:
 
 ```json
 {
   "status": "Success",
   "cash_movement": "POS-CMOV-2026-00001",
+  "external_pos_reference": "KARAMA-C001-T001-CASHOUT-20260625-000010",
   "cashier_shift": "POS-CSH-2026-00001",
   "counter_session": "POS-CSES-2026-00001",
   "movement_type": "Cash Out",

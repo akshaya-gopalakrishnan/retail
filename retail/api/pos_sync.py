@@ -389,7 +389,11 @@ def create_pos_cash_movement(data=None, **kwargs):
 
 		existing = _existing_doc("POS Cash Movement", payload.external_pos_reference)
 		if existing:
-			return {"status": "Duplicate", "cash_movement": existing.name}
+			return {
+				"status": "Duplicate",
+				"cash_movement": existing.name,
+				"external_pos_reference": payload.external_pos_reference,
+			}
 
 		counter_doc = _counter(payload.get("branch"), payload.get("counter_code"))
 		cashier_employee, cashier_shift, counter_session = _validate_active_counter_session(payload, counter_doc)
@@ -425,6 +429,7 @@ def create_pos_cash_movement(data=None, **kwargs):
 		return {
 			"status": "Success",
 			"cash_movement": doc.name,
+			"external_pos_reference": payload.external_pos_reference,
 			"cashier_shift": cashier_shift,
 			"counter_session": counter_session,
 			"movement_type": movement_type,
