@@ -125,9 +125,8 @@
 	}
 
 	function generateScaleItemBarcode() {
-		const timestampPart = String(Date.now()).slice(-8);
-		const randomPart = String(Math.floor(Math.random() * 100)).padStart(2, "0");
-		return `99${timestampPart}${randomPart}`;
+		const randomPart = String(Math.floor(Math.random() * 100000)).padStart(5, "0");
+		return `99${randomPart}`;
 	}
 
 	function addZebraLabelButton(frm) {
