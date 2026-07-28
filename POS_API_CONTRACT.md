@@ -194,7 +194,8 @@ Item sync behavior:
 
 - `items` includes both active and disabled items.
 - `items` includes audit fields: `created_by`, `created_on`, `modified_by`, `modified_on`. The existing `modified` field is still returned for incremental sync compatibility.
-- `items` includes POS item flags: `is_scalable_item`, `scale_barcode_type`, and `is_open_price`. `is_scalable_item` comes from Item's `Scale Item`; `scale_barcode_type` comes from Item's `Scale Barcode Type`; `is_open_price` comes from Item's `Open Price`.
+- `items` includes POS item flags: `is_scalable_item`, `scale_barcode_type`, `is_open_price`, and `is_fast_plu_item`. `is_scalable_item` comes from Item's `Scale Item`; `scale_barcode_type` comes from Item's `Scale Barcode Type`; `is_open_price` comes from Item's `Open Price`; `is_fast_plu_item` comes from Item's `Fast PLU Item`.
+- .NET should show an item in the fast PLU item list when `is_fast_plu_item = 1`.
 - .NET should use only `is_scalable_item` and `scale_barcode_type` for scale-item handling. ERPNext does not send PLU, prefix, scale UOM, scale format, or scale unit code in POS master sync.
 - `scale_barcode_type` values are `Price`, `Weight`, or `Quantity`.
 - .NET should upsert item rows by `item_code` / `name`.

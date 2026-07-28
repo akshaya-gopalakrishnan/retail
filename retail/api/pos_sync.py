@@ -814,6 +814,7 @@ def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
 			"custom_scale_item as is_scalable_item",
 			"custom_scale_barcode_type as scale_barcode_type",
 			"custom_is_open_price as is_open_price",
+			"custom_is_fast_plu_item as is_fast_plu_item",
 			"disabled",
 			"owner as created_by",
 			"creation as created_on",
