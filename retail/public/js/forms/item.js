@@ -44,7 +44,9 @@
 		selling_net_rate: "Sell Exc",
 		selling_gross_rate: "Sell Inc",
 		is_fast_plu_item: "Fast PLU",
+		disabled: "Disabled",
 	};
+	const packingGridCheckboxFields = ["is_fast_plu_item", "disabled"];
 
 	frappe.ui.form.on("Item", {
 		refresh(frm) {
@@ -296,6 +298,9 @@
 		is_fast_plu_item(frm) {
 			refreshPackingGridPresentation(frm);
 		},
+		disabled(frm) {
+			refreshPackingGridPresentation(frm);
+		},
 		selling_vat_confirmed(frm, cdt, cdn) {
 			refreshPackingVatRow(frm, cdt, cdn, "selling");
 		},
@@ -488,14 +493,18 @@
 			(frm.doc.custom_retail_packing_detail || []).forEach((row) => {
 				const gridRow = grid.grid_rows_by_docname?.[row.name];
 				const $row = gridRow?.row || gridRow?.wrapper;
-				const $cell = $row?.find?.('[data-fieldname="is_fast_plu_item"]');
-				if (!$cell?.length) return;
-				const checked = cint(row.is_fast_plu_item) ? 1 : 0;
-				$cell.find('input[type="checkbox"]').prop("checked", Boolean(checked));
-				const $static = $cell.find(".static-area");
-				if ($static.length && !$static.find('input[type="checkbox"]').length) {
-					$static.html(checked ? `<span class="retail-grid-check">&check;</span>` : "");
-				}
+				if (!$row?.length) return;
+
+				packingGridCheckboxFields.forEach((fieldname) => {
+					const $cell = $row.find(`[data-fieldname="${fieldname}"]`);
+					if (!$cell?.length) return;
+					const checked = cint(row[fieldname]) ? 1 : 0;
+					$cell.find('input[type="checkbox"]').prop("checked", Boolean(checked));
+					const $static = $cell.find(".static-area");
+					if ($static.length && !$static.find('input[type="checkbox"]').length) {
+						$static.html(checked ? `<span class="retail-grid-check">&check;</span>` : "");
+					}
+				});
 			});
 		}, 0);
 	}

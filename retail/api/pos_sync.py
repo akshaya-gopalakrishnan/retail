@@ -806,6 +806,7 @@ def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
 		"parent as item_code",
 		"idx",
 		"is_fast_plu_item",
+		"disabled",
 		"barcode",
 		"barcode_type",
 		"uom",

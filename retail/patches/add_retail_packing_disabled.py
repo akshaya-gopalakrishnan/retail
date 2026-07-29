@@ -1,18 +1,6 @@
 import frappe
 
 
-DOCFIELD_LABELS = {
-	"purchase_rate": "Purchase Rate",
-	"selling_rate": "Selling Rate",
-}
-
-CUSTOM_FIELD_LABELS = {
-	"purchase_net_rate": "Purchase Rate Excl. VAT",
-	"purchase_gross_rate": "Purchase Rate Incl. VAT",
-	"selling_net_rate": "Selling Rate Excl. VAT",
-	"selling_gross_rate": "Selling Rate Incl. VAT",
-}
-
 PACKING_GRID_COLUMNS = [
 	{"fieldname": "packing_name", "columns": 2},
 	{"fieldname": "barcode", "columns": 1},
@@ -28,19 +16,18 @@ PACKING_GRID_COLUMNS = [
 
 
 def execute():
-	for fieldname, label in DOCFIELD_LABELS.items():
-		frappe.db.set_value(
-			"DocField",
-			{"parent": "Retail Packing Detail", "fieldname": fieldname},
-			"label",
-			label,
-			update_modified=False,
-		)
+	if not frappe.db.exists("DocType", "Retail Packing Detail"):
+		return
+	if not frappe.db.has_column("Retail Packing Detail", "disabled"):
+		return
 
-	for fieldname, label in CUSTOM_FIELD_LABELS.items():
-		name = f"Retail Packing Detail-{fieldname}"
-		if frappe.db.exists("Custom Field", name):
-			frappe.db.set_value("Custom Field", name, "label", label, update_modified=False)
+	frappe.db.sql(
+		"""
+		update `tabRetail Packing Detail`
+		set disabled = 0
+		where disabled is null
+		"""
+	)
 
 	defaults = {"Item": {"Retail Packing Detail": PACKING_GRID_COLUMNS}}
 	for user in frappe.get_all("User", filters={"enabled": 1}, pluck="name"):
