@@ -227,7 +227,18 @@ def get_conditions(filters):
 		conditions.append("item.brand = %(brand)s")
 		values["brand"] = filters.brand
 	if filters.get("barcode"):
-		conditions.append("packing.barcode like %(barcode)s")
+		conditions.append(
+			"""(
+				item.custom_barcode like %(barcode)s
+				or packing.barcode like %(barcode)s
+				or exists (
+					select 1
+					from `tabItem Barcode` item_barcode
+					where item_barcode.parent = item.name
+						and item_barcode.barcode like %(barcode)s
+				)
+			)"""
+		)
 		values["barcode"] = f"%{filters.barcode}%"
 	if filters.get("disabled") in (0, 1, "0", "1"):
 		conditions.append("item.disabled = %(disabled)s")
