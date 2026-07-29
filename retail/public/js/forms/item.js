@@ -34,6 +34,17 @@
 	};
 	const arabicItemNameField = "custom_arabic_item_name";
 	const arabicTranslationDelay = 900;
+	const packingGridLabels = {
+		packing_name: "Pack Name",
+		barcode: "Barcode",
+		uom: "UOM",
+		conversion_factor: "Conv fac",
+		purchase_net_rate: "Pur Exc",
+		purchase_gross_rate: "Pur Inc",
+		selling_net_rate: "Sell Exc",
+		selling_gross_rate: "Sell Inc",
+		is_fast_plu_item: "Fast PLU",
+	};
 
 	frappe.ui.form.on("Item", {
 		refresh(frm) {
@@ -43,14 +54,14 @@
 			queueLastPurchaseRateLookup(frm);
 			setOpeningAveragePurchaseRate(frm, false);
 			refreshVatPrices(frm);
-			refreshPackingVatRows(frm).then(() => refreshPackingFastPluGrid(frm));
+			refreshPackingVatRows(frm).then(() => refreshPackingGridPresentation(frm));
 			refreshMargin(frm);
 			addPackingVatButton(frm);
 			addZebraLabelButton(frm);
 			setScaleItemDefaults(frm);
 		},
 		after_save(frm) {
-			refreshPackingFastPluGrid(frm);
+			refreshPackingGridPresentation(frm);
 		},
 		item_name(frm) {
 			queueArabicItemNameTranslation(frm);
@@ -283,56 +294,56 @@
 			refreshPackingVatRow(frm, cdt, cdn, "purchase");
 		},
 		is_fast_plu_item(frm) {
-			refreshPackingFastPluGrid(frm);
+			refreshPackingGridPresentation(frm);
 		},
 		selling_vat_confirmed(frm, cdt, cdn) {
 			refreshPackingVatRow(frm, cdt, cdn, "selling");
 		},
-			custom_retail_packing_detail_add(frm, cdt, cdn) {
-				setPackingIdentity(frm, cdt, cdn);
-				setPackingRowFromItemRates(frm, cdt, cdn).then(() => refreshPackingVatRow(frm, cdt, cdn));
-			},
-			uom(frm, cdt, cdn) {
-				setPackingIdentity(frm, cdt, cdn);
-			},
-			conversion_factor(frm, cdt, cdn) {
-				setPackingIdentity(frm, cdt, cdn);
-				setPackingRowFromItemRates(frm, cdt, cdn).then(() => refreshPackingVatRow(frm, cdt, cdn));
-			},
-		});
+		custom_retail_packing_detail_add(frm, cdt, cdn) {
+			setPackingIdentity(frm, cdt, cdn);
+			setPackingRowFromItemRates(frm, cdt, cdn).then(() => refreshPackingVatRow(frm, cdt, cdn));
+		},
+		uom(frm, cdt, cdn) {
+			setPackingIdentity(frm, cdt, cdn);
+		},
+		conversion_factor(frm, cdt, cdn) {
+			setPackingIdentity(frm, cdt, cdn);
+			setPackingRowFromItemRates(frm, cdt, cdn).then(() => refreshPackingVatRow(frm, cdt, cdn));
+		},
+	});
 
-		function setPackingIdentity(frm, cdt, cdn) {
-			const row = locals[cdt][cdn];
-			if (!row || !row.uom) return;
-			if (!row.packing_code && frm.doc.item_code) {
-				frappe.model.set_value(cdt, cdn, "packing_code", [frm.doc.item_code, row.uom].join("-").replace(/\s+/g, "-").toUpperCase());
-			}
-
-			const itemName = frm.doc.item_name || frm.doc.item_code || "";
-			const packingName = getAutoPackingName(itemName, row.uom, row.conversion_factor);
-			if (!packingName) return;
-
-			if (!row.packing_name || row.packing_name === row.__retail_last_auto_packing_name || isAutoPackingName(row.packing_name, itemName, row.uom)) {
-				row.__retail_last_auto_packing_name = packingName;
-				frappe.model.set_value(cdt, cdn, "packing_name", packingName);
-			}
+	function setPackingIdentity(frm, cdt, cdn) {
+		const row = locals[cdt][cdn];
+		if (!row || !row.uom) return;
+		if (!row.packing_code && frm.doc.item_code) {
+			frappe.model.set_value(cdt, cdn, "packing_code", [frm.doc.item_code, row.uom].join("-").replace(/\s+/g, "-").toUpperCase());
 		}
 
-		function getAutoPackingName(itemName, uom, conversionFactor) {
-			if (!itemName || !uom) return "";
-			const factor = flt(conversionFactor);
-			return factor ? `${itemName} - ${uom} x${formatPackingFactor(factor)}` : `${itemName} - ${uom}`;
-		}
+		const itemName = frm.doc.item_name || frm.doc.item_code || "";
+		const packingName = getAutoPackingName(itemName, row.uom, row.conversion_factor);
+		if (!packingName) return;
 
-		function isAutoPackingName(packingName, itemName, uom) {
-			if (!packingName || !itemName || !uom) return false;
-			const prefix = `${itemName} - ${uom}`;
-			return packingName === prefix || packingName.startsWith(`${prefix} x`);
+		if (!row.packing_name || row.packing_name === row.__retail_last_auto_packing_name || isAutoPackingName(row.packing_name, itemName, row.uom)) {
+			row.__retail_last_auto_packing_name = packingName;
+			frappe.model.set_value(cdt, cdn, "packing_name", packingName);
 		}
+	}
 
-		function formatPackingFactor(value) {
-			return Number.isInteger(value) ? String(value) : String(value);
-		}
+	function getAutoPackingName(itemName, uom, conversionFactor) {
+		if (!itemName || !uom) return "";
+		const factor = flt(conversionFactor);
+		return factor ? `${itemName} - ${uom} x${formatPackingFactor(factor)}` : `${itemName} - ${uom}`;
+	}
+
+	function isAutoPackingName(packingName, itemName, uom) {
+		if (!packingName || !itemName || !uom) return false;
+		const prefix = `${itemName} - ${uom}`;
+		return packingName === prefix || packingName.startsWith(`${prefix} x`);
+	}
+
+	function formatPackingFactor(value) {
+		return Number.isInteger(value) ? String(value) : String(value);
+	}
 
 	function setDefaultVatIncludes(frm) {
 		if (!frm.is_new() || frm._retail_vat_defaults_applied) return;
@@ -460,15 +471,20 @@
 		});
 		return Promise.all(work).then(() => {
 			if (!skipGridRefresh) frm.refresh_field("custom_retail_packing_detail");
-			refreshPackingFastPluGrid(frm);
+			refreshPackingGridPresentation(frm);
 			return null;
 		});
 	}
 
-	function refreshPackingFastPluGrid(frm) {
+	function refreshPackingGridPresentation(frm) {
 		const grid = frm.fields_dict.custom_retail_packing_detail?.grid;
 		if (!grid) return;
 		setTimeout(() => {
+			Object.entries(packingGridLabels).forEach(([fieldname, label]) => {
+				const $header = grid.wrapper.find(`.grid-heading-row [data-fieldname="${fieldname}"] .static-area`).first();
+				if ($header.length) $header.text(__(label));
+			});
+
 			(frm.doc.custom_retail_packing_detail || []).forEach((row) => {
 				const gridRow = grid.grid_rows_by_docname?.[row.name];
 				const $row = gridRow?.row || gridRow?.wrapper;

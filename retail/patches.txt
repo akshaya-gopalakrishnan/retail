@@ -25,3 +25,4 @@ retail.patches.add_retail_packing_code
 retail.patches.add_retail_packing_name
 retail.patches.add_retail_packing_fast_plu
 retail.patches.shorten_retail_packing_grid_labels
+retail.patches.restore_retail_packing_popup_labels
