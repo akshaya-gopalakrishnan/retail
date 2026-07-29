@@ -43,11 +43,14 @@
 			queueLastPurchaseRateLookup(frm);
 			setOpeningAveragePurchaseRate(frm, false);
 			refreshVatPrices(frm);
-			refreshPackingVatRows(frm);
+			refreshPackingVatRows(frm).then(() => refreshPackingFastPluGrid(frm));
 			refreshMargin(frm);
 			addPackingVatButton(frm);
 			addZebraLabelButton(frm);
 			setScaleItemDefaults(frm);
+		},
+		after_save(frm) {
+			refreshPackingFastPluGrid(frm);
 		},
 		item_name(frm) {
 			queueArabicItemNameTranslation(frm);
@@ -279,9 +282,12 @@
 		purchase_vat_confirmed(frm, cdt, cdn) {
 			refreshPackingVatRow(frm, cdt, cdn, "purchase");
 		},
-			selling_vat_confirmed(frm, cdt, cdn) {
-				refreshPackingVatRow(frm, cdt, cdn, "selling");
-			},
+		is_fast_plu_item(frm) {
+			refreshPackingFastPluGrid(frm);
+		},
+		selling_vat_confirmed(frm, cdt, cdn) {
+			refreshPackingVatRow(frm, cdt, cdn, "selling");
+		},
 			custom_retail_packing_detail_add(frm, cdt, cdn) {
 				setPackingIdentity(frm, cdt, cdn);
 				setPackingRowFromItemRates(frm, cdt, cdn).then(() => refreshPackingVatRow(frm, cdt, cdn));
@@ -454,8 +460,28 @@
 		});
 		return Promise.all(work).then(() => {
 			if (!skipGridRefresh) frm.refresh_field("custom_retail_packing_detail");
+			refreshPackingFastPluGrid(frm);
 			return null;
 		});
+	}
+
+	function refreshPackingFastPluGrid(frm) {
+		const grid = frm.fields_dict.custom_retail_packing_detail?.grid;
+		if (!grid) return;
+		setTimeout(() => {
+			(frm.doc.custom_retail_packing_detail || []).forEach((row) => {
+				const gridRow = grid.grid_rows_by_docname?.[row.name];
+				const $row = gridRow?.row || gridRow?.wrapper;
+				const $cell = $row?.find?.('[data-fieldname="is_fast_plu_item"]');
+				if (!$cell?.length) return;
+				const checked = cint(row.is_fast_plu_item) ? 1 : 0;
+				$cell.find('input[type="checkbox"]').prop("checked", Boolean(checked));
+				const $static = $cell.find(".static-area");
+				if ($static.length && !$static.find('input[type="checkbox"]').length) {
+					$static.html(checked ? `<span class="retail-grid-check">&check;</span>` : "");
+				}
+			});
+		}, 0);
 	}
 
 	function refreshPackingVatRow(frm, cdt, cdn, direction, sourceField) {

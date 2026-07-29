@@ -7,6 +7,10 @@
       },
       {
         "columns": 1,
+        "fieldname": "is_fast_plu_item"
+      },
+      {
+        "columns": 1,
         "fieldname": "uom"
       },
       {

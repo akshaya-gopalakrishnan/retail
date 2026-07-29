@@ -195,7 +195,7 @@ Item sync behavior:
 - `items` includes both active and disabled items.
 - `items` includes audit fields: `created_by`, `created_on`, `modified_by`, `modified_on`. The existing `modified` field is still returned for incremental sync compatibility.
 - `items` includes POS item flags: `is_scalable_item`, `scale_barcode_type`, `is_open_price`, and `is_fast_plu_item`. `is_scalable_item` comes from Item's `Scale Item`; `scale_barcode_type` comes from Item's `Scale Barcode Type`; `is_open_price` comes from Item's `Open Price`; `is_fast_plu_item` comes from Item's `Fast PLU Item`.
-- .NET should show an item in the fast PLU item list when `is_fast_plu_item = 1`.
+- .NET should show a main item in the fast PLU item list when the item row has `is_fast_plu_item = 1`.
 - .NET should use only `is_scalable_item` and `scale_barcode_type` for scale-item handling. ERPNext does not send PLU, prefix, scale UOM, scale format, or scale unit code in POS master sync.
 - `scale_barcode_type` values are `Price`, `Weight`, `Quantity`, or `Weight+UnitPrice`.
 - .NET should upsert item rows by `item_code` / `name`.
@@ -204,7 +204,8 @@ Item sync behavior:
 - .NET should link each packing row to its parent item using `item_code`.
 - `name` is ERPNext's internal child-row id. Use `packing_code` as the readable business key when present; otherwise fall back to `name` or `item_code + idx`.
 - Use `packing_name` as the POS display name for packing rows. Example: `Water - Box x24`, so cashiers can distinguish base UOM, box-24, and box-14 entries during search/sale.
-- Packing rows include `packing_code`, `packing_name`, `barcode`, `barcode_type`, `uom`, `conversion_factor`, purchase/selling rates, VAT split fields, `packing_margin`, and `modified`.
+- Packing rows include `packing_code`, `packing_name`, `is_fast_plu_item`, `barcode`, `barcode_type`, `uom`, `conversion_factor`, purchase/selling rates, VAT split fields, `packing_margin`, and `modified`.
+- .NET should show a packing row in the fast PLU item list when that packing row has `is_fast_plu_item = 1`. This is separate from the parent Item's `is_fast_plu_item`.
 - If an item row has `disabled = 1`, mark the local POS item inactive/hidden and do not allow it for new sales.
 - Do not delete old local invoice rows that used this item; historical invoices must continue to display correctly.
 - `modified_after` returns only rows changed after that ERPNext server timestamp, including items that were disabled after the previous sync and packing rows changed after the previous sync.
