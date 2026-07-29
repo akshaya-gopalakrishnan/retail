@@ -20,8 +20,10 @@
   "default_copies",
   "currency",
   "column_break_10",
+  "print_method",
   "printer_ip",
   "printer_port",
+  "printer_name",
   "sample_item",
   "template_section",
   "zpl_template",
@@ -113,6 +115,15 @@
    "fieldtype": "Column Break"
   },
   {
+   "default": "Network Printer",
+   "description": "Use Network Printer for direct IP printers. Use System Printer for USB/shared printers installed on the ERPNext host.",
+   "fieldname": "print_method",
+   "fieldtype": "Select",
+   "label": "Print Method",
+   "options": "Network Printer\nSystem Printer",
+   "reqd": 1
+  },
+  {
    "description": "Optional. Network Zebra printer IP for Print Test.",
    "fieldname": "printer_ip",
    "fieldtype": "Data",
@@ -123,6 +134,12 @@
    "fieldname": "printer_port",
    "fieldtype": "Int",
    "label": "Printer Port"
+  },
+  {
+   "description": "Printer name installed on the ERPNext server/host OS. Use this for USB or shared printers.",
+   "fieldname": "printer_name",
+   "fieldtype": "Data",
+   "label": "Printer Name"
   },
   {
    "fieldname": "sample_item",

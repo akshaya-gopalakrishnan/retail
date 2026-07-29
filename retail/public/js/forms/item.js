@@ -279,16 +279,54 @@
 		purchase_vat_confirmed(frm, cdt, cdn) {
 			refreshPackingVatRow(frm, cdt, cdn, "purchase");
 		},
-		selling_vat_confirmed(frm, cdt, cdn) {
-			refreshPackingVatRow(frm, cdt, cdn, "selling");
-		},
-		custom_retail_packing_detail_add(frm, cdt, cdn) {
-			setPackingRowFromItemRates(frm, cdt, cdn).then(() => refreshPackingVatRow(frm, cdt, cdn));
-		},
-		conversion_factor(frm, cdt, cdn) {
-			setPackingRowFromItemRates(frm, cdt, cdn).then(() => refreshPackingVatRow(frm, cdt, cdn));
-		},
-	});
+			selling_vat_confirmed(frm, cdt, cdn) {
+				refreshPackingVatRow(frm, cdt, cdn, "selling");
+			},
+			custom_retail_packing_detail_add(frm, cdt, cdn) {
+				setPackingIdentity(frm, cdt, cdn);
+				setPackingRowFromItemRates(frm, cdt, cdn).then(() => refreshPackingVatRow(frm, cdt, cdn));
+			},
+			uom(frm, cdt, cdn) {
+				setPackingIdentity(frm, cdt, cdn);
+			},
+			conversion_factor(frm, cdt, cdn) {
+				setPackingIdentity(frm, cdt, cdn);
+				setPackingRowFromItemRates(frm, cdt, cdn).then(() => refreshPackingVatRow(frm, cdt, cdn));
+			},
+		});
+
+		function setPackingIdentity(frm, cdt, cdn) {
+			const row = locals[cdt][cdn];
+			if (!row || !row.uom) return;
+			if (!row.packing_code && frm.doc.item_code) {
+				frappe.model.set_value(cdt, cdn, "packing_code", [frm.doc.item_code, row.uom].join("-").replace(/\s+/g, "-").toUpperCase());
+			}
+
+			const itemName = frm.doc.item_name || frm.doc.item_code || "";
+			const packingName = getAutoPackingName(itemName, row.uom, row.conversion_factor);
+			if (!packingName) return;
+
+			if (!row.packing_name || row.packing_name === row.__retail_last_auto_packing_name || isAutoPackingName(row.packing_name, itemName, row.uom)) {
+				row.__retail_last_auto_packing_name = packingName;
+				frappe.model.set_value(cdt, cdn, "packing_name", packingName);
+			}
+		}
+
+		function getAutoPackingName(itemName, uom, conversionFactor) {
+			if (!itemName || !uom) return "";
+			const factor = flt(conversionFactor);
+			return factor ? `${itemName} - ${uom} x${formatPackingFactor(factor)}` : `${itemName} - ${uom}`;
+		}
+
+		function isAutoPackingName(packingName, itemName, uom) {
+			if (!packingName || !itemName || !uom) return false;
+			const prefix = `${itemName} - ${uom}`;
+			return packingName === prefix || packingName.startsWith(`${prefix} x`);
+		}
+
+		function formatPackingFactor(value) {
+			return Number.isInteger(value) ? String(value) : String(value);
+		}
 
 	function setDefaultVatIncludes(frm) {
 		if (!frm.is_new() || frm._retail_vat_defaults_applied) return;

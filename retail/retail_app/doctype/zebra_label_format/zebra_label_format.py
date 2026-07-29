@@ -1,7 +1,11 @@
 import html
 import json
+import os
 import re
+import shutil
 import socket
+import subprocess
+import tempfile
 
 import frappe
 from frappe import _
@@ -56,12 +60,9 @@ def render_label(label_format, item=None, copies=None, price=None, currency=None
 def print_label(label_format, item=None, copies=None, price=None, currency=None):
 	label = frappe.get_doc("Zebra Label Format", label_format)
 	label.check_permission("read")
-	if not label.printer_ip:
-		frappe.throw(_("Please set Printer IP on Zebra Label Format {0}.").format(label.name))
 
 	rendered = render_label(label_format, item=item, copies=copies, price=price, currency=currency)
-	send_to_printer(label.printer_ip, cint(label.printer_port) or 9100, rendered["zpl"], label.name)
-	return _("Sent to printer {0}.").format(label.printer_ip)
+	return send_label_to_configured_printer(label, rendered["zpl"])
 
 
 @frappe.whitelist()
@@ -95,8 +96,6 @@ def render_print_sample(label_format, source="item_list", selected_items=None, f
 def print_labels(label_format, source="item_list", selected_items=None, filters=None, copies=None, currency=None, limit=1000):
 	label = frappe.get_doc("Zebra Label Format", label_format)
 	label.check_permission("read")
-	if not label.printer_ip:
-		frappe.throw(_("Please set Printer IP on Zebra Label Format {0}.").format(label.name))
 
 	items = get_candidate_items(source, selected_items=selected_items, filters=filters, limit=limit)
 	if not items:
@@ -108,8 +107,7 @@ def print_labels(label_format, source="item_list", selected_items=None, filters=
 		context = get_label_context(label, item_doc, copies=copies, currency=currency, candidate=item)
 		zpl_parts.append(render_zpl(label.zpl_template or "", context))
 
-	send_to_printer(label.printer_ip, cint(label.printer_port) or 9100, "\n".join(zpl_parts), label.name)
-	return _("Sent {0} label(s) to printer {1}.").format(len(items), label.printer_ip)
+	return send_label_to_configured_printer(label, "\n".join(zpl_parts), label_count=len(items))
 
 
 @frappe.whitelist()
@@ -122,6 +120,35 @@ def get_default_format(label_type=None):
 		filters.pop("is_default", None)
 		name = frappe.db.get_value("Zebra Label Format", filters, "name", order_by="modified desc")
 	return name
+
+
+@frappe.whitelist()
+def get_system_printers():
+	if os.name == "nt":
+		return get_windows_system_printers()
+	return get_cups_system_printers()
+
+
+def get_cups_system_printers():
+	command = ["lpstat", "-a"]
+	if not shutil.which("lpstat"):
+		return []
+	try:
+		result = subprocess.run(command, check=True, capture_output=True, text=True)
+	except subprocess.CalledProcessError:
+		return []
+	return [line.split()[0] for line in result.stdout.splitlines() if line.strip()]
+
+
+def get_windows_system_printers():
+	if not shutil.which("powershell"):
+		return []
+	command = ["powershell", "-NoProfile", "-Command", "Get-Printer | Select-Object -ExpandProperty Name"]
+	try:
+		result = subprocess.run(command, check=True, capture_output=True, text=True)
+	except subprocess.CalledProcessError:
+		return []
+	return [line.strip() for line in result.stdout.splitlines() if line.strip()]
 
 
 def get_candidate_items(source="item_list", selected_items=None, filters=None, limit=1000):
@@ -421,7 +448,25 @@ def build_preview_html(label, context):
 	"""
 
 
-def send_to_printer(ip, port, zpl, label_format=None):
+def send_label_to_configured_printer(label, zpl, label_count=1):
+	print_method = label.get("print_method") or "Network Printer"
+	if print_method == "System Printer":
+		if not label.get("printer_name"):
+			frappe.throw(_("Please set Printer Name on Zebra Label Format {0}.").format(label.name))
+		send_to_system_printer(label.printer_name, zpl, label.name)
+		if label_count > 1:
+			return _("Sent {0} label(s) to printer {1}.").format(label_count, label.printer_name)
+		return _("Sent to printer {0}.").format(label.printer_name)
+
+	if not label.printer_ip:
+		frappe.throw(_("Please set Printer IP on Zebra Label Format {0}.").format(label.name))
+	send_to_network_printer(label.printer_ip, cint(label.printer_port) or 9100, zpl, label.name)
+	if label_count > 1:
+		return _("Sent {0} label(s) to printer {1}.").format(label_count, label.printer_ip)
+	return _("Sent to printer {0}.").format(label.printer_ip)
+
+
+def send_to_network_printer(ip, port, zpl, label_format=None):
 	try:
 		with socket.create_connection((ip, port), timeout=5) as conn:
 			conn.sendall(zpl.encode("utf-8"))
@@ -435,3 +480,64 @@ def send_to_printer(ip, port, zpl, label_format=None):
 				exc,
 			)
 		)
+
+
+def send_to_system_printer(printer_name, zpl, label_format=None):
+	if os.name == "nt":
+		send_to_windows_system_printer(printer_name, zpl, label_format)
+	else:
+		send_to_cups_printer(printer_name, zpl, label_format)
+
+
+def send_to_cups_printer(printer_name, zpl, label_format=None):
+	command = get_cups_print_command(printer_name)
+	try:
+		subprocess.run(command, input=zpl.encode("utf-8"), check=True, capture_output=True)
+	except FileNotFoundError:
+		frappe.throw(_("Could not find lp or lpr on this server. Install CUPS or use Network Printer mode."))
+	except subprocess.CalledProcessError as exc:
+		throw_system_printer_error(printer_name, label_format, exc.stderr or exc.stdout or exc)
+
+
+def get_cups_print_command(printer_name):
+	if shutil.which("lp"):
+		return ["lp", "-d", printer_name, "-o", "raw"]
+	if shutil.which("lpr"):
+		return ["lpr", "-P", printer_name, "-o", "raw"]
+	return ["lp", "-d", printer_name, "-o", "raw"]
+
+
+def send_to_windows_system_printer(printer_name, zpl, label_format=None):
+	temp_file = None
+	try:
+		with tempfile.NamedTemporaryFile("w", suffix=".zpl", delete=False, encoding="utf-8") as handle:
+			handle.write(zpl)
+			temp_file = handle.name
+		subprocess.run(["print", f"/D:{printer_name}", temp_file], check=True, capture_output=True)
+	except FileNotFoundError:
+		frappe.throw(_("Could not find the Windows print command on this server."))
+	except subprocess.CalledProcessError as exc:
+		throw_system_printer_error(printer_name, label_format, exc.stderr or exc.stdout or exc)
+	finally:
+		if temp_file:
+			try:
+				os.unlink(temp_file)
+			except OSError:
+				pass
+
+
+def throw_system_printer_error(printer_name, label_format=None, details=None):
+	label_text = _(" for {0}").format(label_format) if label_format else ""
+	frappe.throw(
+		_("Could not print Zebra label{0} to system printer {1}. Please check the printer name and server print setup. Error: {2}").format(
+			label_text,
+			printer_name,
+			get_error_text(details),
+		)
+	)
+
+
+def get_error_text(details):
+	if isinstance(details, bytes):
+		return details.decode("utf-8", errors="replace").strip()
+	return str(details or "").strip()

@@ -3,7 +3,12 @@ frappe.ui.form.on("Zebra Label Format", {
 		frm.add_custom_button(__("Preview"), () => run_zebra_action(frm, () => preview_zebra_label(frm))).addClass("btn-primary");
 		frm.add_custom_button(__("Print Test"), () => run_zebra_action(frm, () => print_zebra_label(frm)));
 		frm.add_custom_button(__("Set as Default"), () => run_zebra_action(frm, () => set_zebra_label_default(frm)));
+		set_printer_fields(frm);
+		add_system_printer_button(frm);
 		render_placeholder_help(frm);
+	},
+	print_method(frm) {
+		set_printer_fields(frm);
 	},
 	sample_item(frm) {
 		if (!frm.is_new() && frm.doc.sample_item) {
@@ -55,10 +60,19 @@ async function preview_zebra_label(frm, opts = {}) {
 }
 
 async function print_zebra_label(frm) {
-	if (!frm.doc.printer_ip) {
+	const print_method = frm.doc.print_method || "Network Printer";
+	if (print_method === "Network Printer" && !frm.doc.printer_ip) {
 		frappe.msgprint({
 			title: __("Printer IP Required"),
 			message: __("Set Printer IP on this Zebra Label Format before using Print Test."),
+			indicator: "orange",
+		});
+		return;
+	}
+	if (print_method === "System Printer" && !frm.doc.printer_name) {
+		frappe.msgprint({
+			title: __("Printer Name Required"),
+			message: __("Set Printer Name on this Zebra Label Format before using Print Test."),
 			indicator: "orange",
 		});
 		return;
@@ -74,6 +88,35 @@ async function print_zebra_label(frm) {
 		freeze_message: __("Sending to Zebra printer"),
 	});
 	frappe.show_alert({ message, indicator: "green" });
+}
+
+function set_printer_fields(frm) {
+	const print_method = frm.doc.print_method || "Network Printer";
+	const is_network = print_method === "Network Printer";
+
+	frm.toggle_reqd("printer_ip", is_network);
+	frm.toggle_reqd("printer_port", is_network);
+	frm.toggle_display("printer_ip", is_network);
+	frm.toggle_display("printer_port", is_network);
+	frm.toggle_reqd("printer_name", !is_network);
+	frm.toggle_display("printer_name", !is_network);
+}
+
+function add_system_printer_button(frm) {
+	if ((frm.doc.print_method || "Network Printer") !== "System Printer") return;
+	frm.add_custom_button(__("Show System Printers"), () => run_zebra_action(frm, () => show_system_printers()));
+}
+
+async function show_system_printers() {
+	const { message } = await frappe.call({
+		method: "retail.retail_app.doctype.zebra_label_format.zebra_label_format.get_system_printers",
+	});
+	const printers = message || [];
+	frappe.msgprint({
+		title: __("System Printers"),
+		message: printers.length ? printers.map((printer) => `<div><code>${frappe.utils.escape_html(printer)}</code></div>`).join("") : __("No system printers found on the ERPNext host."),
+		indicator: printers.length ? "green" : "orange",
+	});
 }
 
 async function set_zebra_label_default(frm) {

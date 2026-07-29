@@ -87,6 +87,7 @@ def create_label_format(name, label_type, width_dots, height_dots, zpl_template,
 		"dpi": 203,
 		"default_copies": 1,
 		"currency": "AED",
+		"print_method": "Network Printer",
 		"printer_port": 9100,
 		"zpl_template": zpl_template,
 	}

@@ -799,15 +799,51 @@ def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
 	modified_after = payload.get("modified_after")
 	counter_doc = _counter(branch, counter_code)
 	modified_filter = [["modified", ">", modified_after]] if modified_after else []
+	packing_fields = [
+		"name",
+		"packing_code",
+		"packing_name",
+		"parent as item_code",
+		"idx",
+		"barcode",
+		"barcode_type",
+		"uom",
+		"conversion_factor",
+		"purchase_rate",
+		"selling_rate",
+		"purchase_net_rate",
+		"purchase_vat_amount",
+		"purchase_gross_rate",
+		"selling_net_rate",
+		"selling_vat_amount",
+		"selling_gross_rate",
+		"packing_margin",
+		"modified",
+	]
 	packing_filters = [
 		["parenttype", "=", "Item"],
 		["parentfield", "=", "custom_retail_packing_detail"],
 	]
 	if modified_after:
 		packing_filters.append(["modified", ">", modified_after])
+	packing_details = frappe.get_all(
+		"Retail Packing Detail",
+		filters=packing_filters,
+		fields=packing_fields,
+		order_by="parent asc, idx asc",
+		limit_page_length=0,
+	)
+	packing_parent_items = sorted({row.item_code for row in packing_details if row.item_code})
+	item_or_filters = None
+	if modified_after:
+		item_or_filters = [["modified", ">", modified_after]]
+		if packing_parent_items:
+			item_or_filters.append(["name", "in", packing_parent_items])
+
 	items = frappe.get_all(
 		"Item",
-		filters=modified_filter,
+		filters=[] if item_or_filters else modified_filter,
+		or_filters=item_or_filters,
 		fields=[
 			"name",
 			"item_code",
@@ -829,43 +865,39 @@ def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
 		],
 		limit_page_length=0,
 	)
+	item_codes = [item.item_code for item in items if item.item_code]
+	all_item_packings = []
+	if item_codes:
+		all_item_packings = frappe.get_all(
+			"Retail Packing Detail",
+			filters=[
+				["parenttype", "=", "Item"],
+				["parentfield", "=", "custom_retail_packing_detail"],
+				["parent", "in", item_codes],
+			],
+			fields=packing_fields,
+			order_by="parent asc, idx asc",
+			limit_page_length=0,
+		)
+	packings_by_item = {}
+	for packing in all_item_packings:
+		packings_by_item.setdefault(packing.item_code, []).append(packing)
+	for item in items:
+		item["packings"] = packings_by_item.get(item.item_code, [])
+
 	return {
 		"status": "Success",
 		"server_time": now_datetime(),
 		"counter": counter_doc.as_dict(),
 		"tax_config": _pos_tax_config(counter_doc),
 		"items": items,
-		"item_barcodes": frappe.get_all(
-			"Item Barcode",
-			filters=modified_filter,
-			fields=["parent as item_code", "barcode", "uom", "modified"],
-			limit_page_length=0,
-		),
-		"packing_details": frappe.get_all(
-			"Retail Packing Detail",
-			filters=packing_filters,
-			fields=[
-				"name",
-				"parent as item_code",
-				"idx",
-				"barcode",
-				"barcode_type",
-				"uom",
-				"conversion_factor",
-				"purchase_rate",
-				"selling_rate",
-				"purchase_net_rate",
-				"purchase_vat_amount",
-				"purchase_gross_rate",
-				"selling_net_rate",
-				"selling_vat_amount",
-				"selling_gross_rate",
-				"packing_margin",
-				"modified",
-			],
-			order_by="parent asc, idx asc",
-			limit_page_length=0,
-		),
+			"item_barcodes": frappe.get_all(
+				"Item Barcode",
+				filters=modified_filter,
+				fields=["parent as item_code", "barcode", "uom", "modified"],
+				limit_page_length=0,
+			),
+			"packing_details": packing_details,
 		"item_prices": frappe.get_all(
 			"Item Price",
 			filters=modified_filter,

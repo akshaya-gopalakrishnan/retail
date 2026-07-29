@@ -20,3 +20,6 @@ retail.patches.sales_invoice
 retail.patches.transaction_items
 retail.patches.setup_zebra_label_formats
 retail.patches.scale_items
+retail.patches.add_zebra_print_method
+retail.patches.add_retail_packing_code
+retail.patches.add_retail_packing_name

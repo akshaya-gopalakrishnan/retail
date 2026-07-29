@@ -4,6 +4,12 @@ from __future__ import annotations
 
 import frappe
 
+from retail.retail_app.doctype.retail_packing_detail.retail_packing_detail import (
+	is_auto_packing_name,
+	make_packing_code,
+	make_packing_name,
+)
+
 
 LEGACY_UOM_BARCODE_SCRIPT = "UOM&Barcode table sync Retail Packing Detail"
 
@@ -13,6 +19,7 @@ def sync_uoms_and_barcodes(doc, method=None):
 		doc = frappe.get_doc("Item", doc)
 
 	default_uom = doc.get("stock_uom") or "Nos"
+	fill_packing_identifiers(doc)
 	doc.set("uoms", [])
 	doc.append("uoms", {"uom": default_uom, "conversion_factor": 1})
 
@@ -42,6 +49,16 @@ def sync_uoms_and_barcodes(doc, method=None):
 		if barcode and barcode not in seen_barcodes:
 			doc.append("barcodes", {"barcode": barcode, "uom": row.get("uom") or default_uom})
 			seen_barcodes.add(barcode)
+
+
+def fill_packing_identifiers(doc):
+	item_code = doc.get("item_code") or doc.get("name")
+	item_name = doc.get("item_name") or item_code
+	for row in doc.get("custom_retail_packing_detail") or []:
+		if not row.get("packing_code"):
+			row.packing_code = make_packing_code(item_code, row.get("uom"), row.get("idx"))
+		if not row.get("packing_name") or is_auto_packing_name(row.get("packing_name"), item_name, row.get("uom")):
+			row.packing_name = make_packing_name(item_name, row.get("uom"), row.get("conversion_factor"))
 
 
 def disable_legacy_uom_barcode_script():
