@@ -1,4 +1,5 @@
 import frappe
+from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 from frappe.utils import flt
 
 
@@ -118,20 +119,32 @@ def sync_packing_item_prices(doc):
 			continue
 
 		sync_item_price(
-			doc, "Standard Selling", row.get("selling_net_rate") or row.get("selling_rate"), uom=row.uom
+			doc,
+			"Standard Selling",
+			row.get("selling_net_rate") or row.get("selling_rate"),
+			uom=row.uom,
+			barcode=row.get("barcode"),
 		)
 		sync_item_price(
-			doc, "Standard Buying", row.get("purchase_net_rate") or row.get("purchase_rate"), uom=row.uom
+			doc,
+			"Standard Buying",
+			row.get("purchase_net_rate") or row.get("purchase_rate"),
+			uom=row.uom,
+			barcode=row.get("barcode"),
 		)
 
 
-def sync_item_price(doc, price_list, rate, uom=None):
+def sync_item_price(doc, price_list, rate, uom=None, barcode=None):
 	rate = flt(rate)
 	if rate <= 0:
 		return
 
 	item_code = doc.get("item_code") or doc.name
 	uom = uom or doc.get("stock_uom") or "Nos"
+	barcode = barcode if barcode is not None else get_item_price_barcode(item_code, uom)
+	values = {"price_list_rate": rate}
+	if frappe.db.has_column("Item Price", "custom_barcode"):
+		values["custom_barcode"] = barcode or ""
 
 	price_name = frappe.db.get_value(
 		"Item Price",
@@ -151,20 +164,20 @@ def sync_item_price(doc, price_list, rate, uom=None):
 			frappe.db.set_value(
 				"Item Price",
 				duplicate,
-				"price_list_rate",
-				rate,
+				values,
 			)
 		return
 
-	frappe.get_doc(
-		{
-			"doctype": "Item Price",
-			"item_code": item_code,
-			"price_list": price_list,
-			"price_list_rate": rate,
-			"uom": uom,
-		}
-	).insert(ignore_permissions=True)
+	doc_values = {
+		"doctype": "Item Price",
+		"item_code": item_code,
+		"price_list": price_list,
+		"price_list_rate": rate,
+		"uom": uom,
+	}
+	if frappe.db.has_column("Item Price", "custom_barcode"):
+		doc_values["custom_barcode"] = barcode or ""
+	frappe.get_doc(doc_values).insert(ignore_permissions=True)
 	return
 
 
@@ -396,6 +409,66 @@ def sync_item_master_purchase_rate_from_item_price(doc, method=None):
 	return
 
 
+def populate_item_price_barcode(doc, method=None):
+	if not frappe.db.has_column("Item Price", "custom_barcode") or not doc.get("item_code"):
+		return
+
+	doc.custom_barcode = get_item_price_barcode(doc.item_code, doc.get("uom")) or ""
+
+
+def sync_item_price_barcodes():
+	if not frappe.db.has_column("Item Price", "custom_barcode"):
+		return
+
+	for row in frappe.get_all("Item Price", fields=["name", "item_code", "uom"]):
+		frappe.db.set_value(
+			"Item Price",
+			row.name,
+			"custom_barcode",
+			get_item_price_barcode(row.item_code, row.uom) or "",
+			update_modified=False,
+		)
+
+
+def get_item_price_barcode(item_code, uom=None):
+	if not item_code:
+		return ""
+
+	stock_uom = frappe.db.get_value("Item", item_code, "stock_uom") or "Nos"
+	uom = uom or stock_uom
+
+	if uom != stock_uom:
+		packing_barcode = frappe.db.get_value(
+			"Retail Packing Detail",
+			{
+				"parenttype": "Item",
+				"parentfield": "custom_retail_packing_detail",
+				"parent": item_code,
+				"uom": uom,
+			},
+			"barcode",
+			order_by="idx asc",
+		)
+		if packing_barcode:
+			return packing_barcode
+
+	item_barcode = frappe.db.get_value("Item", item_code, "custom_barcode")
+	if item_barcode:
+		return item_barcode
+
+	item_barcode_rows = frappe.get_all(
+		"Item Barcode",
+		filters=[["parent", "=", item_code], ["uom", "in", [uom, stock_uom, ""]]],
+		fields=["barcode"],
+		order_by="idx asc",
+		limit_page_length=1,
+	)
+	if item_barcode_rows:
+		return item_barcode_rows[0].barcode
+
+	return frappe.db.get_value("Item Barcode", {"parent": item_code}, "barcode", order_by="idx asc") or ""
+
+
 @frappe.whitelist()
 def get_latest_item_name_prices(item_name, uom=None):
 	"""Return latest buying/selling price-list values for an existing item name."""
@@ -591,3 +664,24 @@ def ensure_standard_purchase_rate_field():
 			"Property Setter", "Item-custom_default_purchase_rate-hidden", "value", "0", update_modified=False
 		)
 	frappe.clear_cache(doctype="Item")
+
+
+def ensure_item_price_barcode_field():
+	create_custom_fields(
+		{
+			"Item Price": [
+				{
+					"fieldname": "custom_barcode",
+					"label": "Barcode",
+					"fieldtype": "Data",
+					"insert_after": "price_list_rate",
+					"read_only": 1,
+					"in_list_view": 1,
+					"in_standard_filter": 1,
+				}
+			]
+		},
+		ignore_validate=True,
+		update=True,
+	)
+	frappe.clear_cache(doctype="Item Price")

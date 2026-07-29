@@ -36,10 +36,10 @@
   "disable_sidebar_stats": 0,
   "docstatus": 0,
   "doctype": "List View Settings",
-  "fields": "[{\"fieldname\": \"item_code\"}, {\"fieldname\": \"item_name\"}, {\"fieldname\": \"brand\"}, {\"fieldname\": \"price_list\"}, {\"fieldname\": \"price_list_rate\"}, {\"fieldname\": \"custom_average_purchase_rate\"}]",
+  "fields": "[{\"fieldname\": \"item_code\"}, {\"fieldname\": \"item_name\"}, {\"fieldname\": \"brand\"}, {\"fieldname\": \"price_list\"}, {\"fieldname\": \"price_list_rate\"}, {\"fieldname\": \"custom_barcode\"}, {\"fieldname\": \"custom_average_purchase_rate\"}]",
   "modified": "2026-07-24 09:04:04.319107",
   "name": "Item Price",
-  "total_fields": "6"
+  "total_fields": "7"
  },
  {
   "allow_edit": 0,

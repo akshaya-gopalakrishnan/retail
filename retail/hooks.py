@@ -304,6 +304,7 @@ doc_events = {
         ],
     },
 	"Item Price": {
+		"validate": "retail.domains.item.item_price_sync.populate_item_price_barcode",
 		"on_update": "retail.domains.item.item_price_sync.sync_item_master_purchase_rate_from_item_price",
 	},
 	"Sales Invoice": {

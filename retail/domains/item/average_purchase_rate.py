@@ -179,6 +179,7 @@ def ensure_item_price_list_field():
 		"brand",
 		"price_list",
 		"price_list_rate",
+		"custom_barcode",
 		"custom_average_purchase_rate",
 	]
 
@@ -192,6 +193,9 @@ def ensure_item_price_list_field():
 			pass
 		if "custom_average_purchase_rate" not in fieldnames:
 			fieldnames.append("custom_average_purchase_rate")
+		if "custom_barcode" not in fieldnames:
+			insert_at = fieldnames.index("price_list_rate") + 1 if "price_list_rate" in fieldnames else len(fieldnames)
+			fieldnames.insert(insert_at, "custom_barcode")
 	else:
 		settings = frappe.new_doc("List View Settings")
 		settings.name = "Item Price"

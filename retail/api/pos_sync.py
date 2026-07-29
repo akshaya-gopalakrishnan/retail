@@ -840,6 +840,9 @@ def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
 		item_or_filters = [["modified", ">", modified_after]]
 		if packing_parent_items:
 			item_or_filters.append(["name", "in", packing_parent_items])
+	item_price_fields = ["name", "item_code", "price_list", "uom", "currency", "price_list_rate", "modified"]
+	if frappe.db.has_column("Item Price", "custom_barcode"):
+		item_price_fields.insert(-1, "custom_barcode as barcode")
 
 	items = frappe.get_all(
 		"Item",
@@ -902,7 +905,7 @@ def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
 		"item_prices": frappe.get_all(
 			"Item Price",
 			filters=modified_filter,
-			fields=["name", "item_code", "price_list", "uom", "currency", "price_list_rate", "modified"],
+			fields=item_price_fields,
 			limit_page_length=0,
 		),
 		"scale_barcode_formats": frappe.get_all(
