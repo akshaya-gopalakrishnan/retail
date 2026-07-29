@@ -437,10 +437,9 @@ retail.ItemFamilyList = class ItemFamilyList {
 		const values = {
 			serial: is_packing ? "" : serial,
 			item: is_packing
-				? `<span class="packing-name">${escape_html(family.item_name || family.item_code)}</span>
+				? `<span class="packing-name">${escape_html(row.packing_name || make_packing_display_name(family, row))}</span>
 					<div class="packing-parent">
-						${escape_html(family.item_code)}
-						${row.uom ? ` - ${__("Packing")}: ${escape_html(row.uom)}` : ""}
+						${escape_html(row.packing_code || family.item_code)}
 					</div>`
 				: `<a class="family-link" href="/app/item/${encodeURIComponent(family.item_code)}">
 						${escape_html(family.item_name || family.item_code)}
@@ -510,6 +509,14 @@ function qty(value) {
 function converted_qty(value, conversion_factor) {
 	const factor = flt(conversion_factor);
 	return factor ? flt(value) / factor : flt(value);
+}
+
+function make_packing_display_name(family, row) {
+	const item_name = family.item_name || family.item_code || "";
+	const uom = row.uom || "";
+	const conversion = flt(row.conversion_factor);
+	const suffix = uom ? `${uom}${conversion ? ` x${conversion}` : ""}` : "";
+	return suffix ? `${item_name} - ${suffix}` : item_name;
 }
 
 function get_selection_key(checkbox) {

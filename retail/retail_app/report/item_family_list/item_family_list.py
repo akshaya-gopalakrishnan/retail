@@ -153,15 +153,17 @@ def get_data(filters):
 			item.custom_sales_net_rate as item_selling_net_rate,
 			item.custom_sales_vat_amount as item_selling_vat_amount,
 			item.custom_sales_gross_rate as item_selling_gross_rate,
-			item.custom_margin as item_margin,
-			coalesce(stock_balance.real_stock_qty, 0) as real_stock_qty,
-			coalesce(stock_movement.in_qty, 0) as in_qty,
-			coalesce(stock_movement.out_qty, 0) as out_qty,
-			packing.idx,
-			packing.barcode,
-			packing.uom,
-			packing.conversion_factor,
-			packing.purchase_rate,
+				item.custom_margin as item_margin,
+				coalesce(stock_balance.real_stock_qty, 0) as real_stock_qty,
+				coalesce(stock_movement.in_qty, 0) as in_qty,
+				coalesce(stock_movement.out_qty, 0) as out_qty,
+				packing.idx,
+				packing.packing_code,
+				packing.packing_name,
+				packing.barcode,
+				packing.uom,
+				packing.conversion_factor,
+				packing.purchase_rate,
 			packing.selling_rate,
 			packing.purchase_net_rate,
 			packing.purchase_vat_amount,
@@ -209,7 +211,14 @@ def get_conditions(filters):
 		conditions.append("item.name = %(item_code)s")
 		values["item_code"] = filters.item_code
 	if filters.get("item_name"):
-		conditions.append("(item.item_name like %(item_name)s or item.name like %(item_name)s)")
+		conditions.append(
+			"""(
+				item.item_name like %(item_name)s
+				or item.name like %(item_name)s
+				or packing.packing_name like %(item_name)s
+				or packing.packing_code like %(item_name)s
+			)"""
+		)
 		values["item_name"] = f"%{filters.item_name}%"
 	if filters.get("item_group"):
 		conditions.append("item.item_group = %(item_group)s")
@@ -255,6 +264,8 @@ def get_columns():
 	return [
 		{"label": _("Item Code"), "fieldname": "item_code", "fieldtype": "Link", "options": "Item", "width": 160},
 		{"label": _("Item Name"), "fieldname": "item_name", "fieldtype": "Data", "width": 220},
+		{"label": _("Packing Code"), "fieldname": "packing_code", "fieldtype": "Data", "width": 150},
+		{"label": _("Packing Name"), "fieldname": "packing_name", "fieldtype": "Data", "width": 220},
 		{"label": _("Item Group"), "fieldname": "item_group", "fieldtype": "Link", "options": "Item Group", "width": 140},
 		{"label": _("Brand"), "fieldname": "brand", "fieldtype": "Link", "options": "Brand", "width": 120},
 		{"label": _("Barcode"), "fieldname": "barcode", "fieldtype": "Data", "width": 140},
