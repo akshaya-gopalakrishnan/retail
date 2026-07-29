@@ -19,6 +19,7 @@ frappe.provide("retail");
 const ITEM_FAMILY_SETTINGS_KEY = "retail_item_family_list_columns";
 const ITEM_FAMILY_WIDTHS_KEY = "retail_item_family_list_column_widths";
 const ITEM_FAMILY_STOCK_COLUMNS_ADDED_KEY = "retail_item_family_stock_columns_added";
+const ITEM_FAMILY_STATUS_COLUMN_ADDED_KEY = "retail_item_family_status_column_added";
 const ITEM_FAMILY_COLUMNS = [
 	{ key: "serial", label: __("No."), className: "serial-col", align: "text-right", required: true, width: 64 },
 	{ key: "item", label: __("Item / Packing"), className: "item-col", required: true },
@@ -158,6 +159,7 @@ retail.ItemFamilyList = class ItemFamilyList {
 			const allowed = new Set(ITEM_FAMILY_COLUMNS.map((column) => column.key));
 			const visible = saved.filter((key) => allowed.has(key));
 			const should_add_stock = visible.length && !localStorage.getItem(ITEM_FAMILY_STOCK_COLUMNS_ADDED_KEY);
+			const should_add_status = visible.length && !visible.includes("status") && !localStorage.getItem(ITEM_FAMILY_STATUS_COLUMN_ADDED_KEY);
 			const missing_visible = should_add_stock
 				? ITEM_FAMILY_COLUMNS
 					.filter((column) => column.showForSaved && !visible.includes(column.key))
@@ -165,6 +167,11 @@ retail.ItemFamilyList = class ItemFamilyList {
 				: [];
 			if (should_add_stock) {
 				localStorage.setItem(ITEM_FAMILY_STOCK_COLUMNS_ADDED_KEY, "1");
+			}
+			if (should_add_status) {
+				const insert_at = Math.max(visible.indexOf("barcode") + 1, 2);
+				visible.splice(insert_at, 0, "status");
+				localStorage.setItem(ITEM_FAMILY_STATUS_COLUMN_ADDED_KEY, "1");
 			}
 			return visible.length ? Array.from(new Set(["serial", "item", ...visible, ...missing_visible])) : defaults;
 		} catch {
@@ -446,7 +453,7 @@ retail.ItemFamilyList = class ItemFamilyList {
 					</a>
 					<div class="family-code">${escape_html(family.item_code)}</div>`,
 			barcode: escape_html(is_packing ? row.barcode : family.item_barcode),
-			status: is_packing ? "" : get_status(family.disabled),
+			status: get_status(is_packing ? row.packing_disabled : family.disabled),
 			brand: escape_html(family.brand),
 			item_group: escape_html(family.item_group),
 			conversion: is_packing ? flt(row.conversion_factor) : escape_html(family.stock_uom || ""),
