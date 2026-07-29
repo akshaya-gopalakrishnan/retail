@@ -160,6 +160,7 @@ def get_data(filters):
 				packing.idx,
 				packing.packing_code,
 				packing.packing_name,
+				packing.disabled as packing_disabled,
 				packing.barcode,
 				packing.uom,
 				packing.conversion_factor,
@@ -243,6 +244,9 @@ def get_conditions(filters):
 	if filters.get("disabled") in (0, 1, "0", "1"):
 		conditions.append("item.disabled = %(disabled)s")
 		values["disabled"] = int(filters.disabled)
+	if filters.get("packing_disabled") in (0, 1, "0", "1"):
+		conditions.append("ifnull(packing.disabled, 0) = %(packing_disabled)s")
+		values["packing_disabled"] = int(filters.packing_disabled)
 
 	return (" and " + " and ".join(conditions)) if conditions else "", values
 
@@ -277,6 +281,8 @@ def get_columns():
 		{"label": _("Item Name"), "fieldname": "item_name", "fieldtype": "Data", "width": 220},
 		{"label": _("Packing Code"), "fieldname": "packing_code", "fieldtype": "Data", "width": 150},
 		{"label": _("Packing Name"), "fieldname": "packing_name", "fieldtype": "Data", "width": 220},
+		{"label": _("Item Disabled"), "fieldname": "disabled", "fieldtype": "Check", "width": 100},
+		{"label": _("Packing Disabled"), "fieldname": "packing_disabled", "fieldtype": "Check", "width": 120},
 		{"label": _("Item Group"), "fieldname": "item_group", "fieldtype": "Link", "options": "Item Group", "width": 140},
 		{"label": _("Brand"), "fieldname": "brand", "fieldtype": "Link", "options": "Brand", "width": 120},
 		{"label": _("Barcode"), "fieldname": "barcode", "fieldtype": "Data", "width": 140},
@@ -292,5 +298,4 @@ def get_columns():
 		{"label": _("Selling VAT"), "fieldname": "selling_vat_amount", "fieldtype": "Currency", "width": 110},
 		{"label": _("Selling Incl. VAT"), "fieldname": "selling_gross_rate", "fieldtype": "Currency", "width": 130},
 		{"label": _("Margin Excl. VAT"), "fieldname": "packing_margin", "fieldtype": "Currency", "width": 130},
-		{"label": _("Disabled"), "fieldname": "disabled", "fieldtype": "Check", "width": 80},
 	]

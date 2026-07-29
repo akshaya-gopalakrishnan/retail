@@ -9,10 +9,16 @@ frappe.query_reports["Item Family List"] = {
 		{ fieldname: "barcode", label: __("Barcode"), fieldtype: "Data" },
 		{
 			fieldname: "disabled",
-			label: __("Disabled"),
+			label: __("Item Disabled"),
 			fieldtype: "Select",
 			options: "\n0\n1",
 			default: "0",
+		},
+		{
+			fieldname: "packing_disabled",
+			label: __("Packing Disabled"),
+			fieldtype: "Select",
+			options: "\n0\n1",
 		},
 	],
 	formatter(value, row, column, data, default_formatter) {
