@@ -375,7 +375,7 @@ def ensure_packing_vat_pricing_fields():
 				},
 				{
 					"fieldname": "purchase_net_rate",
-					"label": "Purchase Rate Excl. VAT",
+					"label": "Pur Rate Exc",
 					"fieldtype": "Currency",
 					"read_only": 0,
 					"insert_after": "purchase_vat_confirmed",
@@ -389,7 +389,7 @@ def ensure_packing_vat_pricing_fields():
 				},
 				{
 					"fieldname": "purchase_gross_rate",
-					"label": "Purchase Rate Incl. VAT",
+					"label": "Pur Rate Inc",
 					"fieldtype": "Currency",
 					"read_only": 0,
 					"insert_after": "purchase_vat_amount",
@@ -422,7 +422,7 @@ def ensure_packing_vat_pricing_fields():
 				},
 				{
 					"fieldname": "selling_net_rate",
-					"label": "Selling Rate Excl. VAT",
+					"label": "Sell Rate Exc",
 					"fieldtype": "Currency",
 					"read_only": 0,
 					"insert_after": "selling_vat_confirmed",
@@ -436,7 +436,7 @@ def ensure_packing_vat_pricing_fields():
 				},
 				{
 					"fieldname": "selling_gross_rate",
-					"label": "Selling Rate Incl. VAT",
+					"label": "Sell Rate Inc",
 					"fieldtype": "Currency",
 					"read_only": 0,
 					"insert_after": "selling_vat_amount",
