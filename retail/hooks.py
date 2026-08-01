@@ -38,18 +38,19 @@ app_include_css = [
 ]
 
 app_include_js = [
-    "/assets/retail/js/retail_navigation.js?v=82",
+    "/assets/retail/js/retail_navigation.js?v=92",
     "/assets/retail/js/local_draft_recovery.js?v=28",
     "/assets/retail/js/forms/transaction_items.js?v=14",
     "/assets/retail/js/zebra_label_bulk_print.js?v=3",
     "/assets/retail/js/brand_theme_switcher.js?v=8",
     "/assets/retail/js/reports/gross_profit_item_filter.js?v=1",
+    "/assets/retail/js/reports/pos_report_filters.js?v=1",
 ]
 
 # include js, css files in header of web template
 web_include_css = [
     "/assets/retail/css/brand_themes.css?v=11",
-    "/assets/retail/css/website_branding.css?v=15",
+    "/assets/retail/css/website_branding.css?v=16",
 ]
 
 web_include_js = [
@@ -61,6 +62,19 @@ website_context = {
     "favicon": "/assets/retail/images/business-suite-app-icon.svg?v=3",
     "splash_image": "/assets/retail/images/retail-logo.svg?v=4",
 }
+
+website_route_rules = [
+    {"from_route": "/me", "to_route": "retail-me"},
+    {"from_route": "/profile", "to_route": "retail-me"},
+    {"from_route": "/website", "to_route": "retail-home"},
+]
+
+website_redirects = [
+    {"source": "/", "target": "/app", "redirect_http_status": 302},
+    {"source": "/index", "target": "/retail-home", "redirect_http_status": 302},
+]
+
+boot_session = "retail.workspace_permissions.extend_bootinfo"
 
 setup_wizard_complete = "retail.demo_data.setup_demo"
 
@@ -397,9 +411,12 @@ doc_events = {
 after_migrate = [
 	"retail.branding.apply_default_branding",
 	"retail.setup.hide_non_retail_workspaces",
+	"retail.setup.ensure_settings_sidebar_workspaces",
+	"retail.setup.ensure_website_route_redirects",
 	"retail.setup.clear_url_shortcut_link_targets",
 	"retail.setup.ensure_default_print_formats",
 	"retail.setup.ensure_print_languages",
+	"retail.retail_app.report.pos_report_utils.ensure_pos_reports",
     "retail.domains.transactions.vat.ensure_transaction_vat_rate_fields",
     "retail.domains.purchase.order.backfill_balance_qty",
     "retail.retail_app.report.damaged_and_expired_stock.damaged_and_expired_stock.ensure_report",
@@ -461,6 +478,7 @@ after_migrate = [
 # }
 override_whitelisted_methods = {
 	"frappe.desk.query_report.run": "retail.retail_app.report.stock_movement_utils.run_query_report",
+	"frappe.desk.desktop.get_workspace_sidebar_items": "retail.workspace_permissions.get_workspace_sidebar_items",
 }
 #
 # each overriding function accepts a `data` argument;

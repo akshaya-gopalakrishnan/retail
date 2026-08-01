@@ -1,7 +1,7 @@
 {
  "charts": [],
  "content": "[{\"id\": \"hdr_pos_cashier_shifts\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">POS Cashier Shifts</span>\", \"col\": 12}}, {\"id\": \"ql_pos_cashier_shifts\", \"type\": \"quick_list\", \"data\": {\"quick_list_name\": \"POS Cashier Shifts\", \"col\": 4}}]",
- "creation": "2026-06-26 12:49:28.466792",
+ "creation": "2026-07-30 12:20:09.842586",
  "custom_blocks": [],
  "docstatus": 0,
  "doctype": "Workspace",
@@ -12,7 +12,7 @@
  "is_hidden": 0,
  "label": "POS Cashier Shifts",
  "links": [],
- "modified": "2026-06-26 13:02:40.478811",
+ "modified": "2026-07-31 15:16:01.085492",
  "modified_by": "Administrator",
  "module": "Retail-app",
  "name": "POS Cashier Shifts",

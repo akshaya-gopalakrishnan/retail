@@ -1,7 +1,7 @@
 {
  "charts": [],
  "content": "[{\"id\": \"hdr_pos_opening_entries\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">POS Opening Entries</span>\", \"col\": 12}}, {\"id\": \"ql_pos_opening_entries\", \"type\": \"quick_list\", \"data\": {\"quick_list_name\": \"POS Opening Entries\", \"col\": 4}}]",
- "creation": "2026-06-19 17:48:38.508226",
+ "creation": "2026-07-30 12:20:09.768060",
  "custom_blocks": [],
  "docstatus": 0,
  "doctype": "Workspace",
@@ -12,7 +12,7 @@
  "is_hidden": 0,
  "label": "POS Opening Entries",
  "links": [],
- "modified": "2026-06-26 13:02:40.562408",
+ "modified": "2026-07-31 15:16:01.141612",
  "modified_by": "Administrator",
  "module": "Retail-app",
  "name": "POS Opening Entries",

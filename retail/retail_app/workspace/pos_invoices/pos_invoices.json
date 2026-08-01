@@ -1,7 +1,7 @@
 {
  "charts": [],
  "content": "[{\"id\": \"hdr_pos_invoices\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">POS Invoices</span>\", \"col\": 12}}, {\"id\": \"ql_pos_invoices\", \"type\": \"quick_list\", \"data\": {\"quick_list_name\": \"POS Invoices\", \"col\": 4}}]",
- "creation": "2026-06-19 17:48:38.412850",
+ "creation": "2026-07-30 12:20:09.709320",
  "custom_blocks": [],
  "docstatus": 0,
  "doctype": "Workspace",
@@ -12,7 +12,7 @@
  "is_hidden": 0,
  "label": "POS Invoices",
  "links": [],
- "modified": "2026-06-26 13:02:40.217406",
+ "modified": "2026-07-31 15:16:00.993288",
  "modified_by": "Administrator",
  "module": "Retail-app",
  "name": "POS Invoices",

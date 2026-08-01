@@ -22,8 +22,8 @@
   "disable_sidebar_stats": 0,
   "docstatus": 0,
   "doctype": "List View Settings",
-  "fields": "[{\"fieldname\": \"item_name\", \"label\": \"Item Name\"}, {\"fieldname\": \"status_field\", \"label\": \"Status\"}, {\"fieldname\": \"brand\", \"label\": \"Brand\"}, {\"fieldname\": \"item_group\", \"label\": \"Item Group\"}, {\"fieldname\": \"custom_purchase_gross_rate\", \"label\": \"Purchase Rate Incl. VAT\"}, {\"fieldname\": \"custom_sales_gross_rate\", \"label\": \"Selling Rate Incl. VAT\"}, {\"fieldname\": \"custom_margin\", \"label\": \"Margin\"}]",
-  "modified": "2026-07-24 10:29:42.375963",
+  "fields": "[{\"fieldname\":\"item_name\",\"label\":\"Item Name\"},{\"fieldname\":\"custom_barcode\",\"label\":\"Barcode\"},{\"fieldname\":\"status_field\",\"label\":\"Status\"},{\"fieldname\":\"brand\",\"label\":\"Brand\"},{\"fieldname\":\"item_group\",\"label\":\"Item Group\"},{\"fieldname\":\"custom_purchase_gross_rate\",\"label\":\"Purchase Rate Including VAT\"},{\"fieldname\":\"custom_sales_gross_rate\",\"label\":\"Selling Rate Including VAT\"},{\"fieldname\":\"custom_margin\",\"label\":\"Margin\"}]",
+  "modified": "2026-07-30 11:21:36.945230",
   "name": "Item",
   "total_fields": "9"
  },
@@ -37,7 +37,7 @@
   "docstatus": 0,
   "doctype": "List View Settings",
   "fields": "[{\"fieldname\": \"item_code\"}, {\"fieldname\": \"item_name\"}, {\"fieldname\": \"brand\"}, {\"fieldname\": \"price_list\"}, {\"fieldname\": \"price_list_rate\"}, {\"fieldname\": \"custom_barcode\"}, {\"fieldname\": \"custom_average_purchase_rate\"}]",
-  "modified": "2026-07-24 09:04:04.319107",
+  "modified": "2026-07-30 10:45:32.644225",
   "name": "Item Price",
   "total_fields": "7"
  },

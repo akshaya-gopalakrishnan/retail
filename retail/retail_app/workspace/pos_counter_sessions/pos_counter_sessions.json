@@ -1,7 +1,7 @@
 {
  "charts": [],
  "content": "[{\"id\": \"hdr_pos_counter_sessions\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">POS Counter Sessions</span>\", \"col\": 12}}, {\"id\": \"ql_pos_counter_sessions\", \"type\": \"quick_list\", \"data\": {\"quick_list_name\": \"POS Counter Sessions\", \"col\": 4}}]",
- "creation": "2026-06-26 12:49:28.501754",
+ "creation": "2026-07-30 12:20:09.859654",
  "custom_blocks": [],
  "docstatus": 0,
  "doctype": "Workspace",
@@ -12,7 +12,7 @@
  "is_hidden": 0,
  "label": "POS Counter Sessions",
  "links": [],
- "modified": "2026-06-26 13:02:40.521313",
+ "modified": "2026-07-31 15:16:01.114027",
  "modified_by": "Administrator",
  "module": "Retail-app",
  "name": "POS Counter Sessions",

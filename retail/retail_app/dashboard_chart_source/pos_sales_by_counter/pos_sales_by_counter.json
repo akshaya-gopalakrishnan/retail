@@ -1,0 +1,13 @@
+{
+ "creation": "2026-07-31 14:31:44.989933",
+ "docstatus": 0,
+ "doctype": "Dashboard Chart Source",
+ "idx": 0,
+ "modified": "2026-07-31 15:16:00.578548",
+ "modified_by": "Administrator",
+ "module": "Retail-app",
+ "name": "POS Sales by Counter",
+ "owner": "Administrator",
+ "source_name": "POS Sales by Counter",
+ "timeseries": 0
+}

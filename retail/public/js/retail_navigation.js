@@ -82,6 +82,8 @@
         'accounts payable': { icon: 'fa fa-arrow-circle-up', cls: 'color-accounts' },
         'business profile': { icon: 'fa fa-building', cls: 'color-settings' },
         'staff & users': { icon: 'fa fa-user', cls: 'color-settings' },
+        'user list': { icon: 'fa fa-users', cls: 'color-settings' },
+        'employee list': { icon: 'fa fa-id-badge', cls: 'color-hr' },
         'branding': { icon: 'fa fa-paint-brush', cls: 'color-settings' },
         'system rules': { icon: 'fa fa-gavel', cls: 'color-settings' },
         'counters': { icon: 'fa fa-arrow-up', cls: 'color-settings' },
@@ -105,6 +107,18 @@
         , 'mode of payment': { icon: 'fa fa-credit-card', cls: 'color-accounts' }
         , 'pos sales summary': { icon: 'fa fa-bar-chart', cls: 'color-accounts' }
         , 'pos transaction log': { icon: 'fa fa-list', cls: 'color-accounts' }
+        , 'pos item-wise sales': { icon: 'fa fa-cubes', cls: 'color-sales' }
+        , 'pos category/item group sales': { icon: 'fa fa-sitemap', cls: 'color-sales' }
+        , 'pos hourly sales': { icon: 'fa fa-clock-o', cls: 'color-sales' }
+        , 'pos return report': { icon: 'fa fa-undo', cls: 'color-sales' }
+        , 'cashier wise sales': { icon: 'fa fa-user', cls: 'color-pos-shifts' }
+        , 'counter wise sales': { icon: 'fa fa-desktop', cls: 'color-pos-counters' }
+        , 'shift closing variance': { icon: 'fa fa-balance-scale', cls: 'color-pos-closing' }
+        , 'payment mode summary': { icon: 'fa fa-credit-card', cls: 'color-accounts' }
+        , 'pos discount report': { icon: 'fa fa-tags', cls: 'color-sales' }
+        , 'pos price override report': { icon: 'fa fa-pencil-square-o', cls: 'color-sales' }
+        , 'pos daily closing summary': { icon: 'fa fa-calendar-check-o', cls: 'color-pos-day-closing' }
+        , 'pos cash movement report': { icon: 'fa fa-money', cls: 'color-accounts' }
     };
     const DESKTOP_MEDIA = '(min-width: 992px)';
     const DIRECT_MAPPING = {
@@ -137,9 +151,21 @@
         'Mode of Payment': ['List', 'Mode of Payment'],
         'POS Counters': ['List', 'POS Branch Counter'],
         'POS Payments': ['List', 'Payment Entry'],
-        'POS Reports': ['query-report', 'Daily Sales Summary'],
-        'POS Sales Summary': ['query-report', 'Daily Sales Summary'],
-        'POS Transaction Log': ['query-report', 'Daily Transaction Log'],
+        'POS Sales Summary': ['query-report', 'POS Sales Summary'],
+        'POS Transaction Log': ['query-report', 'POS Transaction Log'],
+        'POS Item-wise Sales': ['query-report', 'POS Item-wise Sales'],
+        'POS Category/Item Group Sales': ['query-report', 'POS Category Item Group Sales'],
+        'POS Category Item Group Sales': ['query-report', 'POS Category Item Group Sales'],
+        'POS Hourly Sales': ['query-report', 'POS Hourly Sales'],
+        'POS Return Report': ['query-report', 'POS Return Report'],
+        'Cashier Wise Sales': ['query-report', 'Cashier Wise Sales'],
+        'Counter Wise Sales': ['query-report', 'Counter Wise Sales'],
+        'Shift Closing Variance': ['query-report', 'Shift Closing Variance'],
+        'Payment Mode Summary': ['query-report', 'POS Payment Mode Summary'],
+        'POS Discount Report': ['query-report', 'POS Discount Report'],
+        'POS Price Override Report': ['query-report', 'POS Price Override Report'],
+        'POS Daily Closing Summary': ['query-report', 'POS Daily Closing Summary'],
+        'POS Cash Movement Report': ['query-report', 'POS Cash Movement Report'],
         'Counter Performance': ['query-report', 'Counter Performance'],
         'Delivery Notes': ['List', 'Delivery Note'],
         'Suppliers': ['List', 'Supplier'],
@@ -187,6 +213,8 @@
         'Accounts Payable': ['query-report', 'Accounts Payable'],
         'Business Profile': ['List', 'Company'],
         'Staff & Users': ['List', 'User'],
+        'User List': ['List', 'User'],
+        'Employee List': ['List', 'Employee'],
         'Branding': ['List', 'Letter Head'],
         'System Rules': ['List', 'Document Naming Rule'],
         'POS Counters': ['List', 'POS Branch Counter']
@@ -237,6 +265,7 @@
         'Journal Entry': 'Accounts',
         'Company': 'Settings',
         'User': 'Settings',
+        'Employee': 'Settings',
         'Letter Head': 'Settings',
         'Document Naming Rule': 'Settings',
         'POS Branch Counter': 'POS'
@@ -286,7 +315,8 @@
         'Sales Taxes and Charges Template': 'Taxes',
         'Journal Entry': 'Journal Entries',
         'Company': 'Business Profile',
-        'User': 'Staff & Users',
+        'User': 'User List',
+        'Employee': 'Employee List',
         'Letter Head': 'Branding',
         'Document Naming Rule': 'System Rules',
         'POS Branch Counter': 'POS Counters'
@@ -321,8 +351,21 @@
         'Mode of Payment': 'POS',
         'POS Payments': 'POS',
         'POS Reports': 'POS',
-        'POS Sales Summary': 'POS',
-        'POS Transaction Log': 'POS',
+        'POS Sales Summary': 'POS Reports',
+        'POS Transaction Log': 'POS Reports',
+        'POS Item-wise Sales': 'POS Reports',
+        'POS Category/Item Group Sales': 'POS Reports',
+        'POS Category Item Group Sales': 'POS Reports',
+        'POS Hourly Sales': 'POS Reports',
+        'POS Return Report': 'POS Reports',
+        'Cashier Wise Sales': 'POS Reports',
+        'Counter Wise Sales': 'POS Reports',
+        'Shift Closing Variance': 'POS Reports',
+        'Payment Mode Summary': 'POS Reports',
+        'POS Discount Report': 'POS Reports',
+        'POS Price Override Report': 'POS Reports',
+        'POS Daily Closing Summary': 'POS Reports',
+        'POS Cash Movement Report': 'POS Reports',
         'Counter Performance': 'POS',
         'Delivery Notes': 'Sales',
         'Suppliers': 'Purchases',
@@ -372,6 +415,8 @@
         'Accounts Payable': 'Accounts',
         'Business Profile': 'Settings',
         'Staff & Users': 'Settings',
+        'User List': 'Settings',
+        'Employee List': 'Settings',
         'Branding': 'Settings',
         'System Rules': 'Settings'
     });
@@ -407,6 +452,146 @@
         'Reports',
         'Settings'
     ]);
+    const WORKSPACE_TO_MODULE = Object.freeze({
+        'Business Home': '',
+        'Items': 'Stock',
+        'Items List': 'Stock',
+        'Item Family List': 'Stock',
+        'Item Groups': 'Stock',
+        'Price Lists': 'Stock',
+        'Brands': 'Stock',
+        'Stocks': 'Stock',
+        'Warehouses': 'Stock',
+        'Stock Adjustments': 'Stock',
+        'Stock Take': 'Stock',
+        'Serials & Batches': 'Stock',
+        'Stock Status': 'Stock',
+        'Delivery Notes': 'Stock',
+        'Purchase Receipts': 'Stock',
+        'Material Requests': 'Stock',
+        'Sales': 'Selling',
+        'Customers': 'Selling',
+        'Quotations': 'Selling',
+        'Sales Orders': 'Selling',
+        'Sales Invoices': 'Accounts',
+        'Sales Returns': 'Accounts',
+        'POS': 'Accounts',
+        'POS Invoices': 'Accounts',
+        'POS Profile': 'Accounts',
+        'POS Profiles': 'Accounts',
+        'POS Counters': 'Accounts',
+        'POS Opening Entry': 'Accounts',
+        'POS Opening Entries': 'Accounts',
+        'POS Closing Entry': 'Accounts',
+        'POS Closing Entries': 'Accounts',
+        'POS Cashier Shifts': 'Accounts',
+        'POS Counter Sessions': 'Accounts',
+        'POS Branch Day Closing': 'Accounts',
+        'POS Branch Day Closings': 'Accounts',
+        'POS Sync Log': 'Accounts',
+        'POS Sync Logs': 'Accounts',
+        'Mode of Payment': 'Accounts',
+        'POS Reports': 'Accounts',
+        'POS Sales Summary': 'Accounts',
+        'POS Transaction Log': 'Accounts',
+        'POS Item-wise Sales': 'Accounts',
+        'POS Category/Item Group Sales': 'Accounts',
+        'POS Category Item Group Sales': 'Accounts',
+        'POS Hourly Sales': 'Accounts',
+        'POS Return Report': 'Accounts',
+        'Cashier Wise Sales': 'Accounts',
+        'Counter Wise Sales': 'Accounts',
+        'Shift Closing Variance': 'Accounts',
+        'Payment Mode Summary': 'Accounts',
+        'POS Discount Report': 'Accounts',
+        'POS Price Override Report': 'Accounts',
+        'POS Daily Closing Summary': 'Accounts',
+        'POS Cash Movement Report': 'Accounts',
+        'Purchases': 'Buying',
+        'Suppliers': 'Buying',
+        'Request for Quotations': 'Buying',
+        'Supplier Quotations': 'Buying',
+        'Purchase Orders': 'Buying',
+        'Purchase Invoices': 'Accounts',
+        'Purchase Returns': 'Accounts',
+        'Manufacturing': 'Manufacturing',
+        'MFG BOM': 'Manufacturing',
+        'MFG Production Plan': 'Manufacturing',
+        'MFG Work Orders': 'Manufacturing',
+        'MFG Job Cards': 'Manufacturing',
+        'MFG Stock Entries': 'Manufacturing',
+        'MFG Quality Inspection': 'Manufacturing',
+        'MFG Reports': 'Manufacturing',
+        'MFG Setup': 'Manufacturing',
+        'BOM': 'Manufacturing',
+        'Production Plan': 'Manufacturing',
+        'Work Orders': 'Manufacturing',
+        'Job Cards': 'Manufacturing',
+        'Stock Entries': 'Manufacturing',
+        'Quality Inspection': 'Manufacturing',
+        'Manufacturing Reports': 'Manufacturing',
+        'Manufacturing Setup': 'Manufacturing',
+        'Accounts': 'Accounts',
+        'Bank Accounts': 'Accounts',
+        'Payments': 'Accounts',
+        'Taxes': 'Accounts',
+        'Journal Entries': 'Accounts',
+        'Accounts Receivable': 'Accounts',
+        'Accounts Payable': 'Accounts',
+        'Reports': 'Accounts',
+        'Settings': 'Setup',
+        'Business Profile': 'Setup',
+        'Branding': 'Setup',
+        'System Rules': 'Setup',
+        'User List': 'Setup',
+        'Employee List': 'HR'
+    });
+    const REPORT_TO_WORKSPACE = Object.freeze({
+        'Daily Sales Summary': 'Sales',
+        'Counter Performance': 'Sales',
+        'Daily Transaction Log': 'Sales',
+        'Daily Profit Report': 'Sales',
+        'Gross Profit': 'Sales',
+        'Low Stock Reorder Report': 'Stocks',
+        'Stock Movement Summary': 'Stocks',
+        'Stock Adjustment History': 'Stocks',
+        'Stock Balance': 'Stocks',
+        'Stock Ledger': 'Stocks',
+        'Packing Stock Balance': 'Stocks',
+        'Packing Stock Ledger': 'Stocks',
+        'Fast Moving Items': 'Items',
+        'Slow Moving Items': 'Items',
+        'Accounts Receivable': 'Accounts',
+        'Accounts Payable': 'Accounts',
+        'General Ledger': 'Accounts',
+        'Trial Balance': 'Accounts',
+        'Balance Sheet': 'Accounts',
+        'Profit and Loss Statement': 'Accounts',
+        'POS Sales Summary': 'POS Reports',
+        'POS Transaction Log': 'POS Reports',
+        'POS Item-wise Sales': 'POS Reports',
+        'POS Category Item Group Sales': 'POS Reports',
+        'POS Category/Item Group Sales': 'POS Reports',
+        'POS Hourly Sales': 'POS Reports',
+        'POS Return Report': 'POS Reports',
+        'Cashier Wise Sales': 'POS Reports',
+        'Counter Wise Sales': 'POS Reports',
+        'Shift Closing Variance': 'POS Reports',
+        'POS Payment Mode Summary': 'POS Reports',
+        'Payment Mode Summary': 'POS Reports',
+        'POS Discount Report': 'POS Reports',
+        'POS Price Override Report': 'POS Reports',
+        'POS Daily Closing Summary': 'POS Reports',
+        'POS Cash Movement Report': 'POS Reports',
+        'BOM Stock Report': 'Manufacturing',
+        'Work Order Stock Report': 'Manufacturing',
+        'Open Work Orders': 'Manufacturing',
+        'Work Orders in Progress': 'Manufacturing',
+        'Completed Work Orders': 'Manufacturing',
+        'Work Order Summary': 'Manufacturing',
+        'Job Card Summary': 'Manufacturing',
+        'Production Analytics': 'Manufacturing'
+    });
     let sidebarItemsPromise = null;
     let sidebarItemsCache = null;
     let observerRefreshTimer = null;
@@ -468,6 +653,145 @@
             .trim()
             .toLowerCase()
             .replace(/\s+/g, ' ');
+    }
+
+    function getBlockedModules() {
+        return new Set(frappe.boot?.retail_blocked_modules || []);
+    }
+
+    function moduleIsAllowed(moduleName) {
+        return !moduleName || !getBlockedModules().has(moduleName);
+    }
+
+    function getWorkspaceModule(workspaceName) {
+        if (!workspaceName) return '';
+        return WORKSPACE_TO_MODULE[workspaceName] || frappe.boot?.retail_workspace_modules?.[workspaceName] || '';
+    }
+
+    function workspaceIsAllowed(workspaceName) {
+        let current = workspaceName;
+        const seen = new Set();
+
+        while (current && !seen.has(current)) {
+            seen.add(current);
+            if (!moduleIsAllowed(getWorkspaceModule(current))) return false;
+            current = CHILD_TO_PARENT[current];
+        }
+
+        return true;
+    }
+
+    function doctypeIsAllowed(doctype) {
+        if (!doctype) return true;
+        const workspace = DOCTYPE_TO_CHILD[doctype] || DOCTYPE_TO_WORKSPACE[doctype];
+        return workspace ? workspaceIsAllowed(workspace) : true;
+    }
+
+    function reportIsAllowed(reportName, report) {
+        const workspace = REPORT_TO_WORKSPACE[reportName];
+        if (workspace) return workspaceIsAllowed(workspace);
+        return doctypeIsAllowed(report?.ref_doctype);
+    }
+
+    function routeIsAllowed(route) {
+        if (!Array.isArray(route) || !route.length) return true;
+        const view = route[0];
+        if (view === 'List' || view === 'Form' || view === 'Tree') {
+            return doctypeIsAllowed(route[1]);
+        }
+        if (view === 'query-report') {
+            return reportIsAllowed(route[1], frappe.boot?.user?.all_reports?.[route[1]]);
+        }
+        if (view === 'Workspaces' || view === 'workspace' || view === 'private') {
+            const workspaceName = view === 'private' ? route[1] : route[1];
+            return workspaceIsAllowed(routeNameToWorkspaceTitle(workspaceName));
+        }
+        return true;
+    }
+
+    function optionIsAllowed(option) {
+        if (!option) return true;
+        if (option.match && typeof option.match === 'string') {
+            if (DOCTYPE_TO_CHILD[option.match] || DOCTYPE_TO_WORKSPACE[option.match]) {
+                return doctypeIsAllowed(option.match);
+            }
+            if (WORKSPACE_TO_MODULE[option.match]) {
+                return workspaceIsAllowed(option.match);
+            }
+        }
+        return routeIsAllowed(option.route);
+    }
+
+    function routeNameToWorkspaceTitle(routeName) {
+        const decoded = decodeURIComponent(String(routeName || '')).replace(/-/g, ' ');
+        const normalized = normalizeText(decoded);
+        const known = Object.keys(WORKSPACE_TO_MODULE).find(name => normalizeText(name) === normalized);
+        return known || decoded.replace(/\b\w/g, char => char.toUpperCase());
+    }
+
+    function filterSearchResults(results) {
+        if (!Array.isArray(results)) return results;
+        return results.filter(optionIsAllowed);
+    }
+
+    function filterGlobalResultSets(resultSets) {
+        if (!Array.isArray(resultSets)) return resultSets;
+        return resultSets
+            .map(set => Object.assign({}, set, { results: filterSearchResults(set.results || []) }))
+            .filter(set => doctypeIsAllowed(set.title) && set.results.length);
+    }
+
+    function installModuleAwareSearchFilters() {
+        const utils = frappe.search?.utils;
+        if (!utils || utils.__retail_module_filters_installed) return !!utils;
+
+        [
+            'get_recent_pages',
+            'get_frequent_links',
+            'get_search_in_list',
+            'get_creatables',
+            'get_doctypes',
+            'get_reports',
+            'get_pages',
+            'get_workspaces',
+            'get_dashboards',
+            'get_executables'
+        ].forEach(methodName => {
+            const original = utils[methodName];
+            if (typeof original !== 'function') return;
+            utils[methodName] = function (...args) {
+                return filterSearchResults(original.apply(this, args));
+            };
+        });
+
+        const originalGetGlobalResults = utils.get_global_results;
+        if (typeof originalGetGlobalResults === 'function') {
+            utils.get_global_results = function (...args) {
+                return originalGetGlobalResults.apply(this, args).then(filterGlobalResultSets);
+            };
+        }
+
+        utils.__retail_module_filters_installed = true;
+        return true;
+    }
+
+    function waitForSearchFilters() {
+        if (installModuleAwareSearchFilters()) return;
+        let attempts = 0;
+        const timer = setInterval(() => {
+            attempts += 1;
+            if (installModuleAwareSearchFilters() || attempts >= 40) clearInterval(timer);
+        }, 250);
+    }
+
+    function enforceAllowedRoute() {
+        if (routeIsAllowed(frappe.get_route?.() || [])) return false;
+        frappe.show_alert({
+            message: __('You do not have permission to access this module.'),
+            indicator: 'orange'
+        });
+        frappe.set_route(getWorkspaceUrl('Business Home', true).replace(/^\/app\//, ''));
+        return true;
     }
 
     function findIconConfig(labelText) {
@@ -694,6 +1018,59 @@
             if (clearedReturnFilter && window.cur_list?.doctype === "Sales Invoice") {
                 return window.cur_list.refresh();
             }
+        });
+    }
+
+    function bindViewWebsiteToRetailHome() {
+        const websiteUrl = '/retail-home';
+
+        if (window.frappe?.ui?.toolbar) {
+            frappe.ui.toolbar.view_website = function () {
+                const websiteTab = window.open();
+                if (!websiteTab) {
+                    window.location.href = websiteUrl;
+                    return;
+                }
+                websiteTab.opener = null;
+                websiteTab.location = websiteUrl;
+            };
+        }
+
+        if (!window.__retail_view_website_bound) {
+            window.__retail_view_website_bound = true;
+            document.addEventListener('click', (event) => {
+                const item = event.target?.closest?.('.dropdown-menu a, .dropdown-menu button');
+                if (!item || normalizeText(item.textContent) !== 'view website') return;
+
+                event.preventDefault();
+                event.stopPropagation();
+                event.stopImmediatePropagation?.();
+                const websiteTab = window.open(websiteUrl);
+                if (websiteTab) {
+                    websiteTab.opener = null;
+                } else {
+                    window.location.href = websiteUrl;
+                }
+            }, true);
+        }
+
+        document.querySelectorAll('.dropdown-menu a, .dropdown-menu button').forEach((item) => {
+            if (normalizeText(item.textContent) !== 'view website') return;
+            if (item.dataset.retailViewWebsiteBound === '1') return;
+            item.dataset.retailViewWebsiteBound = '1';
+            if (item.tagName === 'A') {
+                item.setAttribute('href', websiteUrl);
+            }
+            item.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                const websiteTab = window.open(websiteUrl);
+                if (websiteTab) {
+                    websiteTab.opener = null;
+                } else {
+                    window.location.href = websiteUrl;
+                }
+            }, { capture: true });
         });
     }
 
@@ -1890,10 +2267,14 @@
         ensureRetailCss();
         injectRetailInlineCss();
         bindNavbarHomeToBusinessHome();
+        bindViewWebsiteToRetailHome();
         redirectStandardHomeToBusinessHome();
         redirectItemFamilyListRoute();
+        enforceAllowedRoute();
         waitForWorkspaceModule();
+        waitForSearchFilters();
         applyDirectLinks();
+        bindViewWebsiteToRetailHome();
         applyIcons();
         ensureWorkspaceDropIcons();
         syncSidebarState();
@@ -1908,6 +2289,7 @@
         if (window.frappe?.router?.on) {
             frappe.router.on('change', () => {
                 if (redirectStandardHomeToBusinessHome()) return;
+                if (enforceAllowedRoute()) return;
                 redirectItemFamilyListRoute();
                 clearTimeout(routeRefreshTimer);
                 routeRefreshTimer = setTimeout(refreshSidebarEnhancements, 120);

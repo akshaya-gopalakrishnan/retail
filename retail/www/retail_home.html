@@ -1,0 +1,33 @@
+{% extends "templates/web.html" %}
+
+{% block page_content %}
+<main class="retail-website-home">
+	<section class="retail-website-hero">
+		<div class="retail-website-copy">
+			<div class="retail-website-kicker">Retail operations suite</div>
+			<h1>CELESTA ERP</h1>
+			<p>
+				A focused retail ERP workspace for POS, sales, purchasing, stock, accounts,
+				and management reports.
+			</p>
+			<div class="retail-website-actions">
+				<a class="btn btn-primary" href="/app">Open Desk</a>
+				{% if is_logged_in %}
+				<a class="btn btn-light" href="/me">My Profile</a>
+				{% else %}
+				<a class="btn btn-light" href="/login">Login</a>
+				{% endif %}
+			</div>
+		</div>
+		<div class="retail-website-panel">
+			<div class="retail-website-logo-wrap">
+				<img src="/assets/retail/images/business-suite-app-icon.svg?v=3" alt="CELESTA ERP">
+			</div>
+			<div>
+				<h2>Live business data</h2>
+				<p>Use the Desk for daily operations. Use this page when you intentionally choose View Website.</p>
+			</div>
+		</div>
+	</section>
+</main>
+{% endblock %}

@@ -595,8 +595,9 @@ def _set_item_pricing_field_order():
 
 
 def ensure_item_pricing_list_view():
-	"""Show customer-facing VAT-inclusive prices in the Item list."""
+	"""Keep pricing fields available for Item list fixtures/user settings."""
 	for fieldname, in_list_view in {
+		"custom_barcode": "1",
 		"last_purchase_rate": "1",
 		"standard_rate": "0",
 		"custom_purchase_gross_rate": "1",
@@ -604,26 +605,6 @@ def ensure_item_pricing_list_view():
 		"custom_margin": "1",
 	}.items():
 		_set_field_property(fieldname, "in_list_view", in_list_view, "Check")
-
-	fields = [
-		{"fieldname": "item_name", "label": "Item Name"},
-		{"fieldname": "status_field", "label": "Status"},
-		{"fieldname": "brand", "label": "Brand"},
-		{"fieldname": "item_group", "label": "Item Group"},
-		{"fieldname": "custom_purchase_gross_rate", "label": "Purchase Rate Incl. VAT"},
-		{"fieldname": "custom_sales_gross_rate", "label": "Selling Rate Incl. VAT"},
-		{"fieldname": "custom_margin", "label": "Margin"},
-	]
-
-	if frappe.db.exists("List View Settings", "Item"):
-		settings = frappe.get_doc("List View Settings", "Item")
-	else:
-		settings = frappe.new_doc("List View Settings")
-		settings.name = "Item"
-
-	settings.fields = json.dumps(fields)
-	settings.total_fields = str(len(fields))
-	settings.save(ignore_permissions=True)
 	frappe.clear_cache(doctype="Item")
 
 
@@ -724,10 +705,26 @@ def update_packing_vat_prices(doc):
 		return
 
 	for row in doc.get("custom_retail_packing_detail") or []:
+		_set_missing_packing_purchase_rate_from_item(doc, row)
 		for direction in PACKING_VAT_FIELDS:
 			_apply_packing_direction(doc, row, direction)
 
 		row.set("packing_margin", flt(row.get("selling_net_rate") - row.get("purchase_net_rate"), 2))
+
+
+def _set_missing_packing_purchase_rate_from_item(doc, row):
+	if flt(row.get("purchase_rate")) > 0:
+		return
+
+	factor = flt(row.get("conversion_factor") or 1) or 1
+	item_net = flt(doc.get("custom_purchase_net_rate") or doc.get("custom_default_purchase_rate") or doc.get("last_purchase_rate"))
+	item_gross = flt(doc.get("custom_purchase_gross_rate") or item_net)
+	if item_net <= 0 and item_gross <= 0:
+		return
+
+	mode = "Including VAT" if doc.get("custom_purchase_rate_includes_vat") else "Excluding VAT"
+	row.set("purchase_vat_mode", mode)
+	row.set("purchase_rate", flt((item_gross if mode == "Including VAT" else item_net) * factor, 2))
 
 
 def _apply_packing_direction(doc, row, direction):

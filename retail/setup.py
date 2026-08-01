@@ -4,17 +4,39 @@ from frappe.custom.doctype.property_setter.property_setter import make_property_
 
 RETAIL_WORKSPACE_MODULE = "Retail-app"
 HIDDEN_STANDARD_WORKSPACES = {"Home"}
-VISIBLE_RETAIL_WORKSPACES = {"Business Home", "Manufacturing"}
+VISIBLE_RETAIL_WORKSPACES = {"Business Home"}
 DEFAULT_RETAIL_WORKSPACE = "Business Home"
 DEFAULT_PRINT_FORMATS = {
 	"Sales Invoice": "Sales Invoice - Copy",
 	"Delivery Note": "Delivery Note- Copy",
 }
+SETTINGS_SIDEBAR_WORKSPACES = (
+	{
+		"name": "User List",
+		"title": "User List",
+		"document_type": "User",
+		"quick_list_label": "Users",
+		"icon": "users",
+		"sequence_id": 76,
+	},
+	{
+		"name": "Employee List",
+		"title": "Employee List",
+		"document_type": "Employee",
+		"quick_list_label": "Employees",
+		"icon": "hr",
+		"sequence_id": 77,
+	},
+)
 RETAIL_PRINT_LANGUAGES = {
 	"ar": "Arabic",
 	"hi": "Hindi",
 	"ml": "Malayalam",
 }
+WEBSITE_ROUTE_REDIRECTS = (
+	("/", "/app", "302"),
+	("/index", "/retail-home", "302"),
+)
 
 
 def hide_non_retail_workspaces():
@@ -61,6 +83,71 @@ def clear_url_shortcut_link_targets():
 		WHERE type = 'URL' AND link_to IS NOT NULL
 		"""
 	)
+
+
+def ensure_settings_sidebar_workspaces():
+	"""Expose Users and Employees as Settings sidebar child workspaces."""
+	if not frappe.db.table_exists("Workspace"):
+		return
+
+	for config in SETTINGS_SIDEBAR_WORKSPACES:
+		workspace = (
+			frappe.get_doc("Workspace", config["name"])
+			if frappe.db.exists("Workspace", config["name"])
+			else frappe.new_doc("Workspace")
+		)
+		workspace.update(
+			{
+				"label": config["title"],
+				"title": config["title"],
+				"module": RETAIL_WORKSPACE_MODULE,
+				"public": 1,
+				"is_hidden": 0,
+				"parent_page": "Settings",
+				"icon": config["icon"],
+				"indicator_color": "green",
+				"sequence_id": config["sequence_id"],
+				"content": (
+					f'[{{"id":"ql_settings_{frappe.scrub(config["name"])}","type":"quick_list",'
+					f'"data":{{"quick_list_name":"{config["quick_list_label"]}","col":4}}}}]'
+				),
+			}
+		)
+		workspace.links = []
+		workspace.charts = []
+		workspace.shortcuts = []
+		workspace.number_cards = []
+		workspace.custom_blocks = []
+		workspace.quick_lists = []
+		workspace.append(
+			"quick_lists",
+			{
+				"document_type": config["document_type"],
+				"label": config["quick_list_label"],
+				"quick_list_filter": "[]",
+			},
+		)
+		workspace.save(ignore_permissions=True)
+
+	frappe.clear_cache()
+
+
+def ensure_website_route_redirects():
+	"""Route normal users to Desk while keeping View Website on a real page."""
+	if not frappe.db.table_exists("Website Route Redirect"):
+		return
+
+	settings = frappe.get_doc("Website Settings", "Website Settings")
+	for source, target, status in WEBSITE_ROUTE_REDIRECTS:
+		row = next((row for row in settings.route_redirects if row.source == source), None)
+		if not row:
+			row = settings.append("route_redirects", {"source": source})
+		row.target = target
+		row.redirect_http_status = status
+
+	settings.save(ignore_permissions=True)
+	frappe.clear_cache()
+	frappe.db.commit()
 
 
 def ensure_default_print_formats():

@@ -115,10 +115,10 @@
       }
     ]
   },
-  "Purchase Receipt": {
-    "Purchase Receipt Item": [
+  "Quotation": {
+    "Quotation Item": [
       {
-        "columns": 1,
+        "columns": 2,
         "fieldname": "item_code"
       },
       {
@@ -126,43 +126,27 @@
         "fieldname": "qty"
       },
       {
-        "columns": 1,
-        "fieldname": "custom_foc_qty"
-      },
-      {
-        "columns": 1,
-        "fieldname": "custom_total_stock_qty"
-      },
-      {
-        "columns": 1,
-        "fieldname": "rejected_qty"
-      },
-      {
-        "columns": 1,
+        "columns": 2,
         "fieldname": "rate"
       },
       {
-        "columns": 1,
+        "columns": 2,
         "fieldname": "custom_rate_including_vat"
       },
       {
         "columns": 1,
-        "fieldname": "custom_cur_sell_rate"
+        "fieldname": "amount"
       },
       {
-        "columns": 1,
-        "fieldname": "custom_new_sell_rate"
-      },
-      {
-        "columns": 1,
-        "fieldname": "custom_new_sell_incl"
+        "columns": 2,
+        "fieldname": "custom_amount_including_vat"
       }
     ]
   },
   "Sales Invoice": {
     "Sales Invoice Item": [
       {
-        "columns": 2,
+        "columns": 1,
         "fieldname": "item_code"
       },
       {
@@ -170,7 +154,7 @@
         "fieldname": "item_name"
       },
       {
-        "columns": 2,
+        "columns": 1,
         "fieldname": "qty"
       },
       {
@@ -188,6 +172,10 @@
       {
         "columns": 1,
         "fieldname": "amount"
+      },
+      {
+        "columns": 2,
+        "fieldname": "custom_amount_including_vat"
       }
     ]
   },

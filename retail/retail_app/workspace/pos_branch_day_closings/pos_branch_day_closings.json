@@ -1,7 +1,7 @@
 {
  "charts": [],
  "content": "[{\"id\": \"hdr_pos_branch_day_closings\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">POS Branch Day Closings</span>\", \"col\": 12}}, {\"id\": \"ql_pos_branch_day_closings\", \"type\": \"quick_list\", \"data\": {\"quick_list_name\": \"POS Branch Day Closings\", \"col\": 4}}]",
- "creation": "2026-06-26 12:49:28.632897",
+ "creation": "2026-07-30 12:20:09.878411",
  "custom_blocks": [],
  "docstatus": 0,
  "doctype": "Workspace",
@@ -12,7 +12,7 @@
  "is_hidden": 0,
  "label": "POS Branch Day Closings",
  "links": [],
- "modified": "2026-06-26 13:02:40.650003",
+ "modified": "2026-07-31 15:15:58.540724",
  "modified_by": "Administrator",
  "module": "Retail-app",
  "name": "POS Branch Day Closings",

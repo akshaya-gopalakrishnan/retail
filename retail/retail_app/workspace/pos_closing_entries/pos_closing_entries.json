@@ -1,7 +1,7 @@
 {
  "charts": [],
  "content": "[{\"id\": \"hdr_pos_closing_entries\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">POS Closing Entries</span>\", \"col\": 12}}, {\"id\": \"ql_pos_closing_entries\", \"type\": \"quick_list\", \"data\": {\"quick_list_name\": \"POS Closing Entries\", \"col\": 4}}]",
- "creation": "2026-06-19 17:48:38.528449",
+ "creation": "2026-07-30 12:20:09.786385",
  "custom_blocks": [],
  "docstatus": 0,
  "doctype": "Workspace",
@@ -12,7 +12,7 @@
  "is_hidden": 0,
  "label": "POS Closing Entries",
  "links": [],
- "modified": "2026-06-26 13:02:40.608985",
+ "modified": "2026-07-31 15:16:01.167620",
  "modified_by": "Administrator",
  "module": "Retail-app",
  "name": "POS Closing Entries",

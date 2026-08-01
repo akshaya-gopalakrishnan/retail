@@ -137,6 +137,31 @@ def get_latest_sales_posting_date(from_date=None, to_date=None):
 	return getdate(latest_date) if latest_date else None
 
 
+def get_latest_pos_sales_posting_date(from_date=None, to_date=None):
+	conditions = ["docstatus = 1"]
+	values = {}
+
+	if from_date:
+		conditions.append("posting_date >= %(from_date)s")
+		values["from_date"] = from_date
+
+	if to_date:
+		conditions.append("posting_date <= %(to_date)s")
+		values["to_date"] = to_date
+
+	latest_date = frappe.db.sql(
+		f"""
+		select max(posting_date)
+		from `tabPOS Invoice`
+		where {" and ".join(conditions)}
+		""",
+		values,
+	)
+	latest_date = latest_date[0][0] if latest_date else None
+
+	return getdate(latest_date) if latest_date else None
+
+
 def get_chart_period(days=7):
 	end_date = get_today()
 	start_date = end_date - timedelta(days=days - 1)
@@ -145,6 +170,20 @@ def get_chart_period(days=7):
 		return start_date, end_date
 
 	latest_sales_date = get_latest_sales_posting_date()
+	if latest_sales_date:
+		return latest_sales_date - timedelta(days=days - 1), latest_sales_date
+
+	return start_date, end_date
+
+
+def get_pos_chart_period(days=7):
+	end_date = get_today()
+	start_date = end_date - timedelta(days=days - 1)
+
+	if get_latest_pos_sales_posting_date(start_date, end_date):
+		return start_date, end_date
+
+	latest_sales_date = get_latest_pos_sales_posting_date()
 	if latest_sales_date:
 		return latest_sales_date - timedelta(days=days - 1), latest_sales_date
 
@@ -247,6 +286,113 @@ def get_sales_trend_7_days(
 			posting_date,
 			sum(case when is_return = 1 then -abs(base_grand_total) else abs(base_grand_total) end) as net_sales
 		from `tabSales Invoice`
+		where docstatus = 1
+			and posting_date between %(from_date)s and %(to_date)s
+		group by posting_date
+		""",
+		{"from_date": start_date, "to_date": end_date},
+		as_dict=True,
+	)
+	values_by_date = {getdate(row.posting_date): flt(row.net_sales) for row in rows}
+	labels = []
+	values = []
+
+	for offset in range(7):
+		date = start_date + timedelta(days=offset)
+		labels.append(date.strftime("%d %b"))
+		values.append(values_by_date.get(date, 0))
+
+	return {"labels": labels, "datasets": [{"name": _("Net Sales"), "values": values}], "type": "line"}
+
+
+@frappe.whitelist()
+@cache_source
+def get_pos_top_selling_products(
+	chart_name=None,
+	chart=None,
+	no_cache=None,
+	filters=None,
+	from_date=None,
+	to_date=None,
+	timespan=None,
+	time_interval=None,
+	heatmap_year=None,
+):
+	start_date, end_date = get_pos_chart_period()
+	rows = frappe.db.sql(
+		"""
+		select
+			pii.item_name,
+			sum(case when pi.is_return = 1 then -abs(coalesce(pii.stock_qty, pii.qty, 0)) else abs(coalesce(pii.stock_qty, pii.qty, 0)) end) as net_qty
+		from `tabPOS Invoice Item` pii
+		inner join `tabPOS Invoice` pi on pi.name = pii.parent
+		inner join `tabItem` item on item.name = pii.item_code
+		where pi.docstatus = 1
+			and pi.posting_date between %(from_date)s and %(to_date)s
+			and item.is_stock_item = 1
+		group by pii.item_code
+		having net_qty > 0
+		order by net_qty desc, pii.item_name asc
+		limit 10
+		""",
+		{"from_date": start_date, "to_date": end_date},
+		as_dict=True,
+	)
+	return build_bar_chart(rows, "item_name", "net_qty", _("Qty Sold"))
+
+
+@frappe.whitelist()
+@cache_source
+def get_pos_sales_by_counter(
+	chart_name=None,
+	chart=None,
+	no_cache=None,
+	filters=None,
+	from_date=None,
+	to_date=None,
+	timespan=None,
+	time_interval=None,
+	heatmap_year=None,
+):
+	posting_date = get_latest_pos_sales_posting_date(get_today(), get_today()) or get_latest_pos_sales_posting_date() or get_today()
+	rows = frappe.db.sql(
+		"""
+		select
+			coalesce(nullif(pi.pos_counter, ''), %(no_counter)s) as counter,
+			sum(case when pi.is_return = 1 then -abs(pi.base_grand_total) else abs(pi.base_grand_total) end) as net_sales
+		from `tabPOS Invoice` pi
+		where pi.docstatus = 1
+			and pi.posting_date = %(posting_date)s
+		group by coalesce(nullif(pi.pos_counter, ''), %(no_counter)s)
+		having net_sales != 0
+		order by net_sales desc
+		""",
+		{"posting_date": posting_date, "no_counter": _("No Counter")},
+		as_dict=True,
+	)
+	return build_bar_chart(rows, "counter", "net_sales", _("Net Sales"))
+
+
+@frappe.whitelist()
+@cache_source
+def get_pos_sales_trend_7_days(
+	chart_name=None,
+	chart=None,
+	no_cache=None,
+	filters=None,
+	from_date=None,
+	to_date=None,
+	timespan=None,
+	time_interval=None,
+	heatmap_year=None,
+):
+	start_date, end_date = get_pos_chart_period()
+	rows = frappe.db.sql(
+		"""
+		select
+			posting_date,
+			sum(case when is_return = 1 then -abs(base_grand_total) else abs(base_grand_total) end) as net_sales
+		from `tabPOS Invoice`
 		where docstatus = 1
 			and posting_date between %(from_date)s and %(to_date)s
 		group by posting_date

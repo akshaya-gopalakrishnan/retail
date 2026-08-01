@@ -1,7 +1,7 @@
 {
  "charts": [],
  "content": "[{\"id\": \"hdr_pos_counters\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">POS Counters</span>\", \"col\": 12}}, {\"id\": \"ql_pos_counters\", \"type\": \"quick_list\", \"data\": {\"quick_list_name\": \"POS Counters\", \"col\": 4}}]",
- "creation": "2026-06-19 17:48:38.487967",
+ "creation": "2026-07-30 12:20:09.748052",
  "custom_blocks": [],
  "docstatus": 0,
  "doctype": "Workspace",
@@ -12,7 +12,7 @@
  "is_hidden": 0,
  "label": "POS Counters",
  "links": [],
- "modified": "2026-06-26 13:02:40.434245",
+ "modified": "2026-07-31 15:16:01.057348",
  "modified_by": "Administrator",
  "module": "Retail-app",
  "name": "POS Counters",

@@ -1,0 +1,34 @@
+{
+ "charts": [],
+ "content": "[{\"id\":\"ql_settings_employee_list\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Employees\",\"col\":4}}]",
+ "creation": "2026-07-31 12:04:56.774074",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "hide_custom": 0,
+ "icon": "hr",
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "Employee List",
+ "links": [],
+ "modified": "2026-07-31 12:09:10.943192",
+ "modified_by": "Administrator",
+ "module": "Retail-app",
+ "name": "Employee List",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "Settings",
+ "public": 1,
+ "quick_lists": [
+  {
+   "document_type": "Employee",
+   "label": "Employees",
+   "quick_list_filter": "[]"
+  }
+ ],
+ "roles": [],
+ "sequence_id": 77.0,
+ "shortcuts": [],
+ "title": "Employee List"
+}

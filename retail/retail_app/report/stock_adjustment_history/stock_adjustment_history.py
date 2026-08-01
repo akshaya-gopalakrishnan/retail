@@ -146,6 +146,7 @@ def get_stock_reconciliation_rows(filters):
 		"sr.docstatus in %(docstatus)s",
 	]
 	values = get_common_values(filters)
+	remarks_select = "sr.remarks" if frappe.db.has_column("Stock Reconciliation", "remarks") else "'' as remarks"
 
 	if filters.get("company"):
 		conditions.append("sr.company = %(company)s")
@@ -171,7 +172,7 @@ def get_stock_reconciliation_rows(filters):
 			sr.modified,
 			sr.purpose,
 			sr.expense_account,
-			sr.remarks,
+			{remarks_select},
 			sri.item_code,
 			sri.item_name,
 			sri.item_group,

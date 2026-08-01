@@ -14,7 +14,7 @@
   }
  ],
  "content": "[{\"id\": \"hdr_manufacturing\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Manufacturing</span>\", \"col\": 12}}, {\"id\": \"sc_bom\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"BOM\", \"col\": 3}}, {\"id\": \"sc_production_plan\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Production Plan\", \"col\": 3}}, {\"id\": \"sc_work_order\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Work Orders\", \"col\": 3}}, {\"id\": \"sc_job_card\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Job Cards\", \"col\": 3}}, {\"id\": \"sc_stock_entry\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Stock Entries\", \"col\": 3}}, {\"id\": \"sc_quality_inspection\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Quality Inspection\", \"col\": 3}}, {\"id\": \"sc_work_order_summary\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Work Order Summary\", \"col\": 3}}, {\"id\": \"sp_manufacturing_charts\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"chart_pending_work_order\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Pending Work Order\", \"col\": 4}}, {\"id\": \"chart_produced_quantity\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Produced Quantity\", \"col\": 4}}, {\"id\": \"chart_job_card_analysis\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Job Card Analysis\", \"col\": 4}}, {\"id\": \"sp_manufacturing_cards\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"card_manufacturing_flow\", \"type\": \"card\", \"data\": {\"card_name\": \"Manufacturing Flow\", \"col\": 4}}, {\"id\": \"card_factory_stock\", \"type\": \"card\", \"data\": {\"card_name\": \"Factory Stock\", \"col\": 4}}, {\"id\": \"card_manufacturing_reports\", \"type\": \"card\", \"data\": {\"card_name\": \"Manufacturing Reports\", \"col\": 4}}, {\"id\": \"card_manufacturing_setup\", \"type\": \"card\", \"data\": {\"card_name\": \"Manufacturing Setup\", \"col\": 4}}]",
- "creation": "2026-07-20 16:46:24.123362",
+ "creation": "2026-07-30 12:20:09.466077",
  "custom_blocks": [],
  "docstatus": 0,
  "doctype": "Workspace",
@@ -23,7 +23,7 @@
  "icon": "manufacturing",
  "idx": 0,
  "indicator_color": "blue",
- "is_hidden": 1,
+ "is_hidden": 0,
  "label": "Manufacturing",
  "links": [
   {
@@ -292,7 +292,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-07-22 16:53:02.660300",
+ "modified": "2026-08-01 09:36:42.289346",
  "modified_by": "pos.api@arabscale.com",
  "module": "Retail-app",
  "name": "Manufacturing",

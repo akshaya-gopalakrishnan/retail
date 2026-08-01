@@ -138,7 +138,7 @@ def ensure_scale_item_fields():
 					"fieldtype": "Data",
 					"insert_after": "scale_enabled",
 					"hidden": 1,
-					"in_standard_filter": 1,
+					"in_standard_filter": 0,
 				},
 				{
 					"fieldname": "scale_prefix",

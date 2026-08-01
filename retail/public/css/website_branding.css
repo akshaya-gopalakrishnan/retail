@@ -206,7 +206,116 @@ body[data-path="login"] .web-footer {
     display: none;
 }
 
+.retail-website-home {
+    margin: 0 auto;
+    max-width: 1180px;
+    padding: 82px 24px 96px;
+}
+
+.retail-website-hero {
+    align-items: stretch;
+    display: grid;
+    gap: 24px;
+    grid-template-columns: minmax(0, 1.3fr) minmax(320px, 0.7fr);
+}
+
+.retail-website-copy,
+.retail-website-panel {
+    background: var(--retail-brand-surface);
+    border: 1px solid var(--retail-brand-border);
+    border-radius: 8px;
+    box-shadow: var(--retail-brand-shadow-md);
+    backdrop-filter: blur(var(--retail-brand-glass-blur));
+    -webkit-backdrop-filter: blur(var(--retail-brand-glass-blur));
+}
+
+.retail-website-copy {
+    padding: 52px;
+}
+
+.retail-website-kicker {
+    color: var(--retail-brand-accent);
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+}
+
+.retail-website-copy h1 {
+    color: var(--retail-brand-primary);
+    font-size: 3rem;
+    font-weight: 800;
+    letter-spacing: 0;
+    line-height: 1.05;
+    margin: 0 0 18px;
+}
+
+.retail-website-copy p,
+.retail-website-panel p {
+    color: var(--retail-brand-muted);
+    font-size: 1.05rem;
+    line-height: 1.65;
+    margin: 0;
+}
+
+.retail-website-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 32px;
+}
+
+.retail-website-panel {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 36px;
+}
+
+.retail-website-logo-wrap {
+    align-items: center;
+    background: var(--retail-brand-surface-strong);
+    border: 1px solid var(--retail-brand-border);
+    border-radius: 8px;
+    display: flex;
+    height: 86px;
+    justify-content: center;
+    margin-bottom: 24px;
+    width: 86px;
+}
+
+.retail-website-logo-wrap img {
+    height: 54px;
+    width: 54px;
+}
+
+.retail-website-panel h2 {
+    color: var(--retail-brand-text);
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: 0;
+    margin: 0 0 10px;
+}
+
 @media (max-width: 860px) {
+    .retail-website-home {
+        padding: 36px 16px 56px;
+    }
+
+    .retail-website-hero {
+        grid-template-columns: 1fr;
+    }
+
+    .retail-website-copy,
+    .retail-website-panel {
+        padding: 28px;
+    }
+
+    .retail-website-copy h1 {
+        font-size: 2.2rem;
+    }
+
     body[data-path="login"] .for-login,
     body[data-path="login"] .for-forgot,
     body[data-path="login"] .for-signup,

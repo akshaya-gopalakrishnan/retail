@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import frappe
-from frappe.utils import add_days, flt, getdate, now, now_datetime, nowdate, nowtime, today
+from frappe.utils import add_days, add_months, flt, getdate, now, now_datetime, nowdate, nowtime, today
 
 
 DEMO_PREFIX = "BUSINESS-DEMO"
@@ -16,6 +16,7 @@ DEMO_POS_PROFILE = "Business Demo POS Profile"
 DEMO_POS_COUNTER = f"{DEMO_BRANCH}-COUNTER-1"
 DEMO_GROUP = "Business Demo"
 DEMO_BRAND = "Business Demo"
+DEMO_SIX_MONTH_PREFIX = "BUSINESS-DEMO-6M"
 
 
 def setup_demo(args=None):
@@ -51,6 +52,14 @@ def _submit_once(doc):
 		doc.flags.ignore_permissions = True
 		doc.submit()
 	return doc
+
+
+def _date_range(start_date, end_date):
+	current = getdate(start_date)
+	end = getdate(end_date)
+	while current <= end:
+		yield current
+		current += timedelta(days=1)
 
 
 def _get_company():
@@ -750,6 +759,721 @@ def _seed_reorder_rows(item_code, low_stock_warehouse, out_stock_warehouse):
 	]
 	for row in rows:
 		frappe.get_doc(row).db_insert()
+
+
+def _ensure_demo_fiscal_years(start_date, end_date):
+	for year in range(getdate(start_date).year, getdate(end_date).year + 1):
+		name = str(year)
+		if not frappe.db.exists("Fiscal Year", name):
+			doc = frappe.new_doc("Fiscal Year")
+			doc.year = name
+			doc.year_start_date = f"{year}-01-01"
+			doc.year_end_date = f"{year}-12-31"
+			doc.insert(ignore_permissions=True)
+
+
+def _ensure_demo_people(ctx):
+	people = (
+		("demo.cashier1@example.com", "Amina", "Cashier", "Female", "1111"),
+		("demo.cashier2@example.com", "Ravi", "Cashier", "Male", "2222"),
+		("demo.manager@example.com", "Maya", "Store Manager", "Female", "3333"),
+	)
+	employees = []
+	for index, (email, first_name, designation, gender, pin) in enumerate(people, start=1):
+		if not frappe.db.exists("User", email):
+			user = frappe.new_doc("User")
+			user.email = email
+			user.first_name = first_name
+			user.enabled = 1
+			user.user_type = "System User"
+			user.send_welcome_email = 0
+			for role in ("Sales User", "Stock User", "Accounts User"):
+				if frappe.db.exists("Role", role):
+					user.append("roles", {"role": role})
+			user.insert(ignore_permissions=True)
+
+		employee_name = f"{DEMO_SIX_MONTH_PREFIX}-EMP-{index:03d}"
+		existing_employee = (
+			frappe.db.get_value("Employee", {"user_id": email}, "name")
+			or (employee_name if frappe.db.exists("Employee", employee_name) else None)
+		)
+		if not existing_employee:
+			employee = frappe.new_doc("Employee")
+			employee.name = employee_name
+			employee.first_name = first_name
+			employee.employee_name = first_name
+			employee.company = ctx.company
+			employee.status = "Active"
+			employee.gender = gender
+			employee.date_of_birth = "1990-01-01"
+			employee.date_of_joining = add_days(today(), -365)
+			employee.branch = ctx.branch
+			employee.user_id = email
+			if employee.meta.has_field("pos_login_enabled"):
+				employee.pos_login_enabled = 1
+			if employee.meta.has_field("employee_number"):
+				employee.employee_number = f"DEMO-CASHIER-{index:03d}"
+			if employee.meta.has_field("pos_quick_pin_hash"):
+				from retail.pos_login import make_quick_pin_hash
+
+				pin_hash, salt = make_quick_pin_hash(pin)
+				employee.pos_quick_pin_hash = pin_hash
+				employee.pos_quick_pin_salt = salt
+			employee.flags.ignore_mandatory = True
+			employee.insert(ignore_permissions=True)
+		else:
+			employee = frappe.get_doc("Employee", existing_employee)
+
+		if frappe.db.has_column("User", "pos_cashier_employee"):
+			frappe.db.set_value("User", email, "pos_cashier_employee", employee.name, update_modified=False)
+		employees.append(employee.name)
+	return employees
+
+
+def _delete_prefixed_documents(doctypes, prefix):
+	for doctype in doctypes:
+		if not frappe.db.table_exists(doctype):
+			continue
+		names = frappe.get_all(doctype, filters={"name": ["like", f"{prefix}%"]}, pluck="name", limit_page_length=0)
+		if not names:
+			continue
+		for field in frappe.get_meta(doctype).fields:
+			if field.fieldtype == "Table" and field.options and frappe.db.table_exists(field.options):
+				frappe.db.delete(field.options, {"parent": ["in", names], "parenttype": doctype})
+		frappe.db.delete(doctype, {"name": ["in", names]})
+
+
+def _delete_six_month_demo_data():
+	_delete_prefixed_documents(
+		(
+			"POS Cash Movement",
+			"POS Branch Day Closing",
+			"POS Counter Session",
+			"POS Cashier Shift",
+			"POS Closing Entry",
+			"POS Opening Entry",
+			"POS Invoice",
+			"Sales Invoice",
+			"Purchase Invoice",
+			"Delivery Note",
+			"Purchase Receipt",
+			"Sales Order",
+			"Purchase Order",
+			"Stock Entry",
+		),
+		DEMO_SIX_MONTH_PREFIX,
+	)
+	if frappe.db.table_exists("Stock Ledger Entry"):
+		frappe.db.delete("Stock Ledger Entry", {"name": ["like", f"{DEMO_SIX_MONTH_PREFIX}%"]})
+
+
+def _clone_parent(doctype, template_name, new_name, updates):
+	template = frappe.get_doc(doctype, template_name)
+	data = _valid_row_data(doctype, template)
+	data.update(updates)
+	data["doctype"] = doctype
+	data["name"] = new_name
+	doc = frappe.get_doc(data)
+	doc.db_insert()
+	return doc
+
+
+def _insert_direct_doc(doctype, name, values):
+	data = {"doctype": doctype, "name": name}
+	for column in frappe.get_meta(doctype).get_valid_columns():
+		if column in values:
+			data[column] = values[column]
+	doc = frappe.get_doc(data)
+	doc.db_insert()
+	return doc
+
+
+def _clone_child(doctype, template_row, name, parent, parenttype, parentfield, updates):
+	data = _valid_row_data(doctype, template_row)
+	data.update(updates)
+	data.update({"doctype": doctype, "name": name, "parent": parent, "parenttype": parenttype, "parentfield": parentfield})
+	frappe.get_doc(data).db_insert()
+
+
+def _amount_fields(amount):
+	return {
+		"total": amount,
+		"base_total": amount,
+		"net_total": amount,
+		"base_net_total": amount,
+		"grand_total": amount,
+		"base_grand_total": amount,
+		"rounded_total": amount,
+		"base_rounded_total": amount,
+		"outstanding_amount": 0,
+	}
+
+
+def _invoice_item_values(item_code, qty, rate, idx, amount=None):
+	amount = flt(amount if amount is not None else qty * rate, 2)
+	item = frappe.get_doc("Item", item_code)
+	values = {
+		"idx": idx,
+		"docstatus": 1,
+		"item_code": item_code,
+		"item_name": item.item_name,
+		"description": item.description or item.item_name,
+		"item_group": item.item_group,
+		"qty": qty,
+		"stock_qty": qty,
+		"rate": abs(rate),
+		"base_rate": abs(rate),
+		"net_rate": abs(rate),
+		"base_net_rate": abs(rate),
+		"amount": amount,
+		"base_amount": amount,
+		"net_amount": amount,
+		"base_net_amount": amount,
+		"incoming_rate": abs(rate) * 0.62,
+	}
+	return values
+
+
+def _clone_payment_rows(template_parent, target_parent, parenttype, payments):
+	template_payment_name = frappe.db.get_value("Sales Invoice Payment", {"parent": template_parent, "parenttype": parenttype}, "name")
+	if not template_payment_name:
+		return
+	template_payment = frappe.get_doc("Sales Invoice Payment", template_payment_name)
+	for idx, (mode, amount) in enumerate(payments, start=1):
+		_clone_child(
+			"Sales Invoice Payment",
+			template_payment,
+			f"{target_parent}-PAY-{idx}",
+			target_parent,
+			parenttype,
+			"payments",
+			{
+				"idx": idx,
+				"docstatus": 1,
+				"mode_of_payment": mode,
+				"amount": amount,
+				"base_amount": amount,
+			},
+		)
+
+
+def _clone_stock_ledger(template_sle, name, posting_date, posting_time, voucher_type, voucher_no, item_code, qty, rate, warehouse, detail_no=None):
+	amount = flt(qty * rate * 0.62, 2)
+	_clone_parent(
+		"Stock Ledger Entry",
+		template_sle.name,
+		name,
+		{
+			"docstatus": 1,
+			"is_cancelled": 0,
+			"posting_date": posting_date,
+			"posting_time": posting_time,
+			"posting_datetime": f"{posting_date} {posting_time}",
+			"voucher_type": voucher_type,
+			"voucher_no": voucher_no,
+			"voucher_detail_no": detail_no,
+			"item_code": item_code,
+			"warehouse": warehouse,
+			"actual_qty": qty,
+			"qty_after_transaction": 1000 + qty,
+			"incoming_rate": abs(rate) * 0.62,
+			"valuation_rate": abs(rate) * 0.62,
+			"stock_value_difference": amount,
+			"company": frappe.db.get_value("Warehouse", warehouse, "company"),
+			"creation": f"{posting_date} {posting_time}",
+			"modified": f"{posting_date} {posting_time}",
+			"owner": "Administrator",
+			"modified_by": "Administrator",
+		},
+	)
+
+
+def _seed_pos_day(ctx, items, employees, date_value, day_index, templates):
+	date_key = date_value.strftime("%Y%m%d")
+	cashier = employees[day_index % len(employees)]
+	open_time = f"{date_value} 08:00:00"
+	close_time = f"{date_value} 22:00:00"
+	opening_amount = 350 + (day_index % 5) * 25
+	shift_name = f"{DEMO_SIX_MONTH_PREFIX}-SHIFT-{date_key}"
+	session_name = f"{DEMO_SIX_MONTH_PREFIX}-SESSION-{date_key}"
+	opening_name = f"{DEMO_SIX_MONTH_PREFIX}-OPEN-{date_key}"
+	closing_name = f"{DEMO_SIX_MONTH_PREFIX}-CLOSE-{date_key}"
+
+	_clone_parent(
+		"POS Cashier Shift",
+		templates.shift.name,
+		shift_name,
+		{
+			"branch": ctx.branch,
+			"cashier_employee": cashier,
+			"cashier_name": frappe.db.get_value("Employee", cashier, "employee_name"),
+			"status": "Closed",
+			"opening_time": open_time,
+			"closing_time": close_time,
+			"opening_amount": opening_amount,
+			"current_counter": None,
+			"current_counter_session": None,
+			"device_api_user": "Administrator",
+			"external_open_reference": f"{shift_name}-OPEN-REF",
+			"external_close_reference": f"{shift_name}-CLOSE-REF",
+		},
+	)
+	_clone_parent(
+		"POS Counter Session",
+		templates.session.name,
+		session_name,
+		{
+			"cashier_shift": shift_name,
+			"branch": ctx.branch,
+			"counter": DEMO_POS_COUNTER,
+			"counter_code": "COUNTER-1",
+			"terminal_id": "DEMO-POS-01",
+			"status": "Closed",
+			"cashier_employee": cashier,
+			"started_at": open_time,
+			"ended_at": close_time,
+			"pos_opening_entry": opening_name,
+			"pos_closing_entry": closing_name,
+			"opened_by_api_user": "Administrator",
+			"opening_external_reference": f"{session_name}-OPEN-REF",
+			"closing_external_reference": f"{session_name}-CLOSE-REF",
+		},
+	)
+
+	if templates.opening:
+		_clone_parent(
+			"POS Opening Entry",
+			templates.opening.name,
+			opening_name,
+			{
+				"docstatus": 1,
+				"status": "Closed",
+				"company": ctx.company,
+				"pos_profile": DEMO_POS_PROFILE,
+				"user": "Administrator",
+				"posting_date": date_value,
+				"period_start_date": open_time,
+				"pos_cashier_shift": shift_name,
+				"pos_counter_session": session_name,
+				"pos_branch_counter": DEMO_POS_COUNTER,
+			},
+		)
+	if templates.closing:
+		_clone_parent(
+			"POS Closing Entry",
+			templates.closing.name,
+			closing_name,
+			{
+				"docstatus": 1,
+				"company": ctx.company,
+				"pos_profile": DEMO_POS_PROFILE,
+				"user": "Administrator",
+				"posting_date": date_value,
+				"period_start_date": open_time,
+				"period_end_date": close_time,
+				"pos_opening_entry": opening_name,
+				"pos_cashier_shift": shift_name,
+				"pos_counter_session": session_name,
+				"pos_branch_counter": DEMO_POS_COUNTER,
+			},
+		)
+
+	invoice_total = 0
+	cash_total = 0
+	for invoice_idx in range(1, 5):
+		hour = 9 + invoice_idx * 3 + (day_index % 2)
+		posting_time = f"{hour:02d}:{(day_index * 7 + invoice_idx * 3) % 60:02d}:00"
+		is_return = invoice_idx == 4 and day_index % 5 == 0
+		name = f"{DEMO_SIX_MONTH_PREFIX}-POS-{date_key}-{invoice_idx:02d}"
+		item_code = items[(day_index + invoice_idx) % len(items)]
+		qty = (day_index % 3) + invoice_idx
+		rate = frappe.db.get_value("Item Price", {"item_code": item_code, "price_list": "Standard Selling"}, "price_list_rate") or 10
+		if invoice_idx == 3:
+			rate = flt(rate * 0.92, 2)
+		if is_return:
+			qty = -1
+		amount = flt(qty * rate, 2)
+		payments = [(ctx.cash_mode, amount)] if invoice_idx % 2 else [(ctx.card_mode, amount)]
+		if invoice_idx == 2:
+			payments = [(ctx.cash_mode, flt(amount * 0.45, 2)), (ctx.card_mode, flt(amount * 0.55, 2))]
+
+		updates = {
+			"docstatus": 1,
+			"posting_date": date_value,
+			"due_date": date_value,
+			"posting_time": posting_time,
+			"set_posting_time": 1,
+			"is_return": 1 if is_return else 0,
+			"return_against": f"{DEMO_SIX_MONTH_PREFIX}-POS-{date_key}-01" if is_return else None,
+			"customer": ctx.customer,
+			"company": ctx.company,
+			"update_stock": 1,
+			"set_warehouse": ctx.warehouse,
+			"cost_center": ctx.cost_center,
+			"pos_profile": DEMO_POS_PROFILE,
+			"external_pos_reference": f"{name}-EXT",
+			"pos_bill_no": f"BILL-{date_key}-{invoice_idx:03d}",
+			"pos_branch": ctx.branch,
+			"pos_counter": DEMO_POS_COUNTER,
+			"pos_terminal_id": "DEMO-POS-01",
+			"pos_shift_no": shift_name,
+			"pos_cashier": "Administrator",
+			"pos_cashier_employee": cashier,
+			"pos_cashier_shift": shift_name,
+			"pos_counter_session": session_name,
+			"pos_sync_source": "Offline POS",
+			"pos_sync_datetime": f"{date_value} {posting_time}",
+			"paid_amount": amount,
+			"base_paid_amount": amount,
+			"creation": f"{date_value} {posting_time}",
+			"modified": f"{date_value} {posting_time}",
+			"owner": "Administrator",
+			"modified_by": "Administrator",
+			"remarks": "Six month retail POS demo data",
+		}
+		updates.update(_amount_fields(amount))
+		_clone_parent("POS Invoice", templates.pos_invoice.name, name, updates)
+		item_row_name = f"{name}-ITEM-1"
+		_clone_child(
+			"POS Invoice Item",
+			templates.pos_item,
+			item_row_name,
+			name,
+			"POS Invoice",
+			"items",
+			_invoice_item_values(item_code, qty, rate, 1, amount),
+		)
+		_clone_payment_rows(templates.pos_invoice.name, name, "POS Invoice", payments)
+		_clone_stock_ledger(templates.sle, f"{DEMO_SIX_MONTH_PREFIX}-SLE-POS-{date_key}-{invoice_idx:02d}", date_value, posting_time, "POS Invoice", name, item_code, -qty, rate, ctx.warehouse, item_row_name)
+		invoice_total += amount
+		cash_total += sum(amount for mode, amount in payments if mode == ctx.cash_mode)
+
+	cash_in = 40 if day_index % 6 == 0 else 0
+	cash_out = 25 if day_index % 4 == 0 else 0
+	for movement_type, amount in (("Cash In", cash_in), ("Cash Out", cash_out)):
+		if not amount:
+			continue
+		movement_name = f"{DEMO_SIX_MONTH_PREFIX}-CMOV-{date_key}-{movement_type.replace(' ', '').upper()}"
+		movement_values = {
+			"external_pos_reference": f"{movement_name}-EXT",
+			"branch": ctx.branch,
+			"counter": DEMO_POS_COUNTER,
+			"counter_code": "COUNTER-1",
+			"terminal_id": "DEMO-POS-01",
+			"cashier_employee": cashier,
+			"cashier_name": frappe.db.get_value("Employee", cashier, "employee_name"),
+			"cashier_shift": shift_name,
+			"counter_session": session_name,
+			"movement_type": movement_type,
+			"amount": amount,
+			"posting_datetime": f"{date_value} 15:30:00",
+			"description": "Demo till cash movement",
+			"device_api_user": "Administrator",
+			"creation": f"{date_value} 15:30:00",
+			"modified": f"{date_value} 15:30:00",
+			"owner": "Administrator",
+			"modified_by": "Administrator",
+		}
+		if templates.cash_movement:
+			_clone_parent("POS Cash Movement", templates.cash_movement.name, movement_name, movement_values)
+		else:
+			_insert_direct_doc("POS Cash Movement", movement_name, movement_values)
+
+	expected_cash = flt(opening_amount + cash_total + cash_in - cash_out, 2)
+	counted_cash = flt(expected_cash + ((day_index % 7) - 3), 2)
+	frappe.db.set_value(
+		"POS Cashier Shift",
+		shift_name,
+		{
+			"cash_in_amount": cash_in,
+			"cash_out_amount": cash_out,
+			"expected_cash": expected_cash,
+			"closing_amount": counted_cash,
+			"variance": flt(counted_cash - expected_cash, 2),
+		},
+		update_modified=False,
+	)
+	return invoice_total
+
+
+def _seed_branch_day_closings(ctx, start_date, end_date):
+	for date_value in _date_range(start_date, end_date):
+		date_key = date_value.strftime("%Y%m%d")
+		closing_name = f"{DEMO_SIX_MONTH_PREFIX}-BDC-{date_key}"
+		shift_name = f"{DEMO_SIX_MONTH_PREFIX}-SHIFT-{date_key}"
+		shift = frappe.db.get_value(
+			"POS Cashier Shift",
+			shift_name,
+			[
+				"name",
+				"cashier_employee",
+				"cashier_name",
+				"status",
+				"opening_time",
+				"closing_time",
+				"opening_amount",
+				"cash_in_amount",
+				"cash_out_amount",
+				"expected_cash",
+				"closing_amount",
+				"variance",
+			],
+			as_dict=True,
+		)
+		if not shift:
+			continue
+		invoice = frappe.db.sql(
+			"""
+			select count(*) as invoice_count, coalesce(sum(grand_total), 0) as sales_total
+			from `tabPOS Invoice`
+			where docstatus = 1 and pos_cashier_shift = %s
+			""",
+			shift_name,
+			as_dict=True,
+		)[0]
+		_insert_direct_doc(
+			"POS Branch Day Closing",
+			closing_name,
+			{
+				"docstatus": 1,
+				"branch": ctx.branch,
+				"business_date": date_value,
+				"manager_user": "Administrator",
+				"closed_at": f"{date_value} 23:00:00",
+				"total_cashier_shifts": 1,
+				"open_shift_count": 0,
+				"closed_shift_count": 1,
+				"active_counter_session_count": 0,
+				"total_invoice_count": invoice.invoice_count,
+				"total_sales": invoice.sales_total,
+				"total_cash_in": shift.cash_in_amount,
+				"total_cash_out": shift.cash_out_amount,
+				"total_expected_cash": shift.expected_cash,
+				"total_closing_cash": shift.closing_amount,
+				"total_variance": shift.variance,
+				"notes": "Six month branch day closing demo data",
+				"creation": f"{date_value} 23:00:00",
+				"modified": f"{date_value} 23:00:00",
+				"owner": "Administrator",
+				"modified_by": "Administrator",
+			},
+		)
+		frappe.get_doc(
+			{
+				"doctype": "POS Day Closing Cashier Summary",
+				"name": f"{closing_name}-CASHIER-1",
+				"parent": closing_name,
+				"parenttype": "POS Branch Day Closing",
+				"parentfield": "cashier_summaries",
+				"idx": 1,
+				"cashier_shift": shift.name,
+				"cashier_employee": shift.cashier_employee,
+				"cashier_name": shift.cashier_name,
+				"status": shift.status,
+				"opening_time": shift.opening_time,
+				"closing_time": shift.closing_time,
+				"opening_amount": shift.opening_amount,
+				"cash_in_amount": shift.cash_in_amount,
+				"cash_out_amount": shift.cash_out_amount,
+				"expected_cash": shift.expected_cash,
+				"closing_amount": shift.closing_amount,
+				"variance": shift.variance,
+				"invoice_count": invoice.invoice_count,
+				"sales_total": invoice.sales_total,
+			}
+		).db_insert()
+		frappe.get_doc(
+			{
+				"doctype": "POS Day Closing Counter Summary",
+				"name": f"{closing_name}-COUNTER-1",
+				"parent": closing_name,
+				"parenttype": "POS Branch Day Closing",
+				"parentfield": "counter_summaries",
+				"idx": 1,
+				"counter": DEMO_POS_COUNTER,
+				"counter_code": "COUNTER-1",
+				"session_count": 1,
+				"invoice_count": invoice.invoice_count,
+				"sales_total": invoice.sales_total,
+				"expected_cash": shift.expected_cash,
+				"closing_amount": shift.closing_amount,
+				"variance": shift.variance,
+			}
+		).db_insert()
+
+
+def _seed_normal_invoice(doctype, child_doctype, template_name, template_item, ctx, items, date_value, index, party_field):
+	name = f"{DEMO_SIX_MONTH_PREFIX}-{frappe.scrub(doctype).upper().replace('_', '-')}-{date_value.strftime('%Y%m%d')}-{index:02d}"
+	item_code = items[index % len(items)]
+	rate = frappe.db.get_value("Item Price", {"item_code": item_code, "price_list": "Standard Selling"}, "price_list_rate") or 10
+	if doctype == "Purchase Invoice":
+		rate = frappe.db.get_value("Item Price", {"item_code": item_code, "price_list": "Standard Buying"}, "price_list_rate") or flt(rate * 0.62, 2)
+	qty = 4 + (index % 5)
+	amount = flt(qty * rate, 2)
+	updates = {
+		"docstatus": 1,
+		"posting_date": date_value,
+		"due_date": add_days(date_value, 15),
+		"set_posting_time": 1,
+		"posting_time": "11:10:00",
+		"company": ctx.company,
+		"set_warehouse": ctx.warehouse,
+		"cost_center": ctx.cost_center,
+		"is_return": 0,
+		"creation": f"{date_value} 11:10:00",
+		"modified": f"{date_value} 11:10:00",
+		"owner": "Administrator",
+		"modified_by": "Administrator",
+		"remarks": "Six month retail back-office demo data",
+	}
+	updates[party_field] = ctx.customer if party_field == "customer" else ctx.supplier
+	if doctype == "Sales Invoice":
+		updates["is_pos"] = 0
+		updates["update_stock"] = 1
+		updates["paid_amount"] = amount if index % 3 else 0
+		updates["base_paid_amount"] = updates["paid_amount"]
+		updates["outstanding_amount"] = 0 if updates["paid_amount"] else amount
+	if doctype == "Purchase Invoice":
+		updates["credit_to"] = _payable_account(ctx.company)
+		updates["outstanding_amount"] = amount if index % 4 else 0
+	updates.update(_amount_fields(amount))
+	if doctype == "Sales Invoice" and index % 3 == 0:
+		updates["outstanding_amount"] = amount
+	_clone_parent(doctype, template_name, name, updates)
+	item_row_name = f"{name}-ITEM-1"
+	_clone_child(child_doctype, template_item, item_row_name, name, doctype, "items", _invoice_item_values(item_code, qty, rate, 1, amount))
+	if doctype == "Sales Invoice" and updates.get("paid_amount"):
+		_clone_payment_rows(template_name, name, "Sales Invoice", [(ctx.cash_mode, amount)])
+	if doctype in ("Sales Invoice", "Purchase Invoice"):
+		sle_qty = -qty if doctype == "Sales Invoice" else qty
+		_clone_stock_ledger(
+			frappe.get_doc("Stock Ledger Entry", frappe.db.get_value("Stock Ledger Entry", {}, "name")),
+			f"{DEMO_SIX_MONTH_PREFIX}-SLE-{frappe.scrub(doctype).upper().replace('_', '-')}-{date_value.strftime('%Y%m%d')}-{index:02d}",
+			date_value,
+			"11:10:00",
+			doctype,
+			name,
+			item_code,
+			sle_qty,
+			rate,
+			ctx.warehouse,
+			item_row_name,
+		)
+	return amount
+
+
+def _seed_workflow_doc(doctype, child_doctype, template_name, template_item, ctx, items, date_value, index, party_field):
+	name = f"{DEMO_SIX_MONTH_PREFIX}-{frappe.scrub(doctype).upper().replace('_', '-')}-{date_value.strftime('%Y%m%d')}-{index:02d}"
+	item_code = items[(index + 1) % len(items)]
+	rate = frappe.db.get_value("Item Price", {"item_code": item_code, "price_list": "Standard Selling"}, "price_list_rate") or 10
+	if doctype in ("Purchase Order", "Purchase Receipt"):
+		rate = frappe.db.get_value("Item Price", {"item_code": item_code, "price_list": "Standard Buying"}, "price_list_rate") or flt(rate * 0.62, 2)
+	qty = 8 + (index % 4)
+	amount = flt(qty * rate, 2)
+	updates = {
+		"docstatus": 1,
+		"company": ctx.company,
+		"set_warehouse": ctx.warehouse,
+		"cost_center": ctx.cost_center,
+		"creation": f"{date_value} 10:00:00",
+		"modified": f"{date_value} 10:00:00",
+		"owner": "Administrator",
+		"modified_by": "Administrator",
+	}
+	updates[party_field] = ctx.customer if party_field == "customer" else ctx.supplier
+	if doctype in ("Sales Order", "Purchase Order"):
+		updates["transaction_date"] = date_value
+		updates["delivery_date" if doctype == "Sales Order" else "schedule_date"] = add_days(date_value, 3)
+	else:
+		updates["posting_date"] = date_value
+		updates["posting_time"] = "10:00:00"
+		updates["set_posting_time"] = 1
+	updates.update(_amount_fields(amount))
+	_clone_parent(doctype, template_name, name, updates)
+	_clone_child(child_doctype, template_item, f"{name}-ITEM-1", name, doctype, "items", _invoice_item_values(item_code, qty, rate, 1, amount))
+	return amount
+
+
+@frappe.whitelist()
+def seed_six_month_demo_data():
+	"""Seed a broad, repeatable retail demo window around today through the next 6 months."""
+	seed_full_demo_data()
+	company = _get_company()
+	ctx = _ensure_masters(company)
+	items = _ensure_items(ctx)
+	_ensure_pos(ctx)
+	employees = _ensure_demo_people(ctx)
+
+	start_date = add_days(today(), -90)
+	end_date = add_months(today(), 6)
+	_ensure_demo_fiscal_years(start_date, end_date)
+	_delete_six_month_demo_data()
+
+	templates = frappe._dict(
+		{
+			"pos_invoice": frappe.get_doc("POS Invoice", frappe.db.get_value("POS Invoice", {"docstatus": 1, "is_return": 0}, "name", order_by="posting_date desc, creation desc")),
+			"shift": frappe.get_doc("POS Cashier Shift", frappe.db.get_value("POS Cashier Shift", {}, "name", order_by="creation desc")),
+			"session": frappe.get_doc("POS Counter Session", frappe.db.get_value("POS Counter Session", {}, "name", order_by="creation desc")),
+			"opening": None,
+			"closing": None,
+			"cash_movement": None,
+			"sle": frappe.get_doc("Stock Ledger Entry", frappe.db.get_value("Stock Ledger Entry", {}, "name", order_by="posting_date desc, creation desc")),
+		}
+	)
+	templates.pos_item = templates.pos_invoice.items[0]
+	if cash_movement_name := frappe.db.get_value("POS Cash Movement", {}, "name", order_by="creation desc"):
+		templates.cash_movement = frappe.get_doc("POS Cash Movement", cash_movement_name)
+	if opening_name := frappe.db.get_value("POS Opening Entry", {}, "name", order_by="creation desc"):
+		templates.opening = frappe.get_doc("POS Opening Entry", opening_name)
+	if closing_name := frappe.db.get_value("POS Closing Entry", {}, "name", order_by="creation desc"):
+		templates.closing = frappe.get_doc("POS Closing Entry", closing_name)
+
+	si_name = frappe.db.get_value("Sales Invoice", {"docstatus": 1, "is_return": 0}, "name", order_by="posting_date desc, creation desc")
+	pi_name = frappe.db.get_value("Purchase Invoice", {"docstatus": 1}, "name", order_by="posting_date desc, creation desc")
+	so_name = frappe.db.get_value("Sales Order", {"docstatus": 1}, "name", order_by="transaction_date desc, creation desc")
+	po_name = frappe.db.get_value("Purchase Order", {"docstatus": 1}, "name", order_by="transaction_date desc, creation desc")
+	dn_name = frappe.db.get_value("Delivery Note", {"docstatus": 1}, "name", order_by="posting_date desc, creation desc")
+	pr_name = frappe.db.get_value("Purchase Receipt", {"docstatus": 1}, "name", order_by="posting_date desc, creation desc")
+
+	counts = frappe._dict(pos_invoices=0, sales_invoices=0, purchase_invoices=0, cash_movements=0, cashier_shifts=0, stock_ledger_entries=0)
+	for day_index, date_value in enumerate(_date_range(start_date, end_date)):
+		_seed_pos_day(ctx, items, employees, date_value, day_index, templates)
+		counts.pos_invoices += 4
+		counts.cashier_shifts += 1
+		counts.cash_movements += (1 if day_index % 6 == 0 else 0) + (1 if day_index % 4 == 0 else 0)
+		counts.stock_ledger_entries += 4
+
+		if day_index % 3 == 0 and si_name:
+			si = frappe.get_doc("Sales Invoice", si_name)
+			_seed_normal_invoice("Sales Invoice", "Sales Invoice Item", si_name, si.items[0], ctx, items, date_value, day_index, "customer")
+			counts.sales_invoices += 1
+			counts.stock_ledger_entries += 1
+		if day_index % 5 == 0 and pi_name:
+			pi = frappe.get_doc("Purchase Invoice", pi_name)
+			_seed_normal_invoice("Purchase Invoice", "Purchase Invoice Item", pi_name, pi.items[0], ctx, items, date_value, day_index, "supplier")
+			counts.purchase_invoices += 1
+			counts.stock_ledger_entries += 1
+		if day_index % 14 == 0:
+			if so_name:
+				so = frappe.get_doc("Sales Order", so_name)
+				_seed_workflow_doc("Sales Order", "Sales Order Item", so_name, so.items[0], ctx, items, date_value, day_index, "customer")
+			if po_name:
+				po = frappe.get_doc("Purchase Order", po_name)
+				_seed_workflow_doc("Purchase Order", "Purchase Order Item", po_name, po.items[0], ctx, items, date_value, day_index, "supplier")
+			if dn_name:
+				dn = frappe.get_doc("Delivery Note", dn_name)
+				_seed_workflow_doc("Delivery Note", "Delivery Note Item", dn_name, dn.items[0], ctx, items, date_value, day_index, "customer")
+			if pr_name:
+				pr = frappe.get_doc("Purchase Receipt", pr_name)
+				_seed_workflow_doc("Purchase Receipt", "Purchase Receipt Item", pr_name, pr.items[0], ctx, items, date_value, day_index, "supplier")
+
+	_seed_branch_day_closings(ctx, start_date, end_date)
+	counts.branch_day_closings = counts.cashier_shifts
+
+	frappe.clear_cache()
+	frappe.db.commit()
+	counts.update({"from_date": str(start_date), "to_date": str(end_date), "employees": len(employees), "items": len(items)})
+	return counts
 
 
 @frappe.whitelist()

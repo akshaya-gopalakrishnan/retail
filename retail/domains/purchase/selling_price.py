@@ -29,7 +29,7 @@ def ensure_purchase_selling_price_fields():
 			doctype: [
 				{
 					"fieldname": "custom_allow_selling_price",
-					"label": "Allow Selling Price",
+					"label": "Update Selling Price",
 					"fieldtype": "Check",
 					"insert_after": ALLOW_SELLING_PRICE_INSERT_AFTER[doctype],
 					"default": ALLOW_SELLING_PRICE_DEFAULT[doctype],
@@ -206,7 +206,7 @@ def _update_field_metadata():
 				"Custom Field",
 				custom_field,
 				{
-					"label": "Allow Selling Price",
+					"label": "Update Selling Price",
 					"insert_after": ALLOW_SELLING_PRICE_INSERT_AFTER[doctype],
 					"default": ALLOW_SELLING_PRICE_DEFAULT[doctype],
 					"print_hide": 1,
