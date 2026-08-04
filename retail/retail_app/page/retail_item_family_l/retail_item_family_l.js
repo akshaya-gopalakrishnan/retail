@@ -108,7 +108,8 @@ retail.ItemFamilyList = class ItemFamilyList {
 
 	make_actions() {
 		this.page.set_primary_action(__("Add Item"), () => frappe.new_doc("Item"), "add");
-		this.page.add_inner_button(__("Print Zebra Labels"), () => this.show_zebra_print_dialog());
+		// Hidden for now. Uncomment if bulk Zebra label printing is needed again.
+		// this.page.add_inner_button(__("Print Zebra Labels"), () => this.show_zebra_print_dialog());
 		this.page.add_inner_button(__("List Settings"), () => this.show_list_settings());
 		this.page.add_action_icon("refresh", () => this.refresh());
 	}

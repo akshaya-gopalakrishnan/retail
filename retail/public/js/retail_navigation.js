@@ -28,6 +28,8 @@
         'quality inspection': { icon: 'fa fa-check-square-o', cls: 'color-manufacturing' },
         'manufacturing reports': { icon: 'fa fa-line-chart', cls: 'color-manufacturing' },
         'manufacturing setup': { icon: 'fa fa-cogs', cls: 'color-manufacturing' },
+        'manufacturing child reports': { icon: 'fa fa-line-chart', cls: 'color-manufacturing' },
+        'manufacturing child setup': { icon: 'fa fa-cogs', cls: 'color-manufacturing' },
         'operations': { icon: 'fa fa-cogs', cls: 'color-manufacturing' },
         'workstations': { icon: 'fa fa-building-o', cls: 'color-manufacturing' },
         'routing': { icon: 'fa fa-code-fork', cls: 'color-manufacturing' },
@@ -437,8 +439,15 @@
     });
     const WORKSPACE_ROUTE_NAMES = Object.freeze({
         'Home': 'Business Home',
-        'Manufacturing Reports': 'MFG Reports',
-        'Manufacturing Setup': 'MFG Setup'
+        'Manufacturing Reports': 'Manufacturing Reports',
+        'Manufacturing Setup': 'Manufacturing Setup'
+    });
+    const WORKSPACE_DISPLAY_LABELS = Object.freeze({
+        'Manufacturing BOM': 'BOM',
+        'Manufacturing Production Plan': 'Production Plan',
+        'Manufacturing Quality Inspection': 'Quality Inspection',
+        'Manufacturing Reports': 'Reports',
+        'Manufacturing Setup': 'Setup'
     });
     const TOP_LEVEL_WORKSPACES = new Set([
         'Business Home',
@@ -515,14 +524,6 @@
         'Purchase Invoices': 'Accounts',
         'Purchase Returns': 'Accounts',
         'Manufacturing': 'Manufacturing',
-        'MFG BOM': 'Manufacturing',
-        'MFG Production Plan': 'Manufacturing',
-        'MFG Work Orders': 'Manufacturing',
-        'MFG Job Cards': 'Manufacturing',
-        'MFG Stock Entries': 'Manufacturing',
-        'MFG Quality Inspection': 'Manufacturing',
-        'MFG Reports': 'Manufacturing',
-        'MFG Setup': 'Manufacturing',
         'BOM': 'Manufacturing',
         'Production Plan': 'Manufacturing',
         'Work Orders': 'Manufacturing',
@@ -1208,12 +1209,34 @@
             ?.trim();
     }
 
+    function getSidebarRoutingLabel(container) {
+        const label = getItemLabel(container);
+        const workspaceName = container?.getAttribute('item-workspace-name');
+        if (
+            workspaceName
+            && (CHILD_TO_PARENT[workspaceName] || DIRECT_MAPPING[workspaceName] || WORKSPACE_TO_MODULE[workspaceName])
+        ) {
+            return workspaceName;
+        }
+        return label;
+    }
+
+    function getSidebarIconLabel(container) {
+        const workspaceName = container?.getAttribute('item-workspace-name');
+        if (workspaceName === 'Manufacturing Reports') return 'Manufacturing Child Reports';
+        if (workspaceName === 'Manufacturing Setup') return 'Manufacturing Child Setup';
+        return getItemLabel(container);
+    }
+
     function getVisibleSidebarLabels() {
-        return new Set(
-            Array.from(getSelectableSidebarContainers())
-                .map(container => getItemLabel(container))
-                .filter(Boolean)
-        );
+        const labels = new Set();
+        Array.from(getSelectableSidebarContainers()).forEach(container => {
+            const label = getItemLabel(container);
+            const routingLabel = getSidebarRoutingLabel(container);
+            if (label) labels.add(label);
+            if (routingLabel) labels.add(routingLabel);
+        });
+        return labels;
     }
 
     function escapeHtml(value) {
@@ -1616,7 +1639,7 @@
         containers.forEach(container => {
             const labelEl = container.querySelector(':scope > .desk-sidebar-item > .item-anchor .sidebar-item-label');
             const iconContainer = container.querySelector(':scope > .desk-sidebar-item > .item-anchor .sidebar-item-icon');
-            const labelText = normalizeText(labelEl?.innerText);
+            const labelText = normalizeText(getSidebarIconLabel(container) || labelEl?.innerText);
             const config = findIconConfig(labelText);
             if (!config) return;
 
@@ -1655,11 +1678,12 @@
 
         getSelectableSidebarContainers().forEach(container => {
             const label = getItemLabel(container);
+            const routingLabel = getSidebarRoutingLabel(container);
             const directItem = container.querySelector(':scope > .desk-sidebar-item');
             const childSection = container.querySelector(':scope > .sidebar-child-item');
             const isMain = label && state.main === label;
-            const isChild = label && state.child === label;
-            const shouldOpen = isMain || (label && state.child && CHILD_TO_PARENT[state.child] === label);
+            const isChild = (routingLabel && state.child === routingLabel) || (label && state.child === label);
+            const shouldOpen = isMain || (routingLabel && state.child && CHILD_TO_PARENT[state.child] === routingLabel);
 
             container.classList.toggle('retail-primary-active', !!isMain);
             container.classList.toggle('retail-secondary-active', !!isChild);
@@ -2031,15 +2055,16 @@
             const anchor = event.target.closest('.item-anchor');
             const container = anchor?.closest('.sidebar-item-container');
             const label = getItemLabel(container);
-            const parent = CHILD_TO_PARENT[label];
-            const target = getAnchorRouteTarget(anchor) || DIRECT_MAPPING[label] || getTargetFromUrl(anchor);
+            const routingLabel = getSidebarRoutingLabel(container);
+            const parent = CHILD_TO_PARENT[routingLabel];
+            const target = getAnchorRouteTarget(anchor) || DIRECT_MAPPING[routingLabel] || DIRECT_MAPPING[label] || getTargetFromUrl(anchor);
 
             if (target) {
                 event.preventDefault();
                 event.stopPropagation();
                 event.stopImmediatePropagation();
 
-                rememberSidebarContext(label);
+                rememberSidebarContext(routingLabel || label);
                 Promise.resolve(routeToTarget(target)).then(() => {
                     syncSidebarState();
                     scheduleRetry();
@@ -2052,17 +2077,17 @@
                 event.stopPropagation();
                 event.stopImmediatePropagation();
 
-                rememberSidebarContext(label);
+                rememberSidebarContext(routingLabel || label);
                 frappe.route_options = null;
                 frappe.set_route(getWorkspaceUrl(getWorkspaceName(container), true).replace(/^\/app\//, ''));
                 return;
             }
 
-            if (!target && !TOP_LEVEL_WORKSPACES.has(label)) return;
+            if (!target && !TOP_LEVEL_WORKSPACES.has(label) && !CHILD_TO_PARENT[routingLabel]) return;
 
             event.preventDefault();
             frappe.route_options = null;
-            rememberSidebarContext(label);
+            rememberSidebarContext(routingLabel || label);
             frappe.set_route(getWorkspaceUrl(getWorkspaceName(container), true).replace(/^\/app\//, ''));
         }, true);
     }
@@ -2070,14 +2095,15 @@
     function applyDirectLinks() {
         document.querySelectorAll('.sidebar-item-container').forEach(container => {
             const label = getItemLabel(container);
+            const routingLabel = getSidebarRoutingLabel(container);
             const anchor = container.querySelector(':scope > .desk-sidebar-item > .item-anchor');
-            const target = DIRECT_MAPPING[label];
+            const target = DIRECT_MAPPING[routingLabel] || DIRECT_MAPPING[label];
 
             if (target) {
                 anchor?.setAttribute('href', getTargetUrl(target));
                 anchor?.setAttribute('data-retail-direct-link', '1');
                 setAnchorRouteTarget(anchor, target);
-            } else if (CHILD_TO_PARENT[label]) {
+            } else if (CHILD_TO_PARENT[routingLabel]) {
                 anchor?.setAttribute('href', getWorkspaceUrl(getWorkspaceName(container), true));
                 anchor?.setAttribute('data-retail-direct-link', '1');
                 anchor?.removeAttribute('data-retail-route-target');
@@ -2091,6 +2117,7 @@
 
     function buildSidebarItem(item, pages) {
         const title = item.title;
+        const displayTitle = WORKSPACE_DISPLAY_LABELS[item.name] || title;
         const children = pages.filter(page => page.parent_page === title);
         const target = DIRECT_MAPPING[title];
         const href = target ? getTargetUrl(target) : getWorkspaceUrl(item.name || title, item.public);
@@ -2099,16 +2126,16 @@
             : '';
         const container = document.createElement('div');
         container.className = 'sidebar-item-container retail-sidebar-item';
-        container.setAttribute('item-name', title);
+        container.setAttribute('item-name', displayTitle);
         container.setAttribute('item-workspace-name', item.name || title);
         container.setAttribute('item-parent', item.parent_page || '');
         container.setAttribute('item-public', item.public || 0);
         container.setAttribute('item-is-hidden', item.is_hidden || 0);
         container.innerHTML = `
             <div class="desk-sidebar-item standard-sidebar-item">
-                <a href="${href}" class="item-anchor block-click" title="${escapeHtml(__(title))}"${routeTargetAttribute}>
+                <a href="${href}" class="item-anchor block-click" title="${escapeHtml(__(displayTitle))}"${routeTargetAttribute}>
                     <span class="sidebar-item-icon"></span>
-                    <span class="sidebar-item-label">${escapeHtml(__(title))}</span>
+                    <span class="sidebar-item-label">${escapeHtml(__(displayTitle))}</span>
                 </a>
                 <div class="sidebar-item-control"></div>
             </div>

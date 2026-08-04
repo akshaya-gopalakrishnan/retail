@@ -5392,11 +5392,11 @@
   "icon": null,
   "indicator_color": "green",
   "is_hidden": 1,
-  "label": "MFG Material Requests",
+  "label": "Manufacturing Material Requests",
   "links": [],
   "modified": "2026-07-14 18:01:50.757072",
   "module": "Retail-app",
-  "name": "MFG Material Requests",
+  "name": "Manufacturing Material Requests",
   "number_cards": [],
   "parent_page": "",
   "public": 0,
@@ -5404,7 +5404,7 @@
    {
     "document_type": "Material Request",
     "label": "Material Requests",
-    "parent": "MFG Material Requests",
+    "parent": "Manufacturing Material Requests",
     "parentfield": "quick_lists",
     "parenttype": "Workspace",
     "quick_list_filter": "[]"
@@ -5414,7 +5414,7 @@
   "roles": [],
   "sequence_id": 1.0,
   "shortcuts": [],
-  "title": "MFG Material Requests"
+  "title": "Manufacturing Material Requests"
  },
  {
   "charts": [
@@ -6370,11 +6370,11 @@
   "icon": null,
   "indicator_color": "green",
   "is_hidden": 0,
-  "label": "MFG BOM",
+  "label": "BOM",
   "links": [],
   "modified": "2026-07-14 00:00:00",
   "module": "Retail-app",
-  "name": "MFG BOM",
+  "name": "Manufacturing BOM",
   "number_cards": [],
   "parent_page": "Manufacturing",
   "public": 1,
@@ -6382,7 +6382,7 @@
    {
     "document_type": "BOM",
     "label": "BOM",
-    "parent": "MFG BOM",
+    "parent": "Manufacturing BOM",
     "parentfield": "quick_lists",
     "parenttype": "Workspace",
     "quick_list_filter": "[]"
@@ -6392,7 +6392,7 @@
   "roles": [],
   "sequence_id": 1.0,
   "shortcuts": [],
-  "title": "MFG BOM"
+  "title": "BOM"
  },
  {
   "charts": [],
@@ -6405,11 +6405,11 @@
   "icon": null,
   "indicator_color": "green",
   "is_hidden": 0,
-  "label": "MFG Production Plan",
+  "label": "Production Plan",
   "links": [],
   "modified": "2026-07-14 00:00:00",
   "module": "Retail-app",
-  "name": "MFG Production Plan",
+  "name": "Manufacturing Production Plan",
   "number_cards": [],
   "parent_page": "Manufacturing",
   "public": 1,
@@ -6417,7 +6417,7 @@
    {
     "document_type": "Production Plan",
     "label": "Production Plan",
-    "parent": "MFG Production Plan",
+    "parent": "Manufacturing Production Plan",
     "parentfield": "quick_lists",
     "parenttype": "Workspace",
     "quick_list_filter": "[]"
@@ -6427,7 +6427,7 @@
   "roles": [],
   "sequence_id": 2.0,
   "shortcuts": [],
-  "title": "MFG Production Plan"
+  "title": "Production Plan"
  },
  {
   "charts": [],
@@ -6440,11 +6440,11 @@
   "icon": null,
   "indicator_color": "green",
   "is_hidden": 0,
-  "label": "MFG Work Orders",
+  "label": "Work Orders",
   "links": [],
   "modified": "2026-07-14 00:00:00",
   "module": "Retail-app",
-  "name": "MFG Work Orders",
+  "name": "Work Orders",
   "number_cards": [],
   "parent_page": "Manufacturing",
   "public": 1,
@@ -6452,7 +6452,7 @@
    {
     "document_type": "Work Order",
     "label": "Work Orders",
-    "parent": "MFG Work Orders",
+    "parent": "Work Orders",
     "parentfield": "quick_lists",
     "parenttype": "Workspace",
     "quick_list_filter": "[]"
@@ -6462,7 +6462,7 @@
   "roles": [],
   "sequence_id": 3.0,
   "shortcuts": [],
-  "title": "MFG Work Orders"
+  "title": "Work Orders"
  },
  {
   "charts": [],
@@ -6475,11 +6475,11 @@
   "icon": null,
   "indicator_color": "green",
   "is_hidden": 0,
-  "label": "MFG Job Cards",
+  "label": "Job Cards",
   "links": [],
   "modified": "2026-07-14 00:00:00",
   "module": "Retail-app",
-  "name": "MFG Job Cards",
+  "name": "Job Cards",
   "number_cards": [],
   "parent_page": "Manufacturing",
   "public": 1,
@@ -6487,7 +6487,7 @@
    {
     "document_type": "Job Card",
     "label": "Job Cards",
-    "parent": "MFG Job Cards",
+    "parent": "Job Cards",
     "parentfield": "quick_lists",
     "parenttype": "Workspace",
     "quick_list_filter": "[]"
@@ -6497,7 +6497,7 @@
   "roles": [],
   "sequence_id": 4.0,
   "shortcuts": [],
-  "title": "MFG Job Cards"
+  "title": "Job Cards"
  },
  {
   "charts": [],
@@ -6510,11 +6510,11 @@
   "icon": null,
   "indicator_color": "green",
   "is_hidden": 0,
-  "label": "MFG Stock Entries",
+  "label": "Stock Entries",
   "links": [],
   "modified": "2026-07-14 00:00:00",
   "module": "Retail-app",
-  "name": "MFG Stock Entries",
+  "name": "Stock Entries",
   "number_cards": [],
   "parent_page": "Manufacturing",
   "public": 1,
@@ -6522,7 +6522,7 @@
    {
     "document_type": "Stock Entry",
     "label": "Stock Entries",
-    "parent": "MFG Stock Entries",
+    "parent": "Stock Entries",
     "parentfield": "quick_lists",
     "parenttype": "Workspace",
     "quick_list_filter": "[]"
@@ -6532,7 +6532,7 @@
   "roles": [],
   "sequence_id": 5.0,
   "shortcuts": [],
-  "title": "MFG Stock Entries"
+  "title": "Stock Entries"
  },
  {
   "charts": [],
@@ -6545,11 +6545,11 @@
   "icon": null,
   "indicator_color": "green",
   "is_hidden": 0,
-  "label": "MFG Quality Inspection",
+  "label": "Quality Inspection",
   "links": [],
   "modified": "2026-07-14 00:00:00",
   "module": "Retail-app",
-  "name": "MFG Quality Inspection",
+  "name": "Manufacturing Quality Inspection",
   "number_cards": [],
   "parent_page": "Manufacturing",
   "public": 1,
@@ -6557,7 +6557,7 @@
    {
     "document_type": "Quality Inspection",
     "label": "Quality Inspection",
-    "parent": "MFG Quality Inspection",
+    "parent": "Manufacturing Quality Inspection",
     "parentfield": "quick_lists",
     "parenttype": "Workspace",
     "quick_list_filter": "[]"
@@ -6567,7 +6567,7 @@
   "roles": [],
   "sequence_id": 6.0,
   "shortcuts": [],
-  "title": "MFG Quality Inspection"
+  "title": "Quality Inspection"
  },
  {
   "charts": [],
@@ -6580,11 +6580,11 @@
   "icon": null,
   "indicator_color": "green",
   "is_hidden": 0,
-  "label": "MFG Reports",
+  "label": "Manufacturing Reports",
   "links": [],
   "modified": "2026-07-14 00:00:00",
   "module": "Retail-app",
-  "name": "MFG Reports",
+  "name": "Manufacturing Reports",
   "number_cards": [],
   "parent_page": "Manufacturing",
   "public": 1,
@@ -6601,7 +6601,7 @@
     "kanban_board": null,
     "label": "BOM Stock Report",
     "link_to": "BOM Stock Report",
-    "parent": "MFG Reports",
+    "parent": "Manufacturing Reports",
     "parentfield": "shortcuts",
     "parenttype": "Workspace",
     "report_ref_doctype": "BOM",
@@ -6618,7 +6618,7 @@
     "kanban_board": null,
     "label": "Work Order Stock Report",
     "link_to": "Work Order Stock Report",
-    "parent": "MFG Reports",
+    "parent": "Manufacturing Reports",
     "parentfield": "shortcuts",
     "parenttype": "Workspace",
     "report_ref_doctype": "Work Order",
@@ -6635,7 +6635,7 @@
     "kanban_board": null,
     "label": "Open Work Orders",
     "link_to": "Open Work Orders",
-    "parent": "MFG Reports",
+    "parent": "Manufacturing Reports",
     "parentfield": "shortcuts",
     "parenttype": "Workspace",
     "report_ref_doctype": "Work Order",
@@ -6652,7 +6652,7 @@
     "kanban_board": null,
     "label": "Work Order Summary",
     "link_to": "Work Order Summary",
-    "parent": "MFG Reports",
+    "parent": "Manufacturing Reports",
     "parentfield": "shortcuts",
     "parenttype": "Workspace",
     "report_ref_doctype": "Work Order",
@@ -6669,7 +6669,7 @@
     "kanban_board": null,
     "label": "Job Card Summary",
     "link_to": "Job Card Summary",
-    "parent": "MFG Reports",
+    "parent": "Manufacturing Reports",
     "parentfield": "shortcuts",
     "parenttype": "Workspace",
     "report_ref_doctype": "Job Card",
@@ -6686,7 +6686,7 @@
     "kanban_board": null,
     "label": "Production Analytics",
     "link_to": "Production Analytics",
-    "parent": "MFG Reports",
+    "parent": "Manufacturing Reports",
     "parentfield": "shortcuts",
     "parenttype": "Workspace",
     "report_ref_doctype": "Work Order",
@@ -6696,7 +6696,7 @@
     "url": null
    }
   ],
-  "title": "MFG Reports"
+  "title": "Manufacturing Reports"
  },
  {
   "charts": [],
@@ -6709,11 +6709,11 @@
   "icon": null,
   "indicator_color": "green",
   "is_hidden": 0,
-  "label": "MFG Setup",
+  "label": "Manufacturing Setup",
   "links": [],
   "modified": "2026-07-14 00:00:00",
   "module": "Retail-app",
-  "name": "MFG Setup",
+  "name": "Manufacturing Setup",
   "number_cards": [],
   "parent_page": "Manufacturing",
   "public": 1,
@@ -6730,7 +6730,7 @@
     "kanban_board": null,
     "label": "Items",
     "link_to": "Item",
-    "parent": "MFG Setup",
+    "parent": "Manufacturing Setup",
     "parentfield": "shortcuts",
     "parenttype": "Workspace",
     "report_ref_doctype": null,
@@ -6747,7 +6747,7 @@
     "kanban_board": null,
     "label": "Warehouses",
     "link_to": "Warehouse",
-    "parent": "MFG Setup",
+    "parent": "Manufacturing Setup",
     "parentfield": "shortcuts",
     "parenttype": "Workspace",
     "report_ref_doctype": null,
@@ -6764,7 +6764,7 @@
     "kanban_board": null,
     "label": "Operations",
     "link_to": "Operation",
-    "parent": "MFG Setup",
+    "parent": "Manufacturing Setup",
     "parentfield": "shortcuts",
     "parenttype": "Workspace",
     "report_ref_doctype": null,
@@ -6781,7 +6781,7 @@
     "kanban_board": null,
     "label": "Workstations",
     "link_to": "Workstation",
-    "parent": "MFG Setup",
+    "parent": "Manufacturing Setup",
     "parentfield": "shortcuts",
     "parenttype": "Workspace",
     "report_ref_doctype": null,
@@ -6798,7 +6798,7 @@
     "kanban_board": null,
     "label": "Routing",
     "link_to": "Routing",
-    "parent": "MFG Setup",
+    "parent": "Manufacturing Setup",
     "parentfield": "shortcuts",
     "parenttype": "Workspace",
     "report_ref_doctype": null,
@@ -6815,7 +6815,7 @@
     "kanban_board": null,
     "label": "Manufacturing Settings",
     "link_to": "Manufacturing Settings",
-    "parent": "MFG Setup",
+    "parent": "Manufacturing Setup",
     "parentfield": "shortcuts",
     "parenttype": "Workspace",
     "report_ref_doctype": null,
@@ -6825,7 +6825,7 @@
     "url": null
    }
   ],
-  "title": "MFG Setup"
+  "title": "Manufacturing Setup"
  },
  {
   "charts": [],
