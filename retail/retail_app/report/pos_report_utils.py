@@ -52,11 +52,10 @@ def ensure_pos_reports():
 	ensure_pos_dashboard_charts()
 
 	for report_name in POS_REPORTS:
-		doc = (
-			frappe.get_doc("Report", report_name)
-			if frappe.db.exists("Report", report_name)
-			else frappe.new_doc("Report")
-		)
+		if frappe.db.exists("Report", report_name):
+			continue
+
+		doc = frappe.new_doc("Report")
 		doc.update(
 			{
 				"report_name": report_name,
@@ -71,6 +70,7 @@ def ensure_pos_reports():
 		doc.roles = []
 		for role in REPORT_ROLES:
 			doc.append("roles", role)
+		doc.flags.ignore_validate = True
 		doc.save(ignore_permissions=True)
 
 	from retail.patches.v1_2.setup_pos_workspace import execute as setup_pos_workspace
@@ -94,25 +94,21 @@ def ensure_pos_dashboard_charts():
 	}
 
 	for source_name in sources:
-		source = (
-			frappe.get_doc("Dashboard Chart Source", source_name)
-			if frappe.db.exists("Dashboard Chart Source", source_name)
-			else frappe.new_doc("Dashboard Chart Source")
-		)
-		source.update(
-			{
-				"source_name": source_name,
-				"module": "Retail-app",
-				"timeseries": 0,
-			}
-		)
-		source.save(ignore_permissions=True)
+		if not frappe.db.exists("Dashboard Chart Source", source_name):
+			source = frappe.new_doc("Dashboard Chart Source")
+			source.update(
+				{
+					"source_name": source_name,
+					"module": "Retail-app",
+					"timeseries": 0,
+				}
+			)
+			source.save(ignore_permissions=True)
 
-		chart = (
-			frappe.get_doc("Dashboard Chart", source_name)
-			if frappe.db.exists("Dashboard Chart", source_name)
-			else frappe.new_doc("Dashboard Chart")
-		)
+		if frappe.db.exists("Dashboard Chart", source_name):
+			continue
+
+		chart = frappe.new_doc("Dashboard Chart")
 		chart.update(
 			{
 				"chart_name": source_name,
@@ -129,6 +125,7 @@ def ensure_pos_dashboard_charts():
 				"number_of_groups": 0,
 			}
 		)
+		chart.flags.ignore_validate = True
 		chart.save(ignore_permissions=True)
 
 

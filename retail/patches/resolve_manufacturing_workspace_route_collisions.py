@@ -16,13 +16,12 @@ def execute():
 		if not frappe.db.exists("Workspace", old_name):
 			continue
 
-		if frappe.db.exists("Workspace", new_name):
-			frappe.db.set_value(
-				"Workspace",
-				old_name,
-				{"public": 0, "is_hidden": 1, "parent_page": ""},
-				update_modified=False,
-			)
+		if (
+			workspace_exists(new_name)
+			or workspace_label_exists(new_name, exclude=old_name)
+			or workspace_label_exists(old_name, exclude=old_name)
+		):
+			hide_workspace(old_name)
 			continue
 
 		frappe.rename_doc("Workspace", old_name, new_name, force=True)
@@ -34,3 +33,21 @@ def execute():
 		)
 
 	frappe.clear_cache()
+
+
+def workspace_exists(name):
+	return frappe.db.exists("Workspace", name)
+
+
+def workspace_label_exists(label, exclude=None):
+	name = frappe.db.get_value("Workspace", {"label": label}, "name")
+	return bool(name and name != exclude)
+
+
+def hide_workspace(name):
+	frappe.db.set_value(
+		"Workspace",
+		name,
+		{"public": 0, "is_hidden": 1, "parent_page": ""},
+		update_modified=False,
+	)
