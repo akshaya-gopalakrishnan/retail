@@ -803,6 +803,7 @@ def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
 		"name",
 		"packing_code",
 		"packing_name",
+		"arabic_packing_name",
 		"parent as item_code",
 		"idx",
 		"is_fast_plu_item",
@@ -871,6 +872,8 @@ def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
 		limit_page_length=0,
 	)
 	item_codes = [item.item_code for item in items if item.item_code]
+	item_group_by_item = {item.item_code: item.item_group for item in items}
+	stock_by_item = _get_current_stock_by_item(counter_doc.warehouse, set(item_codes) | set(packing_parent_items))
 	all_item_packings = []
 	if item_codes:
 		all_item_packings = frappe.get_all(
@@ -886,9 +889,19 @@ def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
 		)
 	packings_by_item = {}
 	for packing in all_item_packings:
+		packing["packing_group"] = item_group_by_item.get(packing.item_code)
+		packing["current_stock"] = _packing_current_stock(
+			stock_by_item.get(packing.item_code, 0), packing.conversion_factor
+		)
 		packings_by_item.setdefault(packing.item_code, []).append(packing)
 	for item in items:
+		item["current_stock"] = stock_by_item.get(item.item_code, 0)
 		item["packings"] = packings_by_item.get(item.item_code, [])
+	for packing in packing_details:
+		packing["packing_group"] = item_group_by_item.get(packing.item_code)
+		packing["current_stock"] = _packing_current_stock(
+			stock_by_item.get(packing.item_code, 0), packing.conversion_factor
+		)
 
 	return {
 		"status": "Success",
@@ -961,6 +974,26 @@ def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
 			limit_page_length=0,
 		),
 	}
+
+
+def _get_current_stock_by_item(warehouse, item_codes):
+	if not warehouse or not item_codes:
+		return {}
+
+	return {
+		row.item_code: flt(row.actual_qty)
+		for row in frappe.get_all(
+			"Bin",
+			filters={"warehouse": warehouse, "item_code": ["in", sorted(item_codes)]},
+			fields=["item_code", "actual_qty"],
+			limit_page_length=0,
+		)
+	}
+
+
+def _packing_current_stock(item_stock, conversion_factor):
+	factor = flt(conversion_factor)
+	return flt(item_stock) / factor if factor > 0 else 0
 
 
 @frappe.whitelist()

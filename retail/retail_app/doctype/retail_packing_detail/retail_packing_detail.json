@@ -89,6 +89,14 @@
    "width": null
   },
   {
+   "columns": 2,
+   "description": "Arabic POS-facing name for this packing.",
+   "fieldname": "arabic_packing_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Arabic Packing Name"
+  },
+  {
    "allow_bulk_edit": 0,
    "allow_in_quick_entry": 0,
    "allow_on_submit": 0,
@@ -792,6 +800,7 @@
   "barcode",
   "packing_code",
   "packing_name",
+  "arabic_packing_name",
   "is_fast_plu_item",
   "disabled",
   "uom",
