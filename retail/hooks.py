@@ -32,13 +32,13 @@ required_apps = ["erpnext", "hrms"]
 # retail/retail/hooks.py
 
 app_include_css = [
-    "/assets/retail/css/retail_icons.css?v=23",
+    "/assets/retail/css/retail_icons.css?v=30",
     "/assets/retail/css/brand_themes.css?v=14",
     "/assets/retail/css/workspace_glass.css?v=5",
 ]
 
 app_include_js = [
-    "/assets/retail/js/retail_navigation.js?v=95",
+    "/assets/retail/js/retail_navigation.js?v=119",
     "/assets/retail/js/local_draft_recovery.js?v=28",
     "/assets/retail/js/forms/transaction_items.js?v=14",
     "/assets/retail/js/zebra_label_bulk_print.js?v=3",
@@ -331,12 +331,19 @@ doc_events = {
 			"retail.domains.sales.invoice_totals.apply_retail_shipping_charges",
 			"retail.api.pos_sync.validate_external_reference",
 			"retail.api.pos_sync.block_external_sales_invoice",
+			"retail.promotions.gift_voucher.apply_gift_voucher_redemption",
 		],
 		"on_submit": [
 			"retail.domains.foc.add_foc_stock_ledger_entries",
 			"retail.domains.item.item_price_sync.sync_latest_transaction_item_prices",
+			"retail.promotions.gift_voucher.issue_gift_vouchers",
+			"retail.promotions.gift_voucher.mark_gift_voucher_redeemed",
 		],
-		"on_cancel": "retail.domains.item.item_price_sync.recalculate_transaction_item_prices",
+		"on_cancel": [
+			"retail.domains.item.item_price_sync.recalculate_transaction_item_prices",
+			"retail.promotions.gift_voucher.cancel_issued_gift_vouchers",
+			"retail.promotions.gift_voucher.restore_redeemed_gift_voucher",
+		],
 		"on_update_after_submit": "retail.domains.item.item_price_sync.sync_latest_transaction_item_prices",
 	},
 	"POS Invoice": {
@@ -344,12 +351,19 @@ doc_events = {
 			"retail.domains.foc.apply_foc_quantities",
 			"retail.domains.transactions.vat.set_vat_rates",
 			"retail.api.pos_sync.validate_external_reference",
+			"retail.promotions.gift_voucher.apply_gift_voucher_redemption",
 		],
 		"on_submit": [
 			"retail.domains.foc.add_foc_stock_ledger_entries",
 			"retail.domains.item.item_price_sync.sync_latest_transaction_item_prices",
+			"retail.promotions.gift_voucher.issue_gift_vouchers",
+			"retail.promotions.gift_voucher.mark_gift_voucher_redeemed",
 		],
-		"on_cancel": "retail.domains.item.item_price_sync.recalculate_transaction_item_prices",
+		"on_cancel": [
+			"retail.domains.item.item_price_sync.recalculate_transaction_item_prices",
+			"retail.promotions.gift_voucher.cancel_issued_gift_vouchers",
+			"retail.promotions.gift_voucher.restore_redeemed_gift_voucher",
+		],
 		"on_update_after_submit": "retail.domains.item.item_price_sync.sync_latest_transaction_item_prices",
     },
     "Delivery Note": {
@@ -414,6 +428,8 @@ after_migrate = [
 	"retail.setup.ensure_settings_sidebar_workspaces",
 	"retail.setup.ensure_website_route_redirects",
 	"retail.setup.clear_url_shortcut_link_targets",
+	"retail.setup.cleanup_uninstalled_van_sales_metadata",
+	"retail.promotions.gift_voucher.ensure_gift_voucher_invoice_fields",
 	"retail.setup.ensure_default_print_formats",
 	"retail.setup.ensure_print_languages",
 	"retail.retail_app.report.pos_report_utils.ensure_pos_reports",

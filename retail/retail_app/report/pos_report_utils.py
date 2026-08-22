@@ -12,6 +12,7 @@ POS_REPORTS = (
 	"POS Transaction Log",
 	"POS Item-wise Sales",
 	"POS Category Item Group Sales",
+	"Item Group Sales Analysis",
 	"POS Hourly Sales",
 	"POS Return Report",
 	"Cashier Wise Sales",

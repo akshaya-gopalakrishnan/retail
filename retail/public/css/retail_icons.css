@@ -15,12 +15,42 @@
     width: 100%;
 }
 
+.layout-side-section.retail-form-sidebar-mounted > .desk-sidebar:not(.retail-persistent-sidebar),
+.layout-side-section.retail-form-sidebar-mounted > .standard-sidebar-section:not(.retail-persistent-sidebar):not(.retail-sidebar-host) {
+    display: none !important;
+}
+
+.layout-side-section.retail-form-sidebar-mounted .desk-sidebar:not(.retail-persistent-sidebar),
+.layout-side-section.retail-form-sidebar-mounted .standard-sidebar-section:not(.retail-persistent-sidebar) {
+    display: none !important;
+}
+
+.layout-side-section.retail-form-sidebar-mounted .retail-sidebar-host,
+.layout-side-section.retail-form-sidebar-mounted .retail-sidebar-host .retail-persistent-sidebar {
+    display: block !important;
+}
+
 .retail-persistent-sidebar .sidebar-item-container {
     margin-left: -10px;
 }
 
 .retail-persistent-sidebar .sidebar-item-container .sidebar-item-container {
-    margin-left: 10px;
+    margin-left: 0;
+}
+
+.retail-persistent-sidebar .sidebar-child-item {
+    border-left: 1px solid rgba(100, 116, 139, 0.26);
+    margin-left: 18px;
+    padding-left: 9px;
+}
+
+.retail-persistent-sidebar .sidebar-item-container[data-retail-level="1"] > .desk-sidebar-item .item-anchor {
+    padding-left: 6px;
+}
+
+.retail-persistent-sidebar .sidebar-item-container[data-retail-level="2"] > .desk-sidebar-item .item-anchor,
+.retail-persistent-sidebar .sidebar-item-container[data-retail-level="3"] > .desk-sidebar-item .item-anchor {
+    padding-left: 10px;
 }
 
 .retail-persistent-sidebar .standard-sidebar-item {
@@ -37,6 +67,14 @@
     flex: 1;
     overflow: hidden;
     padding: 3px 0 3px 8px;
+    min-width: 0;
+}
+
+.retail-persistent-sidebar .sidebar-item-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .retail-persistent-sidebar .sidebar-item-control {
@@ -48,6 +86,45 @@
     padding: 0 12px 0 2px;
 }
 
+.sidebar-item-control {
+    align-items: center;
+    display: flex;
+    gap: 0;
+}
+
+.sidebar-item-control .retail-drop-icon {
+    align-items: center;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    display: inline-flex !important;
+    height: 22px;
+    justify-content: center;
+    margin: 0 !important;
+    min-width: 22px;
+    padding: 0 !important;
+    width: 22px;
+}
+
+.sidebar-item-control .retail-drop-icon::after {
+    display: none !important;
+}
+
+.sidebar-item-control .retail-drop-icon svg {
+    height: 14px !important;
+    width: 14px !important;
+}
+
+.sidebar-item-control .retail-small-chevron {
+    --icon-stroke: #0f172a;
+    color: #0f172a !important;
+    display: block !important;
+    fill: #0f172a !important;
+    height: 14px !important;
+    opacity: 1 !important;
+    width: 14px !important;
+}
+
 .retail-persistent-sidebar .retail-icon {
     font-family: "FontAwesome" !important;
     font-weight: normal !important;
@@ -57,6 +134,23 @@
     font-size: 15px !important;
     display: inline-block !important;
     vertical-align: middle !important;
+}
+
+.retail-persistent-sidebar .sidebar-item-container[data-retail-level="1"] > .desk-sidebar-item .retail-icon {
+    font-size: 14px !important;
+    margin-right: 9px !important;
+    width: 22px !important;
+}
+
+.retail-persistent-sidebar .sidebar-item-container[data-retail-level="2"] > .desk-sidebar-item .retail-icon,
+.retail-persistent-sidebar .sidebar-item-container[data-retail-level="3"] > .desk-sidebar-item .retail-icon {
+    font-size: 13px !important;
+    margin-right: 8px !important;
+    width: 20px !important;
+}
+
+.retail-persistent-sidebar .sidebar-item-container[data-retail-report-group="1"] > .desk-sidebar-item {
+    font-weight: 600;
 }
 
 .color-items    { color: #06b6d4 !important; } /* Teal */
@@ -87,6 +181,10 @@
 .sidebar-item-container.retail-primary-active > .desk-sidebar-item,
 .sidebar-item-container.retail-secondary-active > .desk-sidebar-item {
     background-color: var(--sidebar-select-color) !important;
+}
+
+.sidebar-item-container.retail-ancestor-active > .desk-sidebar-item {
+    background-color: rgba(59, 130, 246, 0.08) !important;
 }
 
 .sidebar-item-container.retail-secondary-active > .desk-sidebar-item {
@@ -152,7 +250,6 @@
         overflow-y: auto !important;
         align-self: flex-start !important;
         padding-bottom: 20px !important;
-        display: block !important;
     }
 
     .layout-main-section-wrapper {
@@ -509,12 +606,75 @@
 }
 
 @media (max-width: 991.98px) {
-    .retail-sidebar-host {
+    .layout-side-section > .retail-sidebar-host {
         display: none;
+    }
+
+    .overlay-sidebar .retail-sidebar-host {
+        display: block;
+    }
+
+    .overlay-sidebar.retail-mobile-sidebar-mounted > *:not(.retail-sidebar-host) {
+        display: none !important;
     }
 
     .retail-sidebar-overlay.overlay-sidebar {
         width: min(320px, 82vw);
+    }
+
+    .layout-side-section,
+    .desk-sidebar,
+    .standard-sidebar,
+    .overlay-sidebar,
+    .retail-sidebar-overlay.overlay-sidebar,
+    body .sidebar-menu {
+        background: #f8fbff !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+    }
+
+    .overlay-sidebar,
+    .retail-sidebar-overlay.overlay-sidebar {
+        border-right: 1px solid rgba(148, 163, 184, 0.45) !important;
+        box-shadow: 12px 0 32px rgba(15, 23, 42, 0.24) !important;
+    }
+
+    .overlay-sidebar .standard-sidebar-label,
+    .overlay-sidebar .sidebar-item-label,
+    .overlay-sidebar .standard-sidebar-item,
+    .overlay-sidebar .desk-sidebar-item,
+    .layout-side-section .standard-sidebar-label,
+    .layout-side-section .sidebar-item-label,
+    .layout-side-section .standard-sidebar-item,
+    .layout-side-section .desk-sidebar-item {
+        color: #10233f !important;
+        opacity: 1 !important;
+    }
+
+    .overlay-sidebar .item-anchor,
+    .layout-side-section .item-anchor {
+        align-items: center;
+        gap: 8px;
+    }
+
+    .overlay-sidebar .sidebar-item-icon,
+    .layout-side-section .sidebar-item-icon {
+        display: inline-flex !important;
+        flex: 0 0 auto;
+        margin-right: 4px;
+    }
+
+    .overlay-sidebar .standard-sidebar-item.selected,
+    .overlay-sidebar .standard-sidebar-item:hover,
+    .overlay-sidebar .desk-sidebar-item.selected,
+    .overlay-sidebar .desk-sidebar-item:hover {
+        background: #e6f0ff !important;
+    }
+
+    .overlay-sidebar .drop-icon,
+    .layout-side-section .drop-icon {
+        color: #10233f !important;
+        opacity: 1 !important;
     }
 
     .retail-persistent-sidebar {

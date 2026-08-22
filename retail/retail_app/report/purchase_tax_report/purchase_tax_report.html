@@ -1,0 +1,133 @@
+{%
+	const print_columns = [
+		"ref_no",
+		"transaction_type",
+		"invoice_no",
+		"invoice_date",
+		"supplier_name",
+		"supplier_tax_id",
+		"total",
+		"discount_amount",
+		"taxable_amount",
+		"non_taxable_amount",
+		"input_tax",
+		"net_amount",
+	];
+	const columns_by_fieldname = {};
+	for (const column of report.get_columns_for_print()) {
+		columns_by_fieldname[column.fieldname] = column;
+	}
+	const filters = report.get_filter_values ? report.get_filter_values() : {};
+	const printed_on = frappe.datetime.now_datetime();
+%}
+
+<style>
+	@page {
+		size: A4 landscape;
+		margin: 9mm;
+	}
+
+	.print-format {
+		padding: 9mm;
+		font-family: Arial, Helvetica, sans-serif;
+		font-size: 7.5pt;
+		color: #111;
+	}
+
+	.purchase-tax-header {
+		display: flex;
+		justify-content: space-between;
+		margin: 5mm 18mm 20mm;
+		font-size: 8.5pt;
+	}
+
+	.purchase-tax-title {
+		text-align: center;
+		border: 1px solid #777;
+		padding: 4px;
+		font-weight: 700;
+		background: #f3f3f3;
+	}
+
+	.purchase-tax-table {
+		width: 275mm;
+		margin: 0 auto;
+		border-collapse: collapse;
+		table-layout: fixed;
+	}
+
+	.purchase-tax-table th,
+	.purchase-tax-table td {
+		border: 1px solid #777;
+		padding: 3px 2px;
+		vertical-align: top;
+	}
+
+	.purchase-tax-table th {
+		background: #e8e8e8;
+		font-weight: 700;
+	}
+
+	.purchase-tax-table .number {
+		text-align: right;
+	}
+
+	.purchase-tax-table .summary-row td {
+		background: #bdbdbd;
+		font-weight: 700;
+	}
+
+	.purchase-tax-footer {
+		display: flex;
+		justify-content: space-between;
+		margin: 6mm auto 0;
+		width: 275mm;
+		font-size: 8pt;
+	}
+</style>
+
+<div class="purchase-tax-header">
+	<div>{%= __("Purchase Tax Report - Taxable & NonTaxable") %}</div>
+	<div>{%= __("Date From") %}: {%= filters.from_date || "" %} {%= __("To") %} {%= filters.to_date || "" %}</div>
+</div>
+
+<div class="purchase-tax-title">{%= __("Purchase Tax Report") %}</div>
+
+<table class="purchase-tax-table">
+	<thead>
+		<tr>
+			<th>{%= __("Ref No") %}</th>
+			<th>{%= __("Transaction Type") %}</th>
+			<th>{%= __("Invoice No") %}</th>
+			<th>{%= __("Invoice Date") %}</th>
+			<th>{%= __("Supplier Name") %}</th>
+			<th>{%= __("Supplier Tax ID") %}</th>
+			<th class="number">{%= __("Total") %}</th>
+			<th class="number">{%= __("Discount") %}</th>
+			<th class="number">{%= __("Taxable Amount") %}</th>
+			<th class="number">{%= __("Non Taxable Amount") %}</th>
+			<th class="number">{%= __("Input Tax") %}</th>
+			<th class="number">{%= __("Net Amount") %}</th>
+		</tr>
+	</thead>
+	<tbody>
+		{% for (const row of data) { %}
+			<tr class="{%= row.is_group ? "summary-row" : "" %}">
+				{% for (const fieldname of print_columns) { %}
+					{% const column = columns_by_fieldname[fieldname] || {}; %}
+					<td class="{%= ["total", "discount_amount", "taxable_amount", "non_taxable_amount", "input_tax", "net_amount"].includes(fieldname) ? "number" : "" %}">
+						{% if (!is_null(row[fieldname])) { %}
+							{%= frappe.format(row[fieldname], column, {}, row) %}
+						{% } %}
+					</td>
+				{% } %}
+			</tr>
+		{% } %}
+	</tbody>
+</table>
+
+<div class="purchase-tax-footer">
+	<div>{%= __("Printed By") %}: {%= frappe.session.user %} {%= __("On") %} {%= printed_on %}</div>
+	<div>{%= __("Location") %}: {%= filters.cost_center || __("All") %}</div>
+	<div>{%= printed_on %}</div>
+</div>

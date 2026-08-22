@@ -1,0 +1,108 @@
+{%
+	const columns_by_fieldname = {};
+	for (const column of report.get_columns_for_print()) {
+		columns_by_fieldname[column.fieldname] = column;
+	}
+	const filters = report.get_filter_values ? report.get_filter_values() : {};
+%}
+
+<style>
+	@page {
+		size: A4 portrait;
+		margin: 10mm;
+	}
+
+	.print-format {
+		padding: 10mm;
+		font-family: Arial, Helvetica, sans-serif;
+		font-size: 10pt;
+		color: #111;
+	}
+
+	.tax-payable-title {
+		margin: 18mm 0 10mm 22mm;
+		font-size: 11pt;
+	}
+
+	.tax-payable-meta {
+		display: flex;
+		justify-content: space-between;
+		margin: 0 22mm 16mm;
+		font-size: 8pt;
+	}
+
+	.tax-payable-table {
+		margin-left: 22mm;
+		width: 130mm;
+		border-collapse: collapse;
+		table-layout: fixed;
+	}
+
+	.tax-payable-table th,
+	.tax-payable-table td {
+		border: 1px solid #888;
+		padding: 4px 3px;
+		vertical-align: top;
+	}
+
+	.tax-payable-table th {
+		background: #e9e9e9;
+		font-weight: 700;
+		text-align: left;
+	}
+
+	.tax-payable-table .number {
+		text-align: right;
+	}
+
+	.tax-payable-table .summary-row td {
+		background: #d4d4d4;
+		font-weight: 700;
+	}
+
+	.tax-payable-footer {
+		display: flex;
+		justify-content: space-between;
+		margin: 9mm 22mm 0;
+		font-size: 8pt;
+	}
+</style>
+
+<div class="tax-payable-title">{%= __("Tax Payable Report Summary") %}</div>
+<div class="tax-payable-meta">
+	<div>{%= filters.company || "" %}</div>
+	<div>{%= __("Date From") %}: {%= filters.from_date || "" %} {%= __("To") %}: {%= filters.to_date || "" %}</div>
+</div>
+
+<table class="tax-payable-table">
+	<thead>
+		<tr>
+			<th colspan="2"></th>
+			<th colspan="3">{%= __("Grand Total") %}</th>
+		</tr>
+		<tr>
+			<th style="width: 28%;">{%= __("Tax Type") %}</th>
+			<th style="width: 18%;">{%= __("Tax(%)") %}</th>
+			<th class="number" style="width: 18%;">{%= __("Sale Tax") %}</th>
+			<th class="number" style="width: 18%;">{%= __("Purchase Tax") %}</th>
+			<th class="number" style="width: 18%;">{%= __("Tax Payable") %}</th>
+		</tr>
+	</thead>
+	<tbody>
+		{% for (const row of data) { %}
+			<tr class="{%= row.is_group ? "summary-row" : "" %}">
+				<td>{%= row.tax_type || "" %}</td>
+				<td>{%= row.tax_percent != null ? frappe.format(row.tax_percent, columns_by_fieldname.tax_percent || {}, {}, row) : "" %}</td>
+				<td class="number">{%= row.sale_tax != null ? frappe.format(row.sale_tax, columns_by_fieldname.sale_tax || {}, {}, row) : "" %}</td>
+				<td class="number">{%= row.purchase_tax != null ? frappe.format(row.purchase_tax, columns_by_fieldname.purchase_tax || {}, {}, row) : "" %}</td>
+				<td class="number">{%= row.tax_payable != null ? frappe.format(row.tax_payable, columns_by_fieldname.tax_payable || {}, {}, row) : "" %}</td>
+			</tr>
+		{% } %}
+	</tbody>
+</table>
+
+<div class="tax-payable-footer">
+	<div>{%= __("Printed By") %}: {%= frappe.session.user %}</div>
+	<div>{%= __("Location") %}: {%= filters.cost_center || __("All") %}</div>
+	<div>{%= frappe.datetime.now_datetime() %}</div>
+</div>

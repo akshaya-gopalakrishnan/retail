@@ -37,6 +37,58 @@ WEBSITE_ROUTE_REDIRECTS = (
 	("/", "/app", "302"),
 	("/index", "/retail-home", "302"),
 )
+VAN_SALES_REQUIRED_DOCTYPES = ("Van Session", "Van Fleet")
+VAN_SALES_CUSTOM_FIELDS = {
+	"Customer": (
+		"custom_is_van_customer",
+	),
+	"Sales Invoice": (
+		"custom_section_break_ys8q0",
+		"custom_is_van_sale",
+		"custom_van_session",
+		"custom_van",
+		"custom_column_break_lwxjd",
+		"custom_van_warehouse",
+		"custom_driver",
+		"custom_driver_name",
+	),
+	"Payment Entry": (
+		"custom_section_break_qxzwe",
+		"custom_is_van_payment",
+		"custom_van_session",
+		"custom_van",
+		"custom_column_break_pfdm4",
+		"custom_driver",
+		"custom_driver_name",
+	),
+	"Stock Entry": (
+		"custom_section_break_hwoog",
+		"custom_is_van_stock_entry",
+		"custom_van_session",
+		"custom_van",
+		"custom_van_stock_entry_type",
+		"custom_column_break_glsno",
+		"custom_van_warehouse",
+		"custom_driver",
+		"custom_driver_name_",
+		"custom_van_warehouse_stock",
+	),
+	"Material Request": (
+		"custom_van_stock_request_section",
+		"custom_is_van_stock_request",
+		"custom_van_request_type",
+		"custom_van_session",
+		"custom_van",
+		"custom_van_stock_request_column",
+		"custom_van_warehouse",
+		"custom_driver",
+		"custom_driver_name",
+	),
+}
+VAN_SALES_WORKSPACES = (
+	"Van Sales",
+	"Van Sales Sessions Link",
+)
 
 
 def hide_non_retail_workspaces():
@@ -210,3 +262,40 @@ def ensure_print_languages():
 
 	frappe.cache.delete_value("languages_with_name")
 	frappe.cache.delete_value("languages")
+
+
+def cleanup_uninstalled_van_sales_metadata():
+	"""Remove Van Sales metadata from Retail-only sites.
+
+	Van Sales currently lives in a separate app that uses the same Python package
+	name as Retail. Until it is merged or renamed, Retail-only sites must not keep
+	Custom Fields that link to Van Sales DocTypes.
+	"""
+	if not frappe.db.table_exists("DocType") or all(
+		frappe.db.exists("DocType", doctype) for doctype in VAN_SALES_REQUIRED_DOCTYPES
+	):
+		return
+
+	touched_doctypes = set()
+	if frappe.db.table_exists("Custom Field"):
+		for doctype, fieldnames in VAN_SALES_CUSTOM_FIELDS.items():
+			for fieldname in fieldnames:
+				custom_field = frappe.db.exists("Custom Field", {"dt": doctype, "fieldname": fieldname})
+				if not custom_field:
+					continue
+
+				frappe.delete_doc("Custom Field", custom_field, force=True, ignore_permissions=True)
+				touched_doctypes.add(doctype)
+
+	for doctype in touched_doctypes:
+		frappe.clear_cache(doctype=doctype)
+
+	removed_workspaces = False
+	if frappe.db.table_exists("Workspace"):
+		for workspace in VAN_SALES_WORKSPACES:
+			if frappe.db.exists("Workspace", workspace):
+				frappe.delete_doc("Workspace", workspace, force=True, ignore_permissions=True)
+				removed_workspaces = True
+
+	if touched_doctypes or removed_workspaces:
+		frappe.clear_cache()

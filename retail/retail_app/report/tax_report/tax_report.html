@@ -1,0 +1,175 @@
+{%
+	const print_columns = [
+		"ref_no",
+		"date",
+		"transaction_type",
+		"invoice_no",
+		"party_name",
+		"trn",
+		"cost_center",
+		"total",
+		"discount_amount",
+		"taxable_amount",
+		"non_taxable_amount",
+		"output_tax",
+		"input_tax",
+		"net_amount",
+		"tax_payable",
+	];
+	const columns_by_fieldname = {};
+	for (const column of report.get_columns_for_print()) {
+		columns_by_fieldname[column.fieldname] = column;
+	}
+	const filters = report.get_filter_values ? report.get_filter_values() : {};
+	const printed_on = frappe.datetime.now_datetime();
+%}
+
+<style>
+	@page {
+		size: A4 landscape;
+		margin: 9mm;
+	}
+
+	.print-format {
+		padding: 9mm;
+		font-family: Arial, Helvetica, sans-serif;
+		font-size: 7.5pt;
+		color: #111;
+	}
+
+	.tax-report-header {
+		display: flex;
+		justify-content: space-between;
+		margin: 5mm 6mm 12mm;
+		font-size: 8.5pt;
+	}
+
+	.tax-report-header h1 {
+		font-size: 8.5pt;
+		font-weight: 400;
+		margin: 0;
+	}
+
+	.tax-report-title {
+		border: 1px solid #777;
+		padding: 4px;
+		margin: 0 auto;
+		width: 278mm;
+		text-align: center;
+		background: #f3f3f3;
+		color: #563d2f;
+		font-weight: 700;
+	}
+
+	.tax-report-filters {
+		font-size: 8pt;
+		margin: 4mm auto;
+		width: 278mm;
+	}
+
+	.tax-report-table {
+		width: 278mm;
+		margin: 0 auto;
+		border-collapse: collapse;
+		table-layout: fixed;
+	}
+
+	.tax-report-table th {
+		border: 1px solid #777;
+		background: #e6e6e6;
+		font-weight: 700;
+		text-align: left;
+		padding: 3px 2px;
+	}
+
+	.tax-report-table td {
+		border: 1px solid #8f8f8f;
+		padding: 3px 2px;
+		vertical-align: top;
+		overflow: hidden;
+		white-space: nowrap;
+	}
+
+	.tax-report-table .number {
+		text-align: right;
+	}
+
+	.tax-report-table .summary-row td {
+		background: #bdbdbd;
+		font-weight: 700;
+	}
+
+	.tax-report-table .blank-row td {
+		padding: 5px 0;
+	}
+
+	.tax-report-table .col-ref { width: 3%; }
+	.tax-report-table .col-date { width: 8%; }
+	.tax-report-table .col-type { width: 9%; }
+	.tax-report-table .col-invoice { width: 18%; }
+	.tax-report-table .col-party { width: 10%; }
+	.tax-report-table .col-trn { width: 11%; }
+	.tax-report-table .col-money { width: 7.8%; }
+	.tax-report-footer { display: flex; justify-content: space-between; margin: 6mm auto 0; width: 278mm; font-size: 8pt; }
+</style>
+
+<div class="tax-report-header">
+	<h1>{%= __("Tax Report - Taxable & NonTaxable") %}</h1>
+	<div>{%= __("Date From") %}: {%= filters.from_date || "" %} {%= __("To") %} {%= filters.to_date || "" %}</div>
+</div>
+
+<div class="tax-report-title">{%= __("Tax Report") %}</div>
+<div class="tax-report-filters">
+	{%= __("Filter") %}:
+	{% if (filters.company) { %}{%= __("Company") %} - {%= filters.company %}{% } %}
+	{% if (filters.cost_center) { %}&nbsp;&nbsp; {%= __("Cost Center") %} - {%= filters.cost_center %}{% } %}
+	{% if (filters.from_date || filters.to_date) { %}
+		&nbsp;&nbsp; {%= filters.from_date || "" %} {%= __("to") %} {%= filters.to_date || "" %}
+	{% } %}
+</div>
+
+<table class="tax-report-table">
+	<thead>
+		<tr>
+			<th class="col-ref">{%= __("Ref No") %}</th>
+			<th class="col-date">{%= __("Date") %}</th>
+			<th class="col-type">{%= __("Transaction Type") %}</th>
+			<th class="col-invoice">{%= __("Invoice No") %}</th>
+			<th class="col-party">{%= __("Party Name") %}</th>
+			<th class="col-trn">{%= __("Party Tax ID") %}</th>
+			<th class="col-type">{%= __("Cost Center") %}</th>
+			<th class="col-money number">{%= __("Total") %}</th>
+			<th class="col-money number">{%= __("Discount") %}</th>
+			<th class="col-money number">{%= __("Taxable Amount") %}</th>
+			<th class="col-money number">{%= __("Non Taxable Amount") %}</th>
+			<th class="col-money number">{%= __("Output Tax") %}</th>
+			<th class="col-money number">{%= __("Input Tax") %}</th>
+			<th class="col-money number">{%= __("Net Amount") %}</th>
+			<th class="col-money number">{%= __("Tax Payable / Recoverable") %}</th>
+		</tr>
+	</thead>
+	<tbody>
+		{% for (const row of data) { %}
+			{% if (!row || Object.keys(row).length === 0) { %}
+				<tr class="blank-row"><td colspan="15"></td></tr>
+			{% } else { %}
+				<tr class="{%= row.is_group ? "summary-row" : "" %}">
+					{% for (const fieldname of print_columns) { %}
+						{% const column = columns_by_fieldname[fieldname] || {}; %}
+						<td class="{%= ["total", "discount_amount", "taxable_amount", "non_taxable_amount", "output_tax", "input_tax", "net_amount", "tax_payable"].includes(fieldname) ? "number" : "" %}">
+							{% if (!is_null(row[fieldname])) { %}
+								{%= frappe.format(row[fieldname], column, {}, row) %}
+							{% } %}
+						</td>
+					{% } %}
+				</tr>
+			{% } %}
+		{% } %}
+	</tbody>
+</table>
+
+<div class="tax-report-footer">
+	<div>{%= __("Printed By") %}: {%= frappe.session.user %} {%= __("On") %} {%= printed_on %}</div>
+	<div>{%= __("Location") %}: {%= filters.cost_center || __("All") %}</div>
+	<div>{%= printed_on %}</div>
+</div>

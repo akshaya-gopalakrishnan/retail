@@ -1,0 +1,62 @@
+{%
+	const columns_by_fieldname = {};
+	for (const column of report.get_columns_for_print()) {
+		columns_by_fieldname[column.fieldname] = column;
+	}
+	const filters = report.get_filter_values ? report.get_filter_values() : {};
+	const printed_on = frappe.datetime.now_datetime();
+%}
+
+<style>
+	@page { size: A4 portrait; margin: 12mm; }
+	.print-format { padding: 12mm; font-family: Arial, Helvetica, sans-serif; font-size: 8pt; color: #111; }
+	.report-heading { margin: 4mm 0 16mm 14mm; font-size: 11pt; }
+	.report-meta { display: flex; justify-content: space-between; margin: -10mm 14mm 8mm; font-size: 8pt; }
+	.tax-table { width: 155mm; margin: 0 auto; border-collapse: collapse; table-layout: fixed; }
+	.tax-table th, .tax-table td { border: 1px solid #8f8f8f; padding: 3px 3px; vertical-align: top; }
+	.tax-table th { background: #e6e6e6; font-weight: 400; text-align: left; }
+	.tax-table .number { text-align: right; }
+	.tax-table .summary-row td { background: #d9d9d9; font-weight: 600; }
+	.footer { display: flex; justify-content: space-between; margin: 8mm 14mm 0; font-size: 8pt; }
+</style>
+
+<div class="report-heading">{%= __("Sales Day wise Tax Report") %}</div>
+<div class="report-meta">
+	<div>{%= filters.company || "" %}</div>
+	<div>{%= __("Date From") %}: {%= filters.from_date || "" %} {%= __("To") %}: {%= filters.to_date || "" %}</div>
+</div>
+
+<table class="tax-table">
+	<thead>
+		<tr>
+			<th colspan="4"></th>
+			<th colspan="2">{%= __("Grand Total") %}</th>
+		</tr>
+		<tr>
+			<th style="width: 19%;">{%= __("Location") %}</th>
+			<th style="width: 15%;">{%= __("Date") %}</th>
+			<th style="width: 18%;">{%= __("Tax Type") %}</th>
+			<th style="width: 12%;">{%= __("Tax(%)") %}</th>
+			<th class="number" style="width: 22%;">{%= __("Sales Amount") %}</th>
+			<th class="number" style="width: 14%;">{%= __("Tax Amount") %}</th>
+		</tr>
+	</thead>
+	<tbody>
+		{% for (const row of data) { %}
+			<tr class="{%= row.is_group ? "summary-row" : "" %}">
+				<td>{%= row.cost_center || "" %}</td>
+				<td>{%= row.posting_date ? frappe.format(row.posting_date, columns_by_fieldname.posting_date || {}, {}, row) : "" %}</td>
+				<td>{%= row.tax_type || "" %}</td>
+				<td>{%= row.tax_percent != null ? frappe.format(row.tax_percent, columns_by_fieldname.tax_percent || {}, {}, row) : "" %}</td>
+				<td class="number">{%= row.sales_amount != null ? frappe.format(row.sales_amount, columns_by_fieldname.sales_amount || {}, {}, row) : "" %}</td>
+				<td class="number">{%= row.tax_amount != null ? frappe.format(row.tax_amount, columns_by_fieldname.tax_amount || {}, {}, row) : "" %}</td>
+			</tr>
+		{% } %}
+	</tbody>
+</table>
+
+<div class="footer">
+	<div>{%= __("Printed By") %}: {%= frappe.session.user %}</div>
+	<div>{%= __("Location") %}: {%= filters.cost_center || __("All") %}</div>
+	<div>{%= printed_on %}</div>
+</div>

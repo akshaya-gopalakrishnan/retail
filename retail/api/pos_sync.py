@@ -707,7 +707,7 @@ def _pos_tax_config(counter_doc):
 	return {"tax_template": template, "taxes": taxes}
 
 
-def _cashier_master_rows(branch=None, modified_after=None):
+def _operator_master_rows(branch=None, modified_after=None):
 	filters = [["status", "=", "Active"]]
 	if modified_after:
 		filters.append(["modified", ">", modified_after])
@@ -737,7 +737,6 @@ def _cashier_master_rows(branch=None, modified_after=None):
 		rows = [row for row in rows if not row.get("branch") or row.get("branch") == branch]
 	for row in rows:
 		row.login_id = row.get("employee_number") or row.get("employee") or row.get("name")
-		row.operator_group = row.get("designation")
 		row.quick_pin_hash = row.get("pos_quick_pin_hash")
 		row.quick_pin_salt = row.get("pos_quick_pin_salt")
 		if "pos_login_enabled" in row and not cint(row.get("pos_login_enabled")):
@@ -950,7 +949,7 @@ def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
 			fields=["name", "customer_name", "customer_group", "territory", "modified"],
 			limit_page_length=0,
 		),
-		"cashiers": _cashier_master_rows(branch, modified_after),
+		"operators": _operator_master_rows(branch, modified_after),
 		"modes_of_payment": frappe.get_all(
 			"Mode of Payment",
 			filters=modified_filter,

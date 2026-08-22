@@ -13,7 +13,7 @@
    "label": "Profit and Loss"
   }
  ],
- "content": "[{\"id\": \"hdr_reports\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Reports</span>\", \"col\": 12}}, {\"id\": \"sc_daily_sales_summary\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Daily Sales Summary\", \"col\": 3}}, {\"id\": \"sc_counter_performance\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Counter Performance\", \"col\": 3}}, {\"id\": \"sc_daily_transaction_log\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Daily Transaction Log\", \"col\": 3}}, {\"id\": \"sc_daily_profit_report\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Daily Profit Report\", \"col\": 3}}, {\"id\": \"sc_low_stock_reorder_report\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Low Stock Reorder Report\", \"col\": 3}}, {\"id\": \"sc_stock_movement_summary\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Stock Movement Summary\", \"col\": 3}}, {\"id\": \"sc_accounts_receivable\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Accounts Receivable\", \"col\": 3}}, {\"id\": \"sc_accounts_payable\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Accounts Payable\", \"col\": 3}}, {\"id\": \"sc_gross_profit\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Gross Profit\", \"col\": 3}}, {\"id\": \"sp_reports_charts\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"chart_outgoing_bills__sales_invoic\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Outgoing Bills (Sales Invoice)\", \"col\": 4}}, {\"id\": \"chart_incoming_bills__purchase_inv\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Incoming Bills (Purchase Invoice)\", \"col\": 4}}, {\"id\": \"chart_profit_and_loss\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Profit and Loss\", \"col\": 4}}, {\"id\": \"sp_reports_cards\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"card_sales_reports\", \"type\": \"card\", \"data\": {\"card_name\": \"Sales Reports\", \"col\": 4}}, {\"id\": \"card_purchase_reports\", \"type\": \"card\", \"data\": {\"card_name\": \"Purchase Reports\", \"col\": 4}}, {\"id\": \"card_stock_reports\", \"type\": \"card\", \"data\": {\"card_name\": \"Stock Reports\", \"col\": 4}}, {\"id\": \"card_financials\", \"type\": \"card\", \"data\": {\"card_name\": \"Financials\", \"col\": 4}}, {\"id\": \"card_outstandings\", \"type\": \"card\", \"data\": {\"card_name\": \"Outstandings\", \"col\": 4}}, {\"id\": \"card_performance\", \"type\": \"card\", \"data\": {\"card_name\": \"Performance\", \"col\": 4}}, {\"id\": \"card_pos_reports\", \"type\": \"card\", \"data\": {\"card_name\": \"POS Reports\", \"col\": 4}}]",
+ "content": "[{\"id\": \"hdr_reports\",\"type\": \"header\",\"data\": {\"text\": \"<span class=\\\"h4\\\">Reports</span>\",\"col\": 12}},{\"id\": \"sc_daily_sales_summary\",\"type\": \"shortcut\",\"data\": {\"shortcut_name\": \"Daily Sales Summary\",\"col\": 3}},{\"id\": \"sc_sales_day_wise_tax_report\",\"type\": \"shortcut\",\"data\": {\"shortcut_name\": \"Sales Day wise Tax Report\",\"col\": 3}},{\"id\": \"sc_sales_tax_report\",\"type\": \"shortcut\",\"data\": {\"shortcut_name\": \"Sales Tax Report\",\"col\": 3}},{\"id\": \"sc_counter_performance\",\"type\": \"shortcut\",\"data\": {\"shortcut_name\": \"Counter Performance\",\"col\": 3}},{\"id\": \"sc_daily_transaction_log\",\"type\": \"shortcut\",\"data\": {\"shortcut_name\": \"Daily Transaction Log\",\"col\": 3}},{\"id\": \"sc_tax_report\",\"type\": \"shortcut\",\"data\": {\"shortcut_name\": \"Tax Report\",\"col\": 3}},{\"id\": \"sc_tax_payable_report_summary\",\"type\": \"shortcut\",\"data\": {\"shortcut_name\": \"Tax Payable Report Summary\",\"col\": 3}},{\"id\": \"sc_purchase_tax_report\",\"type\": \"shortcut\",\"data\": {\"shortcut_name\": \"Purchase Tax Report\",\"col\": 3}},{\"id\": \"sc_purchase_day_wise_tax_report\",\"type\": \"shortcut\",\"data\": {\"shortcut_name\": \"Purchase Day wise Tax Report\",\"col\": 3}},{\"id\": \"sc_daily_profit_report\",\"type\": \"shortcut\",\"data\": {\"shortcut_name\": \"Daily Profit Report\",\"col\": 3}},{\"id\": \"sc_low_stock_reorder_report\",\"type\": \"shortcut\",\"data\": {\"shortcut_name\": \"Low Stock Reorder Report\",\"col\": 3}},{\"id\": \"sc_stock_movement_summary\",\"type\": \"shortcut\",\"data\": {\"shortcut_name\": \"Stock Movement Summary\",\"col\": 3}},{\"id\": \"sc_accounts_receivable\",\"type\": \"shortcut\",\"data\": {\"shortcut_name\": \"Accounts Receivable\",\"col\": 3}},{\"id\": \"sc_accounts_payable\",\"type\": \"shortcut\",\"data\": {\"shortcut_name\": \"Accounts Payable\",\"col\": 3}},{\"id\": \"sc_gross_profit\",\"type\": \"shortcut\",\"data\": {\"shortcut_name\": \"Gross Profit\",\"col\": 3}},{\"id\": \"sp_reports_charts\",\"type\": \"spacer\",\"data\": {\"col\": 12}},{\"id\": \"chart_outgoing_bills__sales_invoic\",\"type\": \"chart\",\"data\": {\"chart_name\": \"Outgoing Bills (Sales Invoice)\",\"col\": 4}},{\"id\": \"chart_incoming_bills__purchase_inv\",\"type\": \"chart\",\"data\": {\"chart_name\": \"Incoming Bills (Purchase Invoice)\",\"col\": 4}},{\"id\": \"chart_profit_and_loss\",\"type\": \"chart\",\"data\": {\"chart_name\": \"Profit and Loss\",\"col\": 4}},{\"id\": \"sp_reports_cards\",\"type\": \"spacer\",\"data\": {\"col\": 12}},{\"id\": \"card_sales_reports\",\"type\": \"card\",\"data\": {\"card_name\": \"Sales Reports\",\"col\": 4}},{\"id\": \"card_purchase_reports\",\"type\": \"card\",\"data\": {\"card_name\": \"Purchase Reports\",\"col\": 4}},{\"id\": \"card_stock_reports\",\"type\": \"card\",\"data\": {\"card_name\": \"Stock Reports\",\"col\": 4}},{\"id\": \"card_financials\",\"type\": \"card\",\"data\": {\"card_name\": \"Financials\",\"col\": 4}},{\"id\": \"card_outstandings\",\"type\": \"card\",\"data\": {\"card_name\": \"Outstandings\",\"col\": 4}},{\"id\": \"card_performance\",\"type\": \"card\",\"data\": {\"card_name\": \"Performance\",\"col\": 4}},{\"id\": \"card_pos_reports\",\"type\": \"card\",\"data\": {\"card_name\": \"POS Reports\",\"col\": 4}}]",
  "creation": "2026-07-30 12:20:09.119986",
  "custom_blocks": [],
  "docstatus": 0,
@@ -30,7 +30,7 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Sales Reports",
-   "link_count": 6,
+   "link_count": 8,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -41,6 +41,28 @@
    "label": "Daily Sales Summary",
    "link_count": 0,
    "link_to": "Daily Sales Summary",
+   "link_type": "Report",
+   "onboard": 0,
+   "report_ref_doctype": "Sales Invoice",
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Sales Day wise Tax Report",
+   "link_count": 0,
+   "link_to": "Sales Day wise Tax Report",
+   "link_type": "Report",
+   "onboard": 0,
+   "report_ref_doctype": "Sales Invoice",
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Sales Tax Report",
+   "link_count": 0,
+   "link_to": "Sales Tax Report",
    "link_type": "Report",
    "onboard": 0,
    "report_ref_doctype": "Sales Invoice",
@@ -105,10 +127,32 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Purchase Reports",
-   "link_count": 4,
+   "link_count": 6,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Purchase Day wise Tax Report",
+   "link_count": 0,
+   "link_to": "Purchase Day wise Tax Report",
+   "link_type": "Report",
+   "onboard": 0,
+   "report_ref_doctype": "Purchase Invoice",
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Purchase Tax Report",
+   "link_count": 0,
+   "link_to": "Purchase Tax Report",
+   "link_type": "Report",
+   "onboard": 0,
+   "report_ref_doctype": "Purchase Invoice",
+   "type": "Link"
   },
   {
    "hidden": 0,
@@ -277,10 +321,32 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Financials",
-   "link_count": 4,
+   "link_count": 6,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Tax Report",
+   "link_count": 0,
+   "link_to": "Tax Report",
+   "link_type": "Report",
+   "onboard": 0,
+   "report_ref_doctype": "Sales Invoice",
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Tax Payable Report Summary",
+   "link_count": 0,
+   "link_to": "Tax Payable Report Summary",
+   "link_type": "Report",
+   "onboard": 0,
+   "report_ref_doctype": "Sales Invoice",
+   "type": "Link"
   },
   {
    "hidden": 0,
@@ -574,6 +640,22 @@
    "type": "Report"
   },
   {
+   "color": "Blue",
+   "doc_view": "List",
+   "label": "Sales Day wise Tax Report",
+   "link_to": "Sales Day wise Tax Report",
+   "report_ref_doctype": "Sales Invoice",
+   "type": "Report"
+  },
+  {
+   "color": "Blue",
+   "doc_view": "List",
+   "label": "Sales Tax Report",
+   "link_to": "Sales Tax Report",
+   "report_ref_doctype": "Sales Invoice",
+   "type": "Report"
+  },
+  {
    "color": "Green",
    "doc_view": "List",
    "label": "Counter Performance",
@@ -587,6 +669,38 @@
    "label": "Daily Transaction Log",
    "link_to": "Daily Transaction Log",
    "report_ref_doctype": "Sales Invoice",
+   "type": "Report"
+  },
+  {
+   "color": "Blue",
+   "doc_view": "List",
+   "label": "Tax Report",
+   "link_to": "Tax Report",
+   "report_ref_doctype": "Sales Invoice",
+   "type": "Report"
+  },
+  {
+   "color": "Blue",
+   "doc_view": "List",
+   "label": "Tax Payable Report Summary",
+   "link_to": "Tax Payable Report Summary",
+   "report_ref_doctype": "Sales Invoice",
+   "type": "Report"
+  },
+  {
+   "color": "Green",
+   "doc_view": "List",
+   "label": "Purchase Tax Report",
+   "link_to": "Purchase Tax Report",
+   "report_ref_doctype": "Purchase Invoice",
+   "type": "Report"
+  },
+  {
+   "color": "Blue",
+   "doc_view": "List",
+   "label": "Purchase Day wise Tax Report",
+   "link_to": "Purchase Day wise Tax Report",
+   "report_ref_doctype": "Purchase Invoice",
    "type": "Report"
   },
   {

@@ -111,16 +111,60 @@
         , 'pos transaction log': { icon: 'fa fa-list', cls: 'color-accounts' }
         , 'pos item-wise sales': { icon: 'fa fa-cubes', cls: 'color-sales' }
         , 'pos category/item group sales': { icon: 'fa fa-sitemap', cls: 'color-sales' }
+        , 'pos category item group sales': { icon: 'fa fa-sitemap', cls: 'color-sales' }
+        , 'counter performance': { icon: 'fa fa-tachometer', cls: 'color-sales' }
         , 'pos hourly sales': { icon: 'fa fa-clock-o', cls: 'color-sales' }
         , 'pos return report': { icon: 'fa fa-undo', cls: 'color-sales' }
         , 'cashier wise sales': { icon: 'fa fa-user', cls: 'color-pos-shifts' }
         , 'counter wise sales': { icon: 'fa fa-desktop', cls: 'color-pos-counters' }
         , 'shift closing variance': { icon: 'fa fa-balance-scale', cls: 'color-pos-closing' }
         , 'payment mode summary': { icon: 'fa fa-credit-card', cls: 'color-accounts' }
+        , 'pos payment mode summary': { icon: 'fa fa-credit-card', cls: 'color-accounts' }
         , 'pos discount report': { icon: 'fa fa-tags', cls: 'color-sales' }
         , 'pos price override report': { icon: 'fa fa-pencil-square-o', cls: 'color-sales' }
         , 'pos daily closing summary': { icon: 'fa fa-calendar-check-o', cls: 'color-pos-day-closing' }
         , 'pos cash movement report': { icon: 'fa fa-money', cls: 'color-accounts' }
+        , 'sales reports': { icon: 'fa fa-line-chart', cls: 'color-sales' }
+        , 'purchase reports': { icon: 'fa fa-area-chart', cls: 'color-purchase' }
+        , 'stock reports': { icon: 'fa fa-bar-chart', cls: 'color-stock' }
+        , 'accounts reports': { icon: 'fa fa-pie-chart', cls: 'color-accounts' }
+        , 'pos sales reports': { icon: 'fa fa-bar-chart', cls: 'color-pos-reports' }
+        , 'manufacturing module reports': { icon: 'fa fa-industry', cls: 'color-manufacturing' }
+        , 'item group sales analysis': { icon: 'fa fa-sitemap', cls: 'color-sales' }
+        , 'daily sales summary': { icon: 'fa fa-line-chart', cls: 'color-sales' }
+        , 'daily transaction log': { icon: 'fa fa-list', cls: 'color-sales' }
+        , 'sales payment mode summary': { icon: 'fa fa-credit-card', cls: 'color-sales' }
+        , 'daily profit report': { icon: 'fa fa-money', cls: 'color-sales' }
+        , 'gross profit': { icon: 'fa fa-area-chart', cls: 'color-sales' }
+        , 'sales tax report': { icon: 'fa fa-percent', cls: 'color-accounts' }
+        , 'sales day wise tax report': { icon: 'fa fa-calendar', cls: 'color-accounts' }
+        , 'purchase register': { icon: 'fa fa-book', cls: 'color-purchase' }
+        , 'purchase tax report': { icon: 'fa fa-percent', cls: 'color-purchase' }
+        , 'purchase day wise tax report': { icon: 'fa fa-calendar', cls: 'color-purchase' }
+        , 'supplier wise returns': { icon: 'fa fa-undo', cls: 'color-purchase' }
+        , 'stock balance': { icon: 'fa fa-archive', cls: 'color-stock' }
+        , 'stock ledger': { icon: 'fa fa-list-alt', cls: 'color-stock' }
+        , 'packing stock balance': { icon: 'fa fa-cubes', cls: 'color-stock' }
+        , 'packing stock ledger': { icon: 'fa fa-list', cls: 'color-stock' }
+        , 'stock movement summary': { icon: 'fa fa-exchange', cls: 'color-stock' }
+        , 'stock adjustment history': { icon: 'fa fa-history', cls: 'color-stock' }
+        , 'low stock reorder report': { icon: 'fa fa-warning', cls: 'color-stock' }
+        , 'fast moving items': { icon: 'fa fa-forward', cls: 'color-items' }
+        , 'slow moving items': { icon: 'fa fa-hourglass-half', cls: 'color-items' }
+        , 'negative stock report': { icon: 'fa fa-minus-circle', cls: 'color-stock' }
+        , 'near expiry report': { icon: 'fa fa-clock-o', cls: 'color-stock' }
+        , 'expiry loss': { icon: 'fa fa-trash-o', cls: 'color-stock' }
+        , 'general ledger': { icon: 'fa fa-book', cls: 'color-accounts' }
+        , 'trial balance': { icon: 'fa fa-balance-scale', cls: 'color-accounts' }
+        , 'balance sheet': { icon: 'fa fa-table', cls: 'color-accounts' }
+        , 'profit and loss statement': { icon: 'fa fa-line-chart', cls: 'color-accounts' }
+        , 'tax report': { icon: 'fa fa-percent', cls: 'color-accounts' }
+        , 'tax reports': { icon: 'fa fa-percent', cls: 'color-accounts' }
+        , 'tax payable report summary': { icon: 'fa fa-calculator', cls: 'color-accounts' }
+        , 'promo price': { icon: 'fa fa-tags', cls: 'color-sales' }
+        , 'buy x get y promotion': { icon: 'fa fa-gift', cls: 'color-sales' }
+        , 'gift voucher promotion': { icon: 'fa fa-ticket', cls: 'color-sales' }
+        , 'gift voucher ledger': { icon: 'fa fa-list-alt', cls: 'color-sales' }
     };
     const DESKTOP_MEDIA = '(min-width: 992px)';
     const DIRECT_MAPPING = {
@@ -164,12 +208,47 @@
         'Counter Wise Sales': ['query-report', 'Counter Wise Sales'],
         'Shift Closing Variance': ['query-report', 'Shift Closing Variance'],
         'Payment Mode Summary': ['query-report', 'POS Payment Mode Summary'],
+        'POS Payment Mode Summary': ['query-report', 'POS Payment Mode Summary'],
         'POS Discount Report': ['query-report', 'POS Discount Report'],
         'POS Price Override Report': ['query-report', 'POS Price Override Report'],
         'POS Daily Closing Summary': ['query-report', 'POS Daily Closing Summary'],
         'POS Cash Movement Report': ['query-report', 'POS Cash Movement Report'],
+        'Item Group Sales Analysis': ['query-report', 'Item Group Sales Analysis'],
+        'Daily Sales Summary': ['query-report', 'Daily Sales Summary'],
+        'Daily Transaction Log': ['query-report', 'Daily Transaction Log'],
+        'Sales Payment Mode Summary': ['query-report', 'Sales Payment Mode Summary'],
+        'Daily Profit Report': ['query-report', 'Daily Profit Report'],
+        'Gross Profit': ['query-report', 'Gross Profit'],
+        'Sales Tax Report': ['query-report', 'Sales Tax Report'],
+        'Sales Day wise Tax Report': ['query-report', 'Sales Day wise Tax Report'],
+        'Purchase Register': ['query-report', 'Purchase Register'],
+        'Purchase Tax Report': ['query-report', 'Purchase Tax Report'],
+        'Purchase Day wise Tax Report': ['query-report', 'Purchase Day wise Tax Report'],
+        'Supplier Wise Returns': ['query-report', 'Supplier Wise Returns'],
+        'Stock Balance': ['query-report', 'Stock Balance'],
+        'Stock Ledger': ['query-report', 'Stock Ledger'],
+        'Packing Stock Balance': ['query-report', 'Packing Stock Balance'],
+        'Packing Stock Ledger': ['query-report', 'Packing Stock Ledger'],
+        'Stock Movement Summary': ['query-report', 'Stock Movement Summary'],
+        'Stock Adjustment History': ['query-report', 'Stock Adjustment History'],
+        'Low Stock Reorder Report': ['query-report', 'Low Stock Reorder Report'],
+        'Fast Moving Items': ['query-report', 'Fast Moving Items'],
+        'Slow Moving Items': ['query-report', 'Slow Moving Items'],
+        'Negative Stock Report': ['query-report', 'Negative Stock Report'],
+        'Near Expiry Report': ['query-report', 'Near Expiry Report'],
+        'Expiry Loss': ['query-report', 'Expiry Loss'],
+        'General Ledger': ['query-report', 'General Ledger'],
+        'Trial Balance': ['query-report', 'Trial Balance'],
+        'Balance Sheet': ['query-report', 'Balance Sheet'],
+        'Profit and Loss Statement': ['query-report', 'Profit and Loss Statement'],
+        'Tax Report': ['query-report', 'Tax Report'],
+        'Tax Payable Report Summary': ['query-report', 'Tax Payable Report Summary'],
         'Counter Performance': ['query-report', 'Counter Performance'],
         'Delivery Notes': ['List', 'Delivery Note'],
+        'Promo Price': ['List', 'Promo Price'],
+        'Buy X Get Y Promotion': ['List', 'Buy X Get Y Promotion'],
+        'Gift Voucher Promotion': ['List', 'Gift Voucher Promotion'],
+        'Gift Voucher Ledger': ['List', 'Gift Voucher Ledger'],
         'Suppliers': ['List', 'Supplier'],
         'Material Request': ['List', 'Material Request'],
         'Material Requests': ['List', 'Material Request'],
@@ -336,6 +415,10 @@
         'Sales Returns': 'Sales',
         'Trading Invoices': 'Sales',
         'All Sales Invoices': 'Sales',
+        'Promo Price': 'Sales',
+        'Buy X Get Y Promotion': 'Sales',
+        'Gift Voucher Promotion': 'Sales',
+        'Gift Voucher Ledger': 'Sales',
         'POS Invoices': 'POS',
         'POS Profile': 'POS',
         'POS Profiles': 'POS',
@@ -600,6 +683,9 @@
     let sidebarRenderRetryCount = 0;
     let workspaceCustomCardsPatched = false;
     let openWorkClearedRouteKey = null;
+    let lastSidebarTogglePointerAt = 0;
+    const dynamicChildToParent = {};
+    const dynamicReportToGroup = {};
 
     function redirectStandardHomeToBusinessHome() {
         const route = frappe.get_route?.() || [];
@@ -676,7 +762,7 @@
         while (current && !seen.has(current)) {
             seen.add(current);
             if (!moduleIsAllowed(getWorkspaceModule(current))) return false;
-            current = CHILD_TO_PARENT[current];
+            current = getParentLabel(current);
         }
 
         return true;
@@ -825,6 +911,10 @@
         return window.matchMedia(DESKTOP_MEDIA).matches;
     }
 
+    function isMobile() {
+        return !isDesktop();
+    }
+
     function isWorkspaceRoute(route) {
         const view = route?.[0]?.toLowerCase();
         const routeSlug = frappe.router.slug(
@@ -937,8 +1027,8 @@
     }
 
     function rememberSidebarContext(label) {
-        const child = ROUTE_ALIAS_TO_CHILD[label] || (CHILD_TO_PARENT[label] ? label : null);
-        const main = child ? CHILD_TO_PARENT[child] : (TOP_LEVEL_WORKSPACES.has(label) ? label : null);
+        const child = ROUTE_ALIAS_TO_CHILD[label] || (getParentLabel(label) ? label : null);
+        const main = child ? getTopParentLabel(child) : (TOP_LEVEL_WORKSPACES.has(label) ? label : null);
         if (!main) return;
 
         try {
@@ -1214,11 +1304,42 @@
         const workspaceName = container?.getAttribute('item-workspace-name');
         if (
             workspaceName
-            && (CHILD_TO_PARENT[workspaceName] || DIRECT_MAPPING[workspaceName] || WORKSPACE_TO_MODULE[workspaceName])
+            && (
+                getParentLabel(workspaceName)
+                || DIRECT_MAPPING[workspaceName]
+                || WORKSPACE_TO_MODULE[workspaceName]
+                || container?.dataset?.retailReportLink === '1'
+                || container?.dataset?.retailReportGroup === '1'
+            )
         ) {
             return workspaceName;
         }
         return label;
+    }
+
+    function getParentLabel(label) {
+        return CHILD_TO_PARENT[label] || dynamicChildToParent[label] || '';
+    }
+
+    function getTopParentLabel(label) {
+        let current = label;
+        const seen = new Set();
+        while (getParentLabel(current) && !seen.has(current)) {
+            seen.add(current);
+            current = getParentLabel(current);
+        }
+        return current;
+    }
+
+    function isDescendantOf(label, parentLabel) {
+        let current = label;
+        const seen = new Set();
+        while (getParentLabel(current) && !seen.has(current)) {
+            seen.add(current);
+            current = getParentLabel(current);
+            if (current === parentLabel) return true;
+        }
+        return false;
     }
 
     function getSidebarIconLabel(container) {
@@ -1260,13 +1381,18 @@
         }
 
         if (mappedChild) {
-            return { main: CHILD_TO_PARENT[mappedChild] || DOCTYPE_TO_WORKSPACE[route?.[1]], child: mappedChild };
+            return { main: getTopParentLabel(mappedChild) || DOCTYPE_TO_WORKSPACE[route?.[1]], child: mappedChild };
+        }
+
+        if (view === 'query-report' && route[1]) {
+            const group = dynamicReportToGroup[route[1]];
+            if (group) return { main: 'Reports', child: route[1] };
         }
 
         if (view === 'workspaces' || view === 'workspace') {
             const title = decodeURIComponent(route[route[1] === 'private' ? 2 : 1] || '');
-            if (CHILD_TO_PARENT[title]) {
-                return { main: CHILD_TO_PARENT[title], child: title };
+            if (getParentLabel(title)) {
+                return { main: getTopParentLabel(title), child: title };
             }
             return { main: title, child: '' };
         }
@@ -1276,8 +1402,8 @@
         );
         const workspaceTitle = frappe.workspaces?.[workspaceSlug]?.title;
         if (workspaceTitle) {
-            if (CHILD_TO_PARENT[workspaceTitle]) {
-                return { main: CHILD_TO_PARENT[workspaceTitle], child: workspaceTitle };
+            if (getParentLabel(workspaceTitle)) {
+                return { main: getTopParentLabel(workspaceTitle), child: workspaceTitle };
             }
             return { main: workspaceTitle, child: '' };
         }
@@ -1670,7 +1796,15 @@
     function setDropIcon(container, open) {
         const use = container
             ?.querySelector(':scope > .desk-sidebar-item .drop-icon use');
-        if (use) use.setAttribute('href', open ? '#es-line-up' : '#es-line-down');
+        if (use) use.setAttribute('href', open ? '#es-small-down' : '#es-small-right');
+    }
+
+    function getSmallDropIcon(open) {
+        return `
+            <svg class="es-icon retail-small-chevron" aria-hidden="true">
+                <use href="${open ? '#es-small-down' : '#es-small-right'}"></use>
+            </svg>
+        `;
     }
 
     function syncSidebarState() {
@@ -1683,10 +1817,12 @@
             const childSection = container.querySelector(':scope > .sidebar-child-item');
             const isMain = label && state.main === label;
             const isChild = (routingLabel && state.child === routingLabel) || (label && state.child === label);
-            const shouldOpen = isMain || (routingLabel && state.child && CHILD_TO_PARENT[state.child] === routingLabel);
+            const shouldOpen = isMain || isChild;
+            const isAncestor = !!(routingLabel && state.child && isDescendantOf(state.child, routingLabel));
 
             container.classList.toggle('retail-primary-active', !!isMain);
             container.classList.toggle('retail-secondary-active', !!isChild);
+            container.classList.toggle('retail-ancestor-active', isAncestor && !isChild && !isMain);
             directItem?.classList.toggle('selected', !!(isMain || isChild));
 
             if (childSection && shouldOpen) {
@@ -1699,31 +1835,39 @@
     function ensureWorkspaceDropIcons() {
         if (!isWorkspaceRoute(frappe.get_route())) return;
 
+        const toggleSidebarSection = (container, event) => {
+            const childSection = container?.querySelector(':scope > .sidebar-child-item');
+            if (!container || !childSection) return;
+
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation?.();
+            const isHidden = childSection.classList.toggle('hidden');
+            setDropIcon(container, !isHidden);
+        };
+
         getCurrentPage()
             ?.querySelectorAll('.desk-sidebar:not(.retail-persistent-sidebar) .sidebar-item-container')
             .forEach(container => {
                 const childSection = container.querySelector(':scope > .sidebar-child-item');
                 const control = container.querySelector(':scope > .desk-sidebar-item > .sidebar-item-control');
+                const anchor = container.querySelector(':scope > .desk-sidebar-item > .item-anchor');
                 if (!childSection || !control || !childSection.children.length) return;
 
-                let button = control.querySelector(':scope > .drop-icon');
-                if (!button) {
-                    button = document.createElement('button');
-                    button.className = 'btn-reset drop-icon';
-                    button.innerHTML = frappe.utils.icon(
-                        childSection.classList.contains('hidden') ? 'es-line-down' : 'es-line-up',
-                        'sm'
-                    );
-                    button.addEventListener('click', event => {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        const isHidden = childSection.classList.toggle('hidden');
-                        setDropIcon(container, !isHidden);
-                    });
-                    control.appendChild(button);
-                }
+                const button = document.createElement('button');
+                button.className = 'btn-reset drop-icon retail-drop-icon';
+                button.type = 'button';
+                const childItems = Array.from(childSection.querySelectorAll(':scope > .sidebar-item-container'));
+                const isClosed = childSection.classList.contains('hidden') ||
+                    (childItems.length && childItems.every(child => child.classList.contains('hidden')));
+                button.innerHTML = getSmallDropIcon(!isClosed);
+                button.addEventListener('click', event => toggleSidebarSection(container, event));
+                control.replaceChildren(button);
 
-                button.classList.remove('hidden');
+                if (anchor && !anchor.dataset.retailToggleBound) {
+                    anchor.dataset.retailToggleBound = '1';
+                    anchor.addEventListener('click', event => toggleSidebarSection(container, event));
+                }
             });
     }
 
@@ -2029,6 +2173,10 @@
     function removePersistentSidebar() {
         document.querySelectorAll('.retail-sidebar-overlay').forEach(sidebar => sidebar.remove());
         document.querySelectorAll('.retail-persistent-sidebar').forEach(sidebar => sidebar.remove());
+        document.querySelectorAll('.layout-side-section.retail-form-sidebar-mounted').forEach(section => {
+            section.classList.remove('retail-form-sidebar-mounted', 'retail-mobile-sidebar-mounted');
+            section.style.removeProperty('display');
+        });
         syncDesktopSidebarClass();
     }
 
@@ -2042,9 +2190,127 @@
         return host;
     }
 
+    function hideDuplicateSidebars(sideSection) {
+        if (!sideSection) return;
+        sideSection.querySelectorAll('.desk-sidebar, .standard-sidebar-section').forEach(section => {
+            if (section.classList.contains('retail-persistent-sidebar')) return;
+            if (section.closest('.retail-sidebar-host')) return;
+            section.classList.add('hidden');
+            section.style.display = 'none';
+        });
+    }
+
     function getWorkspaceName(container) {
         const label = getItemLabel(container);
         return container?.getAttribute('item-workspace-name') || WORKSPACE_ROUTE_NAMES[label] || label;
+    }
+
+    function getSidebarMountSections() {
+        const overlaySections = Array.from(document.querySelectorAll('.overlay-sidebar'))
+            .filter(section => !section.classList.contains('retail-sidebar-overlay'));
+
+        if (isMobile() && overlaySections.length) {
+            return overlaySections;
+        }
+
+        const sections = [];
+        const currentSideSection = getCurrentPage()?.querySelector('.layout-side-section') || getCurrentSideSection();
+        if (currentSideSection) sections.push(currentSideSection);
+        return sections;
+    }
+
+    function buildPersistentSidebar(items) {
+        const visibleItems = items.filter(item => !item.is_hidden && (item.title || item.name) !== 'Home');
+        const publicItems = visibleItems.filter(item => item.public);
+        const roots = publicItems.filter(item => !item.parent_page);
+        const wrapper = document.createElement('div');
+        wrapper.className = 'retail-persistent-sidebar standard-sidebar-section nested-container';
+        wrapper.dataset.title = 'CELESTA';
+
+        roots.forEach(item => wrapper.appendChild(buildSidebarItem(item, publicItems)));
+        return wrapper;
+    }
+
+    function mountPersistentSidebar(section, items) {
+        if (!section || section.querySelector('.retail-persistent-sidebar')) return;
+
+        if (isDesktop() && section.classList.contains('layout-side-section')) {
+            document.querySelectorAll('.retail-persistent-sidebar').forEach(sidebar => {
+                if (!section.contains(sidebar)) sidebar.remove();
+            });
+        }
+
+        const host = getRetailSidebarHost(section);
+        host.prepend(buildPersistentSidebar(items));
+        section.classList.add('retail-form-sidebar-mounted');
+        section.classList.toggle('retail-mobile-sidebar-mounted', section.classList.contains('overlay-sidebar'));
+        if (isDesktop() && section.classList.contains('layout-side-section')) {
+            section.classList.remove('hidden');
+            section.style.setProperty('display', 'block', 'important');
+        }
+        hideDuplicateSidebars(section);
+    }
+
+    function toggleSidebarSection(container, event) {
+        const childSection = container?.querySelector(':scope > .sidebar-child-item') ||
+            container?.querySelector('.sidebar-child-item');
+        if (!container || !childSection?.children?.length) return false;
+
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation?.();
+
+        if (container.closest('.retail-persistent-sidebar')) {
+            const isHidden = childSection.classList.toggle('hidden');
+            setDropIcon(container, !isHidden);
+            return true;
+        }
+
+        const childItems = Array.from(childSection.querySelectorAll(':scope > .sidebar-item-container'));
+        const isClosed = childSection.classList.contains('hidden') ||
+            (childItems.length && childItems.every(child => child.classList.contains('hidden')));
+
+        if (childItems.length) {
+            childSection.classList.toggle('hidden', false);
+            childItems.forEach(child => {
+                child.classList.toggle('hidden', !isClosed);
+                child.style.removeProperty('display');
+            });
+        } else {
+            childSection.classList.toggle('hidden', !isClosed);
+        }
+        setDropIcon(container, isClosed);
+        setTimeout(() => setDropIcon(container, isClosed), 0);
+        return true;
+    }
+
+    function bindWorkspaceSidebarToggle() {
+        if (window.__retailWorkspaceSidebarToggleBound) return;
+        window.__retailWorkspaceSidebarToggleBound = true;
+
+        const handleArrowToggle = event => {
+            if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+
+            const control = event.target.closest('.drop-icon, .sidebar-item-control');
+            const container = control?.closest('.sidebar-item-container');
+            if (!container?.closest('.desk-sidebar:not(.retail-persistent-sidebar)')) return;
+
+            if (container.querySelector(':scope > .sidebar-child-item')?.children?.length) {
+                if (event.type === 'click' && Date.now() - lastSidebarTogglePointerAt < 450) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    event.stopImmediatePropagation?.();
+                    return;
+                }
+                if (event.type === 'pointerdown') {
+                    lastSidebarTogglePointerAt = Date.now();
+                }
+                toggleSidebarSection(container, event);
+            }
+        };
+
+        document.addEventListener('pointerdown', handleArrowToggle, true);
+        document.addEventListener('click', handleArrowToggle, true);
     }
 
     function bindSubmenuRouting() {
@@ -2056,8 +2322,29 @@
             const container = anchor?.closest('.sidebar-item-container');
             const label = getItemLabel(container);
             const routingLabel = getSidebarRoutingLabel(container);
-            const parent = CHILD_TO_PARENT[routingLabel];
+            const parent = getParentLabel(routingLabel);
             const target = getAnchorRouteTarget(anchor) || DIRECT_MAPPING[routingLabel] || DIRECT_MAPPING[label] || getTargetFromUrl(anchor);
+            const childSection = container?.querySelector(':scope > .sidebar-child-item');
+            const hasChildren = !!childSection?.children?.length;
+
+            if (isWorkspaceRoute(frappe.get_route()) && hasChildren) {
+                toggleSidebarSection(container, event);
+                frappe.route_options = null;
+                rememberSidebarContext(routingLabel || label);
+                frappe.set_route(getWorkspaceUrl(getWorkspaceName(container), true).replace(/^\/app\//, ''));
+                return;
+            }
+
+            if (container?.dataset?.retailReportGroup === '1') {
+                event.preventDefault();
+                event.stopPropagation();
+                event.stopImmediatePropagation();
+                if (childSection) {
+                    const open = childSection.classList.toggle('hidden');
+                    setDropIcon(container, !open);
+                }
+                return;
+            }
 
             if (target) {
                 event.preventDefault();
@@ -2083,7 +2370,7 @@
                 return;
             }
 
-            if (!target && !TOP_LEVEL_WORKSPACES.has(label) && !CHILD_TO_PARENT[routingLabel]) return;
+            if (!target && !TOP_LEVEL_WORKSPACES.has(label) && !getParentLabel(routingLabel)) return;
 
             event.preventDefault();
             frappe.route_options = null;
@@ -2103,7 +2390,7 @@
                 anchor?.setAttribute('href', getTargetUrl(target));
                 anchor?.setAttribute('data-retail-direct-link', '1');
                 setAnchorRouteTarget(anchor, target);
-            } else if (CHILD_TO_PARENT[routingLabel]) {
+            } else if (getParentLabel(routingLabel)) {
                 anchor?.setAttribute('href', getWorkspaceUrl(getWorkspaceName(container), true));
                 anchor?.setAttribute('data-retail-direct-link', '1');
                 anchor?.removeAttribute('data-retail-route-target');
@@ -2115,22 +2402,47 @@
         });
     }
 
+    function getSidebarItemLevel(item, pages) {
+        let level = 0;
+        let parent = item.parent_page;
+        const seen = new Set();
+        while (parent && !seen.has(parent)) {
+            seen.add(parent);
+            level += 1;
+            const parentItem = pages.find(page => page.title === parent || page.name === parent);
+            parent = parentItem?.parent_page;
+        }
+        return level;
+    }
+
     function buildSidebarItem(item, pages) {
         const title = item.title;
         const displayTitle = WORKSPACE_DISPLAY_LABELS[item.name] || title;
         const children = pages.filter(page => page.parent_page === title);
-        const target = DIRECT_MAPPING[title];
+        const target = item.route || DIRECT_MAPPING[title];
         const href = target ? getTargetUrl(target) : getWorkspaceUrl(item.name || title, item.public);
         const routeTargetAttribute = target
             ? ` data-retail-route-target="${escapeHtml(JSON.stringify(target))}"`
             : '';
         const container = document.createElement('div');
         container.className = 'sidebar-item-container retail-sidebar-item';
+        container.dataset.retailLevel = getSidebarItemLevel(item, pages);
         container.setAttribute('item-name', displayTitle);
         container.setAttribute('item-workspace-name', item.name || title);
         container.setAttribute('item-parent', item.parent_page || '');
         container.setAttribute('item-public', item.public || 0);
         container.setAttribute('item-is-hidden', item.is_hidden || 0);
+        if (item.parent_page) {
+            dynamicChildToParent[item.name || title] = item.parent_page;
+            dynamicChildToParent[title] = item.parent_page;
+        }
+        if (item.is_report_link) {
+            container.dataset.retailReportLink = '1';
+            dynamicReportToGroup[item.name || title] = item.parent_page;
+        }
+        if (item.is_report_group) {
+            container.dataset.retailReportGroup = '1';
+        }
         container.innerHTML = `
             <div class="desk-sidebar-item standard-sidebar-item">
                 <a href="${href}" class="item-anchor block-click" title="${escapeHtml(__(displayTitle))}"${routeTargetAttribute}>
@@ -2146,11 +2458,13 @@
             const control = container.querySelector('.sidebar-item-control');
             const childSection = container.querySelector('.sidebar-child-item');
             const button = document.createElement('button');
-            button.className = 'btn-reset drop-icon';
-            button.innerHTML = frappe.utils.icon('es-line-down', 'sm');
+            button.className = 'btn-reset drop-icon retail-drop-icon';
+            button.type = 'button';
+            button.innerHTML = getSmallDropIcon(false);
             button.addEventListener('click', event => {
                 event.preventDefault();
                 event.stopPropagation();
+                event.stopImmediatePropagation?.();
                 const open = childSection.classList.toggle('hidden');
                 setDropIcon(container, !open);
             });
@@ -2186,8 +2500,8 @@
             return;
         }
 
-        const sideSection = getCurrentSideSection();
-        if (!sideSection) {
+        const sideSections = getSidebarMountSections();
+        if (!sideSections.length) {
             syncDesktopSidebarClass();
             if (sidebarRenderRetryCount < 8) {
                 sidebarRenderRetryCount += 1;
@@ -2196,8 +2510,7 @@
             return;
         }
         sidebarRenderRetryCount = 0;
-        const host = getRetailSidebarHost(sideSection);
-        if (host.querySelector('.retail-persistent-sidebar')) {
+        if (sideSections.every(section => section.querySelector('.retail-persistent-sidebar'))) {
             syncDesktopSidebarClass();
             return;
         }
@@ -2207,18 +2520,7 @@
                 removePersistentSidebar();
                 return;
             }
-            if (host.querySelector('.retail-persistent-sidebar')) return;
-
-            const visibleItems = items.filter(item => !item.is_hidden && (item.title || item.name) !== 'Home');
-            const publicItems = visibleItems.filter(item => item.public);
-            const roots = publicItems.filter(item => !item.parent_page);
-            const wrapper = document.createElement('div');
-            wrapper.className = 'retail-persistent-sidebar standard-sidebar-section nested-container';
-            wrapper.dataset.title = 'CELESTA';
-
-            roots.forEach(item => wrapper.appendChild(buildSidebarItem(item, publicItems)));
-            host.prepend(wrapper);
-            sideSection.classList.add('retail-form-sidebar-mounted');
+            getSidebarMountSections().forEach(section => mountPersistentSidebar(section, items));
             applyIcons();
             syncSidebarState();
             syncDesktopSidebarClass();
@@ -2272,6 +2574,28 @@
         });
     }
 
+    function scheduleMobileSidebarRender() {
+        if (!isMobile()) return;
+        [0, 80, 250, 600].forEach(delay => {
+            setTimeout(() => {
+                renderPersistentSidebar();
+                refreshSidebarEnhancements();
+            }, delay);
+        });
+    }
+
+    function bindMobileSidebarToggle() {
+        if (window.__retailMobileSidebarToggleBound) return;
+        window.__retailMobileSidebarToggleBound = true;
+
+        $(document.body).on('toggleSidebar.retailMobileSidebar', scheduleMobileSidebarRender);
+        document.addEventListener('click', event => {
+            if (event.target.closest('.sidebar-toggle-btn')) {
+                scheduleMobileSidebarRender();
+            }
+        }, true);
+    }
+
     function redirectItemFamilyListRoute() {
         const route = frappe.get_route();
         if (!Array.isArray(route) || !route.length) return false;
@@ -2310,8 +2634,10 @@
         upsertCurrentWorkTab();
         observeSidebarChanges();
         scheduleRetry();
+        bindWorkspaceSidebarToggle();
         bindSubmenuRouting();
         bindOpenWorkEvents();
+        bindMobileSidebarToggle();
 
         if (window.frappe?.router?.on) {
             frappe.router.on('change', () => {

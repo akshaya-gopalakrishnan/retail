@@ -1,0 +1,71 @@
+frappe.query_reports["Item Group Sales Analysis"] = {
+	filters: [
+		{
+			fieldname: "from_date",
+			label: __("From Date"),
+			fieldtype: "Date",
+			default: frappe.datetime.get_today(),
+			reqd: 1,
+		},
+		{
+			fieldname: "to_date",
+			label: __("To Date"),
+			fieldtype: "Date",
+			default: frappe.datetime.get_today(),
+			reqd: 1,
+		},
+		{
+			fieldname: "company",
+			label: __("Company"),
+			fieldtype: "Link",
+			options: "Company",
+		},
+		{
+			fieldname: "branch",
+			label: __("Branch"),
+			fieldtype: "Link",
+			options: "Branch",
+		},
+		{
+			fieldname: "report_view",
+			label: __("Report View"),
+			fieldtype: "Select",
+			options: [
+				"Department Wise",
+				"Department + Sub Department",
+				"Department + Sub Department + Category",
+				"Full Path Summary",
+				"Full Tree",
+				"Item Wise",
+			].join("\n"),
+			default: "Department + Sub Department + Category",
+			reqd: 1,
+		},
+		{
+			fieldname: "sales_source",
+			label: __("Sales Source"),
+			fieldtype: "Select",
+			options: ["Both", "POS Invoice", "Sales Invoice"].join("\n"),
+			default: "Both",
+			reqd: 1,
+		},
+		{
+			fieldname: "item_group",
+			label: __("Item Group"),
+			fieldtype: "Link",
+			options: "Item Group",
+		},
+		{
+			fieldname: "item_code",
+			label: __("Item"),
+			fieldtype: "Link",
+			options: "Item",
+		},
+		{
+			fieldname: "show_item_details",
+			label: __("Show Item Details"),
+			fieldtype: "Check",
+			default: 0,
+		},
+	],
+};

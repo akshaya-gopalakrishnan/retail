@@ -1,0 +1,25 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-08-21 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": ["add_to", "item", "item_group", "uom"],
+ "fields": [
+  {"default": "Buy Item", "fieldname": "add_to", "fieldtype": "Select", "in_list_view": 1, "label": "Add To", "options": "Buy Item\nFree Item"},
+  {"fieldname": "item", "fieldtype": "Link", "in_list_view": 1, "label": "Item", "options": "Item"},
+  {"fieldname": "item_group", "fieldtype": "Link", "in_list_view": 1, "label": "Item Group", "options": "Item Group"},
+  {"fieldname": "uom", "fieldtype": "Link", "in_list_view": 1, "label": "UOM", "options": "UOM"}
+ ],
+ "istable": 1,
+ "modified": "2026-08-21 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Retail-app",
+ "name": "Buy X Get Y Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC"
+}
+
