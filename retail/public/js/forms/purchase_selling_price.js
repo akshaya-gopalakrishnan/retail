@@ -217,6 +217,7 @@
 
 	function refreshAllRows(frm) {
 		if (!hasSellPriceFields(frm)) return;
+		if (frm.doc.docstatus !== 0) return;
 		if (!frm.doc.custom_allow_selling_price) return;
 		(frm.doc.items || []).forEach((row) => {
 			if (row.item_code && !flt(row.custom_cur_sell_rate)) {
@@ -254,6 +255,8 @@
 	}
 
 	async function fetchCurrentSellingRate(frm, cdt, cdn) {
+		if (frm.doc.docstatus !== 0) return;
+
 		const row = locals[cdt]?.[cdn];
 		if (!row?.item_code || row.custom_cur_sell_rate === undefined) return;
 
@@ -275,6 +278,8 @@
 	}
 
 	async function updateInclusiveRate(frm, cdt, cdn) {
+		if (frm.doc.docstatus !== 0) return;
+
 		const row = locals[cdt]?.[cdn];
 		if (!row || row.__retail_sell_price_syncing || row.custom_new_sell_incl === undefined) return;
 
@@ -293,6 +298,8 @@
 	}
 
 	async function updateExclusiveRate(frm, cdt, cdn) {
+		if (frm.doc.docstatus !== 0) return;
+
 		const row = locals[cdt]?.[cdn];
 		if (!row || row.__retail_sell_price_syncing || row.custom_new_sell_incl === undefined) return;
 
@@ -348,6 +355,8 @@
 	}
 
 	function updateMargin(frm, cdt, cdn) {
+		if (frm.doc.docstatus !== 0) return;
+
 		const row = locals[cdt]?.[cdn];
 		if (!row || row.custom_new_sell_rate === undefined) return;
 
