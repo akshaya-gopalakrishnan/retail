@@ -254,7 +254,7 @@ def promotion_matches_doc(promotion, doc):
 def get_eligible_amount(doc, promotion):
 	excluded_groups = {row.item_group for row in promotion.get("excluded_item_groups") or [] if row.item_group}
 	if not excluded_groups:
-		return flt(doc.get("net_total"))
+		return flt(doc.get("grand_total")) or flt(doc.get("net_total"))
 
 	amount = 0
 	for row in doc.get("items") or []:
@@ -262,8 +262,17 @@ def get_eligible_amount(doc, promotion):
 			continue
 		if item_in_excluded_group(row.item_code, excluded_groups):
 			continue
-		amount += flt(row.get("net_amount"))
+		amount += get_row_customer_amount(row)
 	return amount
+
+
+def get_row_customer_amount(row):
+	return (
+		flt(row.get("custom_amount_including_vat"))
+		or flt(row.get("amount_including_vat"))
+		or flt(row.get("net_amount"))
+		or flt(row.get("amount"))
+	)
 
 
 def item_in_excluded_group(item_code, excluded_groups):
