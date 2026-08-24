@@ -38,7 +38,7 @@ app_include_css = [
 ]
 
 app_include_js = [
-    "/assets/retail/js/retail_navigation.js?v=119",
+    "/assets/retail/js/retail_navigation.js?v=133",
     "/assets/retail/js/local_draft_recovery.js?v=28",
     "/assets/retail/js/forms/transaction_items.js?v=14",
     "/assets/retail/js/zebra_label_bulk_print.js?v=3",

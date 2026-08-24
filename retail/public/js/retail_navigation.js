@@ -300,6 +300,12 @@
         'System Rules': ['List', 'Document Naming Rule'],
         'POS Counters': ['List', 'POS Branch Counter']
     };
+    const LIST_FACTORY_DOCTYPES = new Set([
+        'Promo Price',
+        'Buy X Get Y Promotion',
+        'Gift Voucher Promotion',
+        'Gift Voucher Ledger'
+    ]);
     const DOCTYPE_TO_WORKSPACE = {
         'Item': 'Items',
         'Item Group': 'Items',
@@ -682,8 +688,11 @@
     let routeRefreshTimer = null;
     let sidebarRenderRetryCount = 0;
     let workspaceCustomCardsPatched = false;
+    let workspaceSidebarRoutesPatched = false;
     let openWorkClearedRouteKey = null;
     let lastSidebarTogglePointerAt = 0;
+    let lastSidebarStateRouteKey = '';
+    let lastSidebarStateMain = '';
     const dynamicChildToParent = {};
     const dynamicReportToGroup = {};
 
@@ -950,13 +959,40 @@
         return true;
     }
 
+    function patchWorkspaceSidebarRoutes() {
+        const workspacePrototype = frappe.views?.Workspace?.prototype;
+        if (!workspacePrototype || workspaceSidebarRoutesPatched) return !!workspacePrototype;
+
+        const renderSidebarItem = workspacePrototype.sidebar_item_container;
+        if (typeof renderSidebarItem !== 'function') return false;
+
+        workspacePrototype.sidebar_item_container = function (item) {
+            const $container = renderSidebarItem.call(this, item);
+            const target = item?.route || DIRECT_MAPPING[item?.title] || DIRECT_MAPPING[item?.name];
+            if (!target) return $container;
+
+            const anchor = $container.children('.desk-sidebar-item').children('.item-anchor').get(0)
+                || $container.find('.desk-sidebar-item > .item-anchor').get(0);
+            if (!anchor) return $container;
+
+            anchor.setAttribute('href', getTargetUrl(target));
+            anchor.setAttribute('data-retail-direct-link', '1');
+            setAnchorRouteTarget(anchor, target);
+            return $container;
+        };
+
+        workspaceSidebarRoutesPatched = true;
+        return true;
+    }
+
     function waitForWorkspaceModule() {
-        if (suppressCustomDocumentCards()) return;
+        if (suppressCustomDocumentCards() && patchWorkspaceSidebarRoutes()) return;
 
         let attempts = 0;
         const timer = setInterval(() => {
             attempts += 1;
-            if (suppressCustomDocumentCards() || attempts >= 40) clearInterval(timer);
+            const ready = suppressCustomDocumentCards() && patchWorkspaceSidebarRoutes();
+            if (ready || attempts >= 40) clearInterval(timer);
         }, 250);
     }
 
@@ -1065,6 +1101,9 @@
     function getTargetUrl(target) {
         const route = target.filter(part => !$.isPlainObject(part));
         const filters = target.find(part => $.isPlainObject(part));
+        if (route[0] === 'List' && LIST_FACTORY_DOCTYPES.has(route[1]) && !filters) {
+            return `/app/list/${encodeURIComponent(route[1])}`;
+        }
         let url = frappe.router.make_url(frappe.router.convert_from_standard_route(route));
 
         if (filters && Object.keys(filters).length) {
@@ -1089,6 +1128,10 @@
     function routeToTarget(target) {
         const route = target.filter(part => !$.isPlainObject(part));
         const filters = target.find(part => $.isPlainObject(part));
+
+        if (route[0] === 'List' && LIST_FACTORY_DOCTYPES.has(route[1]) && !filters) {
+            return routeToUrl(getTargetUrl(target));
+        }
 
         // A route option alone keeps the same URL as an unfiltered list. When
         // moving from Sales Invoices to Sales Returns, Frappe can therefore
@@ -1239,6 +1282,23 @@
         }
 
         return waitForRoute();
+    }
+
+    function routeToListFactory(doctype) {
+        const url = `/app/list/${encodeURIComponent(doctype)}`;
+        const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+
+        frappe.route_options = null;
+        frappe.route_hash = null;
+        if (window.cur_list && window.cur_list.doctype !== doctype) {
+            window.cur_list = null;
+        }
+
+        if (currentUrl !== url) {
+            window.history.pushState(null, null, url);
+        }
+
+        return Promise.resolve(frappe.router.route()).then(waitForRoute);
     }
 
     function getWorkspaceUrl(workspaceName, isPublic = true) {
@@ -1807,18 +1867,72 @@
         `;
     }
 
+    function closeSidebarChildren(container) {
+        const childSection = container?.querySelector(':scope > .sidebar-child-item');
+        if (!childSection) return;
+
+        container.classList.remove('retail-manual-open');
+        childSection.classList.add('hidden');
+        childSection
+            .querySelectorAll(':scope > .sidebar-item-container')
+            .forEach(child => child.classList.add('hidden'));
+        setDropIcon(container, false);
+    }
+
+    function openSidebarChildren(container) {
+        const childSection = container?.querySelector(':scope > .sidebar-child-item');
+        if (!childSection) return;
+
+        childSection.classList.remove('hidden');
+        childSection
+            .querySelectorAll(':scope > .sidebar-item-container')
+            .forEach(child => {
+                child.classList.remove('hidden');
+                child.style.removeProperty('display');
+            });
+        setDropIcon(container, true);
+    }
+
+    function closeSiblingSidebarSections(container) {
+        const parentSection = container?.parentElement;
+        if (!parentSection) return;
+
+        parentSection
+            .querySelectorAll(':scope > .sidebar-item-container')
+            .forEach(sibling => {
+                if (sibling !== container) closeSidebarChildren(sibling);
+            });
+    }
+
+    function closeAllSidebarSections() {
+        getSelectableSidebarContainers().forEach(closeSidebarChildren);
+    }
+
     function syncSidebarState() {
         const state = getRouteState();
+        const routeKey = (frappe.get_route?.() || []).join('/');
+        const routeChanged = routeKey !== lastSidebarStateRouteKey;
+        const mainChanged = !!state.main && state.main !== lastSidebarStateMain;
+        const resetManualOpen = routeChanged && mainChanged;
+        lastSidebarStateRouteKey = routeKey;
+        if (state.main) {
+            lastSidebarStateMain = state.main;
+        }
 
         getSelectableSidebarContainers().forEach(container => {
+            if (resetManualOpen) {
+                closeSidebarChildren(container);
+            }
+
             const label = getItemLabel(container);
             const routingLabel = getSidebarRoutingLabel(container);
             const directItem = container.querySelector(':scope > .desk-sidebar-item');
             const childSection = container.querySelector(':scope > .sidebar-child-item');
             const isMain = label && state.main === label;
             const isChild = (routingLabel && state.child === routingLabel) || (label && state.child === label);
-            const shouldOpen = isMain || isChild;
             const isAncestor = !!(routingLabel && state.child && isDescendantOf(state.child, routingLabel));
+            const isManualOpen = container.classList.contains('retail-manual-open');
+            const shouldOpen = isMain || isChild || isAncestor || isManualOpen;
 
             container.classList.toggle('retail-primary-active', !!isMain);
             container.classList.toggle('retail-secondary-active', !!isChild);
@@ -1826,8 +1940,9 @@
             directItem?.classList.toggle('selected', !!(isMain || isChild));
 
             if (childSection && shouldOpen) {
-                childSection.classList.remove('hidden');
-                setDropIcon(container, true);
+                openSidebarChildren(container);
+            } else if (childSection) {
+                closeSidebarChildren(container);
             }
         });
     }
@@ -2262,7 +2377,13 @@
 
         if (container.closest('.retail-persistent-sidebar')) {
             const isHidden = childSection.classList.toggle('hidden');
-            setDropIcon(container, !isHidden);
+            container.classList.toggle('retail-manual-open', !isHidden);
+            if (!isHidden) closeSiblingSidebarSections(container);
+            if (isHidden) {
+                closeSidebarChildren(container);
+            } else {
+                openSidebarChildren(container);
+            }
             return true;
         }
 
@@ -2279,6 +2400,8 @@
         } else {
             childSection.classList.toggle('hidden', !isClosed);
         }
+        container.classList.toggle('retail-manual-open', isClosed);
+        if (isClosed) closeSiblingSidebarSections(container);
         setDropIcon(container, isClosed);
         setTimeout(() => setDropIcon(container, isClosed), 0);
         return true;
@@ -2326,9 +2449,30 @@
             const target = getAnchorRouteTarget(anchor) || DIRECT_MAPPING[routingLabel] || DIRECT_MAPPING[label] || getTargetFromUrl(anchor);
             const childSection = container?.querySelector(':scope > .sidebar-child-item');
             const hasChildren = !!childSection?.children?.length;
+            const directListDoctype = [routingLabel, label].find(value => LIST_FACTORY_DOCTYPES.has(value));
+            const isTopLevelMenu = TOP_LEVEL_WORKSPACES.has(routingLabel || label);
 
-            if (isWorkspaceRoute(frappe.get_route()) && hasChildren) {
-                toggleSidebarSection(container, event);
+            if (directListDoctype) {
+                event.preventDefault();
+                event.stopPropagation();
+                event.stopImmediatePropagation();
+
+                rememberSidebarContext(directListDoctype);
+                Promise.resolve(routeToListFactory(directListDoctype)).then(() => {
+                    syncSidebarState();
+                    scheduleRetry();
+                });
+                return;
+            }
+
+            if (hasChildren && isTopLevelMenu) {
+                event.preventDefault();
+                event.stopPropagation();
+                event.stopImmediatePropagation();
+
+                closeSiblingSidebarSections(container);
+                container.classList.add('retail-manual-open');
+                openSidebarChildren(container);
                 frappe.route_options = null;
                 rememberSidebarContext(routingLabel || label);
                 frappe.set_route(getWorkspaceUrl(getWorkspaceName(container), true).replace(/^\/app\//, ''));
@@ -2375,6 +2519,9 @@
             event.preventDefault();
             frappe.route_options = null;
             rememberSidebarContext(routingLabel || label);
+            if (TOP_LEVEL_WORKSPACES.has(routingLabel || label)) {
+                closeAllSidebarSections();
+            }
             frappe.set_route(getWorkspaceUrl(getWorkspaceName(container), true).replace(/^\/app\//, ''));
         }, true);
     }
@@ -2461,13 +2608,7 @@
             button.className = 'btn-reset drop-icon retail-drop-icon';
             button.type = 'button';
             button.innerHTML = getSmallDropIcon(false);
-            button.addEventListener('click', event => {
-                event.preventDefault();
-                event.stopPropagation();
-                event.stopImmediatePropagation?.();
-                const open = childSection.classList.toggle('hidden');
-                setDropIcon(container, !open);
-            });
+            button.addEventListener('click', event => toggleSidebarSection(container, event));
             control.appendChild(button);
             children.forEach(child => childSection.appendChild(buildSidebarItem(child, pages)));
         }

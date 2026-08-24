@@ -250,12 +250,13 @@ def get_permitted_promotion_sidebar_items():
 		if frappe.has_permission(doctype, "read"):
 			items.append(
 				{
-					"name": doctype,
+					"name": f"retail-{frappe.scrub(doctype)}-list-link",
 					"title": doctype,
 					"label": doctype,
 					"parent_page": "Sales",
 					"public": 1,
 					"is_hidden": 0,
+					"content": "[]",
 					"route": ["List", doctype],
 				}
 			)
