@@ -161,6 +161,7 @@
         , 'tax report': { icon: 'fa fa-percent', cls: 'color-accounts' }
         , 'tax reports': { icon: 'fa fa-percent', cls: 'color-accounts' }
         , 'tax payable report summary': { icon: 'fa fa-calculator', cls: 'color-accounts' }
+        , 'promotions': { icon: 'fa fa-gift', cls: 'color-sales' }
         , 'promo price': { icon: 'fa fa-tags', cls: 'color-sales' }
         , 'buy x get y promotion': { icon: 'fa fa-gift', cls: 'color-sales' }
         , 'gift voucher promotion': { icon: 'fa fa-ticket', cls: 'color-sales' }
@@ -316,6 +317,10 @@
         'Sales Order': 'Sales',
         'Sales Invoice': 'Sales',
         'POS Invoice': 'POS',
+        'Promo Price': 'Promotions',
+        'Buy X Get Y Promotion': 'Promotions',
+        'Gift Voucher Promotion': 'Promotions',
+        'Gift Voucher Ledger': 'Promotions',
         'POS Profile': 'POS',
         'POS Cashier Shift': 'POS',
         'POS Counter Session': 'POS',
@@ -421,10 +426,10 @@
         'Sales Returns': 'Sales',
         'Trading Invoices': 'Sales',
         'All Sales Invoices': 'Sales',
-        'Promo Price': 'Sales',
-        'Buy X Get Y Promotion': 'Sales',
-        'Gift Voucher Promotion': 'Sales',
-        'Gift Voucher Ledger': 'Sales',
+        'Promo Price': 'Promotions',
+        'Buy X Get Y Promotion': 'Promotions',
+        'Gift Voucher Promotion': 'Promotions',
+        'Gift Voucher Ledger': 'Promotions',
         'POS Invoices': 'POS',
         'POS Profile': 'POS',
         'POS Profiles': 'POS',
@@ -548,6 +553,7 @@
         'Manufacturing',
         'Accounts',
         'Reports',
+        'Promotions',
         'Settings'
     ]);
     const WORKSPACE_TO_MODULE = Object.freeze({
@@ -573,6 +579,11 @@
         'Sales Orders': 'Selling',
         'Sales Invoices': 'Accounts',
         'Sales Returns': 'Accounts',
+        'Promotions': 'Selling',
+        'Promo Price': 'Selling',
+        'Buy X Get Y Promotion': 'Selling',
+        'Gift Voucher Promotion': 'Selling',
+        'Gift Voucher Ledger': 'Selling',
         'POS': 'Accounts',
         'POS Invoices': 'Accounts',
         'POS Profile': 'Accounts',

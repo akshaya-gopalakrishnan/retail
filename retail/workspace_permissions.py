@@ -23,6 +23,7 @@ WORKSPACE_MODULES = {
 	"Sales Invoices": "Accounts",
 	"Sales Returns": "Accounts",
 	"Delivery Notes": "Stock",
+	"Promotions": "Selling",
 	"Promo Price": "Selling",
 	"Buy X Get Y Promotion": "Selling",
 	"Gift Voucher Promotion": "Selling",
@@ -253,7 +254,7 @@ def get_permitted_promotion_sidebar_items():
 					"name": f"retail-{frappe.scrub(doctype)}-list-link",
 					"title": doctype,
 					"label": doctype,
-					"parent_page": "Sales",
+					"parent_page": "Promotions",
 					"public": 1,
 					"is_hidden": 0,
 					"content": "[]",
@@ -261,6 +262,25 @@ def get_permitted_promotion_sidebar_items():
 				}
 			)
 	return items
+
+
+PROMOTION_SIDEBAR_TITLES = ("Promo Price", "Buy X Get Y Promotion", "Gift Voucher Promotion", "Gift Voucher Ledger")
+
+
+def get_promotions_sidebar_root():
+	return {
+		"name": "Promotions",
+		"title": "Promotions",
+		"label": "Promotions",
+		"public": 1,
+		"is_hidden": 0,
+		"content": "[]",
+	}
+
+
+def insert_after_title(pages, page, after_title):
+	insert_at = next((idx + 1 for idx, existing in enumerate(pages) if existing.get("title") == after_title), len(pages))
+	pages.insert(insert_at, page)
 
 
 def _workspace_module_is_allowed(page, blocked_modules):
@@ -302,17 +322,24 @@ def get_workspace_sidebar_items():
 				existing_titles.add(page.get("title"))
 
 	def append_promotion_sidebar_items():
-		if not any(page.get("title") == "Sales" for page in sidebar.get("pages") or []):
-			return
 		existing_titles = {page.get("title") for page in sidebar.get("pages") or []}
-		for page in get_permitted_promotion_sidebar_items():
+		promotion_pages = get_permitted_promotion_sidebar_items()
+		if not promotion_pages:
+			return
+		if "Promotions" not in existing_titles:
+			insert_after_title(sidebar.setdefault("pages", []), get_promotions_sidebar_root(), "Reports")
+			existing_titles.add("Promotions")
+		for page in sidebar.get("pages") or []:
+			if page.get("title") in PROMOTION_SIDEBAR_TITLES:
+				page["parent_page"] = "Promotions"
+		for page in promotion_pages:
 			if page.get("title") not in existing_titles:
 				sidebar.setdefault("pages", []).append(page)
 				existing_titles.add(page.get("title"))
 
 	if sidebar.get("has_access"):
-		append_promotion_sidebar_items()
 		append_report_sidebar_items()
+		append_promotion_sidebar_items()
 		return sidebar
 
 	pages = sidebar.get("pages") or []
