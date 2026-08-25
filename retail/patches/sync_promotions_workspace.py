@@ -31,6 +31,8 @@ def execute():
 			data.pop(fieldname, None)
 		if doctype == "Dashboard Chart" and not frappe.db.exists("DocType", data.get("document_type")):
 			continue
+		if doctype == "Dashboard Chart":
+			data["is_standard"] = 0
 		existing_name = frappe.db.exists(doctype, name)
 		doc = frappe.get_doc(doctype, existing_name) if existing_name else frappe.new_doc(doctype)
 		doc.update(data)
