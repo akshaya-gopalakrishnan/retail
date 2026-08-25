@@ -23,8 +23,8 @@
   {"default": "0", "fieldname": "min_sales_value", "fieldtype": "Currency", "label": "Min Sales Value"},
   {"fieldname": "priority", "fieldtype": "Select", "label": "Priority", "options": "\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20"},
   {"fieldname": "notes", "fieldtype": "Small Text", "label": "Notes"},
-  {"fieldname": "products_section", "fieldtype": "Section Break", "label": "Product Details"},
-  {"fieldname": "products", "fieldtype": "Table", "label": "Products", "options": "Promo Price Item", "reqd": 1},
+  {"fieldname": "products_section", "fieldtype": "Section Break", "label": "Items and Promo Prices"},
+  {"fieldname": "products", "fieldtype": "Table", "label": "Items", "options": "Promo Price Item", "reqd": 1},
   {"collapsible": 1, "fieldname": "system_section", "fieldtype": "Section Break", "label": "System"},
   {"fieldname": "linked_schemes", "fieldtype": "Table", "hidden": 1, "label": "Saved Rules", "options": "Promotion Linked Scheme", "read_only": 1}
  ],

@@ -265,6 +265,17 @@ def get_permitted_promotion_sidebar_items():
 
 
 PROMOTION_SIDEBAR_TITLES = ("Promo Price", "Buy X Get Y Promotion", "Gift Voucher Promotion", "Gift Voucher Ledger")
+PROMOTIONS_WORKSPACE_CONTENT = (
+	'[{"id":"hdr_promotions","type":"header","data":{"text":"<span class=\\"h4\\">Promotions</span>","col":12}},'
+	'{"id":"sc_promo_price","type":"shortcut","data":{"shortcut_name":"Promo Price","col":3}},'
+	'{"id":"sc_buy_x_get_y_promotion","type":"shortcut","data":{"shortcut_name":"Buy X Get Y Promotion","col":3}},'
+	'{"id":"sc_gift_voucher_promotion","type":"shortcut","data":{"shortcut_name":"Gift Voucher Promotion","col":3}},'
+	'{"id":"sc_gift_voucher_ledger","type":"shortcut","data":{"shortcut_name":"Gift Voucher Ledger","col":3}},'
+	'{"id":"sp_promotion_charts","type":"spacer","data":{"col":12}},'
+	'{"id":"chart_promo_price_status","type":"chart","data":{"chart_name":"Promo Price Status","col":4}},'
+	'{"id":"chart_gift_voucher_promotion_status","type":"chart","data":{"chart_name":"Gift Voucher Promotion Status","col":4}},'
+	'{"id":"chart_gift_voucher_ledger_status","type":"chart","data":{"chart_name":"Gift Voucher Ledger Status","col":4}}]'
+)
 
 
 def get_promotions_sidebar_root():
@@ -274,13 +285,22 @@ def get_promotions_sidebar_root():
 		"label": "Promotions",
 		"public": 1,
 		"is_hidden": 0,
-		"content": "[]",
+		"content": PROMOTIONS_WORKSPACE_CONTENT,
 	}
 
 
 def insert_after_title(pages, page, after_title):
 	insert_at = next((idx + 1 for idx, existing in enumerate(pages) if existing.get("title") == after_title), len(pages))
 	pages.insert(insert_at, page)
+
+
+def move_after_title(pages, title, after_title):
+	page = next((existing for existing in pages if existing.get("title") == title), None)
+	if not page:
+		return
+
+	pages.remove(page)
+	insert_after_title(pages, page, after_title)
 
 
 def _workspace_module_is_allowed(page, blocked_modules):
@@ -329,6 +349,10 @@ def get_workspace_sidebar_items():
 		if "Promotions" not in existing_titles:
 			insert_after_title(sidebar.setdefault("pages", []), get_promotions_sidebar_root(), "Reports")
 			existing_titles.add("Promotions")
+		else:
+			for page in sidebar.get("pages") or []:
+				if page.get("title") == "Promotions" and page.get("content") in (None, "", "[]"):
+					page["content"] = PROMOTIONS_WORKSPACE_CONTENT
 		for page in sidebar.get("pages") or []:
 			if page.get("title") in PROMOTION_SIDEBAR_TITLES:
 				page["parent_page"] = "Promotions"
@@ -336,6 +360,7 @@ def get_workspace_sidebar_items():
 			if page.get("title") not in existing_titles:
 				sidebar.setdefault("pages", []).append(page)
 				existing_titles.add(page.get("title"))
+		move_after_title(sidebar.get("pages") or [], "Promotions", "Reports")
 
 	if sidebar.get("has_access"):
 		append_report_sidebar_items()

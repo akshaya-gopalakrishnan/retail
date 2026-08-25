@@ -30,3 +30,4 @@ retail.patches.add_item_price_barcode
 retail.patches.add_retail_packing_disabled
 retail.patches.cleanup_manufacturing_workspace_names
 retail.patches.resolve_manufacturing_workspace_route_collisions
+retail.patches.sync_promotions_workspace

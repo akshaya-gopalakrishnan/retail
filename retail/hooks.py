@@ -121,6 +121,7 @@ doctype_list_js = {
 	"Counter": "public/js/hide_transaction_id_list.js",
 }
 doctype_js = {
+	"Promo Price": "public/js/forms/promo_price.js",
 	"Employee": "public/js/forms/pos_login.js",
 	"User": "public/js/forms/pos_login.js",
 	"Item": "public/js/forms/item.js",
@@ -327,6 +328,7 @@ doc_events = {
 		"validate": [
 			"retail.domains.foc.apply_foc_quantities",
 			"retail.domains.transactions.vat.set_vat_rates",
+			"retail.promotions.promo_price.apply_inclusive_promo_prices",
 			"retail.domains.sales.counter.set_sales_invoice_counter_name",
 			"retail.domains.sales.invoice_totals.apply_retail_shipping_charges",
 			"retail.api.pos_sync.validate_external_reference",
@@ -350,6 +352,7 @@ doc_events = {
 		"validate": [
 			"retail.domains.foc.apply_foc_quantities",
 			"retail.domains.transactions.vat.set_vat_rates",
+			"retail.promotions.promo_price.apply_inclusive_promo_prices",
 			"retail.api.pos_sync.validate_external_reference",
 			"retail.promotions.gift_voucher.apply_gift_voucher_redemption",
 		],

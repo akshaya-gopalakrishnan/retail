@@ -5,15 +5,16 @@
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
- "field_order": ["item", "item_group", "uom", "promo_price", "promo_price_including_tax", "discount_percent", "max_qty"],
+ "field_order": ["item", "uom", "discount_percent", "promo_price", "promo_price_including_tax", "max_qty", "item_group", "price_list"],
  "fields": [
   {"fieldname": "item", "fieldtype": "Link", "in_list_view": 1, "label": "Item", "options": "Item"},
-  {"fieldname": "item_group", "fieldtype": "Link", "in_list_view": 1, "label": "Item Group", "options": "Item Group"},
+  {"fieldname": "item_group", "fieldtype": "Link", "label": "Item Group", "options": "Item Group"},
   {"fieldname": "uom", "fieldtype": "Link", "in_list_view": 1, "label": "UOM", "options": "UOM"},
-  {"fieldname": "promo_price", "fieldtype": "Currency", "in_list_view": 1, "label": "Promo Price"},
-  {"fieldname": "promo_price_including_tax", "fieldtype": "Currency", "label": "Promo Price Including Tax"},
-  {"fieldname": "discount_percent", "fieldtype": "Percent", "label": "Discount %"},
-  {"fieldname": "max_qty", "fieldtype": "Float", "label": "Max Qty in One Sale"}
+  {"fieldname": "price_list", "fieldtype": "Link", "label": "Price List", "options": "Price List"},
+  {"fieldname": "promo_price", "fieldtype": "Currency", "in_list_view": 1, "label": "Promo Price Excl. VAT"},
+  {"fieldname": "promo_price_including_tax", "fieldtype": "Currency", "in_list_view": 1, "label": "Promo Price Incl. VAT"},
+  {"fieldname": "discount_percent", "fieldtype": "Percent", "in_list_view": 1, "label": "Discount %"},
+  {"fieldname": "max_qty", "fieldtype": "Float", "in_list_view": 1, "label": "Max Qty in One Sale"}
  ],
  "istable": 1,
  "modified": "2026-08-21 00:00:00.000000",
@@ -25,4 +26,3 @@
  "sort_field": "modified",
  "sort_order": "DESC"
 }
-

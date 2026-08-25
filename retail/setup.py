@@ -9,6 +9,16 @@ DEFAULT_RETAIL_WORKSPACE = "Business Home"
 DEFAULT_PRINT_FORMATS = {
 	"Sales Invoice": "Sales Invoice - Copy",
 	"Delivery Note": "Delivery Note- Copy",
+	"Sales Order": "Sales Order - Retail",
+	"Supplier Quotation": "Supplier Quotation - Retail",
+	"Purchase Order": "Purchase Order - Retail",
+	"Purchase Receipt": "Purchase Receipt - Retail",
+	"Purchase Invoice": "Purchase Invoice - Retail",
+	"Material Request": "Material Request - Retail",
+	"Promo Price": "Promo Price Sheet",
+	"Buy X Get Y Promotion": "Buy X Get Y Promotion Sheet",
+	"Gift Voucher Promotion": "Gift Voucher Promotion Sheet",
+	"Gift Voucher Ledger": "Gift Voucher Ledger Sheet",
 }
 SETTINGS_SIDEBAR_WORKSPACES = (
 	{

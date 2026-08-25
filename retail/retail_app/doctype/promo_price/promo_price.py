@@ -60,6 +60,7 @@ class PromoPrice(Document):
 					"rate_or_discount": "Discount Percentage" if flt(row.discount_percent) else "Rate",
 					"rate": flt(row.promo_price) or flt(row.promo_price_including_tax),
 					"discount_percentage": flt(row.discount_percent),
+					"for_price_list": row.price_list,
 					"warehouse": self.warehouse,
 					"priority": str(self.priority) if self.priority else None,
 				},
