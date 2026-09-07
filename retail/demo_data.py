@@ -184,12 +184,21 @@ def _ensure_mode_of_payment(mode, company, account):
 
 
 def _default_item_tax_template(company):
-	abbr = _company_abbr(company)
-	return (
-		frappe.db.exists("Item Tax Template", f"UAE VAT 5% - {abbr}")
-		or frappe.db.get_value("Item Tax Template", {"title": "UAE VAT 5%", "company": company}, "name")
-		or frappe.db.get_value("Item Tax Template", {"company": company}, "name", order_by="modified desc")
+	rows = frappe.db.sql(
+		"""
+		select template.name
+		from `tabItem Tax Template` template
+		inner join `tabItem Tax Template Detail` detail
+			on detail.parent = template.name
+		where template.company = %s
+			and ifnull(template.disabled, 0) = 0
+			and detail.tax_rate = 5
+		order by template.name asc
+		limit 1
+		""",
+		company,
 	)
+	return rows[0][0] if rows else frappe.db.get_value("Item Tax Template", {"company": company}, "name", order_by="modified desc")
 
 
 def _ensure_masters(company):

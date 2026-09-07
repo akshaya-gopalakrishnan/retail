@@ -8,8 +8,10 @@ from frappe.utils import cint, flt, getdate, now_datetime, nowdate
 from erpnext.accounts.report.customer_ledger_summary.customer_ledger_summary import (
 	PartyLedgerSummaryReport,
 )
+from erpnext.selling.doctype.customer.customer import get_credit_limit
 
-from retail.pos_login import hash_quick_pin, make_quick_pin_hash, validate_quick_pin
+from retail.domains.item.vat_pricing import get_item_tax_rate
+from retail.pos_login import get_next_pos_login_id, hash_quick_pin, make_quick_pin_hash, validate_quick_pin
 
 
 SYNC_SOURCE = "Offline POS"
@@ -720,6 +722,7 @@ def _operator_master_rows(branch=None, modified_after=None):
 		"cell_number",
 		"user_id",
 		"employee_number",
+		"pos_login_id",
 		"pos_login_enabled",
 		"pos_quick_pin_hash",
 		"pos_quick_pin_salt",
@@ -736,12 +739,60 @@ def _operator_master_rows(branch=None, modified_after=None):
 	if branch and frappe.get_meta("Employee").has_field("branch"):
 		rows = [row for row in rows if not row.get("branch") or row.get("branch") == branch]
 	for row in rows:
-		row.login_id = row.get("employee_number") or row.get("employee") or row.get("name")
+		row.login_id = row.get("pos_login_id") or row.get("employee_number") or row.get("employee") or row.get("name")
 		row.quick_pin_hash = row.get("pos_quick_pin_hash")
 		row.quick_pin_salt = row.get("pos_quick_pin_salt")
 		if "pos_login_enabled" in row and not cint(row.get("pos_login_enabled")):
 			row.disabled = 1
 	return rows
+
+
+def _customer_master_rows(company, modified_filter=None):
+	modified_filter = modified_filter or []
+	customers = frappe.get_all(
+		"Customer",
+		filters=[["disabled", "=", 0], *modified_filter],
+		fields=["name", "customer_name", "customer_group", "territory", "modified"],
+		limit_page_length=0,
+	)
+
+	if not customers:
+		return customers
+
+	customer_names = [customer.name for customer in customers]
+	customer_groups = list({customer.customer_group for customer in customers if customer.customer_group})
+
+	customer_credit_details = {
+		row.parent: row
+		for row in frappe.get_all(
+			"Customer Credit Limit",
+			filters={"parenttype": "Customer", "parent": ["in", customer_names], "company": company},
+			fields=["parent", "credit_limit", "bypass_credit_limit_check"],
+		)
+	}
+	group_credit_details = {}
+	if customer_groups:
+		group_credit_details = {
+			row.parent: row
+			for row in frappe.get_all(
+				"Customer Credit Limit",
+				filters={"parenttype": "Customer Group", "parent": ["in", customer_groups], "company": company},
+				fields=["parent", "credit_limit", "bypass_credit_limit_check"],
+			)
+		}
+
+	for customer in customers:
+		credit_limit = get_credit_limit(customer.name, company)
+		credit_detail = customer_credit_details.get(customer.name) or group_credit_details.get(
+			customer.customer_group
+		)
+		customer["credit_limit"] = credit_limit
+		customer["is_credit_customer"] = 1 if credit_limit > 0 else 0
+		customer["bypass_credit_limit_check"] = (
+			cint(credit_detail.bypass_credit_limit_check) if credit_detail else 0
+		)
+
+	return customers
 
 
 def _hash_quick_pin(quick_pin, salt):
@@ -845,33 +896,38 @@ def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
 	if frappe.db.has_column("Item Price", "custom_barcode"):
 		item_price_fields.insert(-1, "custom_barcode as barcode")
 
+	item_fields = [
+		"name",
+		"item_code",
+		"item_name",
+		"custom_arabic_item_name as arabic_item_name",
+		"item_group",
+		"stock_uom",
+		"is_stock_item",
+		"custom_scale_item as is_scalable_item",
+		"custom_scale_barcode_type as scale_barcode_type",
+		"custom_is_open_price as is_open_price",
+		"custom_is_fast_plu_item as is_fast_plu_item",
+		"disabled",
+		"owner as created_by",
+		"creation as created_on",
+		"modified_by",
+		"modified",
+		"modified as modified_on",
+	]
+	if frappe.db.has_column("Item", "custom_tax"):
+		item_fields.insert(12, "custom_tax as sales_item_tax_template")
+
 	items = frappe.get_all(
 		"Item",
 		filters=[] if item_or_filters else modified_filter,
 		or_filters=item_or_filters,
-		fields=[
-			"name",
-			"item_code",
-			"item_name",
-			"custom_arabic_item_name as arabic_item_name",
-			"item_group",
-			"stock_uom",
-			"is_stock_item",
-			"custom_scale_item as is_scalable_item",
-			"custom_scale_barcode_type as scale_barcode_type",
-			"custom_is_open_price as is_open_price",
-			"custom_is_fast_plu_item as is_fast_plu_item",
-			"disabled",
-			"owner as created_by",
-			"creation as created_on",
-			"modified_by",
-			"modified",
-			"modified as modified_on",
-		],
+		fields=item_fields,
 		limit_page_length=0,
 	)
 	item_codes = [item.item_code for item in items if item.item_code]
 	item_group_by_item = {item.item_code: item.item_group for item in items}
+	_apply_item_tax_fields(items)
 	stock_by_item = _get_current_stock_by_item(counter_doc.warehouse, set(item_codes) | set(packing_parent_items))
 	all_item_packings = []
 	if item_codes:
@@ -887,8 +943,10 @@ def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
 			limit_page_length=0,
 		)
 	packings_by_item = {}
+	items_by_code = {item.item_code: item for item in items}
 	for packing in all_item_packings:
 		packing["packing_group"] = item_group_by_item.get(packing.item_code)
+		_apply_packing_tax_fields(packing, items_by_code)
 		packing["current_stock"] = _packing_current_stock(
 			stock_by_item.get(packing.item_code, 0), packing.conversion_factor
 		)
@@ -898,6 +956,7 @@ def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
 		item["packings"] = packings_by_item.get(item.item_code, [])
 	for packing in packing_details:
 		packing["packing_group"] = item_group_by_item.get(packing.item_code)
+		_apply_packing_tax_fields(packing, items_by_code)
 		packing["current_stock"] = _packing_current_stock(
 			stock_by_item.get(packing.item_code, 0), packing.conversion_factor
 		)
@@ -943,12 +1002,7 @@ def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
 			],
 			limit_page_length=0,
 		),
-		"customers": frappe.get_all(
-			"Customer",
-			filters=[["disabled", "=", 0], *modified_filter],
-			fields=["name", "customer_name", "customer_group", "territory", "modified"],
-			limit_page_length=0,
-		),
+		"customers": _customer_master_rows(counter_doc.company, modified_filter),
 		"operators": _operator_master_rows(branch, modified_after),
 		"modes_of_payment": frappe.get_all(
 			"Mode of Payment",
@@ -973,6 +1027,53 @@ def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
 			limit_page_length=0,
 		),
 	}
+
+
+def _apply_item_tax_fields(items):
+	if not items:
+		return
+
+	standard_templates = _get_standard_item_tax_templates([item.item_code for item in items])
+	rates_by_template = {}
+	for item in items:
+		template = item.get("sales_item_tax_template") or standard_templates.get(item.item_code)
+		if template not in rates_by_template:
+			rates_by_template[template] = flt(get_item_tax_rate(template)) if template else 0
+		rate = rates_by_template[template]
+		item["item_tax_template"] = template
+		item["tax_rate"] = rate
+		item["is_taxable"] = 1 if rate > 0 else 0
+
+
+def _apply_packing_tax_fields(packing, items_by_code):
+	item = items_by_code.get(packing.item_code)
+	if not item:
+		return
+
+	packing["item_tax_template"] = item.get("item_tax_template")
+	packing["tax_rate"] = item.get("tax_rate")
+	packing["is_taxable"] = item.get("is_taxable")
+
+
+def _get_standard_item_tax_templates(item_codes):
+	if not item_codes:
+		return {}
+
+	templates = {}
+	for row in frappe.get_all(
+		"Item Tax",
+		filters={
+			"parenttype": "Item",
+			"parent": ["in", sorted(set(item_codes))],
+		},
+		fields=["parent", "item_tax_template", "tax_category", "valid_from", "idx"],
+		order_by="parent asc, tax_category asc, valid_from desc, idx asc",
+		limit_page_length=0,
+	):
+		if row.parent in templates:
+			continue
+		templates[row.parent] = row.item_tax_template
+	return templates
 
 
 def _get_current_stock_by_item(warehouse, item_codes):
@@ -1009,14 +1110,19 @@ def set_cashier_quick_pin(data=None, **kwargs):
 	if not frappe.get_meta("Employee").has_field("pos_quick_pin_hash"):
 		frappe.throw(_("POS quick PIN fields are not installed. Run migration."))
 	salt, pin_hash = make_quick_pin_hash(quick_pin)
+	values = {
+		"pos_login_enabled": 1,
+		"pos_quick_pin_salt": salt,
+		"pos_quick_pin_hash": pin_hash,
+	}
+	if frappe.get_meta("Employee").has_field("pos_login_id") and not frappe.db.get_value(
+		"Employee", employee, "pos_login_id"
+	):
+		values["pos_login_id"] = get_next_pos_login_id()
 	frappe.db.set_value(
 		"Employee",
 		employee,
-		{
-			"pos_login_enabled": 1,
-			"pos_quick_pin_salt": salt,
-			"pos_quick_pin_hash": pin_hash,
-		},
+		values,
 	)
 	return {"status": "Success", "cashier_employee": employee}
 
@@ -1026,11 +1132,16 @@ def verify_cashier_quick_pin(data=None, **kwargs):
 	_assert_pos_user()
 	payload = _as_dict(data, **kwargs)
 	employee = payload.get("cashier_employee") or payload.get("employee")
+	login_id = payload.get("login_id") or payload.get("pos_login_id")
 	quick_pin = payload.get("quick_pin")
-	if not employee or not quick_pin:
-		frappe.throw(_("cashier_employee and quick_pin are required."))
+	if not (employee or login_id) or not quick_pin:
+		frappe.throw(_("cashier_employee/login_id and quick_pin are required."))
 	if not frappe.get_meta("Employee").has_field("pos_quick_pin_hash"):
 		frappe.throw(_("POS quick PIN fields are not installed. Run migration."))
+	if not employee and login_id:
+		if not frappe.get_meta("Employee").has_field("pos_login_id"):
+			frappe.throw(_("POS Login ID field is not installed. Run migration."))
+		employee = frappe.db.get_value("Employee", {"pos_login_id": cint(login_id)}, "name")
 	row = frappe.db.get_value(
 		"Employee",
 		employee,

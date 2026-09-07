@@ -23,12 +23,46 @@ def validate_quick_pin(quick_pin):
 		frappe.throw(_("POS Quick PIN must be exactly 4 digits."))
 
 
+def get_next_pos_login_id():
+	used = [
+		cint(row.pos_login_id)
+		for row in frappe.get_all(
+			"Employee",
+			filters=[["pos_login_id", "is", "set"]],
+			fields=["pos_login_id"],
+			limit_page_length=0,
+		)
+		if cint(row.pos_login_id) > 0
+	]
+	return max(max(used) + 1 if used else 101, 101)
+
+
+def set_employee_pos_login_id(doc):
+	if not doc.meta.has_field("pos_login_id"):
+		return
+
+	if cint(doc.get("pos_login_id")) <= 0 and cint(doc.get("pos_login_enabled")):
+		doc.pos_login_id = get_next_pos_login_id()
+
+	if cint(doc.get("pos_login_id")) <= 0:
+		return
+
+	if cint(doc.pos_login_id) <= 0:
+		frappe.throw(_("POS Login ID must be a positive number."))
+
+	existing = frappe.db.get_value("Employee", {"pos_login_id": cint(doc.pos_login_id)}, "name")
+	if existing and existing != doc.name:
+		frappe.throw(_("POS Login ID {0} is already used by Employee {1}.").format(doc.pos_login_id, existing))
+
+
 def apply_employee_pos_login(doc, method=None):
 	if not doc.meta.has_field("pos_quick_pin"):
 		return
 
 	if doc.get("pos_login_user") and doc.get("user_id") != doc.get("pos_login_user"):
 		doc.user_id = doc.pos_login_user
+
+	set_employee_pos_login_id(doc)
 
 	quick_pin = doc.get("pos_quick_pin")
 	if quick_pin:

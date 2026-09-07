@@ -21,11 +21,18 @@ def execute():
 					"insert_after": "pos_login_section",
 				},
 				{
+					"fieldname": "pos_login_id",
+					"label": "POS Login ID",
+					"fieldtype": "Int",
+					"insert_after": "pos_login_enabled",
+					"description": "Unique numeric login ID used by cashier in POS.",
+				},
+				{
 					"fieldname": "pos_login_user",
 					"label": "POS Login User",
 					"fieldtype": "Link",
 					"options": "User",
-					"insert_after": "pos_login_enabled",
+					"insert_after": "pos_login_id",
 					"description": "ERPNext user/login id used by this cashier in POS.",
 				},
 				{

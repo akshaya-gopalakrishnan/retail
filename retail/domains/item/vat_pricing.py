@@ -112,7 +112,7 @@ OBSOLETE_ITEM_PRICING_FIELDS = (
 	"custom_column_break_kcr7n",
 )
 
-DEFAULT_VAT_TEMPLATE_TITLE = "UAE VAT 5%"
+DEFAULT_VAT_RATE = 5
 
 
 def ensure_item_vat_pricing_fields():
@@ -459,19 +459,45 @@ def ensure_packing_vat_pricing_fields():
 
 
 def get_default_vat_template():
-	"""Return the site-specific Item Tax Template used as the default 5% VAT template."""
-	template = frappe.db.get_value("Item Tax Template", {"title": DEFAULT_VAT_TEMPLATE_TITLE}, "name")
-	if template:
-		return template
+	"""Return the current default VAT template, falling back to the default VAT rate."""
+	current_template = _get_current_default_vat_template()
+	if current_template:
+		return current_template
 
-	detail = frappe.qb.DocType("Item Tax Template Detail")
-	rows = (
-		frappe.qb.from_(detail)
-		.select(detail.parent)
-		.where(detail.tax_rate == 5)
-		.limit(1)
-	).run()
+	rows = frappe.db.sql(
+		"""
+		select template.name
+		from `tabItem Tax Template` template
+		inner join `tabItem Tax Template Detail` detail
+			on detail.parent = template.name
+		where ifnull(template.disabled, 0) = 0
+			and detail.tax_rate = %s
+		order by template.company asc, template.name asc
+		limit 1
+		""",
+		DEFAULT_VAT_RATE,
+	)
 	return rows[0][0] if rows else None
+
+
+def _get_current_default_vat_template():
+	for fieldname in ("custom_tax", "custom_purchase_tax_template"):
+		template = frappe.db.get_value(
+			"Property Setter",
+			{
+				"doc_type": "Item",
+				"field_name": fieldname,
+				"property": "default",
+			},
+			"value",
+		)
+		if (
+			template
+			and frappe.db.get_value("Item Tax Template", template, "disabled") == 0
+			and flt(get_item_tax_rate(template)) == DEFAULT_VAT_RATE
+		):
+			return template
+	return None
 
 
 def _set_empty_item_vat_templates(default_vat_template):
