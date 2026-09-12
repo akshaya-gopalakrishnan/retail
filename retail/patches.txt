@@ -32,3 +32,4 @@ retail.patches.cleanup_manufacturing_workspace_names
 retail.patches.resolve_manufacturing_workspace_route_collisions
 retail.patches.sync_promotions_workspace
 retail.patches.add_employee_pos_login_id
+retail.patches.fix_pos_quick_pin_fields

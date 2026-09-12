@@ -8,7 +8,8 @@
 			.attr("inputmode", "numeric")
 			.attr("pattern", "[0-9]*")
 			.attr("autocomplete", "off")
-			.attr("type", "password");
+			.attr("type", "password")
+			.attr("placeholder", frm.doc.pos_quick_pin_hash ? "PIN configured" : "");
 
 		field.$input.off("input.pos_pin").on("input.pos_pin", function () {
 			const value = String(this.value || "").replace(/\D/g, "").slice(0, 4);

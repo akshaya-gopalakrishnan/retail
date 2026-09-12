@@ -51,6 +51,8 @@
 	frappe.ui.form.on("Item", {
 		refresh(frm) {
 			setDefaultVatIncludes(frm);
+			frm.set_df_property("custom_barcode", "reqd", true);
+			ensureItemBarcode(frm);
 			setupArabicItemNameField(frm);
 			addArabicTranslationButton(frm);
 			queueLastPurchaseRateLookup(frm);
@@ -103,15 +105,31 @@
 		is_scale_item(frm) { setScaleItemDefaults(frm); },
 		custom_scale_item(frm) { setScaleItemDefaults(frm); },
 		custom_scale_barcode_type(frm) { syncInternalScaleType(frm); },
-		validate(frm) { removeEmptyBarcodeRows(frm); },
+		validate(frm) {
+			ensureItemBarcode(frm);
+			removeEmptyBarcodeRows(frm);
+		},
 		before_save(frm) { removeEmptyBarcodeRows(frm); },
 	});
+
+	function ensureItemBarcode(frm) {
+		if (frm.doc.custom_barcode) return;
+		frm.set_value("custom_barcode", generateItemBarcode());
+		const newBarcode = frm.doc.custom_barcode;
+		if (newBarcode) {
+			frappe.show_alert({
+				message: __("Barcode was empty, so a unique barcode was generated: {0}", [newBarcode]),
+				indicator: "green",
+			});
+		}
+	}
 
 	function setScaleItemDefaults(frm) {
 		if (!cint(frm.doc.custom_scale_item)) {
 			const updates = {};
 			if (cint(frm.doc.is_scale_item)) updates.is_scale_item = 0;
 			if (cint(frm.doc.scale_enabled)) updates.scale_enabled = 0;
+			if (frm.doc.custom_scale_barcode_type) updates.custom_scale_barcode_type = "";
 			if (Object.keys(updates).length) frm.set_value(updates);
 			return;
 		}
@@ -143,6 +161,11 @@
 	function generateScaleItemBarcode() {
 		const randomPart = String(Math.floor(Math.random() * 100000)).padStart(5, "0");
 		return `99${randomPart}`;
+	}
+
+	function generateItemBarcode() {
+		const randomPart = String(Math.floor(Math.random() * 100000)).padStart(7, "0");
+		return `BC${randomPart}`;
 	}
 
 	function addZebraLabelButton(frm) {

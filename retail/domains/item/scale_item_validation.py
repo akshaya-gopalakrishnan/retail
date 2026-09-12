@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import secrets
 
 import frappe
 from frappe import _
@@ -12,25 +13,58 @@ DEFAULT_SCALE_PREFIX = "99"
 DEFAULT_SCALE_FORMAT = "Prefix 99 - 2-5-5"
 LEGACY_SCALE_BARCODE_SCRIPT = "generate unique scale barcode"
 VISIBLE_SCALE_TYPE_OPTIONS = "Price\nWeight\nQuantity\nWeight+UnitPrice"
+BARCODE_GENERATION_MAX_ATTEMPTS = 200
 
 
 def is_scale_item(doc) -> bool:
-	return bool(cint(doc.get("is_scale_item")) or cint(doc.get("custom_scale_item")))
+	if doc.get("custom_scale_item") is not None:
+		return bool(cint(doc.get("custom_scale_item")))
+	return bool(cint(doc.get("is_scale_item")))
+
+
+def ensure_item_barcode(doc, method=None):
+	"""Ensure Item custom barcode is always populated and unique."""
+	barcode = (doc.get("custom_barcode") or "").strip()
+
+	if barcode:
+		existing = frappe.db.exists("Item", {"custom_barcode": barcode, "name": ["!=", doc.get("name") or ""]})
+		if existing:
+			frappe.throw(_("Barcode {0} is already used by item {1}.").format(barcode, existing))
+		doc.custom_barcode = barcode
+		return
+
+	doc.custom_barcode = get_unique_item_barcode(doc.get("name"))
+
+
+def get_unique_item_barcode(exclude_name=None):
+	for _ in range(BARCODE_GENERATION_MAX_ATTEMPTS):
+		barcode = generate_random_barcode()
+
+		exists = frappe.db.exists("Item", {"custom_barcode": barcode, "name": ["!=", exclude_name or ""]})
+		item_barcode_exists = frappe.db.exists("Item Barcode", {"barcode": barcode})
+		if not exists and not item_barcode_exists:
+			return barcode
+
+	raise frappe.ValidationError("Unable to generate unique barcode. Please retry.")
+
+
+def generate_random_barcode():
+	return f"BC{secrets.randbelow(10**7):07d}"
 
 
 def validate_scale_item(doc, method=None):
 	if not is_scale_item(doc):
+		doc.is_scale_item = 0
+		doc.scale_enabled = 0
+		doc.custom_scale_barcode_type = None
 		return
 
-	if not doc.get("scale_barcode_type") and doc.get("custom_scale_barcode_type"):
-		doc.scale_barcode_type = normalize_barcode_type(doc.custom_scale_barcode_type)
-	if not doc.get("custom_scale_barcode_type") and doc.get("scale_barcode_type"):
-		doc.custom_scale_barcode_type = doc.scale_barcode_type.title().replace("_", " ")
-	if not doc.get("scale_barcode_type"):
-		doc.scale_barcode_type = "WEIGHT"
+	barcode_type = doc.get("custom_scale_barcode_type") or doc.get("scale_barcode_type") or "WEIGHT"
+	doc.scale_barcode_type = normalize_barcode_type(barcode_type)
+	doc.custom_scale_barcode_type = display_barcode_type(doc.scale_barcode_type)
 
 	if doc.scale_barcode_type not in ("WEIGHT", "PRICE", "QUANTITY"):
-		frappe.throw(_("Scale Barcode Type must be WEIGHT, PRICE, or QUANTITY."))
+		frappe.throw(_("Scale Barcode Type must be Price, Weight, Quantity, or Weight+UnitPrice."))
 
 
 def validate_unique_enabled_plu(doc):
@@ -75,6 +109,10 @@ def normalize_barcode_type(value):
 	if value in ("WEIGHT+UNIT_PRICE", "WEIGHT+UNITPRICE"):
 		return "WEIGHT"
 	return value
+
+
+def display_barcode_type(value):
+	return {"PRICE": "Price", "WEIGHT": "Weight", "QUANTITY": "Quantity"}.get(value, value)
 
 
 def ensure_scale_item_setup():
