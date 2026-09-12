@@ -21,6 +21,7 @@ WORKSPACE_MODULES = {
 	"Quotations": "Selling",
 	"Sales Orders": "Selling",
 	"Sales Invoices": "Accounts",
+	"Sales Return": "Accounts",
 	"Sales Returns": "Accounts",
 	"Delivery Notes": "Stock",
 	"Promotions": "Selling",
@@ -173,6 +174,11 @@ POS_REPORT_SIDEBAR_GROUPS = (
 REPORT_SIDEBAR_GROUPS = REPORT_SIDEBAR_GROUPS + POS_REPORT_SIDEBAR_GROUPS
 
 
+def _is_return_page_title(title):
+	title = (title or "").strip().lower()
+	return "sales return" in title or "purchase return" in title
+
+
 def _get_blocked_modules():
 	blocked_modules = frappe.get_cached_doc("User", frappe.session.user).get_blocked_modules()
 	return set(blocked_modules or [])
@@ -304,11 +310,18 @@ def move_after_title(pages, title, after_title):
 
 
 def _workspace_module_is_allowed(page, blocked_modules):
+	title = page.get("title")
+	if _is_return_page_title(title):
+		return True
+
 	module = WORKSPACE_MODULES.get(page.get("title")) or page.get("module")
 	return not module or module not in blocked_modules
 
 
 def _workspace_has_permitted_content(page):
+	if _is_return_page_title(page.get("title")):
+		return True
+
 	try:
 		workspace = Workspace(page)
 		workspace.build_workspace()

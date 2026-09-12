@@ -1,10 +1,66 @@
 import frappe
 from frappe.utils import flt, getdate
 
+from retail.domains.item.vat_pricing import get_item_tax_rate
 from retail.domains.transactions.vat import apply_transaction_vat_taxes, get_transaction_item_vat_rate
 
 
 SALES_DOCTYPES = {"Sales Invoice", "POS Invoice"}
+
+
+@frappe.whitelist()
+def get_item_for_promo_price(barcode=None, price_list=None, item_code=None):
+	"""Return item and current selling VAT prices for a barcode or item code."""
+	barcode = (barcode or "").strip()
+	item_uom = None
+	if not item_code:
+		if not barcode:
+			frappe.throw("Scan or select an item.")
+		barcode_data = frappe.db.get_value(
+			"Item Barcode", {"barcode": barcode}, ["parent as item_code", "uom"], as_dict=True
+		)
+		item_code = barcode_data.item_code if barcode_data else None
+		item_uom = barcode_data.uom if barcode_data else None
+		if not item_code:
+			item_code = frappe.db.get_value("Item", {"custom_barcode": barcode}, "name")
+		if not item_code and frappe.db.has_column("Item Price", "custom_barcode"):
+			item_code = frappe.db.get_value("Item Price", {"custom_barcode": barcode}, "item_code")
+	if not item_code:
+		frappe.throw("No item found for barcode {0}".format(barcode))
+
+	item = frappe.db.get_value(
+		"Item",
+		item_code,
+		["item_group", "stock_uom", "custom_barcode", "custom_sales_net_rate", "custom_sales_gross_rate", "custom_sales_vat_amount", "custom_tax"],
+		as_dict=True,
+	)
+	if not item:
+		frappe.throw("No item found for {0}".format(item_code))
+	item_price = frappe.db.get_value(
+		"Item Price",
+		{"item_code": item_code, "price_list": price_list or "Standard Selling", "uom": item_uom or item.stock_uom},
+		"price_list_rate",
+	)
+	current_price = flt(item_price) or flt(item.custom_sales_net_rate)
+	vat_rate = _get_vat_rate_from_prices(item) or get_item_tax_rate(item.custom_tax)
+	current_price_including_tax = flt(item.custom_sales_gross_rate) or current_price * (1 + vat_rate / 100)
+	return {
+		"item": item_code,
+		"barcode": barcode or item.custom_barcode or "",
+		"item_group": item.item_group,
+		"uom": item_uom or item.stock_uom,
+		"current_price": current_price,
+		"current_price_including_tax": current_price_including_tax,
+		"vat_rate": vat_rate,
+		"price_list": price_list or "Standard Selling",
+		"qty": 1,
+	}
+
+
+def _get_vat_rate_from_prices(item):
+	net = flt(item.custom_sales_net_rate)
+	vat = flt(item.custom_sales_vat_amount)
+	return flt(vat * 100 / net) if net else 0
 
 
 def apply_inclusive_promo_prices(doc, method=None):

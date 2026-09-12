@@ -8,7 +8,8 @@ from frappe.utils import cint, flt, getdate, now_datetime, nowdate
 from erpnext.accounts.report.customer_ledger_summary.customer_ledger_summary import (
 	PartyLedgerSummaryReport,
 )
-from erpnext.selling.doctype.customer.customer import get_credit_limit
+from erpnext.accounts.party import get_party_account
+from erpnext.selling.doctype.customer.customer import check_credit_limit, get_credit_limit
 
 from retail.domains.item.vat_pricing import get_item_tax_rate
 from retail.pos_login import get_next_pos_login_id, hash_quick_pin, make_quick_pin_hash, validate_quick_pin
@@ -567,6 +568,82 @@ def _payment_account(counter_doc, payment):
 	return None
 
 
+def _validate_credit_customer(customer, company, amount):
+	if not customer or not frappe.db.exists("Customer", customer):
+		frappe.throw(_("A valid customer is required for credit transactions."))
+	if cint(frappe.db.get_value("Customer", customer, "disabled")):
+		frappe.throw(_("Customer {0} is disabled.").format(customer))
+	credit_limit = get_credit_limit(customer, company)
+	if credit_limit <= 0:
+		frappe.throw(_("Customer {0} is not approved for credit sales.").format(customer))
+	check_credit_limit(customer, company, extra_amount=amount)
+
+
+def _set_pos_audit_fields(doc, payload, counter_doc):
+	for fieldname, value in {
+		"external_pos_reference": payload.external_pos_reference,
+		"pos_branch": counter_doc.branch,
+		"pos_counter": counter_doc.name,
+		"pos_terminal_id": payload.get("pos_terminal_id") or counter_doc.terminal_id,
+		"pos_cashier": payload.get("cashier") or frappe.session.user,
+		"pos_sync_source": SYNC_SOURCE,
+		"pos_sync_datetime": now_datetime(),
+		"pos_local_created_at": payload.get("pos_local_created_at"),
+	}.items():
+		if value is not None and doc.meta.has_field(fieldname):
+			setattr(doc, fieldname, value)
+
+	cashier_employee, cashier_shift, counter_session = _validate_active_counter_session(payload, counter_doc)
+	for fieldname, value in {
+		"pos_cashier_employee": cashier_employee,
+		"pos_cashier_shift": cashier_shift,
+		"pos_counter_session": counter_session,
+	}.items():
+		if value and doc.meta.has_field(fieldname):
+			setattr(doc, fieldname, value)
+
+
+def _new_customer_payment(payload, counter_doc, customer, amount, invoice=None):
+	account = _payment_account(
+		counter_doc,
+		{"mode_of_payment": payload.get("payment_mode") or payload.get("mode_of_payment")},
+	)
+	if not account:
+		frappe.throw(_("No account is configured for the requested payment mode on this counter."))
+	party_account = get_party_account("Customer", customer, counter_doc.company, include_advance=not invoice)
+	if not party_account:
+		frappe.throw(_("No receivable account is configured for customer {0}.").format(customer))
+
+	doc = frappe.new_doc("Payment Entry")
+	doc.payment_type = "Receive"
+	doc.company = counter_doc.company
+	doc.posting_date = payload.get("posting_date") or frappe.utils.today()
+	doc.reference_date = payload.get("posting_date") or frappe.utils.today()
+	doc.mode_of_payment = payload.get("payment_mode") or payload.get("mode_of_payment")
+	doc.party_type = "Customer"
+	doc.party = customer
+	doc.paid_from = party_account
+	doc.paid_to = account
+	doc.paid_amount = amount
+	doc.received_amount = amount
+	doc.reference_no = payload.get("reference_no") or payload.external_pos_reference
+	doc.cost_center = counter_doc.cost_center
+	if invoice:
+		doc.append(
+			"references",
+			{
+				"reference_doctype": "Sales Invoice",
+				"reference_name": invoice.name,
+				"allocated_amount": amount,
+			},
+		)
+	_set_pos_audit_fields(doc, payload, counter_doc)
+	doc.set_missing_values()
+	doc.insert(ignore_permissions=True)
+	doc.submit()
+	return doc
+
+
 def _base_invoice(payload, counter_doc, is_return=False):
 	customer = payload.get("customer") or counter_doc.default_customer
 	if not customer:
@@ -630,6 +707,7 @@ def _append_invoice_items(doc, payload, counter_doc, is_return=False):
 			"items",
 			{
 				"item_code": _resolve_item(row),
+				"item_tax_template": row.get("sales_vat_template") or row.get("item_tax_template"),
 				"qty": qty,
 				"rate": flt(row.get("rate")),
 				"discount_amount": flt(row.get("discount_amount")),
@@ -742,6 +820,8 @@ def _operator_master_rows(branch=None, modified_after=None):
 		row.login_id = row.get("pos_login_id") or row.get("employee_number") or row.get("employee") or row.get("name")
 		row.quick_pin_hash = row.get("pos_quick_pin_hash")
 		row.quick_pin_salt = row.get("pos_quick_pin_salt")
+		row.pop("pos_quick_pin_hash", None)
+		row.pop("pos_quick_pin_salt", None)
 		if "pos_login_enabled" in row and not cint(row.get("pos_login_enabled")):
 			row.disabled = 1
 	return rows
@@ -902,6 +982,8 @@ def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
 		"item_name",
 		"custom_arabic_item_name as arabic_item_name",
 		"item_group",
+		"brand",
+		"custom_barcode as barcode",
 		"stock_uom",
 		"is_stock_item",
 		"custom_scale_item as is_scalable_item",
@@ -916,7 +998,14 @@ def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
 		"modified as modified_on",
 	]
 	if frappe.db.has_column("Item", "custom_tax"):
-		item_fields.insert(12, "custom_tax as sales_item_tax_template")
+		item_fields.extend(
+			[
+				"custom_tax as sales_vat_template",
+				"custom_tax as sales_item_tax_template",
+			]
+		)
+	if frappe.db.has_column("Item", "custom_purchase_tax_template"):
+		item_fields.append("custom_purchase_tax_template as purchase_vat_template")
 
 	items = frappe.get_all(
 		"Item",
@@ -1036,10 +1125,12 @@ def _apply_item_tax_fields(items):
 	standard_templates = _get_standard_item_tax_templates([item.item_code for item in items])
 	rates_by_template = {}
 	for item in items:
-		template = item.get("sales_item_tax_template") or standard_templates.get(item.item_code)
+		sales_template = item.get("sales_vat_template") or item.get("sales_item_tax_template")
+		template = sales_template or standard_templates.get(item.item_code)
 		if template not in rates_by_template:
 			rates_by_template[template] = flt(get_item_tax_rate(template)) if template else 0
 		rate = rates_by_template[template]
+		item["sales_vat_template"] = template
 		item["item_tax_template"] = template
 		item["tax_rate"] = rate
 		item["is_taxable"] = 1 if rate > 0 else 0
@@ -1050,6 +1141,8 @@ def _apply_packing_tax_fields(packing, items_by_code):
 	if not item:
 		return
 
+	packing["sales_vat_template"] = item.get("sales_vat_template")
+	packing["purchase_vat_template"] = item.get("purchase_vat_template")
 	packing["item_tax_template"] = item.get("item_tax_template")
 	packing["tax_rate"] = item.get("tax_rate")
 	packing["is_taxable"] = item.get("is_taxable")
@@ -1103,7 +1196,7 @@ def set_cashier_quick_pin(data=None, **kwargs):
 		frappe.throw(_("Only System Manager can set cashier quick PIN."))
 	payload = _as_dict(data, **kwargs)
 	employee = payload.get("cashier_employee") or payload.get("employee")
-	quick_pin = payload.get("quick_pin")
+	quick_pin = payload.get("quick_pin") or payload.get("password")
 	if not employee or not frappe.db.exists("Employee", employee):
 		frappe.throw(_("Cashier Employee is required."))
 	validate_quick_pin(quick_pin)
@@ -1203,6 +1296,61 @@ def create_pos_sales_invoice(data=None, **kwargs):
 
 
 @frappe.whitelist()
+def create_credit_pos_invoice(data=None, **kwargs):
+	"""Create an approved customer's unpaid POS sale as a submitted Sales Invoice."""
+	_assert_pos_user()
+	payload = _as_dict(data, **kwargs)
+
+	def handler():
+		existing = _existing_invoice(payload.external_pos_reference)
+		if existing:
+			return {
+				"status": "Duplicate",
+				"invoice_name": existing.name,
+				"doctype": existing.doctype,
+				"docstatus": existing.docstatus,
+				"grand_total": existing.grand_total,
+				"outstanding_amount": existing.outstanding_amount,
+			}
+
+		counter_doc = _counter(payload.get("branch"), payload.get("counter_code"))
+		_assert_day_not_closed(counter_doc.branch, _business_date(payload))
+		customer = payload.get("customer")
+		if not customer:
+			frappe.throw(_("Customer is required for a credit sale."))
+
+		doc = frappe.new_doc("Sales Invoice")
+		doc.company = counter_doc.company
+		doc.customer = customer
+		doc.posting_date = payload.get("posting_date") or frappe.utils.today()
+		if payload.get("posting_time") and doc.meta.has_field("posting_time"):
+			doc.posting_time = payload.get("posting_time")
+		doc.due_date = payload.get("due_date") or doc.posting_date
+		doc.update_stock = cint(payload.get("update_stock", 1))
+		doc.set_warehouse = counter_doc.warehouse
+		doc.cost_center = counter_doc.cost_center
+		_set_pos_audit_fields(doc, payload, counter_doc)
+		if doc.meta.has_field("pos_shift_no"):
+			doc.pos_shift_no = payload.get("pos_shift_no")
+		_set_profile_taxes(doc, counter_doc)
+		_append_invoice_items(doc, payload, counter_doc)
+		doc.flags.allow_external_pos_sales_invoice = True
+		doc.insert(ignore_permissions=True)
+		_validate_credit_customer(customer, counter_doc.company, doc.grand_total)
+		doc.submit()
+		return {
+			"status": "Success",
+			"invoice_name": doc.name,
+			"doctype": "Sales Invoice",
+			"docstatus": doc.docstatus,
+			"grand_total": doc.grand_total,
+			"outstanding_amount": doc.outstanding_amount,
+		}
+
+	return _run("Credit Sales Invoice", payload, handler)
+
+
+@frappe.whitelist()
 def create_pos_payment_entry(data=None, **kwargs):
 	_assert_pos_user()
 	payload = _as_dict(data, **kwargs)
@@ -1261,6 +1409,83 @@ def create_pos_payment_entry(data=None, **kwargs):
 		return {"status": "Success", "payment_entry": doc.name, "docstatus": doc.docstatus}
 
 	return _run("Payment Entry", payload, handler)
+
+
+@frappe.whitelist()
+def create_customer_deposit(data=None, **kwargs):
+	"""Record a customer advance without creating a sale."""
+	_assert_pos_user()
+	payload = _as_dict(data, **kwargs)
+
+	def handler():
+		existing = _existing_doc("Payment Entry", payload.external_pos_reference)
+		if existing:
+			return {"status": "Duplicate", "payment_entry": existing.name, "docstatus": existing.docstatus}
+
+		counter_doc = _counter(payload.get("branch"), payload.get("counter_code"))
+		_assert_day_not_closed(counter_doc.branch, _business_date(payload))
+		customer = payload.get("customer")
+		amount = flt(payload.get("amount"))
+		if amount <= 0:
+			frappe.throw(_("Deposit amount must be greater than zero."))
+		if not customer:
+			frappe.throw(_("Customer is required for a deposit."))
+		doc = _new_customer_payment(payload, counter_doc, customer, amount)
+		return {
+			"status": "Success",
+			"payment_entry": doc.name,
+			"docstatus": doc.docstatus,
+			"customer": customer,
+			"amount": doc.received_amount,
+			"unallocated_amount": doc.unallocated_amount,
+		}
+
+	return _run("Customer Deposit", payload, handler)
+
+
+@frappe.whitelist()
+def pay_customer_invoice(data=None, **kwargs):
+	"""Collect a payment against one submitted customer Sales Invoice."""
+	_assert_pos_user()
+	payload = _as_dict(data, **kwargs)
+
+	def handler():
+		existing = _existing_doc("Payment Entry", payload.external_pos_reference)
+		if existing:
+			return {"status": "Duplicate", "payment_entry": existing.name, "docstatus": existing.docstatus}
+
+		counter_doc = _counter(payload.get("branch"), payload.get("counter_code"))
+		_assert_day_not_closed(counter_doc.branch, _business_date(payload))
+		invoice_name = payload.get("invoice_name")
+		if not invoice_name and payload.get("invoice_external_reference"):
+			invoice_name = frappe.db.get_value(
+				"Sales Invoice",
+				{"external_pos_reference": payload.get("invoice_external_reference"), "docstatus": 1},
+				"name",
+			)
+		if not invoice_name:
+			frappe.throw(_("A submitted Sales Invoice is required for payment."))
+		invoice = frappe.get_doc("Sales Invoice", invoice_name)
+		if invoice.docstatus != 1:
+			frappe.throw(_("Sales Invoice {0} is not submitted.").format(invoice.name))
+		if payload.get("customer") and payload.customer != invoice.customer:
+			frappe.throw(_("Payment customer does not match the Sales Invoice customer."))
+		amount = flt(payload.get("amount"))
+		if amount <= 0:
+			frappe.throw(_("Payment amount must be greater than zero."))
+		if amount > flt(invoice.outstanding_amount) + 0.01:
+			frappe.throw(_("Payment exceeds the invoice outstanding amount."))
+		doc = _new_customer_payment(payload, counter_doc, invoice.customer, amount, invoice=invoice)
+		return {
+			"status": "Success",
+			"payment_entry": doc.name,
+			"docstatus": doc.docstatus,
+			"invoice_name": invoice.name,
+			"allocated_amount": amount,
+			"invoice_outstanding_amount": flt(invoice.outstanding_amount) - amount,
+		}
+
+	return _run("Customer Invoice Payment", payload, handler)
 
 
 @frappe.whitelist()
@@ -2083,7 +2308,12 @@ def validate_external_reference(doc: Document, method=None):
 
 def block_external_sales_invoice(doc: Document, method=None):
 	"""The restricted POS user can only create POS Invoice documents through this API."""
-	if doc.doctype == "Sales Invoice" and INTEGRATION_ROLE in frappe.get_roles() and "System Manager" not in frappe.get_roles():
+	if (
+		doc.doctype == "Sales Invoice"
+		and not doc.flags.get("allow_external_pos_sales_invoice")
+		and INTEGRATION_ROLE in frappe.get_roles()
+		and "System Manager" not in frappe.get_roles()
+	):
 		frappe.throw(
 			_("External POS must use create_pos_invoice; direct Sales Invoice creation is blocked.")
 		)

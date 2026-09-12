@@ -199,6 +199,32 @@ def _get_doctype_field_order(doctype):
 
 def ensure_all_transaction_totals_fields():
 	remove_custom_transaction_totals_fields()
+	_hide_custom_sales_person_field()
+
+
+def _hide_custom_sales_person_field():
+	"""Use ERPNext's Sales Team table instead of the duplicate custom field."""
+	if frappe.db.exists("Custom Field", "Sales Invoice-custom_retail_sales_person"):
+		make_property_setter(
+			"Sales Invoice",
+			"custom_retail_sales_person",
+			"hidden",
+			1,
+			"Check",
+			validate_fields_for_doctype=False,
+		)
+
+	field_order = _get_sales_invoice_field_order()
+	if "custom_retail_sales_person" in field_order:
+		field_order.remove("custom_retail_sales_person")
+		make_property_setter(
+			"Sales Invoice",
+			None,
+			"field_order",
+			json.dumps(field_order),
+			"JSON",
+			validate_fields_for_doctype=False,
+		)
 
 
 def remove_custom_transaction_totals_fields():

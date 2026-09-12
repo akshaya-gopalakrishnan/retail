@@ -195,6 +195,7 @@ Item sync behavior:
 - `items` includes both active and disabled items.
 - `items` includes audit fields: `created_by`, `created_on`, `modified_by`, `modified_on`. The existing `modified` field is still returned for incremental sync compatibility.
 - `items` includes POS item flags: `is_scalable_item`, `scale_barcode_type`, `is_open_price`, and `is_fast_plu_item`. `is_scalable_item` comes from Item's `Scale Item`; `scale_barcode_type` comes from Item's `Scale Barcode Type`; `is_open_price` comes from Item's `Open Price`; `is_fast_plu_item` comes from Item's `Fast PLU Item`.
+- Each item row includes the selected `sales_vat_template` and `purchase_vat_template` from the Item Master. `sales_vat_template` is the template used for POS sales; `purchase_vat_template` is provided for purchase workflows. `item_tax_template` remains available as a sales-template compatibility alias.
 - .NET should show a main item in the fast PLU item list when the item row has `is_fast_plu_item = 1`.
 - .NET should use only `is_scalable_item` and `scale_barcode_type` for scale-item handling. ERPNext does not send PLU, prefix, scale UOM, scale format, or scale unit code in POS master sync.
 - `scale_barcode_type` values are `Price`, `Weight`, `Quantity`, or `Weight+UnitPrice`.
@@ -437,7 +438,14 @@ POST /api/method/retail.api.pos_sync.create_pos_invoice
   "update_stock": 1,
   "vat_amount": 1.0,
   "items": [
-    { "item_code": "ITEM-001", "barcode": "629000000001", "qty": 2, "rate": 10.0, "discount_amount": 0.0 }
+    {
+      "item_code": "ITEM-001",
+      "barcode": "629000000001",
+      "qty": 2,
+      "rate": 10.0,
+      "discount_amount": 0.0,
+      "sales_vat_template": "UAE VAT 5%"
+    }
   ],
   "payments": [
     { "mode_of_payment": "Cash", "amount": 21.0, "reference_no": "CASH-000002" }
@@ -476,6 +484,80 @@ Response:
   "outstanding_amount": 0.0
 }
 ```
+
+### Credit POS Sale
+
+Use this endpoint when an approved customer receives products without paying at the counter:
+
+```text
+POST /api/method/retail.api.pos_sync.create_credit_pos_invoice
+```
+
+Send the same identity, cashier, customer, item, and VAT fields as `create_pos_invoice`, plus:
+
+```json
+{
+  "external_pos_reference": "KARAMA-C001-T001-CREDIT-20260625-000005",
+  "branch": "Karama",
+  "counter_code": "C001",
+  "customer": "CUST-0001",
+  "due_date": "2026-07-25",
+  "vat_amount": 1.0,
+  "items": [
+    { "item_code": "ITEM-001", "qty": 2, "rate": 10.0 }
+  ]
+}
+```
+
+ERPNext creates a submitted unpaid `Sales Invoice`, updates stock, and increases the customer's outstanding balance. It rejects disabled customers, customers without a positive credit limit, and sales that exceed the available credit limit. Do not send a `payments` array for this endpoint.
+
+### Customer Deposit
+
+Use this endpoint when a customer pays before an invoice exists:
+
+```text
+POST /api/method/retail.api.pos_sync.create_customer_deposit
+```
+
+```json
+{
+  "external_pos_reference": "KARAMA-C001-T001-DEPOSIT-20260625-000006",
+  "branch": "Karama",
+  "counter_code": "C001",
+  "customer": "CUST-0001",
+  "payment_mode": "Cash",
+  "amount": 50.0,
+  "reference_no": "CASH-000006",
+  "posting_date": "2026-06-25"
+}
+```
+
+ERPNext creates a customer `Payment Entry` as an unallocated advance. It increases cash/card collection totals but does not create sales, VAT, stock movement, or revenue.
+
+### Pay Customer Invoice
+
+Use this endpoint when a customer later pays an existing credit invoice:
+
+```text
+POST /api/method/retail.api.pos_sync.pay_customer_invoice
+```
+
+Identify the invoice by `invoice_name` or its original `invoice_external_reference`:
+
+```json
+{
+  "external_pos_reference": "KARAMA-C001-T001-COLLECTION-20260626-000007",
+  "branch": "Karama",
+  "counter_code": "C001",
+  "invoice_external_reference": "KARAMA-C001-T001-CREDIT-20260625-000005",
+  "payment_mode": "Cash",
+  "amount": 21.0,
+  "reference_no": "CASH-000007",
+  "posting_date": "2026-06-26"
+}
+```
+
+ERPNext allocates the payment to that submitted Sales Invoice and reduces its outstanding balance. The payment customer must match the invoice customer, and the amount cannot exceed the invoice balance. All three endpoints are idempotent: retry the same `external_pos_reference` after a timeout instead of generating a new reference.
 
 ### Create POS Return
 

@@ -179,6 +179,7 @@
         'Quotations': ['List', 'Quotation'],
         'Sales Orders': ['List', 'Sales Order'],
         'Sales Invoices': ['List', 'Sales Invoice'],
+        'Sales Return': ['List', 'Sales Invoice', { is_return: 1 }],
         'Sales Returns': ['List', 'Sales Invoice', { is_return: 1 }],
         'POS Invoices': ['List', 'POS Invoice'],
         'Trading Invoices': ['List', 'Sales Invoice', { is_pos: 0 }],
@@ -423,6 +424,7 @@
         'Quotations': 'Sales',
         'Sales Orders': 'Sales',
         'Sales Invoices': 'Sales',
+        'Sales Return': 'Sales',
         'Sales Returns': 'Sales',
         'Trading Invoices': 'Sales',
         'All Sales Invoices': 'Sales',
@@ -578,6 +580,7 @@
         'Quotations': 'Selling',
         'Sales Orders': 'Selling',
         'Sales Invoices': 'Accounts',
+        'Sales Return': 'Accounts',
         'Sales Returns': 'Accounts',
         'Promotions': 'Selling',
         'Promo Price': 'Selling',
@@ -1125,8 +1128,13 @@
         return url;
     }
 
-    function clearSalesReturnFilter() {
+    function clearSalesReturnFilter(force = false) {
         if (window.cur_list?.doctype !== "Sales Invoice") return false;
+
+        const queryHasReturnFilter = window.location?.search
+            ? new URLSearchParams(window.location.search).has("is_return")
+            : false;
+        if (!force && queryHasReturnFilter) return false;
 
         const filter = window.cur_list.filter_area?.get_filter("is_return");
         if (!filter) return false;
@@ -2792,10 +2800,14 @@
         bindMobileSidebarToggle();
 
         if (window.frappe?.router?.on) {
-            frappe.router.on('change', () => {
+        frappe.router.on('change', () => {
                 if (redirectStandardHomeToBusinessHome()) return;
                 if (enforceAllowedRoute()) return;
                 redirectItemFamilyListRoute();
+                const route = frappe.get_route();
+                if (Array.isArray(route) && route[0] === "List" && route[1] === "Sales Invoice") {
+                    clearSalesReturnFilter(true);
+                }
                 clearTimeout(routeRefreshTimer);
                 routeRefreshTimer = setTimeout(refreshSidebarEnhancements, 120);
                 setTimeout(applyWideTransactionLayout, 350);

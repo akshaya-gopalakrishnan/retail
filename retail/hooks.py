@@ -305,9 +305,10 @@ doc_events = {
 			"retail.domains.item.item_price_sync.sync_latest_transaction_item_prices",
 		],
 	},
-    "Item": {
+	"Item": {
 		"before_naming": "retail.domains.item.naming.set_automatic_item_code",
 		"validate": [
+			"retail.domains.item.scale_item_validation.ensure_item_barcode",
 			"retail.domains.item.packing_sync.sync_uoms_and_barcodes",
 			"retail.domains.item.scale_item_validation.validate_scale_item",
 			"retail.domains.item.vat_pricing.update_item_vat_prices",
