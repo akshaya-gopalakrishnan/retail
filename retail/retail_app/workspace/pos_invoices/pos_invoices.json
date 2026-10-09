@@ -1,8 +1,9 @@
 {
  "charts": [],
- "content": "[{\"id\": \"hdr_pos_invoices\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">POS Invoices</span>\", \"col\": 12}}, {\"id\": \"ql_pos_invoices\", \"type\": \"quick_list\", \"data\": {\"quick_list_name\": \"POS Invoices\", \"col\": 4}}]",
- "creation": "2026-07-30 12:20:09.709320",
+ "content": "[{\"id\": \"hdr_pos_invoices\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">POS Invoices</span>\", \"col\": 12}}, {\"id\": \"sc_pos_invoice_profit\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Invoice Profit\", \"col\": 4}}, {\"id\": \"ql_pos_invoices\", \"type\": \"quick_list\", \"data\": {\"quick_list_name\": \"POS Invoices\", \"col\": 4}}]",
+ "creation": "2026-09-18 10:05:35.106801",
  "custom_blocks": [],
+ "custom_document_code": "W4-181",
  "docstatus": 0,
  "doctype": "Workspace",
  "hide_custom": 0,
@@ -12,7 +13,7 @@
  "is_hidden": 0,
  "label": "POS Invoices",
  "links": [],
- "modified": "2026-07-31 15:16:00.993288",
+ "modified": "2026-09-18 22:27:42.668127",
  "modified_by": "Administrator",
  "module": "Retail-app",
  "name": "POS Invoices",
@@ -29,6 +30,15 @@
  ],
  "roles": [],
  "sequence_id": 1.0,
- "shortcuts": [],
+ "shortcuts": [
+  {
+   "color": "Green",
+   "doc_view": "List",
+   "label": "POS Invoice Profit",
+   "link_to": "POS Invoice Profit",
+   "report_ref_doctype": "POS Invoice",
+   "type": "Report"
+  }
+ ],
  "title": "POS Invoices"
 }

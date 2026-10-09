@@ -21,6 +21,7 @@ POS_REPORTS = (
 	"POS Payment Mode Summary",
 	"POS Discount Report",
 	"POS Price Override Report",
+	"External POS Rate Audit",
 	"POS Daily Closing Summary",
 	"POS Cash Movement Report",
 )
@@ -35,6 +36,8 @@ REPORT_ROLES = (
 
 
 def execute_report(report_name, filters=None):
+	from retail.module_access import require
+	require("POS")
 	filters = get_filters(filters)
 	return REPORT_EXECUTORS[report_name](filters)
 
@@ -135,6 +138,8 @@ def get_ref_doctype(report_name):
 		return "POS Cashier Shift"
 	if report_name == "POS Cash Movement Report":
 		return "POS Cash Movement"
+	if report_name == "External POS Rate Audit":
+		return "External POS Rate Audit"
 	if report_name == "POS Transaction Log":
 		return "POS Invoice"
 	return "POS Invoice"
@@ -225,6 +230,7 @@ def get_payment_modes(invoice_names):
 		from `tabSales Invoice Payment`
 		where parent in %(invoice_names)s
 			and ifnull(mode_of_payment, '') != ''
+			and ifnull(amount, 0) != 0
 		order by parent, idx
 		""",
 		{"invoice_names": tuple(invoice_names)},
@@ -238,30 +244,11 @@ def get_payment_modes(invoice_names):
 
 
 def pos_sales_summary(filters):
-	conditions, values = pos_invoice_conditions(filters)
-	rows = frappe.db.sql(
-		f"""
-		select
-			pi.posting_date,
-			pi.pos_branch as branch,
-			pi.pos_counter as counter,
-			count(case when ifnull(pi.is_return, 0) = 0 then 1 end) as invoice_count,
-			count(case when ifnull(pi.is_return, 0) = 1 then 1 end) as return_count,
-			sum(case when ifnull(pi.is_return, 0) = 0 then abs(coalesce(pi.base_grand_total, pi.grand_total, 0)) else 0 end) as gross_sales,
-			sum(case when ifnull(pi.is_return, 0) = 1 then abs(coalesce(pi.base_grand_total, pi.grand_total, 0)) else 0 end) as return_amount,
-			sum({signed_amount_expr("base_grand_total")}) as net_sales,
-			sum({signed_amount_expr("base_paid_amount")}) as paid_amount,
-			sum({signed_amount_expr("outstanding_amount")}) as outstanding_amount
-		from `tabPOS Invoice` pi
-		where {conditions}
-		group by pi.posting_date, pi.pos_branch, pi.pos_counter
-		order by pi.posting_date desc, pi.pos_branch, pi.pos_counter
-		""",
-		values,
-		as_dict=True,
-	)
-	return pos_sales_summary_columns(), rows
-
+    from retail.retail_app.report.profitability import profitability_rows, report_result
+    rows = profitability_rows(filters, "POS Invoice")
+    from retail.pos_settlements import add_report_summaries, report_columns
+    add_report_summaries(rows)
+    return report_result(rows, pos_sales_summary_columns() + report_columns(), ['posting_date', 'branch', 'counter'])
 
 def pos_transaction_log(filters):
 	conditions, values = pos_invoice_conditions(filters, include_cancelled=True)
@@ -299,101 +286,68 @@ def pos_transaction_log(filters):
 		row.transaction_type = _("Return") if row.is_return else _("Sale")
 		row.display_status = _("Cancelled") if row.docstatus == 2 else (_("Return") if row.is_return else row.status)
 		row.payment_mode = payment_modes.get(row.invoice_no, "")
-	return pos_transaction_columns(), rows
+	allocations = invoice_settlement_rows([row.invoice_no for row in rows])
+	for row in rows:
+		modes = [row.payment_mode] if row.payment_mode else []
+		for allocation in allocations.get(row.invoice_no, []):
+			modes.append(allocation.settlement_type)
+			field = SETTLEMENT_REPORT_FIELDS[allocation.settlement_type]
+			row[field] = flt(row.get(field)) + flt(allocation.requested_amount)
+			if allocation.settlement_type == "Credit Note Redeemed":
+				row.credit_notes_applied = flt(row.get("credit_notes_applied")) + flt(allocation.applied_amount)
+				row.credit_notes_unresolved = flt(row.get("credit_notes_unresolved")) + flt(allocation.unresolved_amount)
+		row.payment_mode = ", ".join(dict.fromkeys(modes))
+		bill_allocations = allocations.get(row.invoice_no, [])
+		row.settlement_status = ", ".join(dict.fromkeys(a.status for a in bill_allocations))
+	return pos_transaction_columns() + settlement_report_columns(), rows
+
+
+def pos_cost_joins():
+	"""Prefer posted consolidated costs, retaining legacy direct POS stock entries.
+
+	Aggregate before joining so split ledger entries cannot multiply sales values.
+	A missing cost stays NULL; an actual zero-cost ledger entry stays zero.
+	"""
+	return """
+		left join (
+			select sii.pos_invoice_item, sii.parent,
+				sum(-sle.stock_value_difference) as cost_amount
+			from `tabSales Invoice Item` sii
+			inner join `tabSales Invoice` si on si.name = sii.parent and si.docstatus = 1
+			inner join `tabStock Ledger Entry` sle
+				on sle.voucher_detail_no = sii.name and sle.voucher_no = sii.parent
+				and sle.voucher_type = 'Sales Invoice' and sle.is_cancelled = 0
+			where coalesce(sii.pos_invoice_item, '') != ''
+			group by sii.pos_invoice_item, sii.parent
+		) consolidated_cost on consolidated_cost.pos_invoice_item = pii.name
+			and consolidated_cost.parent = pi.consolidated_invoice
+		left join (
+			select voucher_detail_no, voucher_no, sum(-stock_value_difference) as cost_amount
+			from `tabStock Ledger Entry`
+			where voucher_type = 'POS Invoice' and is_cancelled = 0
+			group by voucher_detail_no, voucher_no
+		) direct_cost on direct_cost.voucher_detail_no = pii.name
+			and direct_cost.voucher_no = pi.name
+	"""
 
 
 def pos_item_wise_sales(filters):
-	conditions, values = item_conditions(filters)
-	rows = frappe.db.sql(
-		f"""
-		select
-			pii.item_code,
-			pii.item_name,
-			pii.item_group,
-			pii.warehouse,
-			sum(case when pi.is_return = 1 then 0 else abs(coalesce(pii.stock_qty, pii.qty, 0)) end) as sold_qty,
-			sum(case when pi.is_return = 1 then abs(coalesce(pii.stock_qty, pii.qty, 0)) else 0 end) as return_qty,
-			sum({signed_qty_expr()}) as net_qty,
-			sum({signed_item_amount_expr()}) as net_amount,
-			sum(-coalesce(sle.stock_value_difference, 0)) as cost_amount,
-			count(distinct pi.name) as invoice_count
-		from `tabPOS Invoice Item` pii
-		inner join `tabPOS Invoice` pi on pi.name = pii.parent
-		left join (
-			select voucher_detail_no, sum(stock_value_difference) as stock_value_difference
-			from `tabStock Ledger Entry`
-			where voucher_type = 'POS Invoice' and is_cancelled = 0
-			group by voucher_detail_no
-		) sle on sle.voucher_detail_no = pii.name
-		where {conditions}
-		group by pii.item_code, pii.item_name, pii.item_group, pii.warehouse
-		order by net_amount desc, net_qty desc
-		""",
-		values,
-		as_dict=True,
-	)
-	add_margin(rows)
-	return item_sales_columns(), rows
-
+    from retail.retail_app.report.profitability import profitability_rows, report_result
+    rows = profitability_rows(filters, "POS Invoice")
+    return report_result(rows, item_sales_columns(), ['item_code', 'item_name', 'item_group', 'warehouse'])
 
 def pos_category_sales(filters):
-	conditions, values = item_conditions(filters)
-	rows = frappe.db.sql(
-		f"""
-		select
-			coalesce(pii.item_group, 'No Item Group') as item_group,
-			count(distinct pi.name) as invoice_count,
-			count(distinct pii.item_code) as item_count,
-			sum(case when pi.is_return = 1 then 0 else abs(coalesce(pii.stock_qty, pii.qty, 0)) end) as sold_qty,
-			sum(case when pi.is_return = 1 then abs(coalesce(pii.stock_qty, pii.qty, 0)) else 0 end) as return_qty,
-			sum({signed_qty_expr()}) as net_qty,
-			sum({signed_item_amount_expr()}) as net_amount,
-			sum(-coalesce(sle.stock_value_difference, 0)) as cost_amount
-		from `tabPOS Invoice Item` pii
-		inner join `tabPOS Invoice` pi on pi.name = pii.parent
-		left join (
-			select voucher_detail_no, sum(stock_value_difference) as stock_value_difference
-			from `tabStock Ledger Entry`
-			where voucher_type = 'POS Invoice' and is_cancelled = 0
-			group by voucher_detail_no
-		) sle on sle.voucher_detail_no = pii.name
-		where {conditions}
-		group by coalesce(pii.item_group, 'No Item Group')
-		order by net_amount desc
-		""",
-		values,
-		as_dict=True,
-	)
-	add_margin(rows)
-	return category_sales_columns(), rows
-
+    from retail.retail_app.report.profitability import profitability_rows, report_result
+    rows = profitability_rows(filters, "POS Invoice")
+    return report_result(rows, category_sales_columns(), ['item_group'])
 
 def pos_hourly_sales(filters):
-	conditions, values = pos_invoice_conditions(filters)
-	rows = frappe.db.sql(
-		f"""
-		select
-			pi.posting_date,
-			hour(coalesce(pi.posting_time, '00:00:00')) as hour_of_day,
-			pi.pos_branch as branch,
-			pi.pos_counter as counter,
-			count(case when ifnull(pi.is_return, 0) = 0 then 1 end) as invoice_count,
-			count(case when ifnull(pi.is_return, 0) = 1 then 1 end) as return_count,
-			sum(case when ifnull(pi.is_return, 0) = 0 then abs(coalesce(pi.base_grand_total, pi.grand_total, 0)) else 0 end) as gross_sales,
-			sum(case when ifnull(pi.is_return, 0) = 1 then abs(coalesce(pi.base_grand_total, pi.grand_total, 0)) else 0 end) as return_amount,
-			sum({signed_amount_expr("base_grand_total")}) as net_sales
-		from `tabPOS Invoice` pi
-		where {conditions}
-		group by pi.posting_date, hour(coalesce(pi.posting_time, '00:00:00')), pi.pos_branch, pi.pos_counter
-		order by pi.posting_date desc, hour_of_day, pi.pos_branch, pi.pos_counter
-		""",
-		values,
-		as_dict=True,
-	)
-	for row in rows:
-		row.hour_label = f"{cint(row.hour_of_day):02d}:00 - {cint(row.hour_of_day):02d}:59"
-	return hourly_sales_columns(), rows
-
+    from retail.retail_app.report.profitability import profitability_rows, report_result
+    rows = profitability_rows(filters, "POS Invoice")
+    for row in rows:
+        hour = str(row.posting_time).split(":")[0].zfill(2)
+        row.hour_label = f"{hour}:00 - {hour}:59"
+    return report_result(rows, hourly_sales_columns(), ['posting_date', 'hour_label', 'branch', 'counter'])
 
 def pos_return_report(filters):
 	conditions, values = pos_invoice_conditions(filters)
@@ -426,52 +380,54 @@ def pos_return_report(filters):
 
 
 def cashier_wise_sales(filters):
-	conditions, values = pos_invoice_conditions(filters)
+	from retail.retail_app.report.profitability import profitability_rows, report_result
+
+	rows = profitability_rows(filters, "POS Invoice")
+	payment_totals = get_cashier_payment_totals({row.invoice_no for row in rows})
+	attached_invoices = set()
+	for row in rows:
+		if row.invoice_no in attached_invoices:
+			continue
+		row.update(payment_totals.get(row.invoice_no, {}))
+		attached_invoices.add(row.invoice_no)
+	from retail.pos_settlements import add_report_summaries, report_columns
+	add_report_summaries(rows)
+	return report_result(rows, cashier_sales_columns() + report_columns(), ['cashier_employee', 'cashier', 'branch'])
+
+
+def get_cashier_payment_totals(invoice_names):
+	if not invoice_names:
+		return {}
+
 	rows = frappe.db.sql(
-		f"""
+		"""
 		select
-			pi.pos_cashier_employee as cashier_employee,
-			pi.pos_cashier as cashier,
-			pi.pos_branch as branch,
-			count(case when ifnull(pi.is_return, 0) = 0 then 1 end) as invoice_count,
-			count(case when ifnull(pi.is_return, 0) = 1 then 1 end) as return_count,
-			sum(case when ifnull(pi.is_return, 0) = 0 then abs(coalesce(pi.base_grand_total, pi.grand_total, 0)) else 0 end) as gross_sales,
-			sum(case when ifnull(pi.is_return, 0) = 1 then abs(coalesce(pi.base_grand_total, pi.grand_total, 0)) else 0 end) as return_amount,
-			sum({signed_amount_expr("base_grand_total")}) as net_sales
-		from `tabPOS Invoice` pi
-		where {conditions}
-		group by pi.pos_cashier_employee, pi.pos_cashier, pi.pos_branch
-		order by net_sales desc
+			pay.parent as invoice_no,
+			sum(case when lower(coalesce(mop.type, '')) = 'cash'
+				then case when pi.is_return = 1 then -abs(coalesce(pay.base_amount, 0))
+					else abs(coalesce(pay.base_amount, 0)) end else 0 end) as cash_amount,
+			sum(case when lower(coalesce(pay.mode_of_payment, '')) like '%%card%%'
+				then case when pi.is_return = 1 then -abs(coalesce(pay.base_amount, 0))
+					else abs(coalesce(pay.base_amount, 0)) end else 0 end) as card_amount,
+			sum(case when lower(coalesce(mop.type, '')) != 'cash'
+					and lower(coalesce(pay.mode_of_payment, '')) not like '%%card%%'
+				then case when pi.is_return = 1 then -abs(coalesce(pay.base_amount, 0))
+					else abs(coalesce(pay.base_amount, 0)) end else 0 end) as other_payment_amount
+		from `tabSales Invoice Payment` pay
+		inner join `tabPOS Invoice` pi on pi.name = pay.parent
+		left join `tabMode of Payment` mop on mop.name = pay.mode_of_payment
+		where pay.parent in %(invoice_names)s
+		group by pay.parent
 		""",
-		values,
+		{"invoice_names": tuple(invoice_names)},
 		as_dict=True,
 	)
-	return cashier_sales_columns(), rows
-
+	return {row.invoice_no: row for row in rows}
 
 def counter_wise_sales(filters):
-	conditions, values = pos_invoice_conditions(filters)
-	rows = frappe.db.sql(
-		f"""
-		select
-			pi.pos_branch as branch,
-			pi.pos_counter as counter,
-			pi.pos_terminal_id as terminal_id,
-			count(case when ifnull(pi.is_return, 0) = 0 then 1 end) as invoice_count,
-			count(case when ifnull(pi.is_return, 0) = 1 then 1 end) as return_count,
-			sum(case when ifnull(pi.is_return, 0) = 0 then abs(coalesce(pi.base_grand_total, pi.grand_total, 0)) else 0 end) as gross_sales,
-			sum(case when ifnull(pi.is_return, 0) = 1 then abs(coalesce(pi.base_grand_total, pi.grand_total, 0)) else 0 end) as return_amount,
-			sum({signed_amount_expr("base_grand_total")}) as net_sales
-		from `tabPOS Invoice` pi
-		where {conditions}
-		group by pi.pos_branch, pi.pos_counter, pi.pos_terminal_id
-		order by net_sales desc
-		""",
-		values,
-		as_dict=True,
-	)
-	return counter_sales_columns(), rows
-
+    from retail.retail_app.report.profitability import profitability_rows, report_result
+    rows = profitability_rows(filters, "POS Invoice")
+    return report_result(rows, counter_sales_columns(), ['branch', 'counter', 'terminal_id'])
 
 def shift_closing_variance(filters):
 	conditions = ["shift.opening_time >= %(from_date)s", "shift.opening_time <= date_add(%(to_date)s, interval 1 day)"]
@@ -503,7 +459,7 @@ def shift_closing_variance(filters):
 			shift.closing_amount,
 			shift.variance,
 			count(pi.name) as invoice_count,
-			sum({signed_amount_expr("base_grand_total")}) as net_sales
+			sum({signed_amount_expr("base_net_total")}) as net_sales
 		from `tabPOS Cashier Shift` shift
 		left join `tabPOS Invoice` pi on pi.pos_cashier_shift = shift.name and pi.docstatus = 1
 		where {" and ".join(conditions)}
@@ -516,34 +472,116 @@ def shift_closing_variance(filters):
 	return shift_variance_columns(), rows
 
 
+SETTLEMENT_REPORT_FIELDS = {
+	"Credit Sale": "credit_sales",
+	"Credit Note Issued": "credit_notes_issued",
+	"Credit Note Redeemed": "credit_notes_redeemed",
+	"Original Debt Reduction": "original_debt_reduction",
+}
+
+
+def settlement_report_columns():
+	from retail.pos_settlements import report_columns
+	columns = [c for c in report_columns() if c["fieldname"] != "current_customer_outstanding"]
+	for column in columns:
+		if column["fieldname"] == "credit_notes_redeemed":
+			column["label"] = _("Credit Note Redemption Requested")
+	return columns + [
+		{"label": _("Original Debt Reduction"), "fieldname": "original_debt_reduction", "fieldtype": "Currency", "width": 160}]
+
+
+def invoice_settlement_rows(invoice_names):
+	result = defaultdict(list)
+	if not invoice_names:
+		return result
+	for row in frappe.db.sql("""
+		select t.pos_invoice, a.settlement_type, a.requested_amount, a.status,
+			a.applied_amount, a.unresolved_amount
+		from `tabPOS Accepted Transaction` t
+		join `tabPOS Settlement Allocation` a on a.transaction = t.name
+		where t.pos_invoice in %(names)s and a.settlement_type in %(types)s
+			and a.requested_amount != 0
+		order by a.creation
+	""", {"names": tuple(invoice_names), "types": tuple(SETTLEMENT_REPORT_FIELDS)}, as_dict=True):
+		result[row.pos_invoice].append(row)
+	return result
+
+
 def payment_mode_summary(filters):
 	conditions, values = pos_invoice_conditions(filters)
 	if filters.get("payment_mode"):
 		conditions += " and pay.mode_of_payment = %(payment_mode)s"
 		values["payment_mode"] = filters.payment_mode
+	# Credit measures are separate from cash/card paid amounts. Pending requests
+	# remain visible without being presented as successful accounting allocations.
 	rows = frappe.db.sql(
 		f"""
-		select
-			pi.posting_date,
-			pi.pos_branch as branch,
-			pi.pos_counter as counter,
-			pi.pos_cashier_employee as cashier_employee,
-			pi.pos_cashier as cashier,
-			pay.mode_of_payment,
-			mop.type as payment_type,
+		select pi.posting_date, pi.pos_branch as branch, pi.pos_counter as counter,
+			pi.pos_cashier_employee as cashier_employee, pi.pos_cashier as cashier,
+			pay.mode_of_payment, pay.payment_type,
 			count(distinct pi.name) as invoice_count,
-			sum(case when pi.is_return = 1 then -abs(coalesce(pay.amount, 0)) else abs(coalesce(pay.amount, 0)) end) as paid_amount
-		from `tabSales Invoice Payment` pay
-		inner join `tabPOS Invoice` pi on pi.name = pay.parent
-		left join `tabMode of Payment` mop on mop.name = pay.mode_of_payment
+			sum(case when pi.is_return = 1 then -abs(pay.amount) else abs(pay.amount) end) as paid_amount,
+			sum(pay.credit_sales) as credit_sales,
+			sum(pay.credit_notes_issued) as credit_notes_issued,
+			sum(pay.credit_notes_redeemed) as credit_notes_redeemed,
+			sum(pay.credit_notes_applied) as credit_notes_applied,
+			sum(pay.credit_notes_unresolved) as credit_notes_unresolved,
+			sum(pay.original_debt_reduction) as original_debt_reduction
+		from (
+			select p.parent, p.mode_of_payment, mop.type as payment_type,
+				p.amount, 0 as credit_sales, 0 as credit_notes_issued,
+				0 as credit_notes_redeemed, 0 as credit_notes_applied,
+				0 as credit_notes_unresolved, 0 as original_debt_reduction
+			from `tabSales Invoice Payment` p
+			left join `tabMode of Payment` mop on mop.name = p.mode_of_payment
+			where ifnull(p.amount, 0) != 0
+			union all
+			select t.pos_invoice, a.settlement_type, 'Non-cash Settlement', 0,
+				if(a.settlement_type = 'Credit Sale', a.requested_amount, 0),
+				if(a.settlement_type = 'Credit Note Issued', a.requested_amount, 0),
+				if(a.settlement_type = 'Credit Note Redeemed', a.requested_amount, 0),
+				if(a.settlement_type = 'Credit Note Redeemed', a.applied_amount, 0),
+				if(a.settlement_type = 'Credit Note Redeemed', a.unresolved_amount, 0),
+				if(a.settlement_type = 'Original Debt Reduction', a.requested_amount, 0)
+			from `tabPOS Settlement Allocation` a
+			join `tabPOS Accepted Transaction` t on t.name = a.transaction
+			where a.settlement_type in ('Credit Sale', 'Credit Note Issued', 'Credit Note Redeemed', 'Original Debt Reduction')
+				and a.requested_amount != 0
+		) pay
+		join `tabPOS Invoice` pi on pi.name = pay.parent
 		where {conditions}
-		group by pi.posting_date, pi.pos_branch, pi.pos_counter, pi.pos_cashier_employee, pi.pos_cashier, pay.mode_of_payment
+		group by pi.posting_date, pi.pos_branch, pi.pos_counter, pi.pos_cashier_employee, pi.pos_cashier, pay.mode_of_payment, pay.payment_type
 		order by pi.posting_date desc, pi.pos_branch, pi.pos_counter, pay.mode_of_payment
-		""",
-		values,
-		as_dict=True,
+		""", values, as_dict=True,
 	)
-	return payment_summary_columns(), rows
+	columns = payment_summary_columns()
+	# Settlement labels are not ERP Mode of Payment documents.
+	for column in columns:
+		if column["fieldname"] == "mode_of_payment":
+			column.update(fieldtype="Data")
+			column.pop("options", None)
+	columns += settlement_report_columns()
+	# Populate each mode only on its own rows so the report's total row does
+	# not count the same payment more than once. Keep settlement rows separate.
+	payment_modes = sorted({
+		row.mode_of_payment for row in rows
+		if row.mode_of_payment and row.payment_type != "Non-cash Settlement"
+	})
+	for index, mode in enumerate(payment_modes):
+		fieldname = f"payment_mode_total_{index}"
+		columns.append({
+			"label": _("Total {0} Sales").format(mode),
+			"fieldname": fieldname,
+			"fieldtype": "Currency",
+			"width": 160,
+		})
+		for row in rows:
+			row[fieldname] = (
+				row.paid_amount
+				if row.mode_of_payment == mode and row.payment_type != "Non-cash Settlement"
+				else 0
+			)
+	return columns, rows
 
 
 def pos_discount_report(filters):
@@ -620,8 +658,67 @@ def pos_price_override_report(filters):
 	return price_override_columns(), rows
 
 
+def external_pos_rate_audit(filters):
+	conditions = ["audit.posting_date between %(from_date)s and %(to_date)s"]
+	values = {"from_date": filters.from_date, "to_date": filters.to_date}
+	for field in ("company", "branch", "counter", "cashier", "cashier_employee", "item_code", "status"):
+		if filters.get(field):
+			conditions.append(f"audit.{field} = %({field})s")
+			values[field] = filters[field]
+	if filters.get("warehouse"):
+		conditions.append("1 = 1")
+	if filters.get("item_group"):
+		conditions.append("item.item_group = %(item_group)s")
+		values["item_group"] = filters.item_group
+
+	rows = frappe.db.sql(
+		f"""
+		select
+			audit.name,
+			audit.status,
+			audit.pos_invoice,
+			audit.external_pos_reference,
+			audit.posting_date,
+			audit.posting_time,
+			audit.company,
+			audit.branch,
+			audit.counter,
+			audit.counter_code,
+			audit.cashier,
+			audit.cashier_employee,
+			audit.item_code,
+			audit.item_name,
+			audit.uom,
+			audit.qty,
+			audit.pos_gross_rate,
+			audit.erp_expected_gross_rate,
+			audit.rate_difference,
+			audit.pos_gross_amount,
+			audit.erp_expected_gross_amount,
+			audit.amount_difference,
+			audit.difference_percent,
+			audit.vat_rate,
+			audit.pos_vat_amount,
+			audit.erp_expected_vat_amount,
+			audit.vat_difference,
+			audit.promo_reference,
+			audit.reason,
+			audit.reviewed_by,
+			audit.reviewed_on
+		from `tabExternal POS Rate Audit` audit
+		left join `tabItem` item on item.name = audit.item_code
+		where {" and ".join(conditions)}
+		order by audit.posting_date desc, audit.posting_time desc, audit.creation desc
+		""",
+		values,
+		as_dict=True,
+	)
+	return external_pos_rate_audit_columns(), rows
+
+
 def pos_daily_closing_summary(filters):
-	columns, rows = pos_sales_summary(filters)
+	columns, rows = pos_sales_summary(filters)[:2]
+	rows = [r for r in rows if not r.get("is_total_row")]
 	payments = get_daily_payment_totals(filters)
 	variances = get_daily_shift_variances(filters)
 	for row in rows:
@@ -633,7 +730,9 @@ def pos_daily_closing_summary(filters):
 		row.expected_cash = flt(variance.get("expected_cash"))
 		row.closing_amount = flt(variance.get("closing_amount"))
 		row.variance = flt(variance.get("variance"))
-	return daily_closing_columns(), rows
+	from retail.retail_app.report.profitability import report_result
+	from retail.pos_settlements import report_columns
+	return report_result(rows, daily_closing_columns() + report_columns())
 
 
 def get_daily_payment_totals(filters):
@@ -645,7 +744,7 @@ def get_daily_payment_totals(filters):
 			pi.pos_branch as branch,
 			pi.pos_counter as counter,
 			sum(case when mop.type = 'Cash' then case when pi.is_return = 1 then -abs(coalesce(pay.amount, 0)) else abs(coalesce(pay.amount, 0)) end else 0 end) as cash_amount,
-			sum(case when ifnull(mop.type, '') != 'Cash' then case when pi.is_return = 1 then -abs(coalesce(pay.amount, 0)) else abs(coalesce(pay.amount, 0)) end else 0 end) as non_cash_amount
+			sum(case when lower(coalesce(pay.mode_of_payment, '')) like '%%card%%' then case when pi.is_return = 1 then -abs(coalesce(pay.amount, 0)) else abs(coalesce(pay.amount, 0)) end else 0 end) as non_cash_amount
 		from `tabSales Invoice Payment` pay
 		inner join `tabPOS Invoice` pi on pi.name = pay.parent
 		left join `tabMode of Payment` mop on mop.name = pay.mode_of_payment
@@ -729,13 +828,6 @@ def pos_cash_movement_report(filters):
 	return cash_movement_columns(), rows
 
 
-def add_margin(rows):
-	for row in rows:
-		row.cost_amount = flt(row.cost_amount)
-		row.gross_profit = flt(row.net_amount) - row.cost_amount
-		row.margin_percent = (row.gross_profit / flt(row.net_amount) * 100) if row.net_amount else 0
-
-
 def base_filters():
 	return [
 		{"label": _("From Date"), "fieldname": "from_date", "fieldtype": "Date", "default": "Today", "reqd": 1},
@@ -750,7 +842,7 @@ def pos_sales_summary_columns():
 		{"label": _("Counter"), "fieldname": "counter", "fieldtype": "Link", "options": "POS Branch Counter", "width": 150},
 		{"label": _("Invoice Count"), "fieldname": "invoice_count", "fieldtype": "Int", "width": 110},
 		{"label": _("Return Count"), "fieldname": "return_count", "fieldtype": "Int", "width": 110},
-		{"label": _("Gross Sales"), "fieldname": "gross_sales", "fieldtype": "Currency", "width": 120},
+		{"label": _("Sales Before Returns (excl. VAT, after discounts)"), "fieldname": "gross_sales", "fieldtype": "Currency", "width": 120},
 		{"label": _("Return Amount"), "fieldname": "return_amount", "fieldtype": "Currency", "width": 130},
 		{"label": _("Net Sales"), "fieldname": "net_sales", "fieldtype": "Currency", "width": 120},
 		{"label": _("Paid Amount"), "fieldname": "paid_amount", "fieldtype": "Currency", "width": 120},
@@ -773,6 +865,7 @@ def pos_transaction_columns():
 		{"label": _("Grand Total"), "fieldname": "grand_total", "fieldtype": "Currency", "width": 120},
 		{"label": _("Paid"), "fieldname": "paid_amount", "fieldtype": "Currency", "width": 110},
 		{"label": _("Payment Mode"), "fieldname": "payment_mode", "fieldtype": "Data", "width": 140},
+		{"label": _("Settlement Status"), "fieldname": "settlement_status", "fieldtype": "Data", "width": 160},
 		{"label": _("POS Bill No"), "fieldname": "pos_bill_no", "fieldtype": "Data", "width": 120},
 		{"label": _("External Reference"), "fieldname": "external_pos_reference", "fieldtype": "Data", "width": 170},
 	]
@@ -787,10 +880,11 @@ def item_sales_columns():
 		{"label": _("Sold Qty"), "fieldname": "sold_qty", "fieldtype": "Float", "width": 100},
 		{"label": _("Return Qty"), "fieldname": "return_qty", "fieldtype": "Float", "width": 100},
 		{"label": _("Net Qty"), "fieldname": "net_qty", "fieldtype": "Float", "width": 90},
-		{"label": _("Net Amount"), "fieldname": "net_amount", "fieldtype": "Currency", "width": 120},
-		{"label": _("Cost Amount"), "fieldname": "cost_amount", "fieldtype": "Currency", "width": 120},
+		{"label": _("Net Sales"), "fieldname": "net_amount", "fieldtype": "Currency", "width": 120},
+		{"label": _("COGS"), "fieldname": "cost_amount", "fieldtype": "Currency", "width": 120},
 		{"label": _("Gross Profit"), "fieldname": "gross_profit", "fieldtype": "Currency", "width": 120},
-		{"label": _("Margin %"), "fieldname": "margin_percent", "fieldtype": "Percent", "width": 100},
+		{"label": _("Gross Profit Margin %"), "fieldname": "margin_percent", "fieldtype": "Percent", "width": 100},
+		{"label": _("Cost Status"), "fieldname": "cost_status", "fieldtype": "Data", "width": 140},
 		{"label": _("Invoice Count"), "fieldname": "invoice_count", "fieldtype": "Int", "width": 110},
 	]
 
@@ -803,9 +897,11 @@ def category_sales_columns():
 		{"label": _("Sold Qty"), "fieldname": "sold_qty", "fieldtype": "Float", "width": 100},
 		{"label": _("Return Qty"), "fieldname": "return_qty", "fieldtype": "Float", "width": 100},
 		{"label": _("Net Qty"), "fieldname": "net_qty", "fieldtype": "Float", "width": 90},
-		{"label": _("Net Amount"), "fieldname": "net_amount", "fieldtype": "Currency", "width": 120},
+		{"label": _("Net Sales"), "fieldname": "net_amount", "fieldtype": "Currency", "width": 120},
+		{"label": _("COGS"), "fieldname": "cost_amount", "fieldtype": "Currency", "width": 120},
 		{"label": _("Gross Profit"), "fieldname": "gross_profit", "fieldtype": "Currency", "width": 120},
-		{"label": _("Margin %"), "fieldname": "margin_percent", "fieldtype": "Percent", "width": 100},
+		{"label": _("Gross Profit Margin %"), "fieldname": "margin_percent", "fieldtype": "Percent", "width": 100},
+		{"label": _("Cost Status"), "fieldname": "cost_status", "fieldtype": "Data", "width": 140},
 	]
 
 
@@ -817,7 +913,7 @@ def hourly_sales_columns():
 		{"label": _("Counter"), "fieldname": "counter", "fieldtype": "Link", "options": "POS Branch Counter", "width": 140},
 		{"label": _("Invoice Count"), "fieldname": "invoice_count", "fieldtype": "Int", "width": 110},
 		{"label": _("Return Count"), "fieldname": "return_count", "fieldtype": "Int", "width": 110},
-		{"label": _("Gross Sales"), "fieldname": "gross_sales", "fieldtype": "Currency", "width": 120},
+		{"label": _("Sales Before Returns (excl. VAT, after discounts)"), "fieldname": "gross_sales", "fieldtype": "Currency", "width": 120},
 		{"label": _("Return Amount"), "fieldname": "return_amount", "fieldtype": "Currency", "width": 130},
 		{"label": _("Net Sales"), "fieldname": "net_sales", "fieldtype": "Currency", "width": 120},
 	]
@@ -845,9 +941,12 @@ def cashier_sales_columns():
 		{"label": _("Branch"), "fieldname": "branch", "fieldtype": "Link", "options": "Branch", "width": 140},
 		{"label": _("Invoice Count"), "fieldname": "invoice_count", "fieldtype": "Int", "width": 110},
 		{"label": _("Return Count"), "fieldname": "return_count", "fieldtype": "Int", "width": 110},
-		{"label": _("Gross Sales"), "fieldname": "gross_sales", "fieldtype": "Currency", "width": 120},
+		{"label": _("Sales Before Returns (excl. VAT, after discounts)"), "fieldname": "gross_sales", "fieldtype": "Currency", "width": 120},
 		{"label": _("Return Amount"), "fieldname": "return_amount", "fieldtype": "Currency", "width": 130},
 		{"label": _("Net Sales"), "fieldname": "net_sales", "fieldtype": "Currency", "width": 120},
+		{"label": _("Cash"), "fieldname": "cash_amount", "fieldtype": "Currency", "width": 120},
+		{"label": _("Card"), "fieldname": "card_amount", "fieldtype": "Currency", "width": 120},
+		{"label": _("Other Payments"), "fieldname": "other_payment_amount", "fieldtype": "Currency", "width": 140},
 	]
 
 
@@ -858,7 +957,7 @@ def counter_sales_columns():
 		{"label": _("Terminal ID"), "fieldname": "terminal_id", "fieldtype": "Data", "width": 120},
 		{"label": _("Invoice Count"), "fieldname": "invoice_count", "fieldtype": "Int", "width": 110},
 		{"label": _("Return Count"), "fieldname": "return_count", "fieldtype": "Int", "width": 110},
-		{"label": _("Gross Sales"), "fieldname": "gross_sales", "fieldtype": "Currency", "width": 120},
+		{"label": _("Sales Before Returns (excl. VAT, after discounts)"), "fieldname": "gross_sales", "fieldtype": "Currency", "width": 120},
 		{"label": _("Return Amount"), "fieldname": "return_amount", "fieldtype": "Currency", "width": 130},
 		{"label": _("Net Sales"), "fieldname": "net_sales", "fieldtype": "Currency", "width": 120},
 	]
@@ -914,7 +1013,7 @@ def discount_columns():
 		{"label": _("Discount Amount"), "fieldname": "discount_amount", "fieldtype": "Currency", "width": 130},
 		{"label": _("Distributed Discount"), "fieldname": "distributed_discount_amount", "fieldtype": "Currency", "width": 140},
 		{"label": _("Invoice Discount"), "fieldname": "invoice_discount_amount", "fieldtype": "Currency", "width": 130},
-		{"label": _("Net Amount"), "fieldname": "net_amount", "fieldtype": "Currency", "width": 120},
+		{"label": _("Net Sales"), "fieldname": "net_amount", "fieldtype": "Currency", "width": 120},
 	]
 
 
@@ -936,12 +1035,40 @@ def price_override_columns():
 	]
 
 
+def external_pos_rate_audit_columns():
+	return [
+		{"label": _("Audit"), "fieldname": "name", "fieldtype": "Link", "options": "External POS Rate Audit", "width": 170},
+		{"label": _("Status"), "fieldname": "status", "fieldtype": "Data", "width": 100},
+		{"label": _("POS Invoice"), "fieldname": "pos_invoice", "fieldtype": "Link", "options": "POS Invoice", "width": 170},
+		{"label": _("External Reference"), "fieldname": "external_pos_reference", "fieldtype": "Data", "width": 180},
+		{"label": _("Date"), "fieldname": "posting_date", "fieldtype": "Date", "width": 100},
+		{"label": _("Branch"), "fieldname": "branch", "fieldtype": "Link", "options": "Branch", "width": 130},
+		{"label": _("Counter"), "fieldname": "counter", "fieldtype": "Link", "options": "POS Branch Counter", "width": 140},
+		{"label": _("Counter Code"), "fieldname": "counter_code", "fieldtype": "Data", "width": 110},
+		{"label": _("Cashier"), "fieldname": "cashier", "fieldtype": "Link", "options": "User", "width": 140},
+		{"label": _("Cashier Employee"), "fieldname": "cashier_employee", "fieldtype": "Link", "options": "Employee", "width": 150},
+		{"label": _("Item"), "fieldname": "item_code", "fieldtype": "Link", "options": "Item", "width": 140},
+		{"label": _("Item Name"), "fieldname": "item_name", "fieldtype": "Data", "width": 170},
+		{"label": _("Qty"), "fieldname": "qty", "fieldtype": "Float", "width": 80},
+		{"label": _("POS Gross Rate"), "fieldname": "pos_gross_rate", "fieldtype": "Currency", "width": 120},
+		{"label": _("ERP Expected Rate"), "fieldname": "erp_expected_gross_rate", "fieldtype": "Currency", "width": 130},
+		{"label": _("Rate Difference"), "fieldname": "rate_difference", "fieldtype": "Currency", "width": 120},
+		{"label": _("Amount Difference"), "fieldname": "amount_difference", "fieldtype": "Currency", "width": 140},
+		{"label": _("Difference %"), "fieldname": "difference_percent", "fieldtype": "Percent", "width": 110},
+		{"label": _("POS VAT"), "fieldname": "pos_vat_amount", "fieldtype": "Currency", "width": 110},
+		{"label": _("ERP VAT"), "fieldname": "erp_expected_vat_amount", "fieldtype": "Currency", "width": 110},
+		{"label": _("VAT Difference"), "fieldname": "vat_difference", "fieldtype": "Currency", "width": 120},
+		{"label": _("Promo Reference"), "fieldname": "promo_reference", "fieldtype": "Data", "width": 140},
+		{"label": _("Reason"), "fieldname": "reason", "fieldtype": "Data", "width": 260},
+	]
+
+
 def daily_closing_columns():
 	columns = pos_sales_summary_columns()
 	columns.extend(
 		[
 			{"label": _("Cash Amount"), "fieldname": "cash_amount", "fieldtype": "Currency", "width": 120},
-			{"label": _("Card/Bank Amount"), "fieldname": "non_cash_amount", "fieldtype": "Currency", "width": 130},
+			{"label": _("Card Amount"), "fieldname": "non_cash_amount", "fieldtype": "Currency", "width": 130},
 			{"label": _("Expected Cash"), "fieldname": "expected_cash", "fieldtype": "Currency", "width": 130},
 			{"label": _("Closing Amount"), "fieldname": "closing_amount", "fieldtype": "Currency", "width": 130},
 			{"label": _("Variance"), "fieldname": "variance", "fieldtype": "Currency", "width": 120},
@@ -983,6 +1110,7 @@ REPORT_EXECUTORS = {
 	"POS Payment Mode Summary": payment_mode_summary,
 	"POS Discount Report": pos_discount_report,
 	"POS Price Override Report": pos_price_override_report,
+	"External POS Rate Audit": external_pos_rate_audit,
 	"POS Daily Closing Summary": pos_daily_closing_summary,
 	"POS Cash Movement Report": pos_cash_movement_report,
 }

@@ -5073,6 +5073,24 @@
     "parenttype": "Workspace",
     "report_ref_doctype": null,
     "type": "Link"
+   },
+      {
+    "dependencies": null,
+    "description": null,
+    "hidden": 0,
+    "icon": null,
+    "is_query_report": 1,
+    "label": "Supplier-Wise Sales Analytics",
+    "link_count": 0,
+    "link_to": "Supplier-Wise Sales Analytics",
+    "link_type": "Report",
+    "onboard": 0,
+    "only_for": null,
+    "parent": "Purchases",
+    "parentfield": "links",
+    "parenttype": "Workspace",
+    "report_ref_doctype": null,
+    "type": "Link"
    }
   ],
   "modified": "2026-06-21 11:07:52.181713",

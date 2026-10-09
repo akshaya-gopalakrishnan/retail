@@ -1,0 +1,30 @@
+{
+ "content": null,
+ "creation": "2026-08-14 09:10:06.517517",
+ "docstatus": 0,
+ "doctype": "Page",
+ "icon": "fa fa-list-alt",
+ "idx": 0,
+ "modified": "2026-10-09 12:31:45.723375",
+ "modified_by": "Administrator",
+ "module": "Retail-app",
+ "name": "van-stock-request",
+ "owner": "Administrator",
+ "page_name": "van-stock-request",
+ "roles": [
+  {
+   "role": "Van Sales User"
+  },
+  {
+   "role": "Van Sales Manager"
+  },
+  {
+   "role": "System Manager"
+  }
+ ],
+ "script": null,
+ "standard": "Yes",
+ "style": null,
+ "system_page": 0,
+ "title": "Stock Request"
+}

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import frappe
 from frappe import _
-from frappe.utils import flt, getdate
+from frappe.utils import flt, getdate, parse_json
 from frappe.desk.query_report import run as run_standard_query_report
 
 
@@ -247,6 +247,10 @@ def run_query_report(
 	parent_field=None,
 	are_default_filters=True,
 ):
+	filters = parse_json(filters) if isinstance(filters, str) else frappe._dict(filters or {})
+	if not ensure_report_company_filter(filters):
+		return empty_report_result()
+
 	result = run_standard_query_report(
 		report_name,
 		filters=filters,
@@ -263,6 +267,28 @@ def run_query_report(
 		add_stock_ledger_foc_markers(result)
 
 	return result
+
+
+def ensure_report_company_filter(filters):
+	if filters.get("company"):
+		return True
+
+	company = frappe.defaults.get_user_default("Company") or frappe.defaults.get_global_default("company")
+	if not company:
+		company = frappe.db.get_value("Company", {}, "name", order_by="lft asc")
+	if not company:
+		return False
+
+	filters["company"] = company
+	return True
+
+
+def empty_report_result():
+	return {
+		"columns": [],
+		"result": [],
+		"message": _("Complete Company and Fiscal Year setup to view this report."),
+	}
 
 
 def add_stock_ledger_foc_markers(result):

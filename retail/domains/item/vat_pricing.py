@@ -732,6 +732,7 @@ def update_packing_vat_prices(doc):
 
 	for row in doc.get("custom_retail_packing_detail") or []:
 		_set_missing_packing_purchase_rate_from_item(doc, row)
+		_set_missing_packing_selling_rate_from_item(doc, row)
 		for direction in PACKING_VAT_FIELDS:
 			_apply_packing_direction(doc, row, direction)
 
@@ -753,12 +754,36 @@ def _set_missing_packing_purchase_rate_from_item(doc, row):
 	row.set("purchase_rate", flt((item_gross if mode == "Including VAT" else item_net) * factor, 2))
 
 
+def _set_missing_packing_selling_rate_from_item(doc, row):
+	"""Default empty or unscaled new rows from the stock-UOM selling rate."""
+
+	factor = flt(row.get("conversion_factor") or 1) or 1
+	net = flt(doc.get("custom_sales_net_rate") or doc.get("standard_rate"))
+	if net <= 0:
+		return
+
+	rate = get_item_tax_rate(doc.get("custom_tax"))
+	inclusive = doc.get("custom_sales_rate_includes_vat")
+	gross = flt(doc.get("custom_sales_gross_rate")) or net * (1 + rate / 100)
+	unit_entry = gross if row.get("selling_vat_mode") == "Including VAT" else net
+	unscaled_new_row = (
+		row.get("__islocal") and factor != 1
+		and not row.get("__retail_manual_selling_price")
+		and flt(row.get("selling_rate"), 2) == flt(unit_entry, 2)
+	)
+	if flt(row.get("selling_rate")) and not unscaled_new_row:
+		return
+	row.set("selling_vat_mode", "Including VAT" if inclusive else "Excluding VAT")
+	row.set("selling_rate", flt((gross if inclusive else net) * factor, 2))
+
+
 def _apply_packing_direction(doc, row, direction):
 	fields = PACKING_VAT_FIELDS[direction]
 	entry = flt(row.get(fields["entry"]))
 	template = doc.get(fields["template"])
 	default_rate = get_item_tax_rate(template) if template else 0.0
-	rate = flt(row.get(fields["rate"]) if row.get(fields["rate"]) not in (None, "") else default_rate)
+	# A stored row percentage must not override the selected Item VAT template.
+	rate = flt(default_rate if template else row.get(fields["rate"]))
 	mode = row.get(fields["mode"]) or "Excluding VAT"
 
 	if mode == "Including VAT" and rate:
@@ -792,11 +817,11 @@ def _get_packing_vat_status(mode, rate, confirmed):
 def _update_margin(doc):
 	selling_net = _get_selling_net_rate(doc)
 	cost_net = _get_cost_net_rate(doc)
-	margin = selling_net - cost_net if selling_net else 0
-	margin_percent = (margin / selling_net * 100) if selling_net else 0
+	margin = (selling_net - cost_net if selling_net else 0) if cost_net is not None else None
+	margin_percent = (margin / selling_net * 100 if selling_net else 0) if margin is not None else None
 
-	doc.set("custom_margin", flt(margin, 2))
-	doc.set("custom_margin_", flt(margin_percent, 3))
+	doc.set("custom_margin", flt(margin, 2) if margin is not None else None)
+	doc.set("custom_margin_", flt(margin_percent, 3) if margin_percent is not None else None)
 
 
 def _get_selling_net_rate(doc):
@@ -807,15 +832,9 @@ def _get_selling_net_rate(doc):
 
 
 def _get_cost_net_rate(doc):
-	if doc.get("custom_purchase_rate_entry") not in (None, ""):
-		return flt(doc.get("custom_purchase_net_rate"))
+	from retail.domains.item.margin_cost import get_margin_cost
 
-	return flt(
-		doc.get("custom_default_purchase_rate")
-		or doc.get("last_purchase_rate")
-		or doc.get("valuation_rate")
-		or doc.get("custom_average_purchase_rate")
-	)
+	return get_margin_cost(doc)["cost"]
 
 
 @frappe.whitelist()

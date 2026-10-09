@@ -1,0 +1,143 @@
+{
+ "doctype": "DocType",
+ "name": "Celesta License Settings",
+ "module": "Retail-app",
+ "issingle": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "license_key",
+  "installation_id",
+  "customer_name",
+  "status",
+  "allowed_users",
+  "used_licensed_users",
+  "expiry_date",
+  "device_restriction_enabled",
+  "max_devices",
+  "max_sessions_per_user",
+  "last_verified",
+  "offline_valid_until",
+  "activate",
+  "sync_verify",
+  "verified_issued_at",
+  "verified_token",
+  "licensed_users"
+ ],
+ "fields": [
+  {
+   "fieldname": "license_key",
+   "label": "License Key",
+   "fieldtype": "Password"
+  },
+  {
+   "fieldname": "installation_id",
+   "label": "Installation ID",
+   "fieldtype": "Data",
+   "read_only": 1,
+   "description": "Generated on first save. Assign this ID to the license on the central server before activation."
+  },
+  {
+   "fieldname": "customer_name",
+   "label": "Customer Name",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "status",
+   "label": "Status",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "allowed_users",
+   "label": "Allowed Users",
+   "fieldtype": "Int",
+   "read_only": 1
+  },
+  {
+   "fieldname": "used_licensed_users",
+   "label": "Used Licensed Users",
+   "fieldtype": "Int",
+   "read_only": 1
+  },
+  {
+   "fieldname": "expiry_date",
+   "label": "Expiry",
+   "fieldtype": "Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "device_restriction_enabled",
+   "label": "Device Restriction",
+   "fieldtype": "Check",
+   "read_only": 1,
+   "description": "Not enforced yet. Signed metadata only."
+  },
+  {
+   "fieldname": "max_devices",
+   "label": "Max Devices",
+   "fieldtype": "Int",
+   "read_only": 1,
+   "description": "Not enforced yet. Signed metadata only."
+  },
+  {
+   "fieldname": "max_sessions_per_user",
+   "label": "Max Sessions/User",
+   "fieldtype": "Int",
+   "read_only": 1,
+   "description": "Not enforced yet. Signed metadata only."
+  },
+  {
+   "fieldname": "last_verified",
+   "label": "Last Verified",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "offline_valid_until",
+   "label": "Offline Valid Until",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "activate",
+   "label": "Activate",
+   "fieldtype": "Button"
+  },
+  {
+   "fieldname": "sync_verify",
+   "label": "Sync/Verify",
+   "fieldtype": "Button"
+  },
+  {
+   "fieldname": "verified_issued_at",
+   "label": "Verified Issued At",
+   "fieldtype": "Data",
+   "read_only": 1,
+   "hidden": 1
+  },
+  {
+   "fieldname": "verified_token",
+   "label": "Verified Token",
+   "fieldtype": "Long Text",
+   "read_only": 1,
+   "hidden": 1
+  },
+  {
+   "fieldname": "licensed_users",
+   "label": "Licensed Users",
+   "fieldtype": "Table",
+   "options": "Celesta Licensed User",
+   "description": "Administrator is the full emergency recovery account. Retail Super Admin has restricted licensing-repair access only when the license is invalid. Normal ERP access requires a valid license and an assigned seat. Only the first Allowed Users rows have access."
+  }
+ ],
+ "permissions": [
+  {
+   "role": "Super Admin",
+   "read": 1,
+   "write": 1,
+   "create": 1
+  }
+ ],
+ "track_changes": 0
+}

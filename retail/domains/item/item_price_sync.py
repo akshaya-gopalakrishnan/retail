@@ -4,7 +4,10 @@ from frappe.utils import flt
 
 
 BUYING_DOCTYPES = {"Purchase Order", "Purchase Receipt", "Purchase Invoice"}
-SELLING_DOCTYPES = {"Sales Order", "Delivery Note", "Sales Invoice", "POS Invoice"}
+# Invoice rates (including open-price sales and consolidated POS invoices) are
+# transaction-specific and must never become maintained selling prices.
+INVOICE_ONLY_RATE_DOCTYPES = {"Sales Invoice", "POS Invoice"}
+SELLING_DOCTYPES = {"Sales Order", "Delivery Note"}
 BUYING_HISTORY = (
 	("Purchase Order", "Purchase Order Item", "buying_price_list"),
 	("Purchase Receipt", "Purchase Receipt Item", "buying_price_list"),
@@ -13,8 +16,6 @@ BUYING_HISTORY = (
 SELLING_HISTORY = (
 	("Sales Order", "Sales Order Item", "selling_price_list"),
 	("Delivery Note", "Delivery Note Item", "selling_price_list"),
-	("Sales Invoice", "Sales Invoice Item", "selling_price_list"),
-	("POS Invoice", "POS Invoice Item", "selling_price_list"),
 )
 
 LEGACY_ITEM_PRICE_SCRIPTS = (
@@ -96,6 +97,9 @@ def _recalculate_side_item_prices(
 
 
 def sync_transaction_item_prices(doc, standard_price_list, document_price_list=None):
+	if doc.doctype in INVOICE_ONLY_RATE_DOCTYPES:
+		return
+
 	price_lists = [standard_price_list]
 	if document_price_list and document_price_list not in price_lists:
 		price_lists.append(document_price_list)
@@ -109,7 +113,8 @@ def sync_transaction_item_prices(doc, standard_price_list, document_price_list=N
 			continue
 
 		for price_list in price_lists:
-			sync_item_price(row, price_list, rate, uom=row.get("uom"))
+			sync_item_price(row, price_list, rate, uom=row.get("uom"),
+				source={"doctype": doc.doctype, "name": doc.name, "company": doc.get("company"), "row": row.name})
 
 
 
@@ -134,51 +139,35 @@ def sync_packing_item_prices(doc):
 		)
 
 
-def sync_item_price(doc, price_list, rate, uom=None, barcode=None):
+def sync_item_price(doc, price_list, rate, uom=None, barcode=None, source=None):
+	"""One maintained price per item/list/UOM, serialized even when none exists."""
 	rate = flt(rate)
 	if rate <= 0:
 		return
-
-	item_code = doc.get("item_code") or doc.name
-	uom = uom or doc.get("stock_uom") or "Nos"
-	barcode = barcode if barcode is not None else get_item_price_barcode(item_code, uom)
+	from retail.domains.purchase import price_history
+	item_code = doc.get("item_code") or doc.get("name")
+	uom = uom or doc.get("stock_uom") or frappe.db.get_value("Item", item_code, "stock_uom")
+	price_history.lock_item(item_code)
+	prices = frappe.get_all("Item Price", filters={"item_code": item_code,
+		"price_list": price_list, "uom": uom}, fields=["*"], order_by="creation asc, name asc")
+	if len(prices) > 1:
+		# Existing dated/customer-specific prices cannot safely be silently merged.
+		frappe.throw(f"Multiple Item Prices for {item_code} / {price_list} / {uom}. Resolve the duplicates before updating.")
+	old = prices[0] if prices else None
+	price_name = old.name if old else frappe.generate_hash(length=10)
 	values = {"price_list_rate": rate}
 	if frappe.db.has_column("Item Price", "custom_barcode"):
-		values["custom_barcode"] = barcode or ""
-
-	price_name = frappe.db.get_value(
-		"Item Price",
-		{
-			"item_code": item_code,
-			"price_list": price_list,
-			"uom": uom,
-		},
-	)
-
-	if price_name:
-		for duplicate in frappe.get_all(
-			"Item Price",
-			filters={"item_code": item_code, "price_list": price_list, "uom": uom},
-			pluck="name",
-		):
-			frappe.db.set_value(
-				"Item Price",
-				duplicate,
-				values,
-			)
-		return
-
-	doc_values = {
-		"doctype": "Item Price",
-		"item_code": item_code,
-		"price_list": price_list,
-		"price_list_rate": rate,
-		"uom": uom,
-	}
-	if frappe.db.has_column("Item Price", "custom_barcode"):
-		doc_values["custom_barcode"] = barcode or ""
-	frappe.get_doc(doc_values).insert(ignore_permissions=True)
-	return
+		values["custom_barcode"] = barcode if barcode is not None else get_item_price_barcode(item_code, uom)
+	if price_list == "Standard Selling" and price_history.ready():
+		values[price_history.POINTER] = price_history.record_change(item_code, uom, old, rate, price_name, source)
+	if old:
+		frappe.db.set_value("Item Price", price_name, values)
+	else:
+		price = frappe.get_doc({"doctype": "Item Price", "item_code": item_code,
+			"price_list": price_list, "uom": uom, **values})
+		price.flags.retail_price_sync = True
+		price.insert(ignore_permissions=True, set_name=price_name)
+	return price_name
 
 
 def sync_item_master_purchase_rate_from_price_list(doc, method=None, uom=None):
@@ -260,6 +249,8 @@ def sync_item_master_margin(item_code):
 			"standard_rate",
 			"custom_sales_net_rate",
 			"custom_default_purchase_rate",
+			"custom_purchase_net_rate",
+			"custom_average_purchase_rate",
 			"last_purchase_rate",
 			"valuation_rate",
 		],
@@ -269,19 +260,18 @@ def sync_item_master_margin(item_code):
 		return
 
 	selling_rate = flt(item.get("custom_sales_net_rate") or item.get("standard_rate"))
-	purchase_rate = flt(
-		item.get("custom_default_purchase_rate")
-		or item.get("last_purchase_rate")
-		or item.get("valuation_rate")
-	)
-	margin = selling_rate - purchase_rate if selling_rate else 0
-	margin_percent = (margin / selling_rate * 100) if selling_rate else 0
+	from retail.domains.item.margin_cost import get_margin_cost
+
+	item.name = item_code
+	cost = get_margin_cost(item)["cost"]
+	margin = (selling_rate - cost if selling_rate else 0) if cost is not None else None
+	margin_percent = (margin / selling_rate * 100 if selling_rate else 0) if margin is not None else None
 
 	values = {}
 	if frappe.db.has_column("Item", "custom_margin"):
-		values["custom_margin"] = flt(margin, 2)
+		values["custom_margin"] = flt(margin, 2) if margin is not None else None
 	if frappe.db.has_column("Item", "custom_margin_"):
-		values["custom_margin_"] = flt(margin_percent, 3)
+		values["custom_margin_"] = flt(margin_percent, 3) if margin_percent is not None else None
 	if values:
 		frappe.db.set_value("Item", item_code, values, update_modified=False)
 
@@ -351,6 +341,9 @@ def _get_item_master_vat_values(item_code, direction, net_rate):
 	gross_rate = net_rate + vat_amount
 
 	values = {default_field: net_rate}
+	inclusive = frappe.db.get_value("Item", item_code, f"custom_{prefix}_rate_includes_vat")
+	if frappe.db.has_column("Item", f"custom_{prefix}_rate_entry"):
+		values[f"custom_{prefix}_rate_entry"] = flt(gross_rate if inclusive else net_rate, 2)
 	for fieldname, value in {
 		f"custom_{prefix}_net_rate": net_rate,
 		f"custom_{prefix}_vat_amount": vat_amount,

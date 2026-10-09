@@ -65,7 +65,9 @@ def _get_vat_rate_from_prices(item):
 
 def apply_inclusive_promo_prices(doc, method=None):
 	"""Apply fixed promo prices that are stored as customer-facing VAT-inclusive prices."""
-	if doc.doctype not in SALES_DOCTYPES or doc.get("is_return"):
+	if doc.doctype not in SALES_DOCTYPES or doc.get("is_return") or doc.get("is_consolidated"):
+		return
+	if doc.doctype == "POS Invoice" and doc.get("pos_sync_source"):
 		return
 
 	promotions = get_active_promo_prices(doc)
@@ -129,6 +131,8 @@ def promotion_matches_doc(promotion, doc):
 
 
 def get_matching_inclusive_promo_row(doc, item, promotions):
+	if item.get("custom_foc_parent"):
+		return None  # The linked free goods retain their zero commercial price.
 	matches = []
 	for promotion in promotions:
 		for row in promotion.get("products") or []:

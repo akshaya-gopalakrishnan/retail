@@ -58,6 +58,53 @@ function hide_raw_total_fields(frm) {
 }
 
 function add_day_closing_actions(frm) {
+	if (!frm.is_new()) {
+		frappe.call({
+			method: "retail.pos_day_corrections.get_day_correction_actions",
+			type: "GET",
+			args: { day_closing: frm.doc.name },
+			callback: ({ message: actions }) => {
+				if (!actions) return;
+				const choices = [
+					["reopen", "Reopen Day", "reopen_day_closing"],
+					["recalculate", "Recalculate", "recalculate_day_closing"],
+					["reclose", "Close Day", "submit_branch_day_closing"],
+				];
+				choices.forEach(([key, label, method]) => {
+					if (!actions[key]) return;
+					frm.add_custom_button(__(label), () => {
+						if (frm.is_dirty()) {
+							frappe.msgprint(__("Save or reload the document before continuing."));
+							return;
+						}
+						const run_action = (values = {}) => {
+							frappe.call({
+								method: (key === "reclose" ? "retail.api.pos_sync." : "retail.pos_day_corrections.") + method,
+								args: { data: { day_closing: frm.doc.name,
+									...(key === "reopen" ? { reason: values.reason } : {}),
+									operation_reference: frappe.utils.get_random(32),
+									...(key === "reclose" ? {branch: frm.doc.branch, business_date: frm.doc.business_date, external_pos_reference: frappe.utils.get_random(32)} : {}),
+								} },
+								freeze: true,
+								callback: ({message}) => {
+									if (message?.status === "Failed") { frappe.msgprint(message.error); return; }
+									if (!message?.day_closing) return;
+									if (message.day_closing === frm.doc.name) frm.reload_doc();
+									else frappe.set_route("Form", "POS Branch Day Closing", message.day_closing);
+								},
+							});
+						};
+						if (key === "reopen") {
+							frappe.prompt([{fieldname: "reason", label: __("Reason"), fieldtype: "Small Text", reqd: 1}], run_action, __(label), __("Confirm"));
+						} else {
+							run_action();
+						}
+					});
+				});
+			},
+		});
+	}
+	if (frm.doc.amended_from) return;
 	if (frm.doc.docstatus !== 0 || !frm.doc.branch || !frm.doc.business_date) return;
 
 	frm.add_custom_button(__("Refresh Closing"), () => {

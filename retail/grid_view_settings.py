@@ -75,11 +75,16 @@ def apply_default_grid_view_settings_for_user(doc=None, method=None, defaults=No
 	defaults = defaults or json.loads(get_fixture_path().read_text() or "{}")
 	for parent_doctype, grid_view_defaults in defaults.items():
 		current = _get_user_settings(user, parent_doctype)
-		current_grid_view = current.setdefault("GridView", {})
+		# Preserve an explicit native Reset to default (GridView=null).
+		if "GridView" in current and current["GridView"] is None and not overwrite:
+			continue
+		current_grid_view = current.get("GridView")
+		if not isinstance(current_grid_view, dict):
+			current_grid_view = current["GridView"] = {}
 		changed = False
 
 		for child_doctype, columns in grid_view_defaults.items():
-			if current_grid_view.get(child_doctype) and not overwrite:
+			if child_doctype in current_grid_view and not overwrite:
 				continue
 			current_grid_view[child_doctype] = columns
 			changed = True

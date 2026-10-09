@@ -4,10 +4,9 @@ from __future__ import annotations
 
 import frappe
 from frappe.custom.doctype.property_setter.property_setter import make_property_setter
-from frappe.model.naming import make_autoname
 
 
-ITEM_NAMING_SERIES = "RTL-ITEM-.YYYY.-"
+ITEM_NAMING_SERIES = "I-.#"
 
 
 def install_item_code_defaults():
@@ -25,12 +24,8 @@ def install_item_code_defaults():
 
 
 def set_automatic_item_code(doc, method=None):
-	"""Generate an Item Code when one was not supplied by an integration."""
-	if doc.item_code:
-		return
-
+	"""The shared server naming hook assigns a permanent short Item Code."""
 	doc.naming_series = ITEM_NAMING_SERIES
-	doc.item_code = make_autoname(f"{ITEM_NAMING_SERIES}.#####", doc=doc)
 
 
 def _set_field_property(fieldname, property_name, value, property_type):

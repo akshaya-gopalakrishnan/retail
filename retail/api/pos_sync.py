@@ -1,4 +1,5 @@
 import json
+from decimal import Decimal, InvalidOperation
 
 import frappe
 from frappe import _
@@ -8,10 +9,14 @@ from frappe.utils import cint, flt, getdate, now_datetime, nowdate
 from erpnext.accounts.report.customer_ledger_summary.customer_ledger_summary import (
 	PartyLedgerSummaryReport,
 )
-from erpnext.accounts.party import get_party_account
+from erpnext.accounts.party import get_due_date, get_party_account
 from erpnext.selling.doctype.customer.customer import check_credit_limit, get_credit_limit
 
+from retail.customer_credit_notes import add_credit_note_snapshots
 from retail.domains.item.vat_pricing import get_item_tax_rate
+from retail.domains.item.arabic_name import fill_arabic_packing_names
+from retail.pos_rate_audit import create_for_pos_invoice
+from retail.pos_privileges import add_operator_privileges
 from retail.pos_login import get_next_pos_login_id, hash_quick_pin, make_quick_pin_hash, validate_quick_pin
 
 
@@ -58,6 +63,8 @@ def _json(data):
 
 
 def _assert_pos_user():
+	from retail.module_access import require
+	require("POS")
 	if frappe.session.user == "Guest":
 		frappe.throw(_("Authentication is required."))
 	if "System Manager" in frappe.get_roles() or INTEGRATION_ROLE in frappe.get_roles():
@@ -65,19 +72,23 @@ def _assert_pos_user():
 	frappe.throw(_("User requires {0} role.").format(INTEGRATION_ROLE))
 
 
-def _counter(branch, counter_code):
+def _counter(branch, counter_code, completed=False):
 	if not branch or not counter_code:
 		frappe.throw(_("Branch and counter_code are required."))
 
+	completed = completed or frappe.flags.get("pos_settlement_recovery") or frappe.flags.get("pos_completed_acceptance")
+	filters = {"branch": branch, "counter_code": counter_code}
+	if not completed:
+		filters["is_active"] = 1
 	name = frappe.db.get_value(
 		"POS Branch Counter",
-		{"branch": branch, "counter_code": counter_code, "is_active": 1},
+		filters,
 		"name",
 	)
 	if not name:
 		frappe.throw(_("Active POS Branch Counter not found for {0} / {1}.").format(branch, counter_code))
 	counter_doc = frappe.get_doc("POS Branch Counter", name)
-	if not cint(counter_doc.allow_offline_sync):
+	if not completed and not cint(counter_doc.allow_offline_sync):
 		frappe.throw(_("Offline sync is disabled for counter {0}.").format(counter_code))
 	# A production integration user may be assigned to one terminal only. System
 	# Managers retain access for support and setup.
@@ -109,7 +120,7 @@ def _existing_doc(doctype, external_reference):
 def _existing_invoice(external_reference):
 	"""Find an invoice reference across both invoice doctypes.
 
-	A cancelled document intentionally does not reserve its external reference.
+	Cancelled documents retain their external reference permanently.
 	"""
 	if not external_reference:
 		frappe.throw(_("external_pos_reference is required."))
@@ -117,7 +128,7 @@ def _existing_invoice(external_reference):
 		fields = ["name", "docstatus", "grand_total", "outstanding_amount"]
 		existing = frappe.db.get_value(
 			doctype,
-			{"external_pos_reference": external_reference, "docstatus": ["!=", 2]},
+			{"external_pos_reference": external_reference},
 			fields,
 			as_dict=True,
 		)
@@ -128,6 +139,10 @@ def _existing_invoice(external_reference):
 
 
 def _sync_log(sync_type, external_reference, payload, response=None, status="Pending", error_message=None, docname=None):
+	# Failure logs use the same sale label as durable successful receipts,
+	# including failures raised before authorization/operation claiming.
+	if sync_type in ("Sales Invoice", "Credit Sales Invoice"):
+		sync_type = "POS Sale"
 	doc = frappe.get_doc(
 		{
 			"doctype": "POS Sync Log",
@@ -163,8 +178,43 @@ def _previous_success(external_reference):
 
 def _run(sync_type, payload, handler):
 	external_reference = payload.get("external_pos_reference")
+	if sync_type in ("Sales Invoice", "Credit Sales Invoice", "Return") and frappe.flags.get("pos_settlement_recovery"):
+		return handler()
+	frappe.db.savepoint("pos_sync_request")
 	try:
-		response = handler()
+		if sync_type in ("Sales Invoice", "Credit Sales Invoice", "Return", "Shift Opening", "Shift Pause",
+			"Shift Resume", "Shift Closing", "Shift Reopen", "Cash Movement", "Customer Deposit", "Payment Entry", "Day Closing"):
+			from retail.pos_operations import execute
+			from retail.pos_external_refs import authorize, echo
+			counter = authorize(sync_type, payload)
+			request = {"payload": dict(payload)}
+			kind = sync_type
+			if sync_type in ("Sales Invoice", "Credit Sales Invoice", "Return"):
+				# Preserve the existing sale receipt key and canonical request format.
+				kind = "POS Return" if sync_type == "Return" else "POS Sale"
+				request.update(company=counter.company, counter=counter.name)
+
+			def action():
+				if sync_type in ("Sales Invoice", "Credit Sales Invoice", "Return", "Shift Opening", "Shift Pause", "Shift Resume", "Shift Closing", "Shift Reopen", "Day Closing", "Payment Entry", "Customer Deposit", "Cash Movement"):
+					# Serialize lifecycle changes against branch day-close checks.
+					frappe.db.get_value("Branch", payload.get("branch") or counter.branch, "name", for_update=True)
+				if sync_type == "Shift Opening":
+					frappe.db.get_value("Employee", _cashier_employee(payload, required=True), "name", for_update=True)
+				_validate_legacy_operation(sync_type, payload)
+				if sync_type in ("Sales Invoice", "Credit Sales Invoice", "Return"):
+					from retail.pos_settlements import accept
+					return echo(payload, accept(sync_type, payload, counter, handler))
+				return echo(payload, handler())
+
+			response = execute(kind, external_reference, request, action)
+			if response.get("duplicate") and response.get("accepted_transaction"):
+				from retail.pos_settlements import audit
+				audit(frappe.get_doc("POS Accepted Transaction", response["accepted_transaction"]),
+					"Exact retry returned the immutable acceptance receipt.", "Info")
+			# Every operation above already has a durable success receipt.
+			return response
+		else:
+			response = handler()
 		_sync_log(
 			sync_type,
 			external_reference,
@@ -181,14 +231,37 @@ def _run(sync_type, payload, handler):
 				or response.get("cash_movement")
 				or response.get("cashier_shift")
 				or response.get("counter_session")
+				or (response.get("name") if sync_type == "Day Closing" else None)
 			),
 		)
 		return response
 	except Exception as exc:
-		frappe.db.rollback()
+		frappe.db.rollback(save_point="pos_sync_request")
 		error = frappe.get_traceback()
 		_sync_log(sync_type, external_reference, payload, status="Failed", error_message=error)
-		return {"status": "Failed", "error": str(exc)}
+		from retail.pos_external_refs import MissingPOSDependency
+		response = {"status": "Failed", "error": str(exc)}
+		from retail.pos_day_corrections import POSDayClosed
+		if isinstance(exc, POSDayClosed):
+			response["error_code"] = "DayClosed"
+		if isinstance(exc, MissingPOSDependency):
+			response["error_code"] = "BlockedDependency"
+		return response
+
+
+def _validate_legacy_operation(sync_type, payload):
+	"""Do not let old log-only retries bypass payload conflict checks."""
+	from retail.pos_operations import canonical
+	previous = frappe.db.get_value("POS Sync Log",
+		{"external_reference": payload.get("external_pos_reference"), "status": ["in", ["Success", "Duplicate"]],
+		 "operation_key": ["is", "not set"]},
+		["sync_type", "request_json"], as_dict=True, order_by="creation asc")
+	if previous and previous.request_json:
+		compatible = {sync_type}
+		if sync_type in ("Sales Invoice", "Credit Sales Invoice"):
+			compatible = {"Sales Invoice", "Credit Sales Invoice", "POS Sale"}
+		if previous.sync_type not in compatible or canonical(json.loads(previous.request_json)) != canonical(dict(payload)):
+			frappe.throw("Reference conflict: this operation reference was used with different data.")
 
 
 def _cashier_employee(payload, required=False):
@@ -229,9 +302,12 @@ def _assert_day_not_closed(branch, business_date=None):
 		"POS Branch Day Closing",
 		{"branch": branch, "business_date": business_date, "docstatus": 1},
 		"name",
+		for_update=True,
 	)
 	if closed:
-		frappe.throw(_("POS day is already closed for {0} on {1}: {2}.").format(branch, business_date, closed))
+		from retail.pos_day_corrections import POSDayClosed
+
+		frappe.throw(_("POS day is already closed for {0} on {1}: {2}.").format(branch, business_date, closed), POSDayClosed)
 
 
 def _submitted_day_closing(branch, business_date=None):
@@ -247,35 +323,39 @@ def _cashier_name(employee):
 	return frappe.db.get_value("Employee", employee, "employee_name") if employee else None
 
 
-def _active_cashier_shift(cashier_employee):
+def _active_cashier_shift(cashier_employee, for_update=False):
 	return frappe.db.get_value(
 		"POS Cashier Shift",
 		{"cashier_employee": cashier_employee, "status": ["in", ["Open", "Paused"]]},
 		"name",
 		order_by="creation desc",
+		for_update=for_update,
 	)
 
 
-def _active_counter_session(counter_name):
+def _active_counter_session(counter_name, for_update=False):
 	return frappe.db.get_value(
 		"POS Counter Session",
 		{"counter": counter_name, "status": "Active"},
 		["name", "cashier_shift", "cashier_employee", "pos_opening_entry"],
 		as_dict=True,
 		order_by="creation desc",
+		for_update=for_update,
 	)
 
 
-def _cashier_shift_doc(name):
-	if not name or not frappe.db.exists("POS Cashier Shift", name):
+def _cashier_shift_doc(name, for_update=False):
+	if not name:
 		frappe.throw(_("POS Cashier Shift is required."))
-	return frappe.get_doc("POS Cashier Shift", name)
+	if not frappe.db.exists("POS Cashier Shift", name):
+		frappe.throw(_("POS Cashier Shift {0} does not exist. Use the cashier_shift returned when opening the shift.").format(name))
+	return frappe.get_doc("POS Cashier Shift", name, for_update=for_update)
 
 
-def _counter_session_doc(name):
+def _counter_session_doc(name, for_update=False):
 	if not name or not frappe.db.exists("POS Counter Session", name):
 		frappe.throw(_("POS Counter Session is required."))
-	return frappe.get_doc("POS Counter Session", name)
+	return frappe.get_doc("POS Counter Session", name, for_update=for_update)
 
 
 def _cash_amount(rows, key):
@@ -298,16 +378,29 @@ def _expected_cash_for_shift(cashier_shift):
 			select sum(p.amount)
 			from `tabSales Invoice Payment` p
 			inner join `tabPOS Invoice` i on i.name = p.parent
-			inner join `tabMode of Payment` m on m.name = p.mode_of_payment
+			inner join `tabAccount` m on m.name = p.account
 			where i.docstatus = 1
 				and i.pos_cashier_shift = %s
-				and m.type = 'Cash'
+				and p.parenttype = 'POS Invoice'
+				and m.account_type = 'Cash'
 			""",
 			(cashier_shift,),
 		)[0][0]
 		)
 	movements = _cash_movement_totals_for_shift(cashier_shift)
-	return opening_amount + cash_sales + movements.cash_in - movements.cash_out
+	cash_change = flt(frappe.db.sql("""
+        select sum(i.change_amount) from `tabPOS Invoice` i
+        join `tabAccount` a on a.name=i.account_for_change_amount
+        where i.docstatus=1 and i.pos_cashier_shift=%s and a.account_type='Cash'
+    """, (cashier_shift,))[0][0])
+	cash_collections = flt(frappe.db.sql("""
+        select coalesce(sum(case when p.payment_type='Receive' then p.received_amount else -p.paid_amount end),0)
+        from `tabPayment Entry` p
+        join `tabAccount` a on a.name=case when p.payment_type='Receive' then p.paid_to else p.paid_from end
+        where p.docstatus=1 and p.pos_cashier_shift=%s and p.payment_type in ('Receive','Pay')
+          and a.account_type='Cash'
+    """, (cashier_shift,))[0][0])
+	return opening_amount + cash_sales - cash_change + cash_collections + movements.cash_in - movements.cash_out
 
 
 def _cash_movement_totals_for_shift(cashier_shift):
@@ -470,8 +563,8 @@ def _make_pos_opening_entry(payload, counter_doc, cashier_employee=None, cashier
 	entry.company = counter_doc.company
 	entry.pos_profile = counter_doc.pos_profile
 	entry.user = frappe.session.user
-	entry.period_start_date = payload.get("opened_at") or payload.get("started_at") or now_datetime()
-	entry.posting_date = payload.get("posting_date") or frappe.utils.today()
+	entry.period_start_date = payload.get("opened_at") or payload.get("resumed_at") or payload.get("started_at") or (str(_business_date(payload)) + " 00:00:00")
+	entry.posting_date = _business_date(payload)
 	_mark_offline_fields(entry, counter_doc, cashier_employee, cashier_shift, counter_session)
 
 	balances = payload.get("opening_balances") or []
@@ -502,20 +595,23 @@ def _close_pos_opening_entry(opening_name, closing_balances=None, counter_doc=No
 		)
 		return frappe.get_doc("POS Closing Entry", existing_closing) if existing_closing else None
 
-	from erpnext.accounts.doctype.pos_closing_entry.pos_closing_entry import make_closing_entry_from_opening
+	from retail.pos_realtime import make_closing_entry_from_opening
 
 	closing = make_closing_entry_from_opening(opening)
 	_mark_offline_fields(closing, counter_doc, cashier_employee, cashier_shift, counter_session)
-	actuals = {row.get("mode_of_payment"): flt(row.get("closing_amount")) for row in closing_balances or []}
+	actuals = {str(row.get("mode_of_payment") or "").strip().casefold(): flt(row.get("closing_amount")) for row in closing_balances or []}
 	for row in closing.payment_reconciliation:
-		row.closing_amount = actuals.get(row.mode_of_payment, row.expected_amount)
+		row.closing_amount = actuals.get(row.mode_of_payment.strip().casefold(), row.expected_amount)
 	closing.insert(ignore_permissions=True)
 	closing.submit()
 	return closing
 
 
-def _validate_active_counter_session(payload, counter_doc):
-	_assert_day_not_closed(counter_doc.branch, _business_date(payload))
+def _validate_active_counter_session(payload, counter_doc, check_day=True):
+	from retail.pos_external_refs import resolve
+	payload = resolve(payload)
+	if check_day:
+		_assert_day_not_closed(counter_doc.branch, _business_date(payload))
 	cashier_shift = payload.get("cashier_shift") or payload.get("cashier_shift_id")
 	counter_session = payload.get("counter_session") or payload.get("counter_session_id")
 	cashier_employee = _cashier_employee(payload)
@@ -551,11 +647,14 @@ def _legacy_counter_name(counter_doc):
 def _resolve_item(row):
 	item_code = row.get("item_code")
 	barcode = row.get("barcode")
-	if not item_code and barcode:
+	if item_code and frappe.db.exists("Item", item_code):
+		return item_code
+	if barcode:
 		item_code = frappe.db.get_value("Item Barcode", {"barcode": barcode}, "parent")
 	if not item_code or not frappe.db.exists("Item", item_code):
 		frappe.throw(_("Item not found for row {0}.").format(row))
 	return item_code
+
 
 
 def _payment_account(counter_doc, payment):
@@ -603,18 +702,19 @@ def _set_pos_audit_fields(doc, payload, counter_doc):
 			setattr(doc, fieldname, value)
 
 
-def _new_customer_payment(payload, counter_doc, customer, amount, invoice=None):
+def _new_customer_payment(payload, counter_doc, customer, amount, invoice=None, pos_invoice=None, allocations=None):
 	account = _payment_account(
 		counter_doc,
 		{"mode_of_payment": payload.get("payment_mode") or payload.get("mode_of_payment")},
 	)
 	if not account:
 		frappe.throw(_("No account is configured for the requested payment mode on this counter."))
-	party_account = get_party_account("Customer", customer, counter_doc.company, include_advance=not invoice)
+	party_account = get_party_account("Customer", customer, counter_doc.company)
 	if not party_account:
 		frappe.throw(_("No receivable account is configured for customer {0}.").format(customer))
 
 	doc = frappe.new_doc("Payment Entry")
+	doc.pos_credit_invoice = pos_invoice
 	doc.payment_type = "Receive"
 	doc.company = counter_doc.company
 	doc.posting_date = payload.get("posting_date") or frappe.utils.today()
@@ -637,7 +737,14 @@ def _new_customer_payment(payload, counter_doc, customer, amount, invoice=None):
 				"allocated_amount": amount,
 			},
 		)
+	for row in allocations or []:
+		doc.append("references", {
+			"reference_doctype": "Sales Invoice",
+			"reference_name": row["sales_invoice"],
+			"allocated_amount": row["allocated_amount"],
+		})
 	_set_pos_audit_fields(doc, payload, counter_doc)
+	doc.setup_party_account_field()
 	doc.set_missing_values()
 	doc.insert(ignore_permissions=True)
 	doc.submit()
@@ -650,11 +757,25 @@ def _base_invoice(payload, counter_doc, is_return=False):
 		frappe.throw(_("Customer is required or default_customer must be set on the POS Branch Counter."))
 
 	doc = frappe.new_doc("POS Invoice")
+	doc.flags.from_completed_pos_sync = True
+	doc.custom_pos_completed_payload = _json(payload)
+	from retail.pos_external_refs import resolve_completed
+	payload = resolve_completed(payload)
+	doc.pos_sync_source = SYNC_SOURCE
+	doc.ignore_pricing_rule = 1
+	doc.discount_amount = flt(payload.get("discount_amount"))
+	doc.apply_discount_on = "Net Total"
+	redemption = payload.get("voucher_redemption") or {}
+	doc.custom_gift_voucher_code = redemption.get("voucher_code")
+	doc.custom_gift_voucher_amount = flt(redemption.get("amount"))
+	doc.custom_gift_voucher_redemption_reference = redemption.get("redemption_reference")
 	# These values are owned by the server-side counter configuration.  A
 	# terminal must not be able to redirect sales into another ledger/location.
 	doc.company = counter_doc.company
 	doc.customer = customer
 	doc.posting_date = payload.get("posting_date") or frappe.utils.today()
+	# Preserve the original sale timestamp when an offline bill arrives later.
+	doc.set_posting_time = 1
 	if payload.get("posting_time"):
 		doc.posting_time = payload.get("posting_time")
 	doc.update_stock = cint(payload.get("update_stock", 1))
@@ -663,6 +784,12 @@ def _base_invoice(payload, counter_doc, is_return=False):
 	doc.pos_profile = counter_doc.pos_profile
 	doc.is_return = 1 if is_return else 0
 	doc.return_against = payload.get("original_pos_invoice") if is_return else None
+	if is_return and not doc.return_against and payload.get("original_external_pos_reference"):
+		doc.return_against = frappe.db.get_value("POS Invoice",
+			{"external_pos_reference": payload.original_external_pos_reference, "docstatus": 1}, "name")
+		if not doc.return_against:
+			from retail.pos_external_refs import MissingPOSDependency
+			frappe.throw("Original sale must sync before the return.", MissingPOSDependency)
 
 	doc.external_pos_reference = payload.external_pos_reference
 	doc.pos_bill_no = payload.get("pos_bill_no")
@@ -671,7 +798,8 @@ def _base_invoice(payload, counter_doc, is_return=False):
 	doc.pos_terminal_id = payload.get("pos_terminal_id") or counter_doc.terminal_id
 	doc.pos_shift_no = payload.get("pos_shift_no")
 	doc.pos_cashier = payload.get("cashier") or frappe.session.user
-	cashier_employee, cashier_shift, counter_session = _validate_active_counter_session(payload, counter_doc)
+	from retail.pos_completed_sale import completed_session
+	cashier_employee, cashier_shift, counter_session = completed_session(doc, payload, counter_doc)
 	doc.pos_cashier_employee = cashier_employee
 	doc.pos_cashier_shift = cashier_shift
 	doc.pos_counter_session = counter_session
@@ -703,27 +831,48 @@ def _append_invoice_items(doc, payload, counter_doc, is_return=False):
 		elif qty <= 0:
 			frappe.throw(_("Item quantity must be greater than zero."))
 
+		item_code = _resolve_item(row)
+		item = frappe.get_cached_doc("Item", item_code)
+		template = item.get("custom_tax")
+		requested_template = row.get("sales_vat_template") or row.get("item_tax_template")
+		# The POS may have billed using an older template. This is audit data only.
+		if requested_template and frappe.db.exists("Item Tax Template", requested_template):
+			template = requested_template
+		rate = flt(row.get("rate"))
+		discount = flt(row.get("discount_amount"))
+		includes_vat = row.get("rate_includes_vat", item.get("custom_sales_rate_includes_vat"))
+		if cint(includes_vat):
+			factor = 1 + flt(row["vat_rate"] if row.get("vat_rate") is not None else get_item_tax_rate(template)) / 100
+			rate /= factor
+			discount /= factor
+
 		doc.append(
 			"items",
 			{
-				"item_code": _resolve_item(row),
-				"item_tax_template": row.get("sales_vat_template") or row.get("item_tax_template"),
+				"item_code": item_code,
+				"item_tax_template": template,
 				"qty": qty,
-				"rate": flt(row.get("rate")),
-				"discount_amount": flt(row.get("discount_amount")),
+				"rate": rate - discount,
+				"price_list_rate": rate,
+				"discount_amount": discount,
+				"uom": row.get("uom"),
+				"conversion_factor": row.get("conversion_factor"),
 				"warehouse": default_warehouse,
 				"cost_center": default_cost_center,
 			},
 		)
 
 
+
 def _append_invoice_payments(doc, payload, counter_doc, is_return=False):
-	if not payload.get("payments"):
+	from retail.pos_settlements import cash_payments
+	payments = cash_payments(payload)
+	if not payments:
 		return
 
 	doc.set("payments", [])
 	paid_amount = 0
-	for row in payload.get("payments"):
+	for row in payments:
 		row = frappe._dict(row)
 		amount = flt(row.get("amount"))
 		if is_return:
@@ -788,7 +937,7 @@ def _pos_tax_config(counter_doc):
 
 
 def _operator_master_rows(branch=None, modified_after=None):
-	filters = [["status", "=", "Active"]]
+	filters = []
 	if modified_after:
 		filters.append(["modified", ">", modified_after])
 
@@ -802,6 +951,7 @@ def _operator_master_rows(branch=None, modified_after=None):
 		"employee_number",
 		"pos_login_id",
 		"pos_login_enabled",
+		"pos_operator_privilege",
 		"pos_quick_pin_hash",
 		"pos_quick_pin_salt",
 	):
@@ -822,9 +972,8 @@ def _operator_master_rows(branch=None, modified_after=None):
 		row.quick_pin_salt = row.get("pos_quick_pin_salt")
 		row.pop("pos_quick_pin_hash", None)
 		row.pop("pos_quick_pin_salt", None)
-		if "pos_login_enabled" in row and not cint(row.get("pos_login_enabled")):
-			row.disabled = 1
-	return rows
+		row.disabled = int(row.status != "Active" or not cint(row.get("pos_login_enabled")))
+	return add_operator_privileges(rows)
 
 
 def _customer_master_rows(company, modified_filter=None):
@@ -872,6 +1021,7 @@ def _customer_master_rows(company, modified_filter=None):
 			cint(credit_detail.bypass_credit_limit_check) if credit_detail else 0
 		)
 
+	add_credit_note_snapshots(customers, company, "name")
 	return customers
 
 
@@ -880,18 +1030,13 @@ def _hash_quick_pin(quick_pin, salt):
 
 
 def _validate_vat(doc, payload):
-	"""Check the POS-provided VAT against ERPNext's configured-tax calculation."""
+	"""Require POS VAT metadata without comparing it with ERPNext's calculated VAT."""
 	provided = payload.get("vat_amount")
 	if provided is None and payload.get("taxes"):
 		provided = sum(flt(row.get("tax_amount")) for row in payload.taxes)
 	if provided is None:
 		frappe.throw(_("vat_amount is required for external POS invoices."))
-	if abs(flt(provided) - flt(doc.total_taxes_and_charges)) > 0.01:
-		frappe.throw(
-			_("VAT mismatch. POS sent {0}; configured ERPNext taxes calculate {1}.").format(
-				flt(provided), flt(doc.total_taxes_and_charges)
-			)
-		)
+
 
 
 @frappe.whitelist()
@@ -920,8 +1065,214 @@ def health_check(branch=None, counter_code=None):
 	return response
 
 
+def _pos_selling_price(item, uom=None, barcode=None):
+	"""Return the maintained VAT-inclusive customer price for this sale unit."""
+	if not uom or uom == item.get("stock_uom"):
+		gross = item.get("custom_sales_gross_rate")
+		if gross is not None:
+			return flt(gross)
+		return flt(flt(item.get("standard_rate")) * (1 + flt(get_item_tax_rate(item.get("custom_tax"))) / 100), 2)
+	packings = [row for row in item.get("custom_retail_packing_detail") or [] if row.get("uom") == uom]
+	packing = next((row for row in packings if barcode and row.get("barcode") == barcode), None)
+	if packing is None and packings:
+		packing = packings[0]
+	if packing is not None and packing.get("selling_gross_rate") is not None:
+		return flt(packing.get("selling_gross_rate"))
+	return None
+
+
+def _pos_item_prices(fields, modified_filter, changed_item_codes):
+	# Gross prices may change on Item/packing even when Item Price is unchanged.
+	or_filters = list(modified_filter)
+	if or_filters and changed_item_codes:
+		or_filters.append(["item_code", "in", changed_item_codes])
+	rows = frappe.get_all(
+		"Item Price", fields=[*fields, "selling"], or_filters=or_filters, limit_page_length=0
+	)
+	items = {}
+	for row in rows:
+		if not cint(row.pop("selling", 0)):
+			continue
+		if row.item_code not in items:
+			items[row.item_code] = frappe.get_cached_doc("Item", row.item_code)
+		item = items[row.item_code]
+		gross = _pos_selling_price(item, row.get("uom"), row.get("barcode"))
+		if gross is None:
+			gross = flt(flt(row.price_list_rate) * (1 + flt(get_item_tax_rate(item.get("custom_tax"))) / 100), 2)
+		row["price_list_rate"] = gross
+		row["rate_includes_vat"] = 1
+	return rows
+
+
+def _company_bill_format(company):
+	"""Always send current print settings, including blanks that clear POS values."""
+	doc = frappe.get_doc("Company", company)
+	field_map = {
+		"address": "custom_bill_address",
+		"phone_number": "custom_bill_phone",
+		"email_id": "custom_bill_email",
+		"tax_id": "custom_bill_tax_id",
+		**{f"h{i}": f"custom_bill_h{i}" for i in range(1, 6)},
+		**{f"f{i}": f"custom_bill_f{i}" for i in range(1, 6)},
+	}
+	return {key: doc.get(fieldname) or "" for key, fieldname in field_map.items()}
+
+
+def _promotion_doc_payload(doc, child_table, child_fields):
+	data = doc.as_dict()
+	data[child_table] = [
+		{field: row.get(field) for field in child_fields}
+		for row in doc.get(child_table) or []
+	]
+	data.pop("linked_schemes", None)
+	return data
+
+
+def _get_promotion_docs(doctype, counter_doc, modified_after=None):
+	filters = []
+	if modified_after:
+		filters.append(["modified", ">", modified_after])
+	else:
+		filters.append(["active_to", ">=", nowdate()])
+	names = frappe.get_all(doctype, filters=filters, pluck="name", order_by="priority desc, modified desc")
+	docs = [frappe.get_doc(doctype, name) for name in names]
+	return [
+		doc
+		for doc in docs
+		if _matches_optional_scope(doc.get("company"), counter_doc.company)
+		and _matches_optional_scope(doc.get("warehouse"), counter_doc.warehouse)
+	]
+
+
+def _matches_optional_scope(value, expected):
+	return not value or value == expected
+
+
+def _pos_promotion_payload(branch=None, counter_code=None, modified_after=None):
+	_assert_pos_user()
+	payload = _as_dict(None, branch=branch, counter_code=counter_code, modified_after=modified_after)
+	counter_doc = _counter(payload.get("branch"), payload.get("counter_code"))
+	return payload, counter_doc, payload.get("modified_after")
+
+
+@frappe.whitelist()
+def get_pos_promo_prices(branch=None, counter_code=None, modified_after=None):
+	_payload, counter_doc, modified_after = _pos_promotion_payload(branch, counter_code, modified_after)
+	child_fields = [
+		"name",
+		"idx",
+		"item",
+		"barcode",
+		"item_group",
+		"uom",
+		"price_list",
+		"qty",
+		"current_price",
+		"current_price_including_tax",
+		"vat_rate",
+		"promo_price",
+		"promo_price_including_tax",
+		"discount_percent",
+		"max_qty",
+	]
+	promotions = [
+		_promotion_doc_payload(doc, "products", child_fields)
+		for doc in _get_promotion_docs("Promo Price", counter_doc, modified_after)
+	]
+	return {
+		"status": "Success",
+		"server_time": now_datetime(),
+		"branch": counter_doc.branch,
+		"counter": counter_doc.name,
+		"counter_code": counter_doc.counter_code,
+		"promotions": promotions,
+	}
+
+
+@frappe.whitelist()
+def get_pos_buy_x_get_y_promotions(branch=None, counter_code=None, modified_after=None):
+	_payload, counter_doc, modified_after = _pos_promotion_payload(branch, counter_code, modified_after)
+	child_fields = ["name", "idx", "add_to", "item", "item_group", "uom"]
+	promotions = [
+		_promotion_doc_payload(doc, "products", child_fields)
+		for doc in _get_promotion_docs("Buy X Get Y Promotion", counter_doc, modified_after)
+	]
+	return {
+		"status": "Success",
+		"server_time": now_datetime(),
+		"branch": counter_doc.branch,
+		"counter": counter_doc.name,
+		"counter_code": counter_doc.counter_code,
+		"promotions": promotions,
+	}
+
+
+@frappe.whitelist()
+def get_pos_loyalty_programs(branch=None, counter_code=None, modified_after=None):
+	_assert_pos_user()
+	payload = _as_dict(None, branch=branch, counter_code=counter_code, modified_after=modified_after)
+	counter_doc = _counter(payload.get("branch"), payload.get("counter_code"))
+	filters = []
+	if payload.get("modified_after"):
+		filters.append(["modified", ">", payload.get("modified_after")])
+	else:
+		filters.append(["from_date", "<=", nowdate()])
+
+	rows = frappe.get_all(
+		"Loyalty Program",
+		filters=filters,
+		fields=[
+			"name",
+			"loyalty_program_name",
+			"loyalty_program_type",
+			"from_date",
+			"to_date",
+			"customer_group",
+			"customer_territory",
+			"auto_opt_in",
+			"conversion_factor",
+			"expiry_duration",
+			"expense_account",
+			"company",
+			"cost_center",
+			"project",
+			"modified",
+		],
+		order_by="modified desc",
+		limit_page_length=0,
+	)
+	programs = []
+	for row in rows:
+		if not _matches_optional_scope(row.company, counter_doc.company):
+			continue
+		if row.to_date and getdate(row.to_date) < getdate(nowdate()) and not payload.get("modified_after"):
+			continue
+		doc = frappe.get_doc("Loyalty Program", row.name)
+		data = dict(row)
+		data["collection_rules"] = [
+			{
+				"name": rule.name,
+				"idx": rule.idx,
+				"tier_name": rule.tier_name,
+				"min_spent": rule.min_spent,
+				"collection_factor": rule.collection_factor,
+			}
+			for rule in doc.get("collection_rules") or []
+		]
+		programs.append(data)
+	return {
+		"status": "Success",
+		"server_time": now_datetime(),
+		"branch": counter_doc.branch,
+		"counter": counter_doc.name,
+		"counter_code": counter_doc.counter_code,
+		"loyalty_programs": programs,
+	}
+
+
 @frappe.whitelist()
 def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
+	from retail.api.gift_vouchers import get_gift_voucher_promotions
 	_assert_pos_user()
 	payload = _as_dict(None, branch=branch, counter_code=counter_code, modified_after=modified_after)
 	branch = payload.get("branch")
@@ -1006,6 +1357,10 @@ def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
 		)
 	if frappe.db.has_column("Item", "custom_purchase_tax_template"):
 		item_fields.append("custom_purchase_tax_template as purchase_vat_template")
+	if frappe.db.has_column("Item", "custom_sales_rate_includes_vat"):
+		item_fields.append("custom_sales_rate_includes_vat as sales_rate_includes_vat")
+
+	item_fields.append("custom_sales_gross_rate as selling_gross_rate")
 
 	items = frappe.get_all(
 		"Item",
@@ -1031,6 +1386,7 @@ def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
 			order_by="parent asc, idx asc",
 			limit_page_length=0,
 		)
+	fill_arabic_packing_names([*all_item_packings, *packing_details])
 	packings_by_item = {}
 	items_by_code = {item.item_code: item for item in items}
 	for packing in all_item_packings:
@@ -1041,6 +1397,8 @@ def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
 		)
 		packings_by_item.setdefault(packing.item_code, []).append(packing)
 	for item in items:
+		item["selling_rate"] = flt(item.get("selling_gross_rate"))
+		item["rate_includes_vat"] = 1
 		item["current_stock"] = stock_by_item.get(item.item_code, 0)
 		item["packings"] = packings_by_item.get(item.item_code, [])
 	for packing in packing_details:
@@ -1050,11 +1408,15 @@ def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
 			stock_by_item.get(packing.item_code, 0), packing.conversion_factor
 		)
 
+	_apply_current_stock_to_items(items, counter_doc.warehouse)
+	_apply_current_stock_to_packings(packing_details, counter_doc.warehouse)
+
 	return {
 		"status": "Success",
 		"server_time": now_datetime(),
 		"counter": counter_doc.as_dict(),
 		"tax_config": _pos_tax_config(counter_doc),
+		"bill_format": _company_bill_format(counter_doc.company),
 		"items": items,
 			"item_barcodes": frappe.get_all(
 				"Item Barcode",
@@ -1063,12 +1425,7 @@ def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
 				limit_page_length=0,
 			),
 			"packing_details": packing_details,
-		"item_prices": frappe.get_all(
-			"Item Price",
-			filters=modified_filter,
-			fields=item_price_fields,
-			limit_page_length=0,
-		),
+		"item_prices": _pos_item_prices(item_price_fields, modified_filter, item_codes),
 		"scale_barcode_formats": frappe.get_all(
 			"Scale Barcode Format",
 			filters={"enabled": 1},
@@ -1091,14 +1448,10 @@ def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
 			],
 			limit_page_length=0,
 		),
+		"gift_voucher_promotions": get_gift_voucher_promotions({"branch": branch, "counter_code": counter_code})["promotions"],
 		"customers": _customer_master_rows(counter_doc.company, modified_filter),
 		"operators": _operator_master_rows(branch, modified_after),
-		"modes_of_payment": frappe.get_all(
-			"Mode of Payment",
-			filters=modified_filter,
-			fields=["name", "type", "enabled", "modified"],
-			limit_page_length=0,
-		),
+		"modes_of_payment": _pos_payment_modes(modified_filter),
 		"counters": frappe.get_all(
 			"POS Branch Counter",
 			filters={"branch": branch, "is_active": 1},
@@ -1118,25 +1471,49 @@ def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
 	}
 
 
+def _pos_payment_modes(modified_filter):
+	rows = frappe.get_all(
+		"Mode of Payment",
+		filters=modified_filter,
+		fields=["name", "type", "enabled", "modified"],
+		limit_page_length=0,
+	)
+	# Include POS options in every download without creating ERP tender accounts.
+	pos_options = ("Credit Note", "Voucher", "Cancelled", "Customer")
+	rows = [row for row in rows if row.get("name") not in pos_options]
+	modified = now_datetime()
+	rows.append({
+		"name": "Credit Note", "type": "Credit Note", "enabled": 1,
+		"modified": modified, "is_settlement": 1,
+		"settlement_type": "Credit Note Redeemed",
+	})
+	for name in ("Voucher", "Cancelled", "Customer"):
+		rows.append({"name": name, "type": name, "enabled": 1, "modified": modified})
+	return rows
+
+
 def _apply_item_tax_fields(items):
 	if not items:
 		return
 
-	standard_templates = _get_standard_item_tax_templates([item.item_code for item in items])
 	rates_by_template = {}
 	for item in items:
 		sales_template = item.get("sales_vat_template") or item.get("sales_item_tax_template")
-		template = sales_template or standard_templates.get(item.item_code)
+		template = sales_template
 		if template not in rates_by_template:
 			rates_by_template[template] = flt(get_item_tax_rate(template)) if template else 0
 		rate = rates_by_template[template]
 		item["sales_vat_template"] = template
 		item["item_tax_template"] = template
+		item["sales_vat_rate"] = _format_tax_rate(rate)
+		item["purchase_vat_rate"] = _format_tax_rate(get_item_tax_rate(item.get("purchase_vat_template")))
 		item["tax_rate"] = rate
 		item["is_taxable"] = 1 if rate > 0 else 0
 
 
 def _apply_packing_tax_fields(packing, items_by_code):
+	packing["selling_rate"] = flt(packing.get("selling_gross_rate"))
+	packing["rate_includes_vat"] = 1
 	item = items_by_code.get(packing.item_code)
 	if not item:
 		return
@@ -1144,6 +1521,8 @@ def _apply_packing_tax_fields(packing, items_by_code):
 	packing["sales_vat_template"] = item.get("sales_vat_template")
 	packing["purchase_vat_template"] = item.get("purchase_vat_template")
 	packing["item_tax_template"] = item.get("item_tax_template")
+	packing["sales_vat_rate"] = item.get("sales_vat_rate")
+	packing["purchase_vat_rate"] = item.get("purchase_vat_rate")
 	packing["tax_rate"] = item.get("tax_rate")
 	packing["is_taxable"] = item.get("is_taxable")
 
@@ -1251,10 +1630,18 @@ def verify_cashier_quick_pin(data=None, **kwargs):
 def create_pos_invoice(data=None, **kwargs):
 	_assert_pos_user()
 	payload = _as_dict(data, **kwargs)
+	if any(flt(row.get("qty")) < 0 for row in payload.get("items") or []):
+		from retail.pos_exchange import post_exchange
+		return _run("Sales Invoice", payload, lambda: post_exchange(payload))
+	from retail.pos_settlements import cash_payments
+	if not cash_payments(payload):
+		return create_credit_pos_invoice(payload)
 
 	def handler():
 		existing = _existing_invoice(payload.external_pos_reference)
 		if existing:
+			if existing.get("doctype") == "POS Invoice":
+				_validate_existing_completed_sale(existing.name, payload)
 			return {
 				"status": "Duplicate",
 				"pos_invoice_name": existing.name,
@@ -1266,17 +1653,25 @@ def create_pos_invoice(data=None, **kwargs):
 			}
 
 		counter_doc = _counter(payload.get("branch"), payload.get("counter_code"))
-		_assert_day_not_closed(counter_doc.branch, _business_date(payload))
-		if not payload.get("payments"):
-			frappe.throw(_("Credit POS sales are not supported. Submit a payment or create the credit sale through the backend Sales Invoice process."))
 		doc = _base_invoice(payload, counter_doc)
 		_append_invoice_items(doc, payload, counter_doc)
 		_set_profile_taxes(doc, counter_doc)
 		_append_invoice_payments(doc, payload, counter_doc)
 		doc.insert(ignore_permissions=True)
-		_validate_vat(doc, payload)
+		doc.outstanding_amount = flt(
+			flt(doc.rounded_total or doc.grand_total) - flt(doc.paid_amount) - flt(doc.write_off_amount),
+			doc.precision("outstanding_amount"),
+		)
+		from retail.pos_completed_sale import audit_validation
+		audit_validation(doc, "VAT metadata", lambda: _validate_vat(doc, payload))
+		if flt(doc.outstanding_amount) > 0:
+			audit_validation(doc, "Credit policy", lambda: _validate_credit_customer(
+				doc.customer, counter_doc.company, doc.outstanding_amount))
 		doc.submit()
+		audit_rows = create_for_pos_invoice(doc, payload, counter_doc)
+		from retail.promotions.pos_gift_voucher import issued_for
 		return {
+			"issued_vouchers": issued_for(doc),
 			"status": "Success",
 			"pos_invoice_name": doc.name,
 			"invoice_name": doc.name,
@@ -1284,6 +1679,8 @@ def create_pos_invoice(data=None, **kwargs):
 			"docstatus": doc.docstatus,
 			"grand_total": doc.grand_total,
 			"outstanding_amount": doc.outstanding_amount,
+			"rate_audit_rows": audit_rows,
+			"audit_warnings": doc.flags.get("pos_audit_warnings") or [],
 		}
 
 	return _run("Sales Invoice", payload, handler)
@@ -1297,13 +1694,15 @@ def create_pos_sales_invoice(data=None, **kwargs):
 
 @frappe.whitelist()
 def create_credit_pos_invoice(data=None, **kwargs):
-	"""Create an approved customer's unpaid POS sale as a submitted Sales Invoice."""
+	"""Create an approved customer's unpaid sale as a submitted POS Invoice."""
 	_assert_pos_user()
 	payload = _as_dict(data, **kwargs)
 
 	def handler():
 		existing = _existing_invoice(payload.external_pos_reference)
 		if existing:
+			if existing.get("doctype") == "POS Invoice":
+				_validate_existing_completed_sale(existing.name, payload)
 			return {
 				"status": "Duplicate",
 				"invoice_name": existing.name,
@@ -1314,37 +1713,50 @@ def create_credit_pos_invoice(data=None, **kwargs):
 			}
 
 		counter_doc = _counter(payload.get("branch"), payload.get("counter_code"))
-		_assert_day_not_closed(counter_doc.branch, _business_date(payload))
 		customer = payload.get("customer")
 		if not customer:
 			frappe.throw(_("Customer is required for a credit sale."))
 
-		doc = frappe.new_doc("Sales Invoice")
-		doc.company = counter_doc.company
-		doc.customer = customer
-		doc.posting_date = payload.get("posting_date") or frappe.utils.today()
-		if payload.get("posting_time") and doc.meta.has_field("posting_time"):
-			doc.posting_time = payload.get("posting_time")
-		doc.due_date = payload.get("due_date") or doc.posting_date
-		doc.update_stock = cint(payload.get("update_stock", 1))
-		doc.set_warehouse = counter_doc.warehouse
-		doc.cost_center = counter_doc.cost_center
-		_set_pos_audit_fields(doc, payload, counter_doc)
-		if doc.meta.has_field("pos_shift_no"):
-			doc.pos_shift_no = payload.get("pos_shift_no")
+		from retail.pos_settlements import cash_payments
+		if any(flt(row.get("amount")) for row in cash_payments(payload)):
+			frappe.throw(_("Use create_pos_invoice for a sale with an initial payment."))
+		doc = _base_invoice(payload, counter_doc)
+		doc.due_date = payload.get("due_date") or get_due_date(
+			doc.posting_date, "Customer", customer, counter_doc.company
+		)
+		# Keep the profile's zero-valued payment rows: POS Invoice requires a mode,
+		# even when the customer pays nothing at sale time.
+		doc.set_missing_values()
+		for payment in doc.payments:
+			payment.amount = 0
+			payment.base_amount = 0
+		doc.paid_amount = 0
+		doc.base_paid_amount = 0
 		_set_profile_taxes(doc, counter_doc)
 		_append_invoice_items(doc, payload, counter_doc)
-		doc.flags.allow_external_pos_sales_invoice = True
 		doc.insert(ignore_permissions=True)
-		_validate_credit_customer(customer, counter_doc.company, doc.grand_total)
+		doc.outstanding_amount = flt(
+			flt(doc.rounded_total or doc.grand_total) - flt(doc.paid_amount) - flt(doc.write_off_amount),
+			doc.precision("outstanding_amount"),
+		)
+		from retail.pos_completed_sale import audit_validation
+		audit_validation(doc, "VAT metadata", lambda: _validate_vat(doc, payload))
+		audit_validation(doc, "Credit policy", lambda: _validate_credit_customer(
+			customer, counter_doc.company, doc.grand_total))
 		doc.submit()
+		audit_rows = create_for_pos_invoice(doc, payload, counter_doc)
+		from retail.promotions.pos_gift_voucher import issued_for
 		return {
+			"issued_vouchers": issued_for(doc),
 			"status": "Success",
 			"invoice_name": doc.name,
-			"doctype": "Sales Invoice",
+			"pos_invoice_name": doc.name,
+			"doctype": "POS Invoice",
 			"docstatus": doc.docstatus,
 			"grand_total": doc.grand_total,
 			"outstanding_amount": doc.outstanding_amount,
+			"rate_audit_rows": audit_rows,
+			"audit_warnings": doc.flags.get("pos_audit_warnings") or [],
 		}
 
 	return _run("Credit Sales Invoice", payload, handler)
@@ -1443,9 +1855,51 @@ def create_customer_deposit(data=None, **kwargs):
 	return _run("Customer Deposit", payload, handler)
 
 
+def _collection_amount(value):
+	try:
+		amount = Decimal(str(value))
+		valid = amount.is_finite() and amount > 0 and amount == amount.quantize(Decimal("0.01"))
+	except (InvalidOperation, ValueError, TypeError):
+		valid = False
+	if not valid:
+		frappe.throw(_("Payment allocations must be positive amounts with at most two decimal places."))
+	return amount
+
+
+def _customer_collection_invoice(row, counter_doc, customer):
+	from retail.pos_credit import accounting_invoice, remaining_amount
+
+	invoice_name = row.get("invoice_name")
+	invoice_type = row.get("invoice_doctype")
+	if invoice_type and invoice_type not in ("POS Invoice", "Sales Invoice"):
+		frappe.throw(_("Invoice type must be POS Invoice or Sales Invoice."))
+	matches = []
+	for doctype in ([invoice_type] if invoice_type else ["POS Invoice", "Sales Invoice"]):
+		filters = invoice_name or {"external_pos_reference": row.get("invoice_external_reference"), "docstatus": 1}
+		if invoice_name or row.get("invoice_external_reference"):
+			name = frappe.db.get_value(doctype, filters, "name")
+			if name:
+				matches.append((doctype, name))
+	if len(matches) > 1:
+		frappe.throw(_("Invoice name is ambiguous. Send invoice_doctype."))
+	if not matches:
+		frappe.throw(_("A submitted POS Invoice or Sales Invoice is required for payment."))
+	invoice = frappe.get_doc(*matches[0], for_update=True)
+	if invoice.docstatus != 1 or invoice.get("is_return"):
+		frappe.throw(_("Payment requires a submitted sale invoice."))
+	if invoice.company != counter_doc.company:
+		frappe.throw(_("Invoice company does not match the collection counter."))
+	if customer and customer != invoice.customer:
+		frappe.throw(_("Payment customer does not match the invoice customer."))
+	is_pos = matches[0][0] == "POS Invoice"
+	balance = remaining_amount(invoice) if is_pos else flt(invoice.outstanding_amount)
+	accounting_doc = accounting_invoice(invoice) if is_pos else invoice
+	return invoice, accounting_doc, balance, matches[0][0]
+
+
 @frappe.whitelist()
 def pay_customer_invoice(data=None, **kwargs):
-	"""Collect a payment against one submitted customer Sales Invoice."""
+	"""Collect against a credit POS Invoice or a legacy Sales Invoice, at any time."""
 	_assert_pos_user()
 	payload = _as_dict(data, **kwargs)
 
@@ -1456,46 +1910,76 @@ def pay_customer_invoice(data=None, **kwargs):
 
 		counter_doc = _counter(payload.get("branch"), payload.get("counter_code"))
 		_assert_day_not_closed(counter_doc.branch, _business_date(payload))
-		invoice_name = payload.get("invoice_name")
-		if not invoice_name and payload.get("invoice_external_reference"):
-			invoice_name = frappe.db.get_value(
-				"Sales Invoice",
-				{"external_pos_reference": payload.get("invoice_external_reference"), "docstatus": 1},
-				"name",
-			)
-		if not invoice_name:
-			frappe.throw(_("A submitted Sales Invoice is required for payment."))
-		invoice = frappe.get_doc("Sales Invoice", invoice_name)
-		if invoice.docstatus != 1:
-			frappe.throw(_("Sales Invoice {0} is not submitted.").format(invoice.name))
-		if payload.get("customer") and payload.customer != invoice.customer:
-			frappe.throw(_("Payment customer does not match the Sales Invoice customer."))
+		_validate_active_counter_session(payload, counter_doc)
+		if "invoices" in payload:
+			if payload.get("invoice_name") or payload.get("invoice_external_reference") or payload.get("invoice_doctype"):
+				frappe.throw(_("Use invoices or the single-invoice fields, not both."))
+			rows = payload.get("invoices")
+			if not isinstance(rows, list) or not rows:
+				frappe.throw(_("invoices must be a non-empty array."))
+			amount = _collection_amount(payload.get("amount"))
+			customer = payload.get("customer")
+			if not customer:
+				frappe.throw(_("Customer is required for a multi-invoice collection."))
+			allocations = []
+			seen = set()
+			for row in rows:
+				if not isinstance(row, dict):
+					frappe.throw(_("Each invoice allocation must be an object."))
+				allocated = _collection_amount(row.get("allocated_amount"))
+				invoice, accounting_doc, balance, doctype = _customer_collection_invoice(
+					frappe._dict(row), counter_doc, customer)
+				if accounting_doc.name in seen:
+					frappe.throw(_("The same accounting invoice cannot appear more than once."))
+				seen.add(accounting_doc.name)
+				if accounting_doc.docstatus != 1 or allocated > Decimal(str(balance)) or allocated > Decimal(str(accounting_doc.outstanding_amount)):
+					frappe.throw(_("Payment exceeds the invoice outstanding amount."))
+				allocations.append({
+					"invoice_name": invoice.name, "invoice_doctype": doctype,
+					"invoice_external_reference": row.get("invoice_external_reference"),
+					"sales_invoice": accounting_doc.name, "allocated_amount": float(allocated),
+					"invoice_outstanding_amount": float(Decimal(str(balance)) - allocated),
+				})
+			if sum((Decimal(str(row["allocated_amount"])) for row in allocations), Decimal("0")) != amount:
+				frappe.throw(_("Invoice allocations must equal the total payment amount."))
+			doc = _new_customer_payment(payload, counter_doc, customer, float(amount), allocations=allocations)
+			return {
+				"status": "Success", "payment_entry": doc.name, "docstatus": doc.docstatus,
+				"customer": customer, "amount": float(amount), "allocated_amount": float(amount),
+				"invoices": allocations,
+			}
+
+		invoice, accounting_doc, balance, invoice_type = _customer_collection_invoice(
+			payload, counter_doc, payload.get("customer"))
 		amount = flt(payload.get("amount"))
 		if amount <= 0:
 			frappe.throw(_("Payment amount must be greater than zero."))
-		if amount > flt(invoice.outstanding_amount) + 0.01:
+		if amount > balance:
 			frappe.throw(_("Payment exceeds the invoice outstanding amount."))
-		doc = _new_customer_payment(payload, counter_doc, invoice.customer, amount, invoice=invoice)
+		if accounting_doc.docstatus != 1 or amount > flt(accounting_doc.outstanding_amount):
+			frappe.throw(_("Payment exceeds the accounting invoice outstanding amount."))
+		kwargs = {"pos_invoice": invoice.name} if invoice_type == "POS Invoice" else {}
+		doc = _new_customer_payment(payload, counter_doc, invoice.customer, amount, invoice=accounting_doc, **kwargs)
 		return {
-			"status": "Success",
-			"payment_entry": doc.name,
-			"docstatus": doc.docstatus,
-			"invoice_name": invoice.name,
-			"allocated_amount": amount,
-			"invoice_outstanding_amount": flt(invoice.outstanding_amount) - amount,
+			"status": "Success", "payment_entry": doc.name, "docstatus": doc.docstatus,
+			"invoice_name": invoice.name, "invoice_doctype": invoice_type,
+			"sales_invoice": accounting_doc.name,
+			"allocated_amount": amount, "invoice_outstanding_amount": balance - amount,
 		}
 
-	return _run("Customer Invoice Payment", payload, handler)
-
+	return _run("Payment Entry", payload, handler)
 
 @frappe.whitelist()
 def create_pos_return_invoice(data=None, **kwargs):
 	_assert_pos_user()
 	payload = _as_dict(data, **kwargs)
 
+
 	def handler():
 		existing = _existing_invoice(payload.external_pos_reference)
 		if existing:
+			if existing.get("doctype") == "POS Invoice":
+				_validate_existing_completed_sale(existing.name, payload)
 			return {
 				"status": "Duplicate",
 				"return_invoice": existing.name,
@@ -1503,28 +1987,34 @@ def create_pos_return_invoice(data=None, **kwargs):
 				"grand_total": existing.grand_total,
 			}
 
-		if not payload.get("original_pos_invoice") and payload.get("original_external_pos_reference"):
-			payload.original_pos_invoice = frappe.db.get_value(
-				"POS Invoice",
-				{"external_pos_reference": payload.original_external_pos_reference, "docstatus": 1},
-				"name",
-			)
-		if not payload.get("original_pos_invoice"):
-			frappe.throw(_("original_pos_invoice or original_external_pos_reference is required."))
-
 		counter_doc = _counter(payload.get("branch"), payload.get("counter_code"))
-		_assert_day_not_closed(counter_doc.branch, _business_date(payload))
 		doc = _base_invoice(payload, counter_doc, is_return=True)
+		if not payload.get("payments"):
+			doc.set_missing_values()
+			for payment in doc.payments:
+				payment.amount = 0
+				payment.base_amount = 0
+			doc.paid_amount = 0
+			doc.base_paid_amount = 0
 		_append_invoice_items(doc, payload, counter_doc, is_return=True)
-		_link_return_items_to_original(doc)
+		if doc.return_against:
+			_link_return_items_to_original(doc)
 		_set_profile_taxes(doc, counter_doc)
 		_append_invoice_payments(doc, payload, counter_doc, is_return=True)
 		doc.insert(ignore_permissions=True)
-		_validate_vat(doc, payload)
+		doc.outstanding_amount = flt(
+			flt(doc.rounded_total or doc.grand_total) - flt(doc.paid_amount) - flt(doc.write_off_amount),
+			doc.precision("outstanding_amount"),
+		)
+		from retail.pos_completed_sale import audit_validation
+		audit_validation(doc, "VAT metadata", lambda: _validate_vat(doc, payload))
 		doc.submit()
+		audit_rows = create_for_pos_invoice(doc, payload, counter_doc)
 		return {
+			"rate_audit_rows": audit_rows,
 			"status": "Success",
 			"return_invoice": doc.name,
+			"doctype": "POS Invoice",
 			"docstatus": doc.docstatus,
 			"grand_total": doc.grand_total,
 			"outstanding_amount": doc.outstanding_amount,
@@ -1562,11 +2052,29 @@ def get_sync_status(data=None, external_references=None):
 			as_dict=True,
 			order_by="creation desc",
 		)
-		is_synced = bool(pos_invoice or payment_entry or (log and log.status in ("Success", "Duplicate") and log.erpnext_docname))
+		receipt = frappe.db.get_value("POS Sync Log",
+			{"external_reference": ref, "operation_key": ["is", "set"], "status": "Success"},
+			["sync_type", "request_json", "response_json", "erpnext_docname"], as_dict=True, order_by="creation desc")
+		stored_response = None
+		if receipt and receipt.response_json:
+			request = json.loads(receipt.request_json or "{}")
+			if request.get("payload"):
+				from retail.pos_external_refs import authorize
+				kind = {"POS Sale": "Sales Invoice", "POS Return": "Return"}.get(receipt.sync_type, receipt.sync_type)
+				authorize(kind, frappe._dict(request["payload"]))
+				stored_response = json.loads(receipt.response_json)
+		is_synced = bool(pos_invoice or payment_entry or stored_response
+			or (log and log.status in ("Success", "Duplicate") and log.erpnext_docname))
+		accepted = frappe.db.get_value("POS Accepted Transaction", {"external_pos_reference": ref},
+			["name", "status", "pos_invoice", "sales_invoice", "exception_reason"], as_dict=True)
+		if accepted:
+			accepted.current_accounting_outstanding = frappe.db.get_value("Sales Invoice", accepted.sales_invoice, "outstanding_amount") if accepted.sales_invoice else None
 		result[ref] = {
+			"settlement": accepted,
 			"pos_invoice": pos_invoice,
 			"payment_entry": payment_entry,
 			"latest_log": log,
+			"response": stored_response,
 			"status": "Synced" if is_synced else (log.status if log else "Not Found"),
 		}
 	return {"status": "Success", "references": result}
@@ -1627,10 +2135,10 @@ def open_cashier_shift(data=None, **kwargs):
 		counter_doc = _counter(payload.get("branch"), payload.get("counter_code"))
 		_assert_day_not_closed(counter_doc.branch, _business_date(payload))
 		cashier_employee = _cashier_employee(payload, required=True)
-		active_shift = _active_cashier_shift(cashier_employee)
+		active_shift = _active_cashier_shift(cashier_employee, for_update=True)
 		if active_shift:
 			frappe.throw(_("Cashier already has an open shift: {0}. Use resume_cashier_shift.").format(active_shift))
-		active_session = _active_counter_session(counter_doc.name)
+		active_session = _active_counter_session(counter_doc.name, for_update=True)
 		if active_session:
 			frappe.throw(_("Counter is already used by cashier {0}.").format(active_session.cashier_employee))
 
@@ -1641,10 +2149,11 @@ def open_cashier_shift(data=None, **kwargs):
 				"cashier_employee": cashier_employee,
 				"cashier_name": _cashier_name(cashier_employee),
 				"status": "Open",
-				"opening_time": payload.get("opened_at") or now_datetime(),
+				"opening_time": payload.get("opened_at") or (str(_business_date(payload)) + " 00:00:00"),
 				"opening_amount": _cash_amount(payload.get("opening_balances"), "opening_amount"),
 				"device_api_user": frappe.session.user,
 				"external_open_reference": payload.external_pos_reference,
+				"external_shift_reference": payload.get("external_shift_reference"),
 			}
 		)
 		shift.insert(ignore_permissions=True)
@@ -1659,9 +2168,10 @@ def open_cashier_shift(data=None, **kwargs):
 				"terminal_id": payload.get("pos_terminal_id") or counter_doc.terminal_id,
 				"status": "Active",
 				"cashier_employee": cashier_employee,
-				"started_at": payload.get("opened_at") or now_datetime(),
+				"started_at": payload.get("opened_at") or (str(_business_date(payload)) + " 00:00:00"),
 				"opened_by_api_user": frappe.session.user,
 				"opening_external_reference": payload.external_pos_reference,
+				"external_session_reference": payload.get("external_session_reference"),
 			}
 		)
 		session.insert(ignore_permissions=True)
@@ -1702,8 +2212,10 @@ def pause_cashier_shift(data=None, **kwargs):
 			response["status"] = "Duplicate"
 			return response
 
-		shift = _cashier_shift_doc(payload.get("cashier_shift") or payload.get("cashier_shift_id"))
-		session = _counter_session_doc(payload.get("counter_session") or payload.get("counter_session_id"))
+		from retail.pos_external_refs import resolve
+		resolved = resolve(payload)
+		shift = _cashier_shift_doc(resolved.get("cashier_shift") or resolved.get("cashier_shift_id"), for_update=True)
+		session = _counter_session_doc(resolved.get("counter_session") or resolved.get("counter_session_id"), for_update=True)
 		_assert_day_not_closed(shift.branch, _business_date(payload))
 		if session.cashier_shift != shift.name:
 			frappe.throw(_("Counter session does not belong to this cashier shift."))
@@ -1764,11 +2276,15 @@ def resume_cashier_shift(data=None, **kwargs):
 
 		counter_doc = _counter(payload.get("branch"), payload.get("counter_code"))
 		_assert_day_not_closed(counter_doc.branch, _business_date(payload))
-		shift = _cashier_shift_doc(payload.get("cashier_shift") or payload.get("cashier_shift_id"))
+		from retail.pos_external_refs import resolve
+		resolved = resolve(payload, new_session=True)
+		shift = _cashier_shift_doc(resolved.get("cashier_shift") or resolved.get("cashier_shift_id"), for_update=True)
+		if shift.branch != counter_doc.branch:
+			frappe.throw(_("Cashier shift belongs to another branch."))
 		if shift.status not in ("Open", "Paused"):
 			frappe.throw(_("Only an open or paused cashier shift can be resumed."))
 
-		active_session = _active_counter_session(counter_doc.name)
+		active_session = _active_counter_session(counter_doc.name, for_update=True)
 		if active_session and active_session.cashier_shift != shift.name:
 			frappe.throw(_("Counter is already used by cashier {0}.").format(active_session.cashier_employee))
 
@@ -1777,10 +2293,13 @@ def resume_cashier_shift(data=None, **kwargs):
 			{"cashier_shift": shift.name, "status": "Active"},
 			["name", "counter", "pos_opening_entry"],
 			as_dict=True,
+			for_update=True,
 		)
 		if current_session and current_session.counter != counter_doc.name:
 			frappe.throw(_("Cashier shift is active on another counter. Pause/release it before transfer."))
 		if current_session and current_session.counter == counter_doc.name:
+			if payload.get("external_session_reference") and resolved.get("counter_session") != current_session.name:
+				frappe.throw("Continue the unreleased session using its original external_session_reference.")
 			_db_set_values(shift, {"status": "Open", "current_counter": counter_doc.name, "current_counter_session": current_session.name}, update_modified=False)
 			return {
 				"status": "Success",
@@ -1789,6 +2308,9 @@ def resume_cashier_shift(data=None, **kwargs):
 				"counter_session": current_session.name,
 				"pos_opening_entry": current_session.pos_opening_entry,
 			}
+
+		if payload.get("external_session_reference") and resolved.get("counter_session"):
+			frappe.throw("This session reference already identifies a released session. Use a new reference for a new session.")
 
 		session = frappe.get_doc(
 			{
@@ -1800,9 +2322,10 @@ def resume_cashier_shift(data=None, **kwargs):
 				"terminal_id": payload.get("pos_terminal_id") or counter_doc.terminal_id,
 				"status": "Active",
 				"cashier_employee": shift.cashier_employee,
-				"started_at": payload.get("resumed_at") or now_datetime(),
+				"started_at": payload.get("resumed_at") or (str(_business_date(payload)) + " 00:00:00"),
 				"opened_by_api_user": frappe.session.user,
 				"resume_external_reference": payload.external_pos_reference,
+				"external_session_reference": payload.get("external_session_reference"),
 			}
 		)
 		session.insert(ignore_permissions=True)
@@ -1838,7 +2361,9 @@ def close_cashier_shift(data=None, **kwargs):
 			response["status"] = "Duplicate"
 			return response
 
-		shift = _cashier_shift_doc(payload.get("cashier_shift") or payload.get("cashier_shift_id"))
+		from retail.pos_external_refs import resolve
+		resolved = resolve(payload, shift_only=True)
+		shift = _cashier_shift_doc(resolved.get("cashier_shift") or resolved.get("cashier_shift_id"), for_update=True)
 		_assert_day_not_closed(shift.branch, _business_date(payload))
 		if shift.status == "Closed":
 			return {"status": "Duplicate", "cashier_shift": shift.name}
@@ -1916,40 +2441,60 @@ def reopen_cashier_shift(data=None, **kwargs):
 	if not reason:
 		frappe.throw(_("reopen_reason is required."))
 
-	shift = _cashier_shift_doc(payload.get("cashier_shift") or payload.get("cashier_shift_id"))
-	business_date = payload.get("business_date") or (str(shift.opening_time)[:10] if shift.opening_time else frappe.utils.today())
-	closed_day = _submitted_day_closing(shift.branch, business_date)
-	if closed_day:
-		frappe.throw(_("Cancel day closing {0} before reopening this cashier shift.").format(closed_day))
-	if shift.status != "Closed":
-		frappe.throw(_("Only a closed cashier shift can be reopened."))
+	from retail.pos_external_refs import authorize, echo, resolve
 
-	_db_set_values(
-		shift,
-		{
-			"status": "Paused",
-			"closing_time": None,
-			"closing_amount": 0,
-			"variance": 0,
-			"external_close_reference": None,
-			"current_counter": None,
-			"current_counter_session": None,
-			"reopened_at": now_datetime(),
-			"reopened_by": frappe.session.user,
-			"reopen_reason": reason,
-			"reopen_count": cint(shift.get("reopen_count")) + 1,
-		},
-		update_modified=True,
-	)
-	_sync_log(
-		"Shift Reopen",
-		payload.get("external_pos_reference"),
-		payload,
-		response={"cashier_shift": shift.name, "status": "Success"},
-		status="Success",
-		docname=shift.name,
-	)
-	return {"status": "Success", "cashier_shift": shift.name, "shift_status": "Paused"}
+	def handler():
+		# Old successful log-only requests must also replay without reopening twice.
+		if payload.get("external_pos_reference"):
+			previous = frappe.db.get_value("POS Sync Log", {
+				"sync_type": "Shift Reopen", "external_reference": payload.external_pos_reference,
+				"status": ["in", ["Success", "Duplicate"]], "operation_key": ["is", "not set"],
+			}, ["response_json"], as_dict=True, order_by="creation desc")
+			if previous and previous.response_json:
+				response = json.loads(previous.response_json)
+				response["duplicate"] = True
+				return response
+		resolved = resolve(payload, shift_only=True)
+		shift = _cashier_shift_doc(resolved.get("cashier_shift") or resolved.get("cashier_shift_id"), for_update=True)
+		business_date = str(shift.opening_time)[:10] if shift.opening_time else frappe.utils.today()
+		if payload.get("business_date") and getdate(payload.business_date) != getdate(business_date):
+			frappe.throw(_("Business date does not match the cashier shift."))
+		closed_day = _submitted_day_closing(shift.branch, business_date)
+		if closed_day:
+			frappe.throw(_("Cancel day closing {0} before reopening this cashier shift.").format(closed_day))
+		if shift.status != "Closed":
+			frappe.throw(_("Only a closed cashier shift can be reopened."))
+
+		_db_set_values(
+			shift,
+			{
+				"status": "Paused",
+				"closing_time": None,
+				"closing_amount": 0,
+				"variance": 0,
+				"external_close_reference": None,
+				"current_counter": None,
+				"current_counter_session": None,
+				"reopened_at": now_datetime(),
+				"reopened_by": frappe.session.user,
+				"reopen_reason": reason,
+				"reopen_count": cint(shift.get("reopen_count")) + 1,
+			},
+			update_modified=True,
+		)
+		return {"status": "Success", "cashier_shift": shift.name, "shift_status": "Paused"}
+
+	if payload.get("external_pos_reference"):
+		return _run("Shift Reopen", payload, handler)
+	# Preserve ERP-ID clients which previously omitted the operation reference.
+	# External-reference clients must use a permanent operation ID for safe retry.
+	if payload.get("external_shift_reference") or payload.get("external_session_reference"):
+		frappe.throw(_("external_pos_reference is required for reopening by external reference."))
+	counter = authorize("Shift Reopen", payload)
+	frappe.db.get_value("Branch", counter.branch, "name", for_update=True)
+	response = echo(payload, handler())
+	_sync_log("Shift Reopen", None, payload, response=response, status="Success", docname=response["cashier_shift"])
+	return response
 
 
 @frappe.whitelist()
@@ -1981,7 +2526,6 @@ def cancel_branch_day_closing(data=None, **kwargs):
 
 @frappe.whitelist()
 def submit_branch_day_closing(data=None, **kwargs):
-	_assert_pos_user()
 	payload = _as_dict(data, **kwargs)
 	branch = payload.get("branch")
 	business_date = payload.get("business_date") or payload.get("posting_date") or frappe.utils.today()
@@ -1989,6 +2533,8 @@ def submit_branch_day_closing(data=None, **kwargs):
 		frappe.throw(_("Branch is required."))
 	from retail.retail_app.doctype.pos_branch_day_closing.pos_branch_day_closing import submit_day_closing
 
+	if payload.get("external_pos_reference"):
+		return _run("Day Closing", payload, lambda: submit_day_closing(branch, business_date))
 	return submit_day_closing(branch, business_date)
 
 
@@ -2027,7 +2573,7 @@ def open_pos_shift(data=None, **kwargs):
 		entry.company = counter_doc.company
 		entry.pos_profile = counter_doc.pos_profile
 		entry.user = frappe.session.user
-		entry.period_start_date = payload.get("opened_at") or now_datetime()
+		entry.period_start_date = payload.get("opened_at") or (str(_business_date(payload)) + " 00:00:00")
 		entry.posting_date = payload.get("posting_date") or frappe.utils.today()
 		balances = payload.get("opening_balances") or []
 		if not balances:
@@ -2072,12 +2618,12 @@ def close_pos_shift(data=None, **kwargs):
 		)
 		if not opening_name:
 			frappe.throw(_("No open POS shift exists for this terminal."))
-		from erpnext.accounts.doctype.pos_closing_entry.pos_closing_entry import make_closing_entry_from_opening
+		from retail.pos_realtime import make_closing_entry_from_opening
 
 		closing = make_closing_entry_from_opening(frappe.get_doc("POS Opening Entry", opening_name))
-		actuals = {row.get("mode_of_payment"): flt(row.get("closing_amount")) for row in payload.get("closing_balances", [])}
+		actuals = {str(row.get("mode_of_payment") or "").strip().casefold(): flt(row.get("closing_amount")) for row in payload.get("closing_balances", [])}
 		for row in closing.payment_reconciliation:
-			row.closing_amount = actuals.get(row.mode_of_payment, row.expected_amount)
+			row.closing_amount = actuals.get(row.mode_of_payment.strip().casefold(), row.expected_amount)
 		closing.insert(ignore_permissions=True)
 		closing.submit()
 		return {"status": "Success", "pos_closing_entry": closing.name, "pos_opening_entry": opening_name, "closing_status": closing.status}
@@ -2211,6 +2757,7 @@ def get_customer_balances(
 			continue
 		data.append(_format_customer_balance(customer_row, ledger))
 
+	add_credit_note_snapshots(data, company, "customer")
 	return {
 		"status": "Success",
 		"company": company,
@@ -2263,10 +2810,12 @@ def get_queue_dependencies(data=None, **kwargs):
 		ref = row.get("external_pos_reference")
 		original_ref = row.get("original_external_pos_reference")
 		original_exists = not original_ref or bool(_existing_invoice(original_ref))
+		accepted = frappe.db.exists("POS Accepted Transaction", {"external_pos_reference": ref})
 		dependencies[ref] = {
-			"already_synced": bool(_existing_invoice(ref)),
+			"already_synced": bool(accepted or _existing_invoice(ref)),
 			"original_invoice_synced": original_exists,
-			"can_sync": original_exists,
+			"can_sync": True,
+			"pending_internal_dependency": not original_exists,
 		}
 	return {"status": "Success", "dependencies": dependencies}
 
@@ -2290,6 +2839,8 @@ def ingest_queue_errors(data=None, **kwargs):
 
 def validate_external_reference(doc: Document, method=None):
 	if not doc.get("external_pos_reference"):
+		if doc.meta.has_field("external_pos_reference"):
+			doc.external_pos_reference = None
 		return
 
 	doctypes = ["POS Invoice"]
@@ -2317,3 +2868,68 @@ def block_external_sales_invoice(doc: Document, method=None):
 		frappe.throw(
 			_("External POS must use create_pos_invoice; direct Sales Invoice creation is blocked.")
 		)
+
+
+def _format_tax_rate(rate):
+	return f"{flt(rate):g}%"
+
+
+
+def _warehouse_stock_by_item(warehouse, item_codes):
+	if not warehouse or not item_codes:
+		return {}
+
+	stock_by_item = {}
+	for row in frappe.get_all(
+		"Bin",
+		filters={"warehouse": warehouse, "item_code": ["in", item_codes]},
+		fields=["item_code", "actual_qty", "reserved_qty", "projected_qty", "stock_value", "modified"],
+		limit_page_length=0,
+	):
+		stock_by_item[row.item_code] = row
+	return stock_by_item
+
+
+
+def _apply_current_stock_to_items(items, warehouse):
+	item_codes = [item.item_code for item in items if item.item_code]
+	stock_by_item = _warehouse_stock_by_item(warehouse, item_codes)
+
+	for item in items:
+		stock = stock_by_item.get(item.item_code) or frappe._dict()
+		current_stock = flt(stock.get("actual_qty"))
+		item["actual_qty"] = current_stock
+		item["current_stock"] = current_stock
+		item["reserved_qty"] = flt(stock.get("reserved_qty"))
+		item["projected_qty"] = flt(stock.get("projected_qty"))
+		item["stock_value"] = flt(stock.get("stock_value"))
+		item["stock_modified"] = stock.get("modified")
+		for packing in item.get("packings") or []:
+			conversion_factor = flt(packing.get("conversion_factor")) or 1
+			packing["actual_qty"] = current_stock
+			packing["current_stock"] = current_stock / conversion_factor
+			packing["stock_modified"] = stock.get("modified")
+
+
+
+def _apply_current_stock_to_packings(packings, warehouse):
+	item_codes = sorted({packing.item_code for packing in packings if packing.item_code})
+	stock_by_item = _warehouse_stock_by_item(warehouse, item_codes)
+
+	for packing in packings:
+		stock = stock_by_item.get(packing.item_code) or frappe._dict()
+		actual_qty = flt(stock.get("actual_qty"))
+		conversion_factor = flt(packing.get("conversion_factor")) or 1
+		packing["actual_qty"] = actual_qty
+		packing["current_stock"] = actual_qty / conversion_factor
+		packing["stock_modified"] = stock.get("modified")
+
+
+def _validate_existing_completed_sale(name, payload):
+	from retail.pos_operations import canonical
+	existing = frappe.get_doc("POS Invoice", name)
+	if existing.pos_branch != payload.get("branch"):
+		frappe.throw("External reference belongs to another branch.")
+	original = frappe.parse_json(existing.get("custom_pos_completed_payload") or "null")
+	if original is None or canonical(original) != canonical(dict(payload)):
+		frappe.throw("Reference conflict: existing invoice has a different or legacy payload; reconcile it before retrying.")

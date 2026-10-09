@@ -4,99 +4,29 @@ from frappe.utils import flt, getdate
 
 
 def execute(filters=None):
-	filters = frappe._dict(filters or {})
-	filters.setdefault("from_date", getdate())
-	filters.setdefault("to_date", getdate())
-
-	return get_columns(), get_data(filters)
-
+    from retail.retail_app.report.profitability import profitability_columns
+    return profitability_columns(get_columns()), get_data(frappe._dict(filters or {})), None, None, None, True
 
 def get_data(filters):
-	rows = get_invoice_rows(filters)
-	payment_modes = get_payment_modes([row.name for row in rows])
-
-	data = []
-	counter_totals = {}
-	grand_total = 0
-	current_counter = None
-
-	for row in rows:
-		counter = row.custom_counter or _("No Counter")
-		if current_counter and current_counter != counter:
-			data.append(get_total_row(current_counter, counter_totals[current_counter], _("Counter Total")))
-
-		current_counter = counter
-		row.invoice_no = row.name
-		row.counter = counter
-		row.cashier = row.owner
-		row.net_sales = -abs(flt(row.base_grand_total)) if row.is_return else abs(flt(row.base_grand_total))
-		row.is_return_display = _("Yes") if row.is_return else _("No")
-		row.payment_mode = payment_modes.get(row.name) or ""
-
-		counter_totals.setdefault(counter, 0)
-		counter_totals[counter] += row.net_sales
-		grand_total += row.net_sales
-		data.append(row)
-
-	if current_counter:
-		data.append(get_total_row(current_counter, counter_totals[current_counter], _("Counter Total")))
-
-	if data:
-		data.append(get_total_row(_("Grand Total"), grand_total, _("Grand Total")))
-
-	return data
-
-
-def get_total_row(counter, net_sales, status):
-	return frappe._dict(
-		{
-			"invoice_no": "",
-			"posting_date": None,
-			"posting_time": None,
-			"counter": counter,
-			"cashier": "",
-			"customer_name": "",
-			"net_sales": net_sales,
-			"is_return_display": "",
-			"payment_mode": "",
-			"status": status,
-			"indent": 0,
-		}
-	)
-
-
-def get_invoice_rows(filters):
-	return frappe.db.sql(
-		"""
-		select
-			name,
-			posting_date,
-			posting_time,
-			coalesce(custom_counter, '') as custom_counter,
-			owner,
-			customer,
-			customer_name,
-			base_grand_total,
-			is_return,
-			status
-		from `tabSales Invoice`
-		where docstatus = 1
-			and posting_date between %(from_date)s and %(to_date)s
-			and (%(company)s is null or company = %(company)s)
-			and (%(counter)s is null or custom_counter = %(counter)s)
-			and (%(cashier)s is null or owner = %(cashier)s)
-		order by coalesce(custom_counter, ''), posting_date desc, posting_time desc, creation desc
-		""",
-		{
-			"from_date": filters.from_date,
-			"to_date": filters.to_date,
-			"company": filters.get("company"),
-			"counter": filters.get("counter"),
-			"cashier": filters.get("cashier"),
-		},
-		as_dict=True,
-	)
-
+    from retail.retail_app.report.profitability import profitability_rows, aggregate_profitability, profitability_total
+    rows = aggregate_profitability(profitability_rows(filters),
+        ["invoice_no", "posting_date", "posting_time", "counter", "cashier", "customer_name", "status", "is_return"])
+    modes = get_payment_modes([r.invoice_no for r in rows])
+    data = []
+    from itertools import groupby
+    for counter, members in groupby(sorted(rows, key=lambda r: r.counter or ""), key=lambda r:r.counter):
+        members = list(members)
+        for row in members:
+            row.payment_mode = modes.get(row.invoice_no, "")
+            row.is_return_display = "Yes" if row.is_return else "No"
+        data.extend(members)
+        total = profitability_total(members, "invoice_no")
+        total.counter = counter
+        total.status = "Counter Total"
+        data.append(total)
+    if rows:
+        data.append(profitability_total(rows, "invoice_no"))
+    return data
 
 def get_payment_modes(invoice_names):
 	if not invoice_names:

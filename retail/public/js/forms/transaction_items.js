@@ -3,7 +3,7 @@
 	window.__retail_transaction_items_booted = true;
 
 	function boot() {
-		if (!window.frappe?.ui?.form) {
+		if (typeof window.frappe?.ui?.form?.on !== "function") {
 			setTimeout(boot, 100);
 			return;
 		}
@@ -69,6 +69,9 @@
 				queueVatTaxRowsSync(frm);
 				renderTransactionTotals(frm);
 			},
+			net_amount(frm) {
+				refreshRowVatAmounts(frm);
+			},
 			net_rate(frm, cdt, cdn) {
 				syncVatRates(frm, cdt, cdn, "rate");
 				queueVatTaxRowsSync(frm);
@@ -109,6 +112,29 @@
 			},
 		});
 	});
+
+	vatItemDoctypes.forEach((child) => {
+		frappe.ui.form.on(child.replace(/ Item$/, ""), {
+			refresh: refreshRowVatAmounts,
+			total_taxes_and_charges: refreshRowVatAmounts,
+		});
+	});
+
+	async function refreshRowVatAmounts(frm) {
+		const grid = frm.fields_dict.items?.grid;
+		grid?.update_docfield_property?.("custom_vat_amount", "read_only", 1);
+		for (const row of frm.doc.items || []) {
+			const field = frappe.meta.get_docfield(row.doctype, "custom_vat_amount", row.name);
+			if (!field) continue;
+			field.read_only = 1;
+			const rate = row.item_code ? await getVatRate(frm, row, row.doctype) : 0;
+			// Amount/net_amount may still contain values from the previous edit.
+			const amount = flt(row.qty) * flt(row.rate);
+			const precision = cint(field.precision) || 2;
+			row.custom_vat_amount = flt(amount * rate / 100, precision);
+			grid?.grid_rows_by_docname?.[row.name]?.refresh_field?.("custom_vat_amount");
+		}
+	}
 
 	Object.keys(liveVatFormDoctypes).forEach((doctype) => {
 		frappe.ui.form.on(doctype, {
@@ -244,11 +270,12 @@
 					values.custom_amount_including_vat = flt(qty * inclusiveRate, amountPrecision);
 				}
 			} else {
-				if (exclusiveRate) {
-					inclusiveRate = flt(exclusiveRate * factor, precision);
-					values.rate = flt(exclusiveRate, precision);
-					values.custom_rate_including_vat = inclusiveRate;
-				}
+				// Automatic VAT refreshes derive display values from ERPNext's rate.
+				// Writing rate here fires its discount handler while item details may
+				// still be loading (a transient zero becomes a full-price discount).
+				// Only explicit inclusive-rate/amount edits above may change rate.
+				inclusiveRate = flt(exclusiveRate * factor, precision);
+				values.custom_rate_including_vat = inclusiveRate;
 				if (amountField) {
 					values.amount = flt(qty * exclusiveRate, amountPrecision);
 				}
@@ -258,6 +285,9 @@
 				values.custom_amount_including_vat = flt(qty * inclusiveRate, amountPrecision);
 			}
 
+			if (frappe.meta.get_docfield(cdt, "custom_vat_amount", cdn)) {
+				values.custom_vat_amount = flt(qty * exclusiveRate * flt(vatRate) / 100, amountPrecision);
+			}
 			if (!Object.keys(values).length) return;
 			await setRowValues(frm, cdt, cdn, values);
 			queueVatTaxRowsSync(frm);
@@ -399,7 +429,7 @@
 	}
 
 	function getExclusiveRateForVat(row, qty) {
-		if (hasEnteredValue(row.rate) && flt(row.rate)) return flt(row.rate);
+		if (hasEnteredValue(row.rate)) return flt(row.rate);
 		if (qty && hasEnteredValue(row.amount) && flt(row.amount)) return flt(row.amount) / qty;
 		if (hasEnteredValue(row.net_rate) && flt(row.net_rate)) return flt(row.net_rate);
 		if (hasEnteredValue(row.price_list_rate) && flt(row.price_list_rate)) return flt(row.price_list_rate);
@@ -409,7 +439,6 @@
 	async function getVatRate(frm, row, childDoctype) {
 		const parentDoc = frm?.doc || {};
 		const rowRate = flt(row.tax_rate);
-		const formRate = getFormTaxRate(frm);
 		if (rowRate) return rowRate;
 
 		const response = await frappe.call({
@@ -422,18 +451,7 @@
 				item_tax_template: row.item_tax_template,
 			},
 		});
-		return flt(response.message) || formRate;
-	}
-
-	function getFormTaxRate(frm) {
-		const rates = (frm.doc.taxes || [])
-			.map((row) => flt(row.rate))
-			.filter((rate) => rate > 0 && rate < 100);
-		const uniqueRates = [...new Set(rates)];
-		if (uniqueRates.length === 1) return uniqueRates[0];
-
-		const templateRate = String(frm.doc.taxes_and_charges || "").match(/(\d+(?:\.\d+)?)\s*%/);
-		return templateRate ? flt(templateRate[1]) : 0;
+		return flt(response.message);
 	}
 
 	function taxHandlers() {

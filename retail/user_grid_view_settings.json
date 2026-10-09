@@ -11,7 +11,7 @@
       },
       {
         "columns": 1,
-        "fieldname": "uom"
+        "fieldname": "packing_uom"
       },
       {
         "columns": 1,
@@ -75,6 +75,84 @@
       }
     ]
   },
+  "Purchase Invoice": {
+    "Purchase Invoice Item": [
+      {
+        "columns": 2,
+        "fieldname": "item_code"
+      },
+      {
+        "columns": 2,
+        "fieldname": "item_name"
+      },
+      {
+        "columns": 1,
+        "fieldname": "uom"
+      },
+      {
+        "columns": 1,
+        "fieldname": "qty"
+      },
+      {
+        "fieldname": "custom_foc_qty"
+      },
+      {
+        "fieldname": "custom_total_stock_qty"
+      },
+      {
+        "columns": 2,
+        "fieldname": "rate"
+      },
+      {
+        "columns": 2,
+        "fieldname": "custom_rate_including_vat"
+      },
+      {
+        "columns": 2,
+        "fieldname": "amount"
+      },
+      {
+        "columns": 2,
+        "fieldname": "custom_vat_amount"
+      },
+      {
+        "columns": 2,
+        "fieldname": "custom_amount_including_vat"
+      },
+      {
+        "columns": 1,
+        "fieldname": "vat_rate"
+      },
+      {
+        "columns": 1,
+        "fieldname": "vat_amount"
+      },
+      {
+        "columns": 1,
+        "fieldname": "custom_upd_sell_price"
+      },
+      {
+        "columns": 1,
+        "fieldname": "custom_cur_sell_rate"
+      },
+      {
+        "columns": 1,
+        "fieldname": "custom_new_sell_rate"
+      },
+      {
+        "columns": 1,
+        "fieldname": "custom_new_sell_incl"
+      },
+      {
+        "columns": 1,
+        "fieldname": "rate_with_margin"
+      },
+      {
+        "columns": 1,
+        "fieldname": "custom_sell_margin_pct"
+      }
+    ]
+  },
   "Purchase Order": {
     "Purchase Order Item": [
       {
@@ -115,6 +193,87 @@
       }
     ]
   },
+  "Purchase Receipt": {
+    "Purchase Receipt Item": [
+      {
+        "columns": 2,
+        "fieldname": "item_code"
+      },
+      {
+        "columns": 2,
+        "fieldname": "item_name"
+      },
+      {
+        "columns": 1,
+        "fieldname": "uom"
+      },
+      {
+        "columns": 1,
+        "fieldname": "qty"
+      },
+      {
+        "fieldname": "custom_foc_qty"
+      },
+      {
+        "fieldname": "custom_total_stock_qty"
+      },
+      {
+        "fieldname": "warehouse"
+      },
+      {
+        "columns": 2,
+        "fieldname": "rate"
+      },
+      {
+        "columns": 2,
+        "fieldname": "custom_rate_including_vat"
+      },
+      {
+        "columns": 2,
+        "fieldname": "amount"
+      },
+      {
+        "columns": 2,
+        "fieldname": "custom_vat_amount"
+      },
+      {
+        "columns": 2,
+        "fieldname": "custom_amount_including_vat"
+      },
+      {
+        "columns": 1,
+        "fieldname": "vat_rate"
+      },
+      {
+        "columns": 1,
+        "fieldname": "vat_amount"
+      },
+      {
+        "columns": 1,
+        "fieldname": "custom_upd_sell_price"
+      },
+      {
+        "columns": 1,
+        "fieldname": "custom_cur_sell_rate"
+      },
+      {
+        "columns": 1,
+        "fieldname": "custom_new_sell_rate"
+      },
+      {
+        "columns": 1,
+        "fieldname": "custom_new_sell_incl"
+      },
+      {
+        "columns": 1,
+        "fieldname": "rate_with_margin"
+      },
+      {
+        "columns": 1,
+        "fieldname": "custom_sell_margin_pct"
+      }
+    ]
+  },
   "Quotation": {
     "Quotation Item": [
       {
@@ -136,6 +295,10 @@
       {
         "columns": 1,
         "fieldname": "amount"
+      },
+      {
+        "columns": 2,
+        "fieldname": "custom_vat_amount"
       },
       {
         "columns": 2,
@@ -172,6 +335,10 @@
       {
         "columns": 1,
         "fieldname": "amount"
+      },
+      {
+        "columns": 2,
+        "fieldname": "custom_vat_amount"
       },
       {
         "columns": 2,
@@ -216,6 +383,10 @@
       {
         "columns": 1,
         "fieldname": "amount"
+      },
+      {
+        "columns": 2,
+        "fieldname": "custom_vat_amount"
       },
       {
         "columns": 1,

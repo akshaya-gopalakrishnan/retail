@@ -1,0 +1,45 @@
+{
+ "charts": [],
+ "content": "[{\"id\": \"hdr_van_payments\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Van Payments</span>\", \"col\": 12}}, {\"id\": \"sc_van_payments\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Van Payments\", \"col\": 4}}]",
+ "creation": "2026-08-10 12:20:48.246055",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "hide_custom": 0,
+ "icon": "money",
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "Van Sales Payments Link",
+ "links": [],
+ "modified": "2026-08-13 18:32:03.503297",
+ "modified_by": "Administrator",
+ "module": "Retail-app",
+ "name": "Van Sales Payments Link",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "Van Sales",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [
+  {
+   "role": "Van Sales User"
+  },
+  {
+   "role": "Van Sales Manager"
+  },
+  {
+   "role": "System Manager"
+  }
+ ],
+ "sequence_id": 8.0,
+ "shortcuts": [
+  {
+   "doc_view": "",
+   "label": "Van Payments",
+   "link_to": "van-payments",
+   "type": "Page"
+  }
+ ],
+ "title": "Van Sales Payments Link"
+}

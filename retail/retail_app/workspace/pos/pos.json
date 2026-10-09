@@ -13,7 +13,7 @@
    "label": "POS Top Selling Products"
   }
  ],
- "content": "[{\"id\": \"hdr_pos\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">POS</span>\", \"col\": 12}}, {\"id\": \"sc_pos_invoices\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Invoices\", \"col\": 3}}, {\"id\": \"sc_pos_profile\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Profile\", \"col\": 3}}, {\"id\": \"sc_pos_counters\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Counters\", \"col\": 3}}, {\"id\": \"sc_pos_cashier_shifts\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Cashier Shifts\", \"col\": 3}}, {\"id\": \"sc_pos_counter_sessions\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Counter Sessions\", \"col\": 3}}, {\"id\": \"sc_pos_opening_entry\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Opening Entry\", \"col\": 3}}, {\"id\": \"sc_pos_closing_entry\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Closing Entry\", \"col\": 3}}, {\"id\": \"sc_pos_branch_day_closing\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Branch Day Closing\", \"col\": 3}}, {\"id\": \"sc_pos_sync_log\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Sync Log\", \"col\": 3}}, {\"id\": \"sc_mode_of_payment\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Mode of Payment\", \"col\": 3}}, {\"id\": \"sp_pos_charts\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"chart_pos_sales_trend_7_days\", \"type\": \"chart\", \"data\": {\"chart_name\": \"POS Sales Trend 7 Days\", \"col\": 4}}, {\"id\": \"chart_pos_sales_by_counter\", \"type\": \"chart\", \"data\": {\"chart_name\": \"POS Sales by Counter\", \"col\": 4}}, {\"id\": \"chart_pos_top_selling_products\", \"type\": \"chart\", \"data\": {\"chart_name\": \"POS Top Selling Products\", \"col\": 4}}]",
+ "content": "[{\"id\": \"hdr_pos\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">POS</span>\", \"col\": 12}}, {\"id\": \"sc_pos_invoices\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Invoices\", \"col\": 3}}, {\"id\": \"sc_pos_profile\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Profile\", \"col\": 3}}, {\"id\": \"sc_pos_counters\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Counters\", \"col\": 3}}, {\"id\": \"sc_pos_cashier_shifts\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Cashier Shifts\", \"col\": 3}}, {\"id\": \"sc_pos_counter_sessions\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Counter Sessions\", \"col\": 3}}, {\"id\": \"sc_pos_opening_entry\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Opening Entry\", \"col\": 3}}, {\"id\": \"sc_pos_closing_entry\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Closing Entry\", \"col\": 3}}, {\"id\": \"sc_pos_branch_day_closing\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Branch Day Closing\", \"col\": 3}}, {\"id\": \"sc_pos_sync_log\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"POS Sync Log\", \"col\": 3}}, {\"id\": \"sc_external_pos_rate_audit\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"External POS Rate Audit\", \"col\": 3}}, {\"id\": \"sc_mode_of_payment\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Mode of Payment\", \"col\": 3}}, {\"id\": \"sp_pos_charts\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"chart_pos_sales_trend_7_days\", \"type\": \"chart\", \"data\": {\"chart_name\": \"POS Sales Trend 7 Days\", \"col\": 4}}, {\"id\": \"chart_pos_sales_by_counter\", \"type\": \"chart\", \"data\": {\"chart_name\": \"POS Sales by Counter\", \"col\": 4}}, {\"id\": \"chart_pos_top_selling_products\", \"type\": \"chart\", \"data\": {\"chart_name\": \"POS Top Selling Products\", \"col\": 4}}]",
  "creation": "2026-07-30 12:20:09.684237",
  "custom_blocks": [],
  "docstatus": 0,
@@ -29,7 +29,7 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "POS Documents",
-   "link_count": 10,
+   "link_count": 11,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -126,6 +126,16 @@
   },
   {
    "hidden": 0,
+   "is_query_report": 1,
+   "label": "External POS Rate Audit",
+   "link_count": 0,
+   "link_to": "External POS Rate Audit",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
    "is_query_report": 0,
    "label": "Mode of Payment",
    "link_count": 0,
@@ -209,6 +219,13 @@
    "label": "POS Sync Log",
    "link_to": "POS Sync Log",
    "type": "DocType"
+  },
+  {
+   "color": "Orange",
+   "doc_view": "Report",
+   "label": "External POS Rate Audit",
+   "link_to": "External POS Rate Audit",
+   "type": "Report"
   },
   {
    "color": "Grey",

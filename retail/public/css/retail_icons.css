@@ -191,7 +191,59 @@
     border-left: 3px solid var(--primary-color);
 }
 
+.van-stock-readonly-panel {
+    margin-top: 10px;
+}
+
+.van-stock-action-row {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.van-stock-readonly-table {
+    max-height: 360px;
+    overflow: auto;
+    margin-top: 10px;
+}
+
+.van-stock-readonly-table table {
+    margin-bottom: 0;
+}
+
+.van-stock-readonly-table thead th {
+    background: var(--subtle-fg);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    white-space: nowrap;
+}
+
+.sidebar-item-container.retail-primary-active > .desk-sidebar-item,
+.sidebar-item-container.retail-secondary-active > .desk-sidebar-item {
+    background-color: var(--sidebar-select-color) !important;
+}
+
+.sidebar-item-container.retail-secondary-active > .desk-sidebar-item {
+    border-left: 3px solid var(--primary-color);
+}
+
 @media (min-width: 992px) {
+    /* Form refreshes can reapply hide-sidebar after navigation is mounted. */
+    .layout-side-section.retail-form-navigation.retail-form-sidebar-mounted {
+        display: block !important;
+        flex: 0 0 var(--sidebar-width, 220px) !important;
+        width: var(--sidebar-width, 220px) !important;
+    }
+
+    .layout-side-section.retail-form-navigation.retail-form-sidebar-mounted + .layout-main-section-wrapper {
+        flex: 1 1 0% !important;
+        min-width: 0 !important;
+        width: auto !important;
+    }
+
     .sidebar-item-container .sidebar-item-icon > svg,
     .sidebar-item-container .sidebar-item-icon > .icon-sm,
     .sidebar-item-container .sidebar-item-icon > .es-icon {
@@ -927,4 +979,27 @@ body:has(.modal.show) [data-page-route^="Form/"] .field-area {
         padding-right: 12px !important;
     }
 
+}
+
+/* Clearly identify the keyboard-selected option in form, grid and dialog dropdowns.
+   Inset borders preserve the option size as selection moves. */
+body .awesomplete > ul > li[aria-selected="true"],
+body [role="listbox"] [role="option"][aria-selected="true"],
+body .dropdown-menu .dropdown-item.active,
+body .dropdown-menu .dropdown-item:focus-visible,
+body .dropdown-menu a:focus-visible,
+body .dropdown-menu button:focus-visible {
+    background: #dbeafe !important;
+    color: #102a43 !important;
+    box-shadow: inset 0 0 0 2px #2563eb !important;
+    outline: none !important;
+}
+
+body .awesomplete > ul > li[aria-selected="true"] *,
+body [role="listbox"] [role="option"][aria-selected="true"] *,
+body .dropdown-menu .dropdown-item.active *,
+body .dropdown-menu .dropdown-item:focus-visible *,
+body .dropdown-menu a:focus-visible *,
+body .dropdown-menu button:focus-visible * {
+    color: #102a43 !important;
 }

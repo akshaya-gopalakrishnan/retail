@@ -44,6 +44,15 @@ VAT_TAX_DOCTYPES = {
 
 def set_vat_rates(doc, method=None):
 	"""Keep row VAT-inclusive/exclusive helper rates in sync before save."""
+	if doc.get("is_consolidated"):
+		set_row_vat_amounts(doc)
+		return  # Consolidation carries the original POS tax amounts.
+	from retail.pos_completed_sale import payload_for
+	if payload_for(doc):
+		set_row_vat_amounts(doc)
+		return
+	prepare_external_pos_taxes(doc)
+
 	for item in doc.get("items", []):
 		if not item.get("item_code"):
 			continue
@@ -56,7 +65,7 @@ def set_vat_rates(doc, method=None):
 			parent_doctype=doc.doctype,
 			transaction_type=doc.get("transaction_type"),
 			item_tax_template=item.get("item_tax_template"),
-			throw=True,
+			throw=not _is_external_pos(doc),
 		)
 		exclusive_rate = flt(item.get("rate"))
 		inclusive_rate = flt(item.get("custom_rate_including_vat"))
@@ -88,6 +97,61 @@ def set_vat_rates(doc, method=None):
 			)
 
 	apply_transaction_vat_taxes(doc)
+	set_row_vat_amounts(doc)
+
+
+def set_row_vat_amounts(doc, method=None):
+	"""Store row VAT in document currency from quantity and exclusive rate."""
+	import json
+
+	for item in doc.get("items") or []:
+		if not item.meta.has_field("custom_vat_amount"):
+			continue
+		if not item.get("item_code"):
+			item.custom_vat_amount = 0
+			continue
+		rates = item.get("item_tax_rate")
+		rates = json.loads(rates) if isinstance(rates, str) and rates else rates
+		if rates:
+			rate = sum(flt(value) for value in rates.values())
+		else:
+			rate = get_transaction_item_vat_rate(
+				item.get("item_code"), child_doctype=item.doctype,
+				parent_doctype=doc.doctype, transaction_type=doc.get("transaction_type"),
+				item_tax_template=item.get("item_tax_template"),
+			)
+		amount = flt(item.get("qty")) * flt(item.get("rate"))
+		item.custom_vat_amount = flt(flt(amount) * rate / 100, item.precision("custom_vat_amount"))
+
+
+def _is_external_pos(doc):
+	return doc.doctype == "POS Invoice" and doc.get("pos_sync_source") == "Offline POS"
+
+
+def prepare_external_pos_taxes(doc, method=None):
+	"""Set item-owned VAT before ERPNext validates payment and invoice totals."""
+	if not _is_external_pos(doc):
+		return
+	from retail.pos_completed_sale import payload_for, prepare
+	if payload_for(doc):
+		prepare(doc)
+		return
+	doc.taxes_and_charges = None
+	doc.set("taxes", [])
+	for item in doc.get("items") or []:
+		item.item_tax_template = frappe.get_cached_value("Item", item.item_code, "custom_tax")
+	for group in _get_transaction_vat_groups(doc, "Sales Tax").values():
+		doc.append("taxes", {
+			"charge_type": "On Net Total",
+			"account_head": group["account_head"],
+			"description": group["description"],
+			"included_in_print_rate": 0,
+			# ERPNext rebuilds item maps during calculation. Missing accounts must
+			# therefore fall back to zero on the invoice tax row itself.
+			"rate": 0,
+			"cost_center": doc.get("cost_center"),
+		})
+	_apply_item_vat_tax_rates(doc)
 
 
 def apply_transaction_vat_taxes(doc):
@@ -113,14 +177,15 @@ def apply_transaction_vat_taxes(doc):
 				"category": "Total",
 				"add_deduct_tax": "Add",
 				"included_in_print_rate": 0,
-				"rate": group["rate"],
+				"rate": 0 if _is_external_pos(doc) else group["rate"],
 				"cost_center": doc.get("cost_center"),
 			},
 		)
 
 	_disable_rounded_total(doc)
 	doc.calculate_taxes_and_totals()
-	_apply_explicit_vat_totals(doc, tax_label)
+	if not _is_external_pos(doc):
+		_apply_explicit_vat_totals(doc, tax_label)
 	_refresh_total_in_words(doc)
 
 
@@ -187,6 +252,16 @@ def ensure_transaction_vat_rate_fields():
 				"columns": 2,
 			},
 			{
+				"fieldname": "custom_vat_amount",
+				"label": "VAT Amount",
+				"fieldtype": "Currency",
+				"options": "currency",
+				"insert_after": "amount",
+				"read_only": 1,
+				"in_list_view": 1,
+				"columns": 2,
+			},
+			{
 				"fieldname": "custom_amount_including_vat",
 				"label": "Amount Including VAT",
 				"fieldtype": "Currency",
@@ -207,6 +282,8 @@ def ensure_transaction_vat_rate_fields():
 		if frappe.get_meta(item_doctype).has_field("amount"):
 			_set_item_table_field_property(item_doctype, "amount", "read_only", 0, "Check")
 		_set_custom_field_property(item_doctype, "custom_amount_including_vat", "read_only", 0)
+		_set_custom_field_property(item_doctype, "custom_vat_amount", "read_only", 1)
+		_set_item_table_field_property(item_doctype, "custom_vat_amount", "read_only", 1, "Check")
 		_delete_obsolete_vat_fields(item_doctype)
 		frappe.db.updatedb(item_doctype)
 		frappe.clear_cache(doctype=item_doctype)
@@ -315,6 +392,7 @@ def _apply_explicit_vat_totals(doc, tax_label):
 			if rate:
 				vat_amounts[tax.tax_type] = flt(vat_amounts.get(tax.tax_type)) + flt(net_amount * rate / 100)
 
+	conversion_rate = flt(doc.get("conversion_rate")) or 1
 	total_vat = 0
 	running_total = flt(doc.get("net_total") or doc.get("total"))
 	for tax in doc.get("taxes") or []:
@@ -326,20 +404,20 @@ def _apply_explicit_vat_totals(doc, tax_label):
 		running_total += amount
 		tax.tax_amount = amount
 		tax.tax_amount_after_discount_amount = amount
-		tax.base_tax_amount = amount
-		tax.base_tax_amount_after_discount_amount = amount
+		tax.base_tax_amount = flt(amount * conversion_rate, tax.precision("base_tax_amount"))
+		tax.base_tax_amount_after_discount_amount = tax.base_tax_amount
 		tax.total = running_total
-		tax.base_total = running_total
+		tax.base_total = flt(running_total * conversion_rate, tax.precision("base_total"))
 
 	if total_vat:
 		doc.total_taxes_and_charges = flt(total_vat, doc.precision("total_taxes_and_charges"))
-		doc.base_total_taxes_and_charges = doc.total_taxes_and_charges
+		doc.base_total_taxes_and_charges = flt(total_vat * conversion_rate, doc.precision("base_total_taxes_and_charges"))
 		doc.taxes_and_charges_added = doc.total_taxes_and_charges
-		doc.base_taxes_and_charges_added = doc.total_taxes_and_charges
+		doc.base_taxes_and_charges_added = doc.base_total_taxes_and_charges
 		doc.taxes_and_charges_deducted = 0
 		doc.base_taxes_and_charges_deducted = 0
 		doc.grand_total = flt(flt(doc.get("net_total") or doc.get("total")) + doc.total_taxes_and_charges, doc.precision("grand_total"))
-		doc.base_grand_total = doc.grand_total
+		doc.base_grand_total = flt(doc.grand_total * conversion_rate, doc.precision("base_grand_total"))
 
 
 def _get_item_vat_tax_rates(doc):

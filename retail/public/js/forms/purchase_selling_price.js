@@ -8,14 +8,12 @@
 		frappe.ui.form.on(doctype, {
 			refresh(frm) {
 				toggleSellPriceColumns(frm);
-				alignAllowSellingPrice(frm);
 				addSellPriceButtons(frm);
 				addItemRateUpdateButton(frm);
 				refreshAllRows(frm);
 			},
 			custom_allow_selling_price(frm) {
 				toggleSellPriceColumns(frm);
-				return setAllSellPriceUpdates(frm, frm.doc.custom_allow_selling_price ? 1 : 0);
 			},
 			before_submit(frm) {
 				confirmSellPriceUpdates(frm);
@@ -26,7 +24,6 @@
 	itemDoctypes.forEach((doctype) => {
 		frappe.ui.form.on(doctype, {
 			item_code(frm, cdt, cdn) {
-				enableRowSellPriceWhenAllowed(frm, cdt, cdn);
 				fetchCurrentSellingRate(frm, cdt, cdn);
 			},
 			uom(frm, cdt, cdn) {
@@ -56,9 +53,11 @@
 				updateMargin(frm, cdt, cdn);
 			},
 			custom_new_sell_rate(frm, cdt, cdn) {
+				setRowSellPriceUpdate(frm, cdt, cdn, flt(locals[cdt]?.[cdn]?.custom_new_sell_rate) > 0);
 				updateInclusiveRate(frm, cdt, cdn).then(() => updateMargin(frm, cdt, cdn));
 			},
 			custom_new_sell_incl(frm, cdt, cdn) {
+				setRowSellPriceUpdate(frm, cdt, cdn, flt(locals[cdt]?.[cdn]?.custom_new_sell_incl) > 0);
 				updateExclusiveRate(frm, cdt, cdn).then(() => updateMargin(frm, cdt, cdn));
 			},
 		});
@@ -197,24 +196,6 @@
 		frm.refresh_field("items");
 	}
 
-	function alignAllowSellingPrice(frm) {
-		const field = frm.fields_dict.custom_allow_selling_price;
-		if (!field?.$wrapper) return;
-
-		field.$wrapper.addClass("retail-allow-selling-price-right");
-		if (document.getElementById("retail-allow-selling-price-style")) return;
-
-		$(`<style id="retail-allow-selling-price-style">
-			.retail-allow-selling-price-right .checkbox {
-				display: flex;
-				justify-content: flex-end;
-			}
-			.retail-allow-selling-price-right .checkbox label {
-				margin-right: 0;
-			}
-		</style>`).appendTo(document.head);
-	}
-
 	function refreshAllRows(frm) {
 		if (!hasSellPriceFields(frm)) return;
 		if (frm.doc.docstatus !== 0) return;
@@ -246,11 +227,11 @@
 		frm.refresh_field("items");
 	}
 
-	function enableRowSellPriceWhenAllowed(frm, cdt, cdn) {
+	function setRowSellPriceUpdate(frm, cdt, cdn, hasSellingPrice) {
 		const row = locals[cdt]?.[cdn];
-		if (!row?.item_code || !frm.doc.custom_allow_selling_price) return;
-		if (!row.custom_upd_sell_price) {
-			frappe.model.set_value(cdt, cdn, "custom_upd_sell_price", 1);
+		if (!row || row.__retail_sell_price_syncing) return;
+		if (Boolean(row.custom_upd_sell_price) !== hasSellingPrice) {
+			frappe.model.set_value(cdt, cdn, "custom_upd_sell_price", hasSellingPrice ? 1 : 0);
 		}
 	}
 

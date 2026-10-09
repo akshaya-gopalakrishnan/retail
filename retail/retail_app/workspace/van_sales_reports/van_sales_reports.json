@@ -1,0 +1,81 @@
+{
+ "charts": [],
+ "content": "[{\"id\": \"hdr_van_sales_reports\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Van Sales Reports</span>\", \"col\": 12}}, {\"id\": \"sc_van_daily_sales_summary\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Van Daily Sales Summary\", \"col\": 3}}, {\"id\": \"sc_van_daily_stock_summary\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Van Daily Stock Summary\", \"col\": 3}}, {\"id\": \"sc_van_detailed_sales_summary\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Van Detailed Sales Summary\", \"col\": 3}}, {\"id\": \"sc_van_profit_report\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Van Profit Report\", \"col\": 3}}, {\"id\": \"sc_van_wastage_report\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Van Wastage Report\", \"col\": 3}}, {\"id\": \"sc_van_outstanding_collection_summary\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Van Outstanding Collection Summary\", \"col\": 3}}]",
+ "creation": "2026-08-10 14:05:45.624142",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "hide_custom": 0,
+ "icon": "statistics",
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "Van Sales Reports",
+ "links": [],
+ "modified": "2026-08-13 18:32:03.705612",
+ "modified_by": "Administrator",
+ "module": "Retail-app",
+ "name": "Van Sales Reports",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "Van Sales",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [
+  {
+   "role": "Van Sales User"
+  },
+  {
+   "role": "Van Sales Manager"
+  },
+  {
+   "role": "System Manager"
+  }
+ ],
+ "sequence_id": 12.0,
+ "shortcuts": [
+  {
+   "doc_view": "",
+   "label": "Van Daily Sales Summary",
+   "link_to": "Van Daily Sales Summary",
+   "report_ref_doctype": "Sales Invoice",
+   "type": "Report"
+  },
+  {
+   "doc_view": "",
+   "label": "Van Daily Stock Summary",
+   "link_to": "Van Daily Stock Summary",
+   "report_ref_doctype": "Stock Entry",
+   "type": "Report"
+  },
+  {
+   "doc_view": "",
+   "label": "Van Detailed Sales Summary",
+   "link_to": "Van Detailed Sales Summary",
+   "report_ref_doctype": "Sales Invoice",
+   "type": "Report"
+  },
+  {
+   "doc_view": "",
+   "label": "Van Profit Report",
+   "link_to": "Van Profit Report",
+   "report_ref_doctype": "Sales Invoice",
+   "type": "Report"
+  },
+  {
+   "doc_view": "",
+   "label": "Van Wastage Report",
+   "link_to": "Van Wastage Report",
+   "report_ref_doctype": "Stock Entry",
+   "type": "Report"
+  },
+  {
+   "doc_view": "",
+   "label": "Van Outstanding Collection Summary",
+   "link_to": "Van Outstanding Collection Summary",
+   "report_ref_doctype": "Payment Entry",
+   "type": "Report"
+  }
+ ],
+ "title": "Van Sales Reports"
+}

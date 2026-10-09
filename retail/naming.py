@@ -1,7 +1,8 @@
 """Retail transaction naming-series defaults.
 
-The series are intentionally generic (``RTL``) so the Retail app can be
-installed for any company or site.  Existing documents are never renamed.
+Legacy series are retained here for compatibility with variant selection.
+The installer applies compact transaction codes from ``retail.short_codes``.
+Existing records are renamed only by the explicit migration operation.
 """
 
 from __future__ import annotations
@@ -64,6 +65,8 @@ def install_naming_series():
 				validate_fields_for_doctype=False,
 			)
 
+	from retail.short_codes import install
+	install()
 	frappe.clear_cache()
 
 

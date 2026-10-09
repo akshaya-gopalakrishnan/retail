@@ -20,12 +20,12 @@ DEMO_SIX_MONTH_PREFIX = "BUSINESS-DEMO-6M"
 
 
 def setup_demo(args=None):
-	"""Run Retail demo seeding when ERPNext setup wizard demo data is selected."""
-	args = args or {}
-	if not args.get("setup_demo"):
-		return
+	"""Compatibility no-op for previously configured setup-wizard hooks."""
+	return {"disabled": True}
 
-	frappe.enqueue(seed_full_demo_data, enqueue_after_commit=True, at_front=True)
+
+def _reject_demo_generation():
+	frappe.throw("Demo data generation is disabled for this app.")
 
 
 def _first_existing(doctype, filters=None, fieldname="name", order_by=None):
@@ -611,6 +611,7 @@ def _ensure_purchase_flow(ctx, items):
 @frappe.whitelist()
 def seed_full_demo_data():
 	"""Create a reusable retail demo dataset for fresh or lightly configured sites."""
+	_reject_demo_generation()
 	company = _get_company()
 	ctx = _ensure_masters(company)
 	items = _ensure_items(ctx)
@@ -1406,6 +1407,7 @@ def _seed_workflow_doc(doctype, child_doctype, template_name, template_item, ctx
 @frappe.whitelist()
 def seed_six_month_demo_data():
 	"""Seed a broad, repeatable retail demo window around today through the next 6 months."""
+	_reject_demo_generation()
 	seed_full_demo_data()
 	company = _get_company()
 	ctx = _ensure_masters(company)
@@ -1488,6 +1490,7 @@ def seed_six_month_demo_data():
 @frappe.whitelist()
 def seed_dashboard_demo_data():
 	"""Seed tiny demo records used only to prove dashboard cards/charts render."""
+	_reject_demo_generation()
 	template_invoice_name = frappe.db.get_value(
 		"Sales Invoice", {"docstatus": 1, "is_return": 0}, "name", order_by="posting_date desc, creation desc"
 	)

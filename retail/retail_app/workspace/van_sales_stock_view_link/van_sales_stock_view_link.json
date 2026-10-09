@@ -1,0 +1,45 @@
+{
+ "charts": [],
+ "content": "[{\"id\": \"hdr_van_stock_view\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Van Stock View</span>\", \"col\": 12}}, {\"id\": \"sc_van_stock_view\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Van Stock View\", \"col\": 4}}]",
+ "creation": "2026-08-13 13:04:08.613659",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "hide_custom": 0,
+ "icon": "stock",
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "Van Sales Stock View Link",
+ "links": [],
+ "modified": "2026-08-13 18:32:03.405641",
+ "modified_by": "Administrator",
+ "module": "Retail-app",
+ "name": "Van Sales Stock View Link",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "Van Sales",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [
+  {
+   "role": "Van Sales User"
+  },
+  {
+   "role": "Van Sales Manager"
+  },
+  {
+   "role": "System Manager"
+  }
+ ],
+ "sequence_id": 6.0,
+ "shortcuts": [
+  {
+   "doc_view": "",
+   "label": "Van Stock View",
+   "type": "URL",
+   "url": "/app/van-stock-view"
+  }
+ ],
+ "title": "Van Sales Stock View Link"
+}

@@ -224,9 +224,24 @@ def create_or_update_number_cards():
 
 
 def get_stock_count(only_out_of_stock=False):
-	filters = frappe._dict({"only_low_stock": 1, "only_out_of_stock": cint(only_out_of_stock)})
+	# Count the same reorder rows without sorting or enriching a full report.
+	# Missing Bin means zero stock; equality is included for the Low Stock card.
+	stock_condition = (
+		"coalesce(b.actual_qty, 0) <= 0"
+		if cint(only_out_of_stock)
+		else "coalesce(b.actual_qty, 0) <= ir.warehouse_reorder_level"
+	)
+	count = frappe.db.sql(f"""
+		select count(*)
+		from `tabItem Reorder` ir
+		inner join `tabItem` i on i.name = ir.parent
+		left join `tabBin` b on b.item_code = i.name and b.warehouse = ir.warehouse
+		where i.disabled = 0 and i.is_stock_item = 1
+			and ifnull(ir.warehouse_reorder_level, 0) > 0
+			and {stock_condition}
+	""")[0][0]
 	return {
-		"value": len(get_data(filters)),
+		"value": count,
 		"fieldtype": "Int",
 		"route": ["query-report", "Low Stock Reorder Report"],
 		"route_options": {

@@ -16,7 +16,7 @@ CUSTOM_FIELD_LABELS = {
 PACKING_GRID_COLUMNS = [
 	{"fieldname": "packing_name", "columns": 2},
 	{"fieldname": "barcode", "columns": 1},
-	{"fieldname": "uom", "columns": 1},
+	{"fieldname": "packing_uom", "columns": 1},
 	{"fieldname": "conversion_factor", "columns": 1},
 	{"fieldname": "purchase_net_rate", "columns": 1},
 	{"fieldname": "purchase_gross_rate", "columns": 1},

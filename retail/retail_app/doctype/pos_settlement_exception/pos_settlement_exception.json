@@ -1,0 +1,185 @@
+{
+ "doctype": "DocType",
+ "name": "POS Settlement Exception",
+ "module": "Retail-app",
+ "autoname": "hash",
+ "engine": "InnoDB",
+ "field_order": [
+  "company",
+  "branch",
+  "business_date",
+  "counter",
+  "cashier",
+  "customer",
+  "external_pos_reference",
+  "created_at",
+  "resolved_at",
+  "status",
+  "exception_reason",
+  "transaction",
+  "allocation",
+  "source_external_reference",
+  "source_erp_document",
+  "destination_erp_document",
+  "reconciliation_reference",
+  "severity",
+  "event_key",
+  "details"
+ ],
+ "fields": [
+  {
+   "fieldname": "company",
+   "label": "Company",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "Company"
+  },
+  {
+   "fieldname": "branch",
+   "label": "Branch",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "Branch"
+  },
+  {
+   "fieldname": "business_date",
+   "label": "Business Date",
+   "fieldtype": "Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "counter",
+   "label": "Counter",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "POS Branch Counter"
+  },
+  {
+   "fieldname": "cashier",
+   "label": "Cashier",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "customer",
+   "label": "Customer",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "Customer"
+  },
+  {
+   "fieldname": "external_pos_reference",
+   "label": "External Pos Reference",
+   "fieldtype": "Data",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "created_at",
+   "label": "Created At",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "resolved_at",
+   "label": "Resolved At",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "status",
+   "label": "Status",
+   "fieldtype": "Select",
+   "read_only": 1,
+   "options": "Accepted\nPosted\nPending Dependency\nPending Reconciliation\nReconciled\nReconciliation Exception",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "exception_reason",
+   "label": "Exception Reason",
+   "fieldtype": "Small Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "transaction",
+   "label": "Transaction",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "POS Accepted Transaction"
+  },
+  {
+   "fieldname": "allocation",
+   "label": "Allocation",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "POS Settlement Allocation"
+  },
+  {
+   "fieldname": "source_external_reference",
+   "label": "Source External Reference",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "source_erp_document",
+   "label": "Source Erp Document",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "Sales Invoice"
+  },
+  {
+   "fieldname": "destination_erp_document",
+   "label": "Destination Erp Document",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "Sales Invoice"
+  },
+  {
+   "fieldname": "reconciliation_reference",
+   "label": "Reconciliation Reference",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "severity",
+   "label": "Severity",
+   "fieldtype": "Select",
+   "read_only": 1,
+   "options": "Info\nWarning\nRequires Review\nTechnical Error",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "event_key",
+   "label": "Event Key",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "details",
+   "label": "Details",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "Accounts Manager",
+   "read": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "POS Integration User",
+   "read": 1,
+   "report": 1,
+   "export": 1
+  }
+ ],
+ "track_changes": 1
+}

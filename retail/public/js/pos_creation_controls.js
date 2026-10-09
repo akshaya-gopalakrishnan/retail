@@ -23,3 +23,18 @@
 
 	frappe.views.ListView.prototype.retail_pos_create_guard = true;
 })();
+
+(function () {
+	const settings = frappe.listview_settings["POS Invoice"] ||= {};
+	const original_onload = settings.onload;
+	settings.onload = function (listview) {
+		if (original_onload) original_onload.call(this, listview);
+		if (!frappe.boot.user.all_reports?.["POS Invoice Profit"]) return;
+		listview.page.add_inner_button(__("Daily Sales & Profit"), () => {
+			frappe.set_route("query-report", "POS Invoice Profit", {
+				from_date: frappe.datetime.get_today(),
+				to_date: frappe.datetime.get_today(),
+			});
+		});
+	};
+})();

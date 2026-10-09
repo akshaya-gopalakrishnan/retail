@@ -1,0 +1,9 @@
+{
+ "docstatus": 0,
+ "doctype": "Dashboard Chart Source",
+ "idx": 0,
+ "module": "Retail-app",
+ "name": "Van Sales by Van",
+ "source_name": "Van Sales by Van",
+ "timeseries": 0
+}

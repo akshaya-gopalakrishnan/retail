@@ -18,7 +18,7 @@ ALLOW_SELLING_PRICE_INSERT_AFTER = {
 }
 ALLOW_SELLING_PRICE_DEFAULT = {
 	"Purchase Receipt": "1",
-	"Purchase Invoice": None,
+	"Purchase Invoice": "1",
 }
 
 
@@ -34,6 +34,17 @@ def ensure_purchase_selling_price_fields():
 					"insert_after": ALLOW_SELLING_PRICE_INSERT_AFTER[doctype],
 					"default": ALLOW_SELLING_PRICE_DEFAULT[doctype],
 					"print_hide": 1,
+				},
+				{
+					"fieldname": "custom_update_item_master_rates",
+					"label": "Update Item Master Rates",
+					"fieldtype": "Check",
+					"insert_after": "custom_allow_selling_price",
+					"default": "0",
+					"no_copy": 1,
+					"print_hide": 1,
+					"depends_on": "eval:!doc.is_return",
+					"description": "",
 				},
 			]
 			for doctype in PURCHASE_DOCTYPES
@@ -104,6 +115,13 @@ def ensure_purchase_selling_price_fields():
 		ignore_validate=True,
 	)
 
+	create_custom_fields({
+		**{doctype: [{"fieldname": "custom_packing_selling_prices", "label": "Packing Selling Prices",
+			"fieldtype": "Long Text", "hidden": 1, "no_copy": 1, "print_hide": 1}]
+			for doctype in PURCHASE_ITEM_DOCTYPES},
+		"Item Price": [{"fieldname": "custom_retail_selling_revision", "label": "Selling Price Revision",
+			"fieldtype": "Data", "read_only": 1, "hidden": 1, "no_copy": 1}],
+	}, ignore_validate=True)
 	_update_field_metadata()
 	_update_standard_grid_metadata()
 	for doctype in PURCHASE_ITEM_DOCTYPES:
@@ -114,7 +132,7 @@ def ensure_purchase_selling_price_fields():
 def set_selling_price_margins(doc, method=None):
 	if doc.doctype not in PURCHASE_DOCTYPES:
 		return
-	if not flt(doc.get("custom_allow_selling_price")):
+	if doc.get("is_return") or not flt(doc.get("custom_allow_selling_price")):
 		return
 
 	for row in doc.get("items") or []:
@@ -134,27 +152,78 @@ def set_selling_price_margins(doc, method=None):
 
 
 def update_selected_selling_prices(doc, method=None):
-	if doc.doctype not in PURCHASE_DOCTYPES:
+	if doc.doctype not in PURCHASE_DOCTYPES or doc.get("is_return"):
 		return
+	from retail.domains.purchase.price_history import lock_item, sync_selling_state
+	# Deterministic lock order also covers repeated items and concurrent submissions.
+	for item_code in sorted({row.item_code for row in doc.get("items") or [] if row.item_code}):
+		lock_item(item_code)
+	from retail.domains.purchase.master_rates import update_purchase_master_rates, update_selling_master_rate
+	update_purchase_master_rates(doc)
 	if not flt(doc.get("custom_allow_selling_price")):
 		return
-
 	for row in doc.get("items") or []:
-		if not row.meta.has_field("custom_upd_sell_price"):
+		if not row.get("item_code") or not flt(row.get("custom_upd_sell_price")):
 			continue
-		if not flt(row.get("custom_upd_sell_price")):
-			continue
-		if not row.get("item_code") or flt(row.get("custom_new_sell_rate")) <= 0:
-			continue
-		if flt(row.get("custom_new_sell_rate")) == flt(row.get("custom_cur_sell_rate")):
-			continue
+		item = frappe.get_doc("Item", row.item_code)
+		requests = {row.get("uom") or item.stock_uom: flt(row.get("custom_new_sell_rate"))}
+		allowed = {entry["uom"] for entry in _packing_prices(item)}
+		for entry in _packing_requests(row):
+			if entry.get("item_code") != row.item_code:
+				continue  # Mapped/changed rows must not apply another item's saved overrides.
+			if entry.get("uom") not in allowed:
+				frappe.throw("Selling price UOM is not in this Item's Retail Packing Detail.")
+			if flt(entry.get("update")):
+				requests[entry["uom"]] = flt(entry.get("new_rate"))
+			elif entry["uom"] in requests:
+				requests.pop(entry["uom"])
+		for uom, rate in requests.items():
+			if rate <= 0:
+				continue
+			# Compare to the authoritative key, never the draft's stale Current SP.
+			current = get_standard_selling_rate(row.item_code, uom)
+			if rate == current:
+				continue
+			sync_item_price(row, SELLING_PRICE_LIST, rate, uom=uom,
+				source={"doctype": doc.doctype, "name": doc.name, "company": doc.company, "row": row.name})
+			# Stock-UOM Item Master changes use the explicit, audited checkbox below.
+			if uom != item.stock_uom:
+				sync_selling_state(row.item_code, uom, rate)
+		if flt(doc.get("custom_update_item_master_rates")):
+			update_selling_master_rate(doc, row, item, requests)
 
-		sync_item_price(
-			{"item_code": row.get("item_code")},
-			SELLING_PRICE_LIST,
-			row.get("custom_new_sell_rate"),
-			uom=row.get("uom"),
-		)
+
+def _packing_requests(row):
+	entries = frappe.parse_json(row.get("custom_packing_selling_prices") or "[]")
+	if not isinstance(entries, list) or any(not isinstance(entry, dict) for entry in entries):
+		frappe.throw("Invalid packing selling prices.")
+	if len({entry.get("uom") for entry in entries}) != len(entries):
+		frappe.throw("Only one selling price per packing UOM is allowed.")
+	return entries
+
+
+def _packing_prices(item):
+	from retail.domains.item.item_price_sync import get_item_price_barcode
+	stock_rate = get_standard_selling_rate(item.name, item.stock_uom)
+	rows = [{"uom": item.stock_uom, "conversion_factor": 1}]
+	seen = {item.stock_uom}
+	for row in item.get("custom_retail_packing_detail") or []:
+		if row.uom and row.uom not in seen:
+			rows.append({"uom": row.uom, "conversion_factor": flt(row.conversion_factor) or 1})
+			seen.add(row.uom)
+	for row in rows:
+		row.update(item_code=item.name, barcode=get_item_price_barcode(item.name, row["uom"]),
+			current_rate=get_standard_selling_rate(item.name, row["uom"]),
+			suggested_rate=stock_rate * row["conversion_factor"],
+			vat_rate=get_item_selling_vat_rate(item.name))
+	return rows
+
+
+@frappe.whitelist()
+def get_packing_selling_prices(item_code):
+	item = frappe.get_doc("Item", item_code)
+	item.check_permission("read")
+	return _packing_prices(item)
 
 
 @frappe.whitelist()
@@ -172,16 +241,6 @@ def get_standard_selling_rate(item_code, uom=None):
 		},
 		"price_list_rate",
 	)
-	if rate is None:
-		rate = frappe.db.get_value(
-			"Item Price",
-			{
-				"item_code": item_code,
-				"price_list": SELLING_PRICE_LIST,
-				"uom": ("is", "not set"),
-			},
-			"price_list_rate",
-		)
 	return flt(rate)
 
 
@@ -192,7 +251,6 @@ def get_item_selling_vat_rate(item_code):
 
 	template = (
 		frappe.db.get_value("Item", item_code, "custom_tax")
-		or frappe.db.get_value("Item", item_code, "custom_purchase_tax_template")
 		or get_default_vat_template()
 	)
 	return flt(get_item_tax_rate(template)) if template else 0
@@ -330,7 +388,7 @@ def _set_exclusive_selling_rate(row):
 
 def _set_margin_values(row):
 	new_selling_rate = flt(row.get("custom_new_sell_rate") or row.get("custom_cur_sell_rate"))
-	purchase_rate = flt(row.get("rate") or row.get("net_rate"))
+	purchase_rate = flt(row.get("net_rate") if row.get("net_rate") is not None else row.get("rate"))
 	margin = new_selling_rate - purchase_rate if new_selling_rate else 0
 	margin_pct = (margin / new_selling_rate * 100) if new_selling_rate else 0
 
