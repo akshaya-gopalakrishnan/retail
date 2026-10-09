@@ -12,7 +12,7 @@ from frappe.utils import cint
 DEFAULT_SCALE_PREFIX = "99"
 DEFAULT_SCALE_FORMAT = "Prefix 99 - 2-5-5"
 LEGACY_SCALE_BARCODE_SCRIPT = "generate unique scale barcode"
-VISIBLE_SCALE_TYPE_OPTIONS = "Price\nWeight\nQuantity\nWeight+UnitPrice"
+VISIBLE_SCALE_TYPE_OPTIONS = "\nPrice\nWeight\nQuantity\nWeight+UPrice\nWeight+TotPrice"
 BARCODE_GENERATION_MAX_ATTEMPTS = 200
 
 
@@ -57,14 +57,17 @@ def validate_scale_item(doc, method=None):
 		doc.is_scale_item = 0
 		doc.scale_enabled = 0
 		doc.custom_scale_barcode_type = None
+		doc.scale_barcode_type = None
 		return
 
 	barcode_type = doc.get("custom_scale_barcode_type") or doc.get("scale_barcode_type") or "WEIGHT"
 	doc.scale_barcode_type = normalize_barcode_type(barcode_type)
-	doc.custom_scale_barcode_type = display_barcode_type(doc.scale_barcode_type)
+	doc.custom_scale_barcode_type = display_barcode_type(barcode_type)
 
 	if doc.scale_barcode_type not in ("WEIGHT", "PRICE", "QUANTITY"):
-		frappe.throw(_("Scale Barcode Type must be Price, Weight, Quantity, or Weight+UnitPrice."))
+		frappe.throw(_("Scale Barcode Type must be Price, Weight, Quantity, Weight+UPrice or Weight+TotPrice."))
+	doc.is_scale_item = 1
+	doc.scale_enabled = 1
 
 
 def validate_unique_enabled_plu(doc):
@@ -106,13 +109,18 @@ def clean_digits(value, label):
 
 def normalize_barcode_type(value):
 	value = (value or "").strip().upper().replace(" ", "_")
-	if value in ("WEIGHT+UNIT_PRICE", "WEIGHT+UNITPRICE"):
+	if value in ("WEIGHT+UNIT_PRICE", "WEIGHT+UNITPRICE", "WEIGHT+UPRICE", "WEIGHT+TOTPRICE"):
 		return "WEIGHT"
 	return value
 
 
 def display_barcode_type(value):
-	return {"PRICE": "Price", "WEIGHT": "Weight", "QUANTITY": "Quantity"}.get(value, value)
+	value = (value or "").strip().upper().replace(" ", "_")
+	return {
+		"PRICE": "Price", "WEIGHT": "Weight", "QUANTITY": "Quantity",
+		"WEIGHT+UNIT_PRICE": "Weight+UPrice", "WEIGHT+UNITPRICE": "Weight+UPrice",
+		"WEIGHT+UPRICE": "Weight+UPrice", "WEIGHT+TOTPRICE": "Weight+TotPrice",
+	}.get(value, value)
 
 
 def ensure_scale_item_setup():

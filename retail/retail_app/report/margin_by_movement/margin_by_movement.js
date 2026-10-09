@@ -1,4 +1,5 @@
 frappe.query_reports["Margin By Movement"] = {
+	formatter: (...args) => window.retail_profitability_formatter(...args),
 	filters: [
 		{ fieldname: "company", label: __("Company"), fieldtype: "Link", options: "Company", default: frappe.defaults.get_user_default("Company") },
 		{ fieldname: "from_date", label: __("From Date"), fieldtype: "Date", default: frappe.datetime.add_months(frappe.datetime.get_today(), -1), reqd: 1 },

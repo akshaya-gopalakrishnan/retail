@@ -8,7 +8,7 @@ from frappe.utils import flt, getdate
 
 
 LEVEL_LABELS = ("Department", "Sub Department", "Category", "Sub Category", "Family")
-AMOUNT_FIELDS = ("quantity", "amount", "discount", "tax", "net_total")
+AMOUNT_FIELDS = ("quantity", "gross_sales", "discount", "sales_returns", "net_sales", "vat", "cost_amount")
 ROOT_GROUPS = {"", None, "All Item Groups"}
 
 
@@ -17,8 +17,15 @@ def execute(filters=None):
 	rows = get_sales_rows(filters)
 	group_map = get_item_group_map()
 	data = build_report_data(rows, group_map, filters)
-	columns = get_columns(filters, data)
-	return columns, data
+	from retail.retail_app.report.profitability import profitability_columns, profit_values, profitability_total
+	for row in data:
+		row.gross_profit, row.profit_percent = profit_values(row.net_sales, row.cost_amount)
+		if row.gross_sales == 0 and row.sales_returns:
+			row.profit_percent = None
+	columns = profitability_columns([c for c in get_columns(filters, data) if c["fieldname"] not in ("amount", "tax", "net_total")])
+	if rows:
+		data.append(profitability_total(rows, columns[0]["fieldname"]))
+	return columns, data, None, None, None, True
 
 
 def get_filters(filters=None):
@@ -31,49 +38,23 @@ def get_filters(filters=None):
 
 
 def get_sales_rows(filters):
-	queries = []
-	values = {}
-	if filters.sales_source in ("Both", "POS Invoice"):
-		pos_conditions, pos_values = get_conditions(filters, "pi", "pii", include_branch=True)
-		values.update(pos_values)
-		queries.append(get_sales_query("POS Invoice", "tabPOS Invoice", "tabPOS Invoice Item", pos_conditions))
-	if filters.sales_source in ("Both", "Sales Invoice"):
-		sales_conditions, sales_values = get_conditions(filters, "si", "sii", include_branch=False)
-		values.update(sales_values)
-		queries.append(get_sales_query("Sales Invoice", "tabSales Invoice", "tabSales Invoice Item", sales_conditions))
-
-	if not queries:
-		return []
-
-	return frappe.db.sql(
-		" union all ".join(queries),
-		values,
-		as_dict=True,
-	)
-
-
-def get_sales_query(source, parent_table, item_table, conditions):
-	invoice_alias = "pi" if source == "POS Invoice" else "si"
-	item_alias = "pii" if source == "POS Invoice" else "sii"
-	return f"""
-		select
-			{frappe.db.escape(source)} as sales_source,
-			{item_alias}.item_code,
-			{item_alias}.item_name,
-			coalesce({item_alias}.item_group, item.item_group) as item_group,
-			count(distinct {invoice_alias}.name) as invoice_count,
-			sum(case when {invoice_alias}.is_return = 1 then -abs(coalesce({item_alias}.stock_qty, {item_alias}.qty, 0)) else abs(coalesce({item_alias}.stock_qty, {item_alias}.qty, 0)) end) as quantity,
-			sum(case when {invoice_alias}.is_return = 1 then -abs(coalesce({item_alias}.base_net_amount, {item_alias}.net_amount, 0)) else abs(coalesce({item_alias}.base_net_amount, {item_alias}.net_amount, 0)) end) as amount,
-			sum(case when {invoice_alias}.is_return = 1 then -abs(coalesce({item_alias}.discount_amount, 0) + coalesce({item_alias}.distributed_discount_amount, 0)) else abs(coalesce({item_alias}.discount_amount, 0) + coalesce({item_alias}.distributed_discount_amount, 0)) end) as discount,
-			sum(case when {invoice_alias}.is_return = 1 then -abs(coalesce({item_alias}.tax_amount, 0)) else abs(coalesce({item_alias}.tax_amount, 0)) end) as tax,
-			sum(case when {invoice_alias}.is_return = 1 then -abs(coalesce({item_alias}.base_net_amount, {item_alias}.net_amount, 0) + coalesce({item_alias}.tax_amount, 0)) else abs(coalesce({item_alias}.base_net_amount, {item_alias}.net_amount, 0) + coalesce({item_alias}.tax_amount, 0)) end) as net_total
-		from `{item_table}` {item_alias}
-		inner join `{parent_table}` {invoice_alias} on {invoice_alias}.name = {item_alias}.parent
-		left join `tabItem` item on item.name = {item_alias}.item_code
-		where {conditions}
-		group by {item_alias}.item_code, {item_alias}.item_name, coalesce({item_alias}.item_group, item.item_group)
-	"""
-
+    from retail.retail_app.report.profitability import profitability_rows
+    rows = []
+    sources = ("Sales Invoice", "POS Invoice") if filters.sales_source == "Both" else (filters.sales_source,)
+    narrowed = dict(filters)
+    narrowed.pop("item_group", None)
+    descendants = get_descendant_item_groups(filters.item_group) if filters.get("item_group") else None
+    for source in sources:
+        for row in profitability_rows(narrowed, source):
+            # A consolidated invoice and its original bills are the same revenue.
+            if filters.sales_source == "Both" and source == "Sales Invoice" and frappe.db.get_value("Sales Invoice", row.invoice_no, "is_consolidated"):
+                continue
+            if descendants and row.item_group not in descendants:
+                continue
+            row.quantity = row.qty
+            row.invoice_count = 1
+            rows.append(row)
+    return rows
 
 def get_conditions(filters, invoice_alias, item_alias, include_branch=False):
 	conditions = [f"{invoice_alias}.docstatus = 1"]
@@ -202,7 +183,7 @@ def build_tree_data(rows, group_map, filters):
 			out.indent = len(path)
 			out.invoice_count = row.invoice_count
 			for field in AMOUNT_FIELDS:
-				out[field] = flt(row.get(field))
+				out[field] = row.get(field)
 			data.append(out)
 
 	return data
@@ -233,9 +214,10 @@ def set_path_fields(out, path):
 
 
 def add_amounts(target, source):
+	target.source_status = "; ".join(sorted(set(filter(None, [target.get("source_status"), source.get("source_status")]))))
 	target.invoice_count = flt(target.get("invoice_count")) + flt(source.get("invoice_count"))
 	for field in AMOUNT_FIELDS:
-		target[field] = flt(target.get(field)) + flt(source.get(field))
+		target[field] = None if target.get(field) is None or source.get(field) is None else flt(target.get(field)) + flt(source.get(field))
 
 
 def get_columns(filters, data):

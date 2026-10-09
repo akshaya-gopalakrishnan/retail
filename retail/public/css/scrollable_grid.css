@@ -1,0 +1,89 @@
+/* Scoped to explicitly enabled child tables. */
+.retail-scrollable-grid .form-grid-container {
+	overflow-x: auto !important;
+	overflow-y: hidden !important;
+	overscroll-behavior-x: contain;
+	max-width: 100%;
+}
+.retail-scrollable-grid .form-grid {
+	width: max(100%, var(--retail-grid-width));
+	min-width: var(--retail-grid-width) !important;
+	left: 0 !important;
+	position: relative !important;
+}
+/* Only the outer container owns table scrolling. Link popups are portalled
+   to body by scrollable_grid.js, so they must not create an inner scrollbar. */
+.retail-scrollable-grid .form-grid:not(:has(.grid-row-open)) {
+	overflow: clip !important;
+}
+.retail-scrollable-grid .form-grid:not(:has(.grid-row-open)) .grid-body,
+.retail-scrollable-grid .form-grid:not(:has(.grid-row-open)) .rows {
+	overflow: visible !important;
+	max-height: none !important;
+}
+.retail-scrollable-grid .grid-row > .data-row {
+	flex-wrap: nowrap;
+	margin-inline: 0;
+}
+.retail-scrollable-grid .grid-row > .data-row > .col {
+	flex: 0 0 var(--retail-column-width, 40px) !important;
+	width: var(--retail-column-width, 40px) !important;
+	max-width: var(--retail-column-width, 40px) !important;
+	min-width: 0;
+}
+.retail-scrollable-grid .grid-row > .data-row > .col:last-child:not([data-fieldname]) {
+	flex-grow: 1 !important;
+	max-width: none !important;
+}
+.retail-scrollable-grid .grid-row > .data-row > .row-index {
+	display: block !important;
+}
+@media (min-width: 768px) {
+	.retail-scrollable-grid .data-row > .row-check,
+	.retail-scrollable-grid .data-row > .row-index,
+	.retail-scrollable-grid .data-row > .retail-grid-pinned {
+		position: sticky;
+		z-index: 2;
+		background: var(--fg-color, white);
+	}
+	.retail-scrollable-grid .data-row > .row-check {
+		inset-inline-start: 0;
+	}
+	.retail-scrollable-grid .data-row > .row-index {
+		inset-inline-start: 40px;
+	}
+	.retail-scrollable-grid .data-row > .retail-grid-pinned {
+		inset-inline-start: 96px;
+		box-shadow: 2px 0 3px rgb(0 0 0 / 8%);
+	}
+	.retail-scrollable-grid .grid-heading-row .data-row > .col {
+		background: var(--subtle-fg, white);
+	}
+}
+.retail-grid-autocomplete.awesomplete {
+	position: fixed;
+	z-index: 1060;
+}
+.retail-grid-autocomplete.awesomplete > ul {
+	position: relative !important;
+	top: auto !important;
+	left: auto !important;
+	right: auto !important;
+	width: 100% !important;
+	min-width: 0 !important;
+	margin: 0 !important;
+	overflow-y: auto;
+}
+
+/* The native expanded editor needs the viewport width and unclipped overlays. */
+.retail-scrollable-grid .form-grid-container:has(.grid-row-open) {
+	overflow: visible !important;
+}
+.retail-scrollable-grid .form-grid:has(.grid-row-open) {
+	width: 100%;
+	min-width: 0 !important;
+}
+.retail-scrollable-grid .form-grid:has(.grid-row-open) .grid-heading-row,
+.retail-scrollable-grid .form-grid:has(.grid-row-open) .grid-row:not(.grid-row-open) {
+	display: none;
+}

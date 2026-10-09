@@ -1,0 +1,712 @@
+{
+  "Sales Return": [
+    "List",
+    "Sales Invoice",
+    {
+      "is_return": 1
+    }
+  ],
+  "POS Payment Mode Summary": [
+    "query-report",
+    "POS Payment Mode Summary"
+  ],
+  "Item Group Sales Analysis": [
+    "query-report",
+    "Item Group Sales Analysis"
+  ],
+  "Daily Sales Summary": [
+    "query-report",
+    "Daily Sales Summary"
+  ],
+  "Daily Transaction Log": [
+    "query-report",
+    "Daily Transaction Log"
+  ],
+  "Sales Payment Mode Summary": [
+    "query-report",
+    "Sales Payment Mode Summary"
+  ],
+  "Daily Profit Report": [
+    "query-report",
+    "Daily Profit Report"
+  ],
+  "Gross Profit": [
+    "query-report",
+    "Gross Profit"
+  ],
+  "Sales Tax Report": [
+    "query-report",
+    "Sales Tax Report"
+  ],
+  "Sales Day wise Tax Report": [
+    "query-report",
+    "Sales Day wise Tax Report"
+  ],
+  "Purchase Register": [
+    "query-report",
+    "Purchase Register"
+  ],
+  "Purchase Tax Report": [
+    "query-report",
+    "Purchase Tax Report"
+  ],
+  "Purchase Day wise Tax Report": [
+    "query-report",
+    "Purchase Day wise Tax Report"
+  ],
+  "Supplier Wise Returns": [
+    "query-report",
+    "Supplier Wise Returns"
+  ],
+  "Stock Balance": [
+    "query-report",
+    "Stock Balance"
+  ],
+  "Stock Ledger": [
+    "query-report",
+    "Stock Ledger"
+  ],
+  "Packing Stock Balance": [
+    "query-report",
+    "Packing Stock Balance"
+  ],
+  "Packing Stock Ledger": [
+    "query-report",
+    "Packing Stock Ledger"
+  ],
+  "Stock Movement Summary": [
+    "query-report",
+    "Stock Movement Summary"
+  ],
+  "Stock Adjustment History": [
+    "query-report",
+    "Stock Adjustment History"
+  ],
+  "Low Stock Reorder Report": [
+    "query-report",
+    "Low Stock Reorder Report"
+  ],
+  "Fast Moving Items": [
+    "query-report",
+    "Fast Moving Items"
+  ],
+  "Slow Moving Items": [
+    "query-report",
+    "Slow Moving Items"
+  ],
+  "Negative Stock Report": [
+    "query-report",
+    "Negative Stock Report"
+  ],
+  "Near Expiry Report": [
+    "query-report",
+    "Near Expiry Report"
+  ],
+  "Expiry Loss": [
+    "query-report",
+    "Expiry Loss"
+  ],
+  "General Ledger": [
+    "query-report",
+    "General Ledger"
+  ],
+  "Trial Balance": [
+    "query-report",
+    "Trial Balance"
+  ],
+  "Balance Sheet": [
+    "query-report",
+    "Balance Sheet"
+  ],
+  "Profit and Loss Statement": [
+    "query-report",
+    "Profit and Loss Statement"
+  ],
+  "Tax Report": [
+    "query-report",
+    "Tax Report"
+  ],
+  "Tax Payable Report Summary": [
+    "query-report",
+    "Tax Payable Report Summary"
+  ],
+  "Promotions Loyalty Program Link": [
+    "List",
+    "Loyalty Program"
+  ],
+  "Promotions Loyalty Program List Link": [
+    "List",
+    "Loyalty Program"
+  ],
+  "Promotions Loyalty Program Report Link": [
+    "List",
+    "Loyalty Program",
+    "Report"
+  ],
+  "Promotions Loyalty Point Entry Link": [
+    "List",
+    "Loyalty Point Entry"
+  ],
+  "Promotions Loyalty Point Entry Report Link": [
+    "List",
+    "Loyalty Point Entry",
+    "Report"
+  ],
+  "Promotions Promo Price Link": [
+    "List",
+    "Promo Price"
+  ],
+  "Promotions Buy X Get Y Promotion Link": [
+    "List",
+    "Buy X Get Y Promotion"
+  ],
+  "Promotions Gift Voucher Promotion Link": [
+    "List",
+    "Gift Voucher Promotion"
+  ],
+  "Promotions Gift Voucher Ledger Link": [
+    "List",
+    "Gift Voucher Ledger"
+  ],
+  "Promo Price": [
+    "List",
+    "Promo Price"
+  ],
+  "Buy X Get Y Promotion": [
+    "List",
+    "Buy X Get Y Promotion"
+  ],
+  "Gift Voucher Promotion": [
+    "List",
+    "Gift Voucher Promotion"
+  ],
+  "Gift Voucher Ledger": [
+    "List",
+    "Gift Voucher Ledger"
+  ],
+  "Items List": [
+    "List",
+    "Item"
+  ],
+  "Item Family List": [
+    "retail-item-family-l"
+  ],
+  "Item Groups": [
+    "List",
+    "Item Group"
+  ],
+  "Price Lists": [
+    "List",
+    "Item Price"
+  ],
+  "Brands": [
+    "List",
+    "Brand"
+  ],
+  "Customers": [
+    "List",
+    "Customer"
+  ],
+  "Quotation": [
+    "List",
+    "Quotation"
+  ],
+  "Quotations": [
+    "List",
+    "Quotation"
+  ],
+  "Sales Orders": [
+    "List",
+    "Sales Order"
+  ],
+  "Sales Invoices": [
+    "List",
+    "Sales Invoice"
+  ],
+  "Sales Returns": [
+    "List",
+    "Sales Invoice",
+    {
+      "is_return": 1
+    }
+  ],
+  "POS Invoices": [
+    "List",
+    "POS Invoice"
+  ],
+  "Trading Invoices": [
+    "List",
+    "Sales Invoice",
+    {
+      "is_pos": 0
+    }
+  ],
+  "All Sales Invoices": [
+    "List",
+    "Sales Invoice"
+  ],
+  "POS Profile": [
+    "List",
+    "POS Profile"
+  ],
+  "POS Profiles": [
+    "List",
+    "POS Profile"
+  ],
+  "POS Cashier Shifts": [
+    "List",
+    "POS Cashier Shift"
+  ],
+  "POS Counter Sessions": [
+    "List",
+    "POS Counter Session"
+  ],
+  "POS Opening Entry": [
+    "List",
+    "POS Opening Entry"
+  ],
+  "POS Opening Entries": [
+    "List",
+    "POS Opening Entry"
+  ],
+  "POS Closing Entry": [
+    "List",
+    "POS Closing Entry"
+  ],
+  "POS Closing Entries": [
+    "List",
+    "POS Closing Entry"
+  ],
+  "POS Branch Day Closing": [
+    "List",
+    "POS Branch Day Closing"
+  ],
+  "POS Branch Day Closings": [
+    "List",
+    "POS Branch Day Closing"
+  ],
+  "POS Sync Log": [
+    "List",
+    "POS Sync Log"
+  ],
+  "POS Sync Logs": [
+    "List",
+    "POS Sync Log"
+  ],
+  "Mode of Payment": [
+    "List",
+    "Mode of Payment"
+  ],
+  "POS Counters": [
+    "List",
+    "POS Branch Counter"
+  ],
+  "POS Payments": [
+    "List",
+    "Payment Entry"
+  ],
+  "POS Invoice Profit": [
+    "query-report",
+    "POS Invoice Profit"
+  ],
+  "POS Sales Summary": [
+    "query-report",
+    "POS Sales Summary"
+  ],
+  "POS Transaction Log": [
+    "query-report",
+    "POS Transaction Log"
+  ],
+  "POS Item-wise Sales": [
+    "query-report",
+    "POS Item-wise Sales"
+  ],
+  "POS Category/Item Group Sales": [
+    "query-report",
+    "POS Category Item Group Sales"
+  ],
+  "POS Category Item Group Sales": [
+    "query-report",
+    "POS Category Item Group Sales"
+  ],
+  "POS Hourly Sales": [
+    "query-report",
+    "POS Hourly Sales"
+  ],
+  "POS Return Report": [
+    "query-report",
+    "POS Return Report"
+  ],
+  "Cashier Wise Sales": [
+    "query-report",
+    "Cashier Wise Sales"
+  ],
+  "Counter Wise Sales": [
+    "query-report",
+    "Counter Wise Sales"
+  ],
+  "Shift Closing Variance": [
+    "query-report",
+    "Shift Closing Variance"
+  ],
+  "Payment Mode Summary": [
+    "query-report",
+    "POS Payment Mode Summary"
+  ],
+  "POS Discount Report": [
+    "query-report",
+    "POS Discount Report"
+  ],
+  "POS Price Override Report": [
+    "query-report",
+    "POS Price Override Report"
+  ],
+  "POS Daily Closing Summary": [
+    "query-report",
+    "POS Daily Closing Summary"
+  ],
+  "POS Cash Movement Report": [
+    "query-report",
+    "POS Cash Movement Report"
+  ],
+  "Counter Performance": [
+    "query-report",
+    "Counter Performance"
+  ],
+  "Delivery Notes": [
+    "List",
+    "Delivery Note"
+  ],
+  "Suppliers": [
+    "List",
+    "Supplier"
+  ],
+  "Material Request": [
+    "List",
+    "Material Request"
+  ],
+  "Material Requests": [
+    "List",
+    "Material Request"
+  ],
+  "Request for Quotation": [
+    "List",
+    "Request for Quotation"
+  ],
+  "Request for Quotations": [
+    "List",
+    "Request for Quotation"
+  ],
+  "Supplier Quotation": [
+    "List",
+    "Supplier Quotation"
+  ],
+  "Supplier Quotations": [
+    "List",
+    "Supplier Quotation"
+  ],
+  "Purchase Orders": [
+    "List",
+    "Purchase Order"
+  ],
+  "Purchase Receipts": [
+    "List",
+    "Purchase Receipt"
+  ],
+  "Purchase Invoice": [
+    "List",
+    "Purchase Invoice"
+  ],
+  "Purchase Invoices": [
+    "List",
+    "Purchase Invoice"
+  ],
+  "Purchase Bills": [
+    "List",
+    "Purchase Invoice"
+  ],
+  "Purchase Returns": [
+    "List",
+    "Purchase Receipt",
+    {
+      "is_return": 1
+    }
+  ],
+  "BOM": [
+    "List",
+    "BOM"
+  ],
+  "Production Plan": [
+    "List",
+    "Production Plan"
+  ],
+  "Work Orders": [
+    "List",
+    "Work Order"
+  ],
+  "Job Cards": [
+    "List",
+    "Job Card"
+  ],
+  "Stock Entries": [
+    "List",
+    "Stock Entry"
+  ],
+  "Quality Inspection": [
+    "List",
+    "Quality Inspection"
+  ],
+  "BOM Stock Report": [
+    "query-report",
+    "BOM Stock Report"
+  ],
+  "Work Order Stock Report": [
+    "query-report",
+    "Work Order Stock Report"
+  ],
+  "Open Work Orders": [
+    "query-report",
+    "Open Work Orders"
+  ],
+  "Work Orders in Progress": [
+    "query-report",
+    "Work Orders in Progress"
+  ],
+  "Completed Work Orders": [
+    "query-report",
+    "Completed Work Orders"
+  ],
+  "Work Order Summary": [
+    "query-report",
+    "Work Order Summary"
+  ],
+  "Job Card Summary": [
+    "query-report",
+    "Job Card Summary"
+  ],
+  "Production Analytics": [
+    "query-report",
+    "Production Analytics"
+  ],
+  "Operations": [
+    "List",
+    "Operation"
+  ],
+  "Workstations": [
+    "List",
+    "Workstation"
+  ],
+  "Routing": [
+    "List",
+    "Routing"
+  ],
+  "BOM Creator": [
+    "List",
+    "BOM Creator"
+  ],
+  "Manufacturing Settings": [
+    "Form",
+    "Manufacturing Settings",
+    "Manufacturing Settings"
+  ],
+  "Warehouses": [
+    "List",
+    "Warehouse"
+  ],
+  "Stock Adjustments": [
+    "List",
+    "Stock Entry"
+  ],
+  "Stock Take": [
+    "List",
+    "Stock Reconciliation"
+  ],
+  "Serials & Batches": [
+    "List",
+    "Serial and Batch Bundle"
+  ],
+  "Stock Status": [
+    "List",
+    "Bin"
+  ],
+  "Bank Accounts": [
+    "List",
+    "Bank Account"
+  ],
+  "Payments": [
+    "List",
+    "Payment Entry"
+  ],
+  "Taxes": [
+    "List",
+    "Sales Taxes and Charges Template"
+  ],
+  "Journal Entries": [
+    "List",
+    "Journal Entry"
+  ],
+  "Accounts Receivable": [
+    "query-report",
+    "Accounts Receivable"
+  ],
+  "Accounts Payable": [
+    "query-report",
+    "Accounts Payable"
+  ],
+  "Business Profile": [
+    "List",
+    "Company"
+  ],
+  "Staff & Users": [
+    "List",
+    "User"
+  ],
+  "User List": [
+    "List",
+    "User"
+  ],
+  "Employee List": [
+    "List",
+    "Employee"
+  ],
+  "Branding": [
+    "List",
+    "Letter Head"
+  ],
+  "System Rules": [
+    "List",
+    "Document Naming Rule"
+  ],
+  "Van Fleet": [
+    "List",
+    "Van Fleet"
+  ],
+  "Fleet": [
+    "List",
+    "Van Fleet"
+  ],
+  "Van Sales Fleet Link": [
+    "List",
+    "Van Fleet"
+  ],
+  "Van Driver": [
+    "List",
+    "Driver"
+  ],
+  "Driver": [
+    "List",
+    "Driver"
+  ],
+  "Van Sales Driver Link": [
+    "List",
+    "Driver"
+  ],
+  "Van Sessions": [
+    "List",
+    "Van Session"
+  ],
+  "Van Session": [
+    "List",
+    "Van Session"
+  ],
+  "Van Sales Sessions Link": [
+    "List",
+    "Van Session"
+  ],
+  "Stock Request": [
+    "van-stock-request"
+  ],
+  "Van Stock Request": [
+    "van-stock-request"
+  ],
+  "Van Stock Entries": [
+    "van-stock-entries"
+  ],
+  "Van Sales Stock Entries Link": [
+    "van-stock-entries"
+  ],
+  "Van Stock View": [
+    "van-stock-view"
+  ],
+  "Van Sales Stock View Link": [
+    "van-stock-view"
+  ],
+  "Van Sales Invoice": [
+    "retail-van-sales-invoice"
+  ],
+  "Van Sales Invoice Link": [
+    "retail-van-sales-invoice"
+  ],
+  "Van Payments": [
+    "van-payments"
+  ],
+  "Van Sales Payments Link": [
+    "van-payments"
+  ],
+  "Van Customers": [
+    "van-customers"
+  ],
+  "Van Sales Customers Link": [
+    "van-customers"
+  ],
+  "Van Items": [
+    "List",
+    "Item"
+  ],
+  "Van Sales Items Link": [
+    "List",
+    "Item"
+  ],
+  "Van Warehouses": [
+    "List",
+    "Warehouse"
+  ],
+  "Van Sales Warehouses Link": [
+    "List",
+    "Warehouse"
+  ],
+  "Van Daily Sales Summary": [
+    "query-report",
+    "Van Daily Sales Summary"
+  ],
+  "Van Daily Stock Summary": [
+    "query-report",
+    "Van Daily Stock Summary"
+  ],
+  "Van Detailed Sales Summary": [
+    "query-report",
+    "Van Detailed Sales Summary"
+  ],
+  "Van Profit Report": [
+    "query-report",
+    "Van Profit Report"
+  ],
+  "Van Wastage Report": [
+    "query-report",
+    "Van Wastage Report"
+  ],
+  "Van Outstanding Collection Summary": [
+    "query-report",
+    "Van Outstanding Collection Summary"
+  ],
+  "Daily Stock Summary": [
+    "query-report",
+    "Van Daily Stock Summary"
+  ],
+  "Detailed Sales Summary": [
+    "query-report",
+    "Van Detailed Sales Summary"
+  ],
+  "Profit Report": [
+    "query-report",
+    "Van Profit Report"
+  ],
+  "Wastage Report": [
+    "query-report",
+    "Van Wastage Report"
+  ],
+  "Outstanding / Collection Summary": [
+    "query-report",
+    "Van Outstanding Collection Summary"
+  ]
+}

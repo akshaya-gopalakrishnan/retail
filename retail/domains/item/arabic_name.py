@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
+import logging
+from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
 
 import frappe
 import requests
@@ -14,6 +18,53 @@ from frappe.utils import cint, flt
 
 ARABIC_ITEM_NAME_FIELD = "custom_arabic_item_name"
 GOOGLE_TRANSLATE_URL = "https://translate.googleapis.com/translate_a/single"
+GOOGLE_COOLDOWN_KEY = "retail:google-translation:cooldown"
+
+
+def _log_translation_failure():
+	# Keep optional translation failures out of the request's database writes.
+	try:
+		frappe.log_error(title="Arabic Item Name Translation Failed", defer_insert=True)
+	except Exception:
+		logging.getLogger(__name__).exception("Could not queue Arabic translation error log")
+
+
+def _retry_after_seconds(response):
+	value = response.headers.get("Retry-After", "")
+	try:
+		seconds = int(value)
+	except (ValueError, TypeError):
+		try:
+			seconds = (parsedate_to_datetime(value) - datetime.now(timezone.utc)).total_seconds()
+		except (ValueError, TypeError, OverflowError):
+			seconds = 60
+	return max(60, min(int(seconds), 86400))
+
+
+def fill_arabic_packing_names(rows):
+	"""Fill missing API names, preserving saved translations and caching by source."""
+	translations = {}
+	for row in rows:
+		if (row.get("arabic_packing_name") or "").strip():
+			continue
+		text = (row.get("packing_name") or "").strip()
+		if not text:
+			row["arabic_packing_name"] = ""
+			continue
+		if text not in translations:
+			settings = [frappe.conf.get(key) for key in (
+				"retail_translation_provider", "retail_translation_url",
+				"retail_translation_source_language", "retail_translation_target_language",
+			)]
+			digest = hashlib.sha256(json.dumps([text, settings]).encode()).hexdigest()
+			key = f"retail:arabic-packing:{digest}"
+			translated = frappe.cache.get_value(key)
+			if translated is None:
+				result = translate_item_name_to_arabic(text)
+				translated = result.get("translated_text") or ""
+				frappe.cache.set_value(key, translated, expires_in_sec=86400 if translated else 60)
+			translations[text] = translated
+		row["arabic_packing_name"] = translations[text]
 
 
 def ensure_item_arabic_name_field():
@@ -70,7 +121,7 @@ def translate_item_name_to_arabic(text: str | None = None):
 		response.raise_for_status()
 		data = response.json()
 	except Exception:
-		frappe.log_error(title="Arabic Item Name Translation Failed")
+		_log_translation_failure()
 		return {"translated_text": "", "configured": True, "error": True}
 
 	translated_text = _extract_translated_text(data)
@@ -78,6 +129,8 @@ def translate_item_name_to_arabic(text: str | None = None):
 
 
 def _translate_with_google(text, timeout):
+	if frappe.cache.get_value(GOOGLE_COOLDOWN_KEY):
+		return {"translated_text": "", "configured": True, "error": True}
 	params = {
 		"client": "gtx",
 		"sl": frappe.conf.get("retail_translation_source_language") or "en",
@@ -87,10 +140,12 @@ def _translate_with_google(text, timeout):
 	}
 	try:
 		response = requests.get(GOOGLE_TRANSLATE_URL, params=params, timeout=timeout)
+		if response.status_code == 429:
+			frappe.cache.set_value(GOOGLE_COOLDOWN_KEY, True, expires_in_sec=_retry_after_seconds(response))
 		response.raise_for_status()
 		data = response.json()
 	except Exception:
-		frappe.log_error(title="Arabic Item Name Translation Failed")
+		_log_translation_failure()
 		return {"translated_text": "", "configured": True, "error": True}
 
 	return {"translated_text": _extract_google_translation(data), "configured": True}

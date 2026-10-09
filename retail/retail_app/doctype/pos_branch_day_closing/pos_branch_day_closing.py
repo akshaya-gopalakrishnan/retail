@@ -117,13 +117,13 @@ class POSBranchDayClosing(Document):
 
 
 def _get_cashier_shifts(branch, business_date):
-	return frappe.get_all(
+	return frappe.db.get_values(
 		"POS Cashier Shift",
 		filters={
 			"branch": branch,
 			"opening_time": ["between", [f"{getdate(business_date)} 00:00:00", f"{getdate(business_date)} 23:59:59"]],
 		},
-		fields=[
+		fieldname=[
 			"name",
 			"cashier_employee",
 			"cashier_name",
@@ -137,6 +137,8 @@ def _get_cashier_shifts(branch, business_date):
 			"closing_amount",
 			"variance",
 		],
+		as_dict=True,
+		for_update=True,
 		order_by="opening_time asc",
 	)
 
@@ -213,14 +215,16 @@ def _get_counter_summary(branch, cashier_shifts):
 
 @frappe.whitelist()
 def make_day_closing(branch, business_date):
-	existing = frappe.get_all(
+	existing = frappe.db.get_values(
 		"POS Branch Day Closing",
 		filters={"branch": branch, "business_date": business_date, "docstatus": ["!=", 2]},
-		fields=["name", "docstatus"],
+		fieldname=["name", "docstatus"],
 		order_by="docstatus desc, creation asc",
-		limit_page_length=1,
+		limit=1,
+		as_dict=True,
+		for_update=True,
 	)
-	doc = frappe.get_doc("POS Branch Day Closing", existing[0].name) if existing else frappe.new_doc("POS Branch Day Closing")
+	doc = frappe.get_doc("POS Branch Day Closing", existing[0].name, for_update=True) if existing else frappe.new_doc("POS Branch Day Closing")
 	if doc.docstatus == 1:
 		return doc.as_dict()
 
@@ -237,11 +241,9 @@ def make_day_closing(branch, business_date):
 
 @frappe.whitelist()
 def submit_day_closing(branch, business_date):
-	doc = make_day_closing(branch, business_date)
-	closing = frappe.get_doc("POS Branch Day Closing", doc.name)
-	if closing.docstatus == 0:
-		closing.submit()
-	return closing.as_dict()
+	from retail.pos_day_corrections import close_branch_day
+
+	return close_branch_day(branch, business_date)
 
 
 @frappe.whitelist()

@@ -217,7 +217,12 @@ def ensure_default_print_formats():
 	if not frappe.db.table_exists("Print Format") or not frappe.db.table_exists("Property Setter"):
 		return
 
+	from retail.editable_print_formats import SOURCES, ensure_editable_print_formats
+
+	ensure_editable_print_formats()
 	for doctype, print_format in DEFAULT_PRINT_FORMATS.items():
+		if doctype in SOURCES:
+			continue
 		if not frappe.db.exists("Print Format", print_format):
 			continue
 

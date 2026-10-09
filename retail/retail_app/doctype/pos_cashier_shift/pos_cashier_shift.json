@@ -33,7 +33,8 @@
   "reopened_by",
   "reopen_reason",
   "reopen_count",
-  "notes"
+  "notes",
+  "external_shift_reference"
  ],
  "fields": [
   {"fieldname": "branch", "fieldtype": "Link", "in_list_view": 1, "in_standard_filter": 1, "label": "Branch", "options": "Branch", "reqd": 1},
@@ -61,7 +62,8 @@
   {"fieldname": "reopened_by", "fieldtype": "Link", "label": "Reopened By", "options": "User", "read_only": 1},
   {"fieldname": "reopen_reason", "fieldtype": "Small Text", "label": "Reopen Reason", "read_only": 1},
   {"default": "0", "fieldname": "reopen_count", "fieldtype": "Int", "label": "Reopen Count", "read_only": 1},
-  {"fieldname": "notes", "fieldtype": "Small Text", "label": "Notes"}
+  {"fieldname": "notes", "fieldtype": "Small Text", "label": "Notes"},
+  {"fieldname": "external_shift_reference", "fieldtype": "Data", "label": "External Shift Reference", "unique": 1, "search_index": 1, "read_only": 1, "no_copy": 1, "in_standard_filter": 1}
  ],
  "links": [],
  "modified": "2026-06-25 00:00:00.000000",

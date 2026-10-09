@@ -5,6 +5,8 @@ from frappe.model.document import Document
 
 class POSCashierShift(Document):
 	def validate(self):
+		from retail.pos_external_refs import validate_identity
+		validate_identity(self, "external_shift_reference")
 		if not self.branch:
 			frappe.throw(_("Branch is required."))
 		if not self.cashier_employee:
@@ -27,3 +29,7 @@ class POSCashierShift(Document):
 			)
 			if duplicate:
 				frappe.throw(_("Cashier already has an open shift: {0}").format(duplicate))
+
+	def on_trash(self):
+		if self.get("external_shift_reference"):
+			frappe.throw("Offline POS identity mappings must be retained.")

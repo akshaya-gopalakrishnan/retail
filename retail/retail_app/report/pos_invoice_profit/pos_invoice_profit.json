@@ -1,0 +1,31 @@
+{
+ "add_total_row": 0,
+ "add_translate_data": 0,
+ "columns": [],
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Report",
+ "filters": [],
+ "idx": 0,
+ "is_standard": "Yes",
+ "json": "{}",
+ "letter_head": null,
+ "modified_by": "Administrator",
+ "module": "Retail-app",
+ "name": "POS Invoice Profit",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "ref_doctype": "POS Invoice",
+ "reference_report": null,
+ "report_name": "POS Invoice Profit",
+ "report_type": "Script Report",
+ "roles": [
+  {
+   "role": "Accounts Manager"
+  },
+  {
+   "role": "Accounts User"
+  }
+ ],
+ "timeout": 0
+}

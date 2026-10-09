@@ -1,0 +1,30 @@
+{
+ "content": null,
+ "creation": "2026-08-10 10:30:01.299114",
+ "docstatus": 0,
+ "doctype": "Page",
+ "icon": "fa fa-exchange",
+ "idx": 0,
+ "modified": "2026-10-09 12:31:45.771396",
+ "modified_by": "Administrator",
+ "module": "Retail-app",
+ "name": "van-stock-entries",
+ "owner": "Administrator",
+ "page_name": "van-stock-entries",
+ "roles": [
+  {
+   "role": "Van Sales User"
+  },
+  {
+   "role": "Van Sales Manager"
+  },
+  {
+   "role": "System Manager"
+  }
+ ],
+ "script": null,
+ "standard": "Yes",
+ "style": null,
+ "system_page": 0,
+ "title": "Van Stock Entries"
+}

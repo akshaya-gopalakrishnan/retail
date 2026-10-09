@@ -7,6 +7,7 @@ POS_REPORT_GROUPS = (
 	(
 		"Sales",
 		(
+			("POS Invoice Profit", "POS Invoice Profit"),
 			("POS Sales Summary", "POS Sales Summary"),
 			("POS Transaction Log", "POS Transaction Log"),
 			("POS Item-wise Sales", "POS Item-wise Sales"),
@@ -25,6 +26,7 @@ POS_REPORT_GROUPS = (
 			("Payment Mode Summary", "POS Payment Mode Summary"),
 			("POS Discount Report", "POS Discount Report"),
 			("POS Price Override Report", "POS Price Override Report"),
+			("External POS Rate Audit", "External POS Rate Audit"),
 		),
 	),
 	(

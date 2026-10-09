@@ -5,6 +5,8 @@ from frappe.model.document import Document
 
 class POSCounterSession(Document):
 	def validate(self):
+		from retail.pos_external_refs import validate_identity
+		validate_identity(self, "external_session_reference")
 		if not self.branch:
 			frappe.throw(_("Branch is required."))
 		if not self.counter:
@@ -35,3 +37,7 @@ class POSCounterSession(Document):
 			)
 			if duplicate_shift:
 				frappe.throw(_("Cashier shift already has an active counter session: {0}").format(duplicate_shift))
+
+	def on_trash(self):
+		if self.get("external_session_reference"):
+			frappe.throw("Offline POS identity mappings must be retained.")

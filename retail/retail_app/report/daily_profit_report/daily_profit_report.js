@@ -1,4 +1,5 @@
 frappe.query_reports["Daily Profit Report"] = {
+	formatter: (...args) => window.retail_profitability_formatter(...args),
 	filters: [
 		{
 			fieldname: "company",

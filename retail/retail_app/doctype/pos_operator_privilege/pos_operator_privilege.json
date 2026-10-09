@@ -1,0 +1,369 @@
+{
+ "doctype": "DocType",
+ "name": "POS Operator Privilege",
+ "module": "Retail-app",
+ "engine": "InnoDB",
+ "autoname": "field:profile_name",
+ "title_field": "profile_name",
+ "allow_rename": 0,
+ "track_changes": 1,
+ "field_order": [
+  "profile_name",
+  "disabled",
+  "privilege_categories_section",
+  "sales_section",
+  "void_items",
+  "change_qty",
+  "change_price",
+  "change_waiter",
+  "change_deliveryby",
+  "change_salesman",
+  "cancel_bill",
+  "refund_bill",
+  "hold_bill",
+  "recall_bill",
+  "invrecall_bill",
+  "items_exchange",
+  "adjustment",
+  "discounts_and_loyalty_section",
+  "discount_item",
+  "discount_bill",
+  "coupon",
+  "loyalty",
+  "redeem",
+  "customers_and_credit_section",
+  "delete_customer",
+  "credit_customer",
+  "credit_customer_limit",
+  "credit_customer_payment",
+  "credit_note_issue",
+  "credit_note_recall",
+  "send_email",
+  "cash_and_closing_section",
+  "open_drawer",
+  "cashin_cashout",
+  "clockin_clockout",
+  "shift_closing",
+  "day_closing",
+  "print_shift_closing",
+  "reports_and_enquiries_section",
+  "sales_report",
+  "invoice_lookup",
+  "cost_view",
+  "warranty_lookup",
+  "price_enquiry",
+  "product_info",
+  "reopen_day_closing",
+  "adjust_day_closing_payments",
+  "change_settled_bill_mop",
+  "change_bill_settlement"
+ ],
+ "fields": [
+  {
+   "fieldname": "profile_name",
+   "fieldtype": "Data",
+   "label": "Profile Name",
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "disabled",
+   "fieldtype": "Check",
+   "label": "Disabled",
+   "default": "0",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "privilege_categories_section",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "sales_section",
+   "fieldtype": "Column Break",
+   "label": "Sales"
+  },
+  {
+   "fieldname": "void_items",
+   "fieldtype": "Check",
+   "label": "Void Items",
+   "default": "0"
+  },
+  {
+   "fieldname": "change_qty",
+   "fieldtype": "Check",
+   "label": "Change Quantity",
+   "default": "0"
+  },
+  {
+   "fieldname": "change_price",
+   "fieldtype": "Check",
+   "label": "Change Price",
+   "default": "0"
+  },
+  {
+   "fieldname": "change_waiter",
+   "fieldtype": "Check",
+   "label": "Change Waiter",
+   "default": "0"
+  },
+  {
+   "fieldname": "change_deliveryby",
+   "fieldtype": "Check",
+   "label": "Change Delivery Person",
+   "default": "0"
+  },
+  {
+   "fieldname": "change_salesman",
+   "fieldtype": "Check",
+   "label": "Change Salesperson",
+   "default": "0"
+  },
+  {
+   "fieldname": "cancel_bill",
+   "fieldtype": "Check",
+   "label": "Cancel Bill",
+   "default": "0"
+  },
+  {
+   "fieldname": "refund_bill",
+   "fieldtype": "Check",
+   "label": "Refund Bill",
+   "default": "0"
+  },
+  {
+   "fieldname": "hold_bill",
+   "fieldtype": "Check",
+   "label": "Hold Bill",
+   "default": "0"
+  },
+  {
+   "fieldname": "recall_bill",
+   "fieldtype": "Check",
+   "label": "Recall Bill",
+   "default": "0"
+  },
+  {
+   "fieldname": "invrecall_bill",
+   "fieldtype": "Check",
+   "label": "Invoice Recall Bill",
+   "default": "0"
+  },
+  {
+   "fieldname": "items_exchange",
+   "fieldtype": "Check",
+   "label": "Exchange Items",
+   "default": "0"
+  },
+  {
+   "fieldname": "adjustment",
+   "fieldtype": "Check",
+   "label": "Adjustment",
+   "default": "0"
+  },
+  {
+   "fieldname": "discounts_and_loyalty_section",
+   "fieldtype": "Column Break",
+   "label": "Discounts and Loyalty"
+  },
+  {
+   "fieldname": "discount_item",
+   "fieldtype": "Check",
+   "label": "Item Discount",
+   "default": "0"
+  },
+  {
+   "fieldname": "discount_bill",
+   "fieldtype": "Check",
+   "label": "Bill Discount",
+   "default": "0"
+  },
+  {
+   "fieldname": "coupon",
+   "fieldtype": "Check",
+   "label": "Coupon",
+   "default": "0"
+  },
+  {
+   "fieldname": "loyalty",
+   "fieldtype": "Check",
+   "label": "Loyalty",
+   "default": "0"
+  },
+  {
+   "fieldname": "redeem",
+   "fieldtype": "Check",
+   "label": "Redeem",
+   "default": "0"
+  },
+  {
+   "fieldname": "customers_and_credit_section",
+   "fieldtype": "Column Break",
+   "label": "Customers and Credit"
+  },
+  {
+   "fieldname": "delete_customer",
+   "fieldtype": "Check",
+   "label": "Delete Customer",
+   "default": "0"
+  },
+  {
+   "fieldname": "credit_customer",
+   "fieldtype": "Check",
+   "label": "Credit Customer",
+   "default": "0"
+  },
+  {
+   "fieldname": "credit_customer_limit",
+   "fieldtype": "Check",
+   "label": "Customer Credit Limit",
+   "default": "0"
+  },
+  {
+   "fieldname": "credit_customer_payment",
+   "fieldtype": "Check",
+   "label": "Customer Credit Payment",
+   "default": "0"
+  },
+  {
+   "fieldname": "credit_note_issue",
+   "fieldtype": "Check",
+   "label": "Issue Credit Note",
+   "default": "0"
+  },
+  {
+   "fieldname": "credit_note_recall",
+   "fieldtype": "Check",
+   "label": "Recall Credit Note",
+   "default": "0"
+  },
+  {
+   "fieldname": "send_email",
+   "fieldtype": "Check",
+   "label": "Send Email",
+   "default": "0"
+  },
+  {
+   "fieldname": "cash_and_closing_section",
+   "fieldtype": "Column Break",
+   "label": "Cash and Closing"
+  },
+  {
+   "fieldname": "open_drawer",
+   "fieldtype": "Check",
+   "label": "Open Cash Drawer",
+   "default": "0"
+  },
+  {
+   "fieldname": "cashin_cashout",
+   "fieldtype": "Check",
+   "label": "Cash In / Cash Out",
+   "default": "0"
+  },
+  {
+   "fieldname": "clockin_clockout",
+   "fieldtype": "Check",
+   "label": "Clock In / Clock Out",
+   "default": "0"
+  },
+  {
+   "fieldname": "shift_closing",
+   "fieldtype": "Check",
+   "label": "Shift Closing",
+   "default": "0"
+  },
+  {
+   "fieldname": "day_closing",
+   "fieldtype": "Check",
+   "label": "Day Closing",
+   "default": "0"
+  },
+  {
+   "fieldname": "print_shift_closing",
+   "fieldtype": "Check",
+   "label": "Print Shift Closing",
+   "default": "0"
+  },
+  {
+   "fieldname": "reports_and_enquiries_section",
+   "fieldtype": "Column Break",
+   "label": "Reports and Enquiries"
+  },
+  {
+   "fieldname": "sales_report",
+   "fieldtype": "Check",
+   "label": "Sales Report",
+   "default": "0"
+  },
+  {
+   "fieldname": "invoice_lookup",
+   "fieldtype": "Check",
+   "label": "Invoice Lookup",
+   "default": "0"
+  },
+  {
+   "fieldname": "cost_view",
+   "fieldtype": "Check",
+   "label": "View Cost",
+   "default": "0"
+  },
+  {
+   "fieldname": "warranty_lookup",
+   "fieldtype": "Check",
+   "label": "Warranty Lookup",
+   "default": "0"
+  },
+  {
+   "fieldname": "price_enquiry",
+   "fieldtype": "Check",
+   "label": "Price Enquiry",
+   "default": "0"
+  },
+  {
+   "fieldname": "product_info",
+   "fieldtype": "Check",
+   "label": "Product Information",
+   "default": "0"
+  },
+  {
+   "fieldname": "reopen_day_closing",
+   "fieldtype": "Check",
+   "label": "Reopen Day Closing",
+   "default": "0"
+  },
+  {
+   "fieldname": "adjust_day_closing_payments",
+   "fieldtype": "Check",
+   "label": "Adjust Day Closing Counted Payments",
+   "default": "0"
+  },
+  {
+   "fieldname": "change_settled_bill_mop",
+   "fieldtype": "Check",
+   "label": "Change Settled Bill Payment Method",
+   "default": "0"
+  },
+  {
+   "fieldname": "change_bill_settlement",
+   "fieldtype": "Check",
+   "label": "Change Bill Settlement / Credit Collections",
+   "default": "0"
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "export": 1,
+   "print": 1,
+   "report": 1,
+   "share": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "modified": "2026-09-16 10:31:59.042709"
+}

@@ -1,4 +1,17 @@
 frappe.query_reports["Stock Movement Summary"] = {
+	onload: async function (report) {
+		const stock_entry_types = await frappe.db.get_list("Stock Entry Type", {
+			fields: ["name"],
+			limit: 0,
+			order_by: "name asc",
+		});
+		const filter = report.get_filter("movement_type");
+		filter.df.options = [...new Set([
+			...filter.df.options,
+			...stock_entry_types.map((type) => type.name),
+		])];
+		filter.refresh();
+	},
 	filters: [
 		{
 			fieldname: "company",
@@ -50,7 +63,8 @@ frappe.query_reports["Stock Movement Summary"] = {
 		{
 			fieldname: "movement_type",
 			label: __("Movement Type"),
-			fieldtype: "Data",
+			fieldtype: "Select",
+			options: ["", __("Sale"), __("Return"), __("Purchase"), __("Purchase Return"), __("Adjustment"), __("Stock Entry")],
 		},
 		{
 			fieldname: "voucher_type",

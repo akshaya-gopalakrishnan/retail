@@ -59,6 +59,10 @@ def ensure_foc_fields():
 					"in_list_view": 1,
 					"columns": 1,
 				},
+				{"fieldname": "custom_foc_key", "label": "FOC Relationship",
+				 "fieldtype": "Data", "hidden": 1, "read_only": 1},
+				{"fieldname": "custom_foc_parent", "label": "FOC Paid Row Relationship",
+				 "fieldtype": "Data", "hidden": 1, "read_only": 1},
 			]
 			for doctype in FOC_ITEM_DOCTYPES
 		}
@@ -142,147 +146,103 @@ def _set_paid_amounts(doc, row, paid_qty):
 		row.set("base_net_amount", flt(paid_qty * flt(row.get("base_net_rate")), row.precision("base_net_amount")))
 
 
+def prepare_foc_items(doc, method=None):
+	"""Materialize free goods as native child rows BEFORE core validation/posting.
+
+	The paid row retains its qty, price and promotion fields. A stable relationship
+	key survives saves and document mapping; each free row has its own voucher
+	detail ID, so core can value, account for, cancel and repost it normally.
+	"""
+	if doc.doctype not in FOC_PARENT_DOCTYPES or doc.docstatus == 2:
+		return
+	rows = list(doc.get("items") or [])
+	free_rows = {}
+	for row in rows:
+		if row.get("custom_foc_parent"):
+			key = row.custom_foc_parent
+			if key in free_rows:
+				frappe.throw("Duplicate FOC relationship; remove the duplicate free row.")
+			free_rows[key] = row
+
+	items = []
+	keys = set()
+	for paid in rows:
+		if paid.get("custom_foc_parent"):
+			continue
+		items.append(paid)
+		qty = flt(paid.get("custom_foc_qty"))
+		# Core return mapping reverses native quantities but copies custom fields.
+		if doc.get("is_return") and doc.get("return_against") and flt(paid.qty) < 0 and qty > 0:
+			qty = -qty
+			paid.custom_foc_qty = qty
+		if not qty:
+			continue
+		if not paid.meta.has_field("custom_foc_key"):
+			frappe.throw("Install the Retail FOC relationship fields before posting FOC quantities.")
+		if not flt(paid.qty) or qty * flt(paid.qty) < 0:
+			frappe.throw("FOC quantity must have the same sign as a non-zero paid quantity.")
+		key = paid.get("custom_foc_key") or frappe.generate_hash(length=20)
+		if key in keys:
+			frappe.throw("Duplicate paid FOC relationship; recreate the copied item row.")
+		keys.add(key)
+		paid.custom_foc_key = key
+		free = free_rows.get(key)
+		if free is None:
+			free = doc.append("items", {})
+			# Copy business context, not identifiers, quantities or financial state.
+			for field in ("item_code", "item_name", "description", "uom", "stock_uom",
+				"conversion_factor", "warehouse", "s_warehouse", "t_warehouse",
+				"expense_account", "income_account", "cost_center", "project",
+				"item_tax_template", "custom_tax", "brand", "item_group"):
+				if free.meta.has_field(field):
+					free.set(field, paid.get(field))
+		# Keep explicit serial/batch allocations on the free row separate from paid goods.
+		for field in ("item_code", "uom", "stock_uom", "conversion_factor", "warehouse",
+			"s_warehouse", "t_warehouse", "expense_account", "income_account", "cost_center", "project"):
+			if free.meta.has_field(field):
+				free.set(field, paid.get(field))
+		free.custom_foc_parent = key
+		free.custom_foc_key = None
+		free.custom_foc_qty = 0
+		free.qty = qty
+		if free.meta.has_field("received_qty"):
+			free.received_qty = qty
+		if doc.doctype != "Stock Entry":
+			for field in free.meta.fields:
+				if field.fieldtype == "Currency" or field.fieldname in (
+					"discount_percentage", "margin_rate_or_amount", "pricing_rules"):
+					free.set(field.fieldname, 0 if field.fieldtype != "Data" else None)
+			free.is_free_item = 1
+			free.allow_zero_valuation_rate = 1
+		else:
+			# Stock transfers/issues continue to obtain their incoming rate from core.
+			free.basic_rate = paid.get("basic_rate")
+			free.allow_zero_valuation_rate = paid.get("allow_zero_valuation_rate")
+		items.append(free)
+
+	doc.set("items", items)
+	for index, row in enumerate(doc.items, 1):
+		row.idx = index
+
+
+def validate_foc_items(doc, method=None):
+	"""Fail before posting if another customization changed the free goods contract."""
+	paid_rows = {row.get("custom_foc_key"): row for row in doc.get("items") or []
+		if row.get("custom_foc_key") and flt(row.get("custom_foc_qty"))}
+	for key, paid in paid_rows.items():
+		free_rows = [row for row in doc.items if row.get("custom_foc_parent") == key]
+		if len(free_rows) != 1 or flt(free_rows[0].qty) != flt(paid.custom_foc_qty):
+			frappe.throw("FOC quantity relationship changed during validation; posting stopped.")
+		if doc.doctype != "Stock Entry" and any(flt(free_rows[0].get(field))
+			for field in ("rate", "amount", "base_net_amount")):
+			frappe.throw("A pricing rule changed the free goods price; posting stopped.")
+
+
 def add_foc_stock_ledger_entries(doc, method=None):
-	"""Post FOC quantities as separate stock ledger rows after the normal movement."""
-	if doc.doctype not in FOC_STOCK_DOCTYPES or doc.docstatus != 1:
-		return
-
-	if not frappe.db.has_column("Stock Ledger Entry", "custom_is_foc_stock_entry"):
-		return
-
-	if doc.doctype in ("Purchase Invoice", "Sales Invoice", "POS Invoice") and not doc.get("update_stock"):
-		return
-
-	if not any(flt(row.get("custom_foc_qty")) for row in doc.get("items") or []):
-		return
-
-	if frappe.db.exists(
-		"Stock Ledger Entry",
-		{
-			"voucher_type": doc.doctype,
-			"voucher_no": doc.name,
-			"custom_is_foc_stock_entry": 1,
-			"is_cancelled": 0,
-		},
-	):
-		return
-
-	rows_by_name = {row.name: row for row in doc.get("items") or []}
-	normal_entries = frappe.get_all(
-		"Stock Ledger Entry",
-		filters={
-			"voucher_type": doc.doctype,
-			"voucher_no": doc.name,
-			"is_cancelled": 0,
-			"custom_is_foc_stock_entry": ["!=", 1],
-		},
-		fields=[
-			"item_code",
-			"warehouse",
-			"posting_date",
-			"posting_time",
-			"fiscal_year",
-			"voucher_type",
-			"voucher_no",
-			"voucher_detail_no",
-			"actual_qty",
-			"stock_uom",
-			"incoming_rate",
-			"outgoing_rate",
-			"recalculate_rate",
-			"company",
-			"project",
-			"serial_and_batch_bundle",
-			"dependant_sle_voucher_detail_no",
-		],
-		order_by="creation asc",
-	)
-
-	foc_entries = []
-	for entry in normal_entries:
-		row = rows_by_name.get(entry.voucher_detail_no)
-		if not row:
-			continue
-
-		if _is_rejected_stock_entry(doc, row, entry):
-			continue
-
-		foc_qty = flt(row.get("custom_foc_qty"))
-		if not foc_qty:
-			continue
-
-		conversion_factor = flt(row.get("conversion_factor") or 1)
-		foc_stock_qty = flt(foc_qty * conversion_factor, _get_stock_precision(row))
-		paid_stock_qty = flt(_get_paid_stock_qty(row), _get_stock_precision(row))
-
-		if not foc_stock_qty:
-			continue
-
-		# If a document path already posted paid+FOC in its normal SLE, do not double count it.
-		if paid_stock_qty and abs(flt(entry.actual_qty)) > abs(paid_stock_qty):
-			continue
-
-		actual_qty = abs(foc_stock_qty) if flt(entry.actual_qty) > 0 else -abs(foc_stock_qty)
-		foc_entry = frappe._dict(entry)
-		foc_entry.update(
-			{
-				"actual_qty": actual_qty,
-				"custom_is_foc_stock_entry": 1,
-				"serial_and_batch_bundle": None,
-				"dependant_sle_voucher_detail_no": entry.dependant_sle_voucher_detail_no,
-			}
-		)
-
-		_set_foc_rates(doc, foc_entry, entry)
-		foc_entries.append(foc_entry)
-
-	if foc_entries:
-		from erpnext.stock.stock_ledger import make_sl_entries
-
-		make_sl_entries(foc_entries)
+	"""Legacy entry point: independent stock posting is intentionally prohibited."""
+	frappe.throw("Late FOC stock posting is disabled. Submit a document with native FOC item rows.")
 
 
 @frappe.whitelist()
 def post_foc_stock_ledger_for_voucher(doctype, name):
-	doc = frappe.get_doc(doctype, name)
-	add_foc_stock_ledger_entries(doc)
-
-
-def _get_paid_stock_qty(row):
-	if row.doctype == "Stock Entry Detail":
-		return flt(row.get("transfer_qty")) or flt(row.get("qty")) * flt(row.get("conversion_factor") or 1)
-
-	return flt(row.get("qty")) * flt(row.get("conversion_factor") or 1)
-
-
-def _get_stock_precision(row):
-	if row.meta.has_field("stock_qty"):
-		return row.precision("stock_qty")
-	if row.meta.has_field("transfer_qty"):
-		return row.precision("transfer_qty")
-	return None
-
-
-def _is_rejected_stock_entry(doc, row, entry):
-	if doc.doctype not in ("Purchase Receipt", "Purchase Invoice"):
-		return False
-
-	rejected_warehouse = row.get("rejected_warehouse")
-	return rejected_warehouse and entry.warehouse == rejected_warehouse
-
-
-def _set_foc_rates(doc, foc_entry, normal_entry):
-	if flt(foc_entry.actual_qty) > 0:
-		foc_entry.outgoing_rate = 0
-		foc_entry.incoming_rate = _get_positive_foc_rate(doc, normal_entry)
-	else:
-		foc_entry.incoming_rate = 0
-		if normal_entry.get("outgoing_rate"):
-			foc_entry.outgoing_rate = normal_entry.outgoing_rate
-
-
-def _get_positive_foc_rate(doc, normal_entry):
-	if doc.doctype in ("Purchase Receipt", "Purchase Invoice") and not doc.get("is_return"):
-		return 0
-
-	return flt(normal_entry.get("incoming_rate"))
+	frappe.throw("Late FOC stock posting is disabled. Historical repair requires a separate approved procedure.")

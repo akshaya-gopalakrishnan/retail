@@ -1,0 +1,213 @@
+{
+ "doctype": "DocType",
+ "name": "Retail Selling Price History",
+ "module": "Retail-app",
+ "autoname": "hash",
+ "engine": "InnoDB",
+ "field_order": [
+  "company",
+  "item_code",
+  "uom",
+  "barcode",
+  "price_list",
+  "item_price",
+  "previous_revision",
+  "source_doctype",
+  "source_document",
+  "source_item_row",
+  "changed_by",
+  "reverted_by",
+  "old_rate",
+  "new_rate",
+  "vat_rate",
+  "old_vat_amount",
+  "new_vat_amount",
+  "old_gross_rate",
+  "new_gross_rate",
+  "old_exists",
+  "old_state",
+  "status",
+  "changed_on",
+  "reverted_on",
+  "reverted_reason"
+ ],
+ "fields": [
+  {
+   "fieldname": "company",
+   "label": "Company",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "item_code",
+   "label": "Item Code",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "uom",
+   "label": "Uom",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "barcode",
+   "label": "Barcode",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "price_list",
+   "label": "Price List",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "item_price",
+   "label": "Item Price",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "previous_revision",
+   "label": "Previous Revision",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "source_doctype",
+   "label": "Source Doctype",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "source_document",
+   "label": "Source Document",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "source_item_row",
+   "label": "Source Item Row",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "changed_by",
+   "label": "Changed By",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reverted_by",
+   "label": "Reverted By",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "old_rate",
+   "label": "Old Rate",
+   "fieldtype": "Float",
+   "read_only": 1
+  },
+  {
+   "fieldname": "new_rate",
+   "label": "New Rate",
+   "fieldtype": "Float",
+   "read_only": 1
+  },
+  {
+   "fieldname": "vat_rate",
+   "label": "Vat Rate",
+   "fieldtype": "Float",
+   "read_only": 1
+  },
+  {
+   "fieldname": "old_vat_amount",
+   "label": "Old Vat Amount",
+   "fieldtype": "Float",
+   "read_only": 1
+  },
+  {
+   "fieldname": "new_vat_amount",
+   "label": "New Vat Amount",
+   "fieldtype": "Float",
+   "read_only": 1
+  },
+  {
+   "fieldname": "old_gross_rate",
+   "label": "Old Gross Rate",
+   "fieldtype": "Float",
+   "read_only": 1
+  },
+  {
+   "fieldname": "new_gross_rate",
+   "label": "New Gross Rate",
+   "fieldtype": "Float",
+   "read_only": 1
+  },
+  {
+   "fieldname": "old_exists",
+   "label": "Old Exists",
+   "fieldtype": "Check",
+   "read_only": 1
+  },
+  {
+   "fieldname": "old_state",
+   "label": "Old State",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "status",
+   "label": "Status",
+   "fieldtype": "Select",
+   "read_only": 1,
+   "options": "Active\nReverted"
+  },
+  {
+   "fieldname": "changed_on",
+   "label": "Changed On",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reverted_on",
+   "label": "Reverted On",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reverted_reason",
+   "label": "Reverted Reason",
+   "fieldtype": "Small Text",
+   "read_only": 1
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1
+  },
+  {
+   "role": "Retail Price Manager",
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1
+  },
+  {
+   "role": "Purchase Manager",
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

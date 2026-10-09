@@ -13,13 +13,13 @@
   {"fieldname": "uom", "fieldtype": "Link", "in_list_view": 1, "columns": 1, "label": "UOM", "options": "UOM"},
   {"fieldname": "price_list", "fieldtype": "Link", "label": "Price List", "options": "Price List"},
   {"fieldname": "qty", "fieldtype": "Float", "label": "Qty", "in_list_view": 1, "columns": 1, "default": 0},
-  {"fieldname": "current_price", "fieldtype": "Currency", "in_list_view": 1, "columns": 1, "label": "Current Price Excl. VAT", "read_only": 1},
-    {"fieldname": "current_price_including_tax", "fieldtype": "Currency", "in_list_view": 1, "columns": 1, "label": "Current Price Incl. VAT", "read_only": 1},
+  {"fieldname": "current_price", "fieldtype": "Currency", "in_list_view": 1, "columns": 1, "label": "Cu.P Ex.VAT", "read_only": 1},
+    {"fieldname": "current_price_including_tax", "fieldtype": "Currency", "in_list_view": 1, "columns": 1, "label": "Cu.P In.VAT", "read_only": 1},
     {"fieldname": "vat_rate", "fieldtype": "Percent", "label": "VAT %", "read_only": 1},
-  {"fieldname": "promo_price", "fieldtype": "Currency", "in_list_view": 1, "columns": 1, "label": "Promo Price Excl. VAT"},
-  {"fieldname": "promo_price_including_tax", "fieldtype": "Currency", "in_list_view": 1, "columns": 1, "label": "Promo Price Incl. VAT"},
+  {"fieldname": "promo_price", "fieldtype": "Currency", "in_list_view": 1, "columns": 1, "label": "Pro.P Ex.VAT"},
+  {"fieldname": "promo_price_including_tax", "fieldtype": "Currency", "in_list_view": 1, "columns": 1, "label": "Pro.P In.VAT"},
   {"fieldname": "discount_percent", "fieldtype": "Percent", "in_list_view": 1, "columns": 1, "label": "Discount %"},
-  {"fieldname": "max_qty", "fieldtype": "Float", "in_list_view": 1, "columns": 1, "label": "Max Qty in One Sale"}
+  {"fieldname": "max_qty", "fieldtype": "Float", "in_list_view": 1, "columns": 1, "label": "Max.Qty in One Sale"}
  ],
  "istable": 1,
  "modified": "2026-08-21 00:00:00.000000",

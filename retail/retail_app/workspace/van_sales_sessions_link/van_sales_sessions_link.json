@@ -1,0 +1,45 @@
+{
+ "charts": [],
+ "content": "[{\"id\": \"hdr_van_sessions\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Van Sessions</span>\", \"col\": 12}}, {\"id\": \"sc_van_sessions\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Van Sessions\", \"col\": 4}}]",
+ "creation": "2026-08-10 12:20:48.200925",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "hide_custom": 0,
+ "icon": "recent",
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "Van Sales Sessions Link",
+ "links": [],
+ "modified": "2026-08-13 18:32:03.256787",
+ "modified_by": "Administrator",
+ "module": "Retail-app",
+ "name": "Van Sales Sessions Link",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "Van Sales",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [
+  {
+   "role": "Van Sales User"
+  },
+  {
+   "role": "Van Sales Manager"
+  },
+  {
+   "role": "System Manager"
+  }
+ ],
+ "sequence_id": 3.0,
+ "shortcuts": [
+  {
+   "doc_view": "List",
+   "label": "Van Sessions",
+   "link_to": "Van Session",
+   "type": "DocType"
+  }
+ ],
+ "title": "Van Sales Sessions Link"
+}

@@ -1,4 +1,5 @@
 frappe.query_reports["Item Group Sales Analysis"] = {
+	formatter: (...args) => window.retail_profitability_formatter(...args),
 	filters: [
 		{
 			fieldname: "from_date",

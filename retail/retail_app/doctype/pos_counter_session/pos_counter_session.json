@@ -26,7 +26,8 @@
   "opening_external_reference",
   "pause_external_reference",
   "resume_external_reference",
-  "closing_external_reference"
+  "closing_external_reference",
+  "external_session_reference"
  ],
  "fields": [
   {"fieldname": "cashier_shift", "fieldtype": "Link", "in_list_view": 1, "in_standard_filter": 1, "label": "Cashier Shift", "options": "POS Cashier Shift", "reqd": 1},
@@ -47,7 +48,8 @@
   {"fieldname": "opening_external_reference", "fieldtype": "Data", "label": "Opening External Reference", "read_only": 1},
   {"fieldname": "pause_external_reference", "fieldtype": "Data", "label": "Pause External Reference", "read_only": 1},
   {"fieldname": "resume_external_reference", "fieldtype": "Data", "label": "Resume External Reference", "read_only": 1},
-  {"fieldname": "closing_external_reference", "fieldtype": "Data", "label": "Closing External Reference", "read_only": 1}
+  {"fieldname": "closing_external_reference", "fieldtype": "Data", "label": "Closing External Reference", "read_only": 1},
+  {"fieldname": "external_session_reference", "fieldtype": "Data", "label": "External Session Reference", "unique": 1, "search_index": 1, "read_only": 1, "no_copy": 1, "in_standard_filter": 1}
  ],
  "links": [],
  "modified": "2026-06-25 00:00:00.000000",
