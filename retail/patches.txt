@@ -61,3 +61,4 @@ retail.patches.normalize_failed_pos_sale_logs
 
 retail.patches.setup_pos_settlements
 retail.patches.show_pos_settlement_types
+retail.patches.repair_recovered_pos_display

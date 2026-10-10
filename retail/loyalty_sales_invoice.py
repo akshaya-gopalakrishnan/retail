@@ -8,6 +8,11 @@ from retail import loyalty
 
 
 class RetailSalesInvoice(SalesInvoice):
+    def set_title_field(self):
+        super().set_title_field()
+        from retail.pos_transaction_display import correct_consolidated_title
+        correct_consolidated_title(self)
+
     def check_credit_limit(self):
         if self.flags.get("completed_pos_accounting"):
             from retail.pos_completed_sale import note_mismatch

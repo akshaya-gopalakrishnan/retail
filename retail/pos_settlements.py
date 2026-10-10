@@ -311,6 +311,8 @@ def resolve_transaction(transaction):
     transaction.status = status
     frappe.db.set_value(transaction.doctype, transaction.name, {"status": status,
         "resolved_at": now_datetime() if status == "Reconciled" else None})
+    from retail.pos_transaction_display import refresh_accepted_invoice_links
+    refresh_accepted_invoice_links(transaction)
     from retail.pos_transaction_display import payload_transaction_type
     display_type = payload_transaction_type(transaction.sync_type, payload)
     if transaction.pos_invoice:
