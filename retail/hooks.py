@@ -485,6 +485,7 @@ doc_events = {
 }
 
 after_migrate = [
+	"retail.build_asset_manifest.install",
 	"retail.patches.setup_pos_operator_privileges.execute",
 	"retail.pos_credit.ensure_payment_invoice_field",
 	"retail.branding.apply_default_branding",

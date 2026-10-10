@@ -55,3 +55,41 @@ class TestRecoveredPOSDisplay(unittest.TestCase):
             self.assertEqual(normal['retail_desk.bundle.css'], '/assets/retail/dist/css/retail_desk.bundle.A.css')
             self.assertEqual(rtl['rtl_retail_desk.bundle.css'], '/assets/retail/dist/css-rtl/retail_desk.bundle.C.css')
             self.assertNotIn('retail_desk.bundle.css', rtl)
+
+
+class TestDockerMountedAssets(unittest.TestCase):
+    def test_mounted_volume_gets_image_hashes_and_preserves_existing_assets(self):
+        from retail.build_asset_manifest import install, snapshot
+        with tempfile.TemporaryDirectory() as folder:
+            bench = Path(folder)
+            assets = bench / 'sites/assets'
+            assets.mkdir(parents=True)
+            for app in ('retail', 'hrms'):
+                public = bench / 'apps' / app / app / 'public'
+                public.mkdir(parents=True)
+                (assets / app).symlink_to(public, target_is_directory=True)
+            for subpath in ('css/retail_desk.bundle.NEW.css', 'js/retail_desk.bundle.NEW.js'):
+                path = assets / 'retail/dist' / subpath
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text('new image content')
+            repair(assets)
+            snapshot(bench)
+            (assets / 'assets.json').write_text(json.dumps({'old.bundle.js': '/assets/old.js'}))
+            (assets / 'assets-rtl.json').write_text('{}')
+            (assets / 'retail').unlink()
+            stale = assets / 'retail/dist/css/retail_desk.bundle.ZZZ.css'
+            stale.parent.mkdir(parents=True)
+            stale.write_text('old content')
+            self.assertTrue(install(bench))
+            self.assertTrue(install(bench))
+            data = json.loads((assets / 'assets.json').read_text())
+            self.assertEqual(data['retail_desk.bundle.css'], '/assets/retail/dist/css/retail_desk.bundle.NEW.css')
+            self.assertEqual(data['old.bundle.js'], '/assets/old.js')
+            self.assertTrue(stale.exists())
+            self.assertTrue((assets / 'retail/dist/js/retail_desk.bundle.NEW.js').is_file())
+
+    def test_ordinary_bench_is_unchanged(self):
+        from retail.build_asset_manifest import install
+        with tempfile.TemporaryDirectory() as folder:
+            self.assertFalse(install(Path(folder)))
+            self.assertFalse((Path(folder) / 'sites').exists())
