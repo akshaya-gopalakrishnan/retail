@@ -7,6 +7,11 @@ from pathlib import Path
 IMAGE_MANIFEST_DIRECTORY = ".retail-image-assets"
 
 
+def clean_rtl_manifest(data):
+    """RTL is merged last by Frappe; unprefixed keys can shadow LTR/JS."""
+    return {key: value for key, value in data.items() if key.startswith('rtl_')}
+
+
 def repair(assets):
     assets = Path(assets)
     for filename, folders, prefix in (
@@ -15,6 +20,8 @@ def repair(assets):
     ):
         manifest = assets / filename
         data = json.loads(manifest.read_text()) if manifest.exists() else {}
+        if prefix:
+            data = clean_rtl_manifest(data)
         for app in ('retail', 'hrms'):
             for folder in folders:
                 for path in sorted((assets / app / 'dist' / folder).glob('*')):
@@ -62,6 +69,8 @@ def install(bench=None):
         path = assets / filename
         data = json.loads(path.read_text()) if path.exists() else {}
         data.update(json.loads((source / filename).read_text()))
+        if filename == 'assets-rtl.json':
+            data = clean_rtl_manifest(data)
         path.write_text(json.dumps(data, indent=2) + '\n')
     # Snapshot mappings choose the build's hashes, rather than an arbitrary
     # old file that may still exist in the persistent volume.

@@ -25,6 +25,9 @@ migration, `retail.build_asset_manifest.install` merges those snapshots into the
 mounted manifests, ensures the app's public files are available, validates Desk
 CSS/JS, and clears Frappe's global asset cache. It uses the image's exact hashes,
 preserves older files, and does nothing on benches without an image snapshot.
+Both build and migration discard unprefixed keys from the RTL manifest. Frappe
+merges that manifest last, so stale LTR CSS or JS entries in it could otherwise
+override the valid normal manifest and hide the theme even after installation.
 
 Deploy the new tag through the existing shared demo/staging Compose project.
 Back up both sites before migration. Run `bench --site SITE migrate` on each
@@ -37,6 +40,10 @@ Verify the new image on backend, workers and scheduler; check both site
 migrations, HTTP asset requests, list display, and a representative new POS bill.
 The existing POS acceptance receipt remains immutable: Success means accepted;
 current posting state is in POS Accepted Transaction.
+Only Success/Duplicate sale receipts get recovered invoice links. The migration
+`retail.patches.repair_failed_pos_log_links` clears links previously copied to
+failed attempts sharing the same external reference. It preserves their status,
+error, canonical payload, response and operation key.
 
 If verifying a rollout, inspect the deployed manifest inside the backend:
 

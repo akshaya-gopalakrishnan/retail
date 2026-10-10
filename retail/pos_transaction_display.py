@@ -91,6 +91,7 @@ def refresh_accepted_invoice_links(transaction):
     values["erpnext_docname"] = transaction.pos_invoice
     for name in frappe.get_all("POS Sync Log", filters={
             "external_reference": transaction.external_pos_reference,
+            "status": ["in", ["Success", "Duplicate"]],
             "sync_type": ["in", ["POS Sale", "Sales Invoice", "Credit Sales Invoice", "POS Return", "Return"]]}, pluck="name"):
         frappe.db.set_value("POS Sync Log", name, values, update_modified=False)
 
@@ -120,7 +121,8 @@ def execute():
             "grand_total", "paid_amount", "write_off_amount"]):
         frappe.db.set_value("POS Invoice", row.name, "custom_pos_transaction_type",
             transaction_type(row), update_modified=False)
-    for row in frappe.get_all("POS Sync Log", fields=["name", "response_json", "sync_type", "operation_key"]):
+    for row in frappe.get_all("POS Sync Log", filters={"status": ["in", ["Success", "Duplicate"]]},
+            fields=["name", "response_json", "sync_type", "operation_key"]):
         result = frappe.parse_json(row.response_json or "{}")
         if not isinstance(result, dict):
             continue

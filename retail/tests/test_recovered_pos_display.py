@@ -15,8 +15,9 @@ class TestRecoveredPOSDisplay(unittest.TestCase):
         db.exists.return_value = True
         db.get_value.return_value = 'PSI-1'
         transaction = frappe._dict(pos_invoice='POS-1', external_pos_reference='SALE-1')
-        with patch.object(frappe, 'db', db), patch.object(frappe, 'get_all', return_value=['PSL-1']):
+        with patch.object(frappe, 'db', db), patch.object(frappe, 'get_all', return_value=['PSL-1']) as get_all:
             refresh_accepted_invoice_links(transaction)
+        self.assertEqual(get_all.call_args.kwargs['filters']['status'], ['in', ['Success', 'Duplicate']])
         values = db.set_value.call_args.args[2]
         self.assertEqual(values, dict(linked_invoice_type='POS Invoice', linked_invoice='POS-1',
             custom_accounting_invoice='PSI-1', erpnext_docname='POS-1'))
@@ -93,3 +94,47 @@ class TestDockerMountedAssets(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder:
             self.assertFalse(install(Path(folder)))
             self.assertFalse((Path(folder) / 'sites').exists())
+
+    def test_old_rtl_manifest_cannot_shadow_current_css_or_js(self):
+        from retail.build_asset_manifest import install, snapshot
+        with tempfile.TemporaryDirectory() as folder:
+            bench = Path(folder)
+            assets = bench / 'sites/assets'
+            assets.mkdir(parents=True)
+            for app in ('retail', 'hrms'):
+                public = bench / 'apps' / app / app / 'public'
+                public.mkdir(parents=True)
+                (assets / app).symlink_to(public, target_is_directory=True)
+            for subpath in ('css/retail_desk.bundle.NEW.css', 'js/retail_desk.bundle.NEW.js',
+                            'css-rtl/retail_desk.bundle.RTL.css'):
+                path = assets / 'retail/dist' / subpath
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text('asset')
+            (assets / 'assets-rtl.json').write_text(json.dumps({
+                'retail_desk.bundle.css': '/assets/missing-old.css',
+                'retail_desk.bundle.js': '/assets/missing-old.js',
+            }))
+            repair(assets)
+            snapshot(bench)
+            # The persisted volume can have the same bad keys independently.
+            (assets / 'assets-rtl.json').write_text(json.dumps({
+                'retail_desk.bundle.css': '/assets/missing-old.css',
+                'retail_desk.bundle.js': '/assets/missing-old.js',
+            }))
+            install(bench)
+            merged = json.loads((assets / 'assets.json').read_text())
+            merged.update(json.loads((assets / 'assets-rtl.json').read_text()))
+            for key in ('retail_desk.bundle.css', 'retail_desk.bundle.js', 'rtl_retail_desk.bundle.css'):
+                self.assertTrue((assets / merged[key].removeprefix('/assets/')).is_file())
+            self.assertEqual(merged['retail_desk.bundle.css'], '/assets/retail/dist/css/retail_desk.bundle.NEW.css')
+
+    def test_failed_link_migration_does_not_rewrite_response_or_status(self):
+        from retail.patches.repair_failed_pos_log_links import execute
+        db = Mock()
+        with patch.object(frappe, 'db', db), patch.object(frappe, 'get_all', return_value=['PSL-failed']) as get_all, \
+                patch('retail.patches.repair_recovered_pos_display.execute'):
+            execute()
+        self.assertEqual(get_all.call_args.kwargs['filters']['status'], 'Failed')
+        values = db.set_value.call_args.args[2]
+        self.assertEqual(set(values), {'linked_invoice_type', 'linked_invoice', 'custom_accounting_invoice', 'erpnext_docname'})
+        self.assertTrue(all(value is None for value in values.values()))
