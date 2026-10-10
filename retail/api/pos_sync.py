@@ -125,6 +125,10 @@ def _existing_invoice(external_reference):
 	if not external_reference:
 		frappe.throw(_("external_pos_reference is required."))
 	for doctype in ("POS Invoice", "Sales Invoice"):
+		# Retail removes this field from Sales Invoice; retain legacy lookup
+		# only on sites where its physical column still exists.
+		if doctype == "Sales Invoice" and not frappe.db.has_column(doctype, "external_pos_reference"):
+			continue
 		fields = ["name", "docstatus", "grand_total", "outstanding_amount"]
 		existing = frappe.db.get_value(
 			doctype,
