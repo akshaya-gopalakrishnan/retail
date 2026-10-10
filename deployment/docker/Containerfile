@@ -1,0 +1,18 @@
+ARG ERPNEXT_IMAGE=frappe/erpnext:v15
+FROM ${ERPNEXT_IMAGE}
+
+USER root
+
+COPY --chown=frappe:frappe apps/hrms /home/frappe/frappe-bench/apps/hrms
+COPY --chown=frappe:frappe apps/retail /home/frappe/frappe-bench/apps/retail
+
+USER frappe
+
+RUN cd /home/frappe/frappe-bench \
+	&& printf "frappe\nerpnext\nhrms\nretail\n" > sites/apps.txt \
+	&& ./env/bin/pip install --no-cache-dir -e apps/hrms -e apps/retail \
+	&& ./env/bin/python -c "import json; from pathlib import Path; p=Path('sites/apps.json'); data=json.loads(p.read_text()); data.update({'hrms': {'resolution': {'commit_hash': None, 'branch': 'version-15'}, 'required': [], 'idx': 3, 'version': '15.60.3'}, 'retail': {'resolution': {'commit_hash': None, 'branch': 'main'}, 'required': [], 'idx': 4, 'version': '0.0.1'}}); p.write_text(json.dumps(data, indent=4) + '\n')" \
+	&& ln -sfn /home/frappe/frappe-bench/apps/hrms/hrms/public assets/hrms \
+	&& ln -sfn /home/frappe/frappe-bench/apps/retail/retail/public assets/retail \
+	&& bench build --app hrms --app retail \
+	&& ./env/bin/python -m retail.build_asset_manifest

@@ -81,6 +81,26 @@ def invoice_links(result):
             if doctype == "POS Invoice" else name)}
 
 
+def refresh_accepted_invoice_links(transaction):
+    """Refresh recovered document links without rewriting immutable receipts."""
+    if not transaction.pos_invoice:
+        return
+    values = invoice_links({"doctype": "POS Invoice", "pos_invoice_name": transaction.pos_invoice})
+    if not values:
+        return
+    values["erpnext_docname"] = transaction.pos_invoice
+    for name in frappe.get_all("POS Sync Log", filters={
+            "external_reference": transaction.external_pos_reference,
+            "sync_type": ["in", ["POS Sale", "Sales Invoice", "Credit Sales Invoice", "POS Return", "Return"]]}, pluck="name"):
+        frappe.db.set_value("POS Sync Log", name, values, update_modified=False)
+
+
+def correct_consolidated_title(doc):
+    """Replace a literal series placeholder, preserving intentional titles."""
+    if doc.get("is_consolidated") and doc.get("title") == doc.get("naming_series") and "#" in (doc.get("title") or ""):
+        doc.title = doc.get("customer_name") or doc.get("customer") or doc.get("name")
+
+
 def execute():
     from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
     from retail.short_codes import install
