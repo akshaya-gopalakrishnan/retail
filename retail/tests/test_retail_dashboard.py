@@ -1,18 +1,16 @@
 import random
 
 import frappe
-from frappe import flt
-from frappe.tests.utils import FrappeTestCase
-from frappe.utils import getdate, nowdate
-
+from erpnext.accounts.doctype.pos_profile.test_pos_profile import make_pos_profile
 from erpnext.accounts.doctype.sales_invoice.sales_invoice import make_sales_return
 from erpnext.accounts.doctype.sales_invoice.test_sales_invoice import create_sales_invoice
 from erpnext.accounts.report.gross_profit.gross_profit import execute as execute_gross_profit
-from erpnext.accounts.doctype.pos_profile.test_pos_profile import make_pos_profile
 from erpnext.stock.doctype.delivery_note.delivery_note import make_sales_invoice
 from erpnext.stock.doctype.delivery_note.test_delivery_note import create_delivery_note
 from erpnext.stock.doctype.item.test_item import create_item
 from erpnext.stock.doctype.stock_entry.stock_entry_utils import make_stock_entry
+from frappe.tests.utils import FrappeTestCase
+from frappe.utils import flt, getdate, nowdate
 
 from retail.retail_app.retail_dashboard import get_today_profit
 
@@ -46,13 +44,15 @@ class TestRetailTodayProfit(FrappeTestCase):
 
 	def _gross_profit_report_for_today(self):
 		_, rows = execute_gross_profit(
-			frappe._dict({
-				"company": self.company,
-				"from_date": self.today,
-				"to_date": self.today,
-				"group_by": "Invoice",
-				"include_returned_invoices": 1,
-			})
+			frappe._dict(
+				{
+					"company": self.company,
+					"from_date": self.today,
+					"to_date": self.today,
+					"group_by": "Invoice",
+					"include_returned_invoices": 1,
+				}
+			)
 		)
 		return flt(rows[-1].gross_profit) if rows else 0.0
 
@@ -145,7 +145,13 @@ class TestRetailTodayProfit(FrappeTestCase):
 		report_after_sale = self._gross_profit_report_for_today()
 		card_after_sale = get_today_profit(company=self.company)
 
-		source_invoice = frappe.get_all("Sales Invoice", filters={"company": self.company, "posting_date": self.today}, order_by="creation desc", limit=1, pluck="name")[0]
+		source_invoice = frappe.get_all(
+			"Sales Invoice",
+			filters={"company": self.company, "posting_date": self.today},
+			order_by="creation desc",
+			limit=1,
+			pluck="name",
+		)[0]
 		r = make_sales_return(source_invoice)
 		r.insert()
 		r.submit()
@@ -153,6 +159,8 @@ class TestRetailTodayProfit(FrappeTestCase):
 		report_after_return = self._gross_profit_report_for_today()
 		card_after_return = get_today_profit(company=self.company)
 
-		self.assertEqual(flt(report_after_return - report_after_sale), flt(card_after_return - card_after_sale))
+		self.assertEqual(
+			flt(report_after_return - report_after_sale), flt(card_after_return - card_after_sale)
+		)
 		self.assertLess(card_after_return - card_after_sale, 0)
 		self.assertEqual(flt(card_after_return - card_after_sale), -25.0)
