@@ -443,7 +443,7 @@ All components, stock/accounting effects and the success receipt commit together
 
 `POST /api/method/retail.api.pos_sync.create_pos_invoice`
 
-Send the billed prices, VAT, discounts and totals unchanged. Item `discount_amount` is per unit; header `discount_amount` is the bill discount. `amount` is line value before bill discount, excluding VAT; `net_amount` is after all discounts, excluding VAT. ERP permanently accepts the completed sale and posts it when accounting is available. Do not create a second invoice or payment for it.
+Send the billed prices, VAT, discounts and totals unchanged. Item `discount_amount` is per unit and is preserved exactly in the POS invoice/report. Header `discount_amount` is the reported bill discount summary; it is not applied again as an additional ERP deduction. `amount` is the pre-discount line value in the same VAT basis as `rate` (`rate_includes_vat`); ERP maps it into VAT-exclusive amount fields. `net_amount` is after all discounts, excluding VAT. Explicit final net amounts, VAT and payable totals govern accounting; original values remain in the immutable payload. ERP permanently accepts the completed sale and posts it when accounting is available. Do not create a second invoice or payment for it.
 
 Keep only actual cash/card tenders in `payments`. Send the unpaid customer portion
 in `credit_sale_amount`, and credit-note allocations in `credit_note_redemptions`.
@@ -2657,3 +2657,31 @@ completed transactions remain accepted while accounting is resolved.
 `get_queue_dependencies` is advisory for completed bills: `can_sync` is true even
 when the original is absent, with `pending_internal_dependency: true`.
 Already accepted pending bills have `already_synced: true`.
+
+### Completed-sale discount repair
+
+Completed receipts retain POS item discounts unchanged. Bill discount is a summary;
+ERP does not distribute it again across items. Item VAT helpers use the reported
+line VAT. POS Discount Report reads immutable snapshots for older receipts too,
+shows the bill summary once, and includes a quantity-adjusted line discount total.
+Legacy VAT-exclusive `amount` values remain supported when distinct from the
+VAT-inclusive `rate * qty`.
+
+After deploying Retail and building assets, a saved receipt's display can be
+previewed and repaired without reposting accounting or stock:
+
+```bash
+bench --site <receiving-site> execute retail.pos_completed_sale.repair_discount_display --kwargs '{"invoice_name": "POS-19"}'
+bench --site <receiving-site> execute retail.pos_completed_sale.repair_discount_display --kwargs '{"invoice_name": "POS-19", "dry_run": 0}'
+```
+
+Unposted accepted transactions are retried by `retail.pos_settlements.recover`.
+Keep the original transaction references and payload; never create a replacement
+bill to work around a posting exception. Structural/account configuration failures
+remain pending with their recorded reason; business-policy discrepancies are audited.
+
+The general mapper uses the item discount key on every calculation, including explicit zero; an
+omitted discount defaults to zero rather than a price/VAT difference. Retail form
+VAT/discount recalculation also skips completed snapshots. The batch helper
+`retail.pos_completed_sale.repair_all_discount_displays` defaults to preview and
+is idempotent when applied with `dry_run=0`.

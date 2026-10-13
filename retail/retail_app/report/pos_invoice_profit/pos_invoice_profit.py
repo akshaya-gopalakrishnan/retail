@@ -1,6 +1,7 @@
 """Daily POS sales and posted gross profit, one row per original POS bill."""
 import frappe
 from frappe import _
+from frappe.utils import flt
 from retail.retail_app.report.pos_report_utils import get_filters
 
 
@@ -11,8 +12,16 @@ def execute(filters=None):
     filters = get_filters(filters)
     if not filters.get("company"):
         frappe.throw(_("Please select a Company."))
-    return report_result(profitability_rows(filters, "POS Invoice"), get_columns(),
+    result = report_result(profitability_rows(filters, "POS Invoice"), get_columns(),
         ["pos_invoice", "invoice_no", "posting_date", "customer_name", "sales_invoice", "transaction_type"])
+    columns, rows = result[:2]
+    position = next(i for i, column in enumerate(columns) if column["fieldname"] == "gross_sales")
+    columns.insert(position, {"label": _("Total Sales"), "fieldname": "total_sales",
+        "fieldtype": "Currency", "width": 145})
+    for row in rows:
+        row["total_sales"] = (None if row.get("net_sales") is None or row.get("vat") is None
+            else flt(row["net_sales"]) + flt(row["vat"]))
+    return result
 
 
 def get_columns():

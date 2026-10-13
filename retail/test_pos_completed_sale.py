@@ -39,6 +39,24 @@ class TestCompletedValidation(unittest.TestCase):
 	def reject(exception):
 		raise exception("Failure")
 
+	def test_report_uses_original_discounts_once(self):
+		from retail.retail_app.report.pos_report_utils import completed_discount_rows
+		payload = json.dumps({"discount_amount": 5, "items": [
+			{"discount_amount": 5, "rate": 26.25, "amount": 26.25, "qty": 1, "rate_includes_vat": 1, "vat_rate": 5},
+			{"discount_amount": 0, "rate": 2100, "amount": 2100, "qty": 1, "rate_includes_vat": 1, "vat_rate": 5}]})
+		rows = completed_discount_rows([frappe._dict(invoice_no="POS-19", completed_payload=payload,
+			item_index=i, discount_amount=-100, distributed_discount_amount=4.94) for i in (1, 2)])
+		self.assertEqual(len(rows), 1)
+		self.assertEqual(rows[0].discount_amount, 5)
+		self.assertEqual(rows[0].invoice_discount_amount, 5)
+		self.assertEqual(rows[0].distributed_discount_amount, 0)
+		self.assertEqual(rows[0].rate, 25)
+
+	def test_exclusive_amount_backward_compatibility(self):
+		from retail.pos_completed_sale import exclusive_line_amount
+		self.assertEqual(exclusive_line_amount({"rate": 26.25, "qty": 1, "amount": 25}, 1.05), 25)
+		self.assertEqual(exclusive_line_amount({"rate": 26.25, "qty": 1, "amount": 26.25}, 1.05), 25)
+
 
 def run_integration():
 	if frappe.local.site != "retail-test.localhost":
@@ -105,6 +123,52 @@ def run_integration():
 		assert any("line net amounts + VAT differ" in a.reason for a in audits), audits
 		assert any(a.item_code == base["items"][0]["item_code"] for a in audits), audits
 		results.append("inconsistent line sum preserves POS final bill and VAT with explicit adjustment audit")
+
+		# Exact terminal discount facts must survive insert, submit and merge.
+		for suffix, quantity, discount, rate in (("discount", 1, 5, 26.25),
+			("free", 1, 26.25, 26.25), ("quantity", 3, 5, 26.25), ("no-discount", 1, 0, 4), ("missing-discount", 1, 0, 4)):
+			net = round((rate - discount) * quantity / 1.05, 2)
+			vat = round((rate - discount) * quantity - net, 2)
+			gross = round((rate - discount) * quantity, 2)
+			payload, response, doc, audits = sale(suffix,
+				discount_amount=discount * quantity, grand_total=gross, vat_amount=vat,
+				items=[{**{key: value for key, value in base["items"][0].items() if key != "discount_amount"},
+					"qty": quantity, "rate": rate,
+					"rate_includes_vat": 1, "vat_rate": 5, "amount": rate * quantity,
+					**({"discount_amount": discount} if suffix != "missing-discount" else {}),
+					"net_amount": net, "vat_amount": vat}],
+				payments=[{**base["payments"][0], "amount": gross}] if gross else [])
+			doc.reload()
+			assert doc.items[0].discount_amount == discount, doc.items[0].as_dict()
+			assert doc.items[0].custom_vat_amount == vat
+			assert doc.items[0].amount == round(rate * quantity / 1.05, 2)
+			assert doc.items[0].distributed_discount_amount == 0
+			assert doc.discount_amount == discount * quantity
+			assert doc.grand_total == gross and doc.net_total == net
+			assert doc.consolidated_invoice
+			for _ in range(2):
+				doc.calculate_taxes_and_totals()
+				assert doc.items[0].discount_amount == discount
+				assert doc.items[0].custom_vat_amount == vat
+				assert doc.grand_total == gross and doc.net_total == net
+			from retail.retail_app.report.pos_report_utils import pos_discount_report
+			_, report = pos_discount_report(frappe._dict(from_date=doc.posting_date,
+				to_date=doc.posting_date, company=doc.company))
+			lines = [row for row in report if row.invoice_no == doc.name]
+			assert sum(row.invoice_discount_amount for row in lines) == discount * quantity
+			assert sum(row.line_discount_amount for row in lines) == discount * quantity
+			if suffix == "discount":
+				from retail.pos_completed_sale import repair_discount_display
+				frappe.db.set_value("POS Invoice Item", doc.items[0].name,
+					{"discount_amount": -1.25, "custom_vat_amount": 1.31})
+				assert repair_discount_display(doc.name)["items"]
+				repair_discount_display(doc.name, dry_run=False)
+				assert not repair_discount_display(doc.name)["items"]
+				doc.reload()
+				assert doc.items[0].discount_amount == 5 and doc.items[0].custom_vat_amount == vat
+			assert pos_sync.create_pos_invoice(payload)["duplicate"] is True
+			assert frappe.db.count("POS Invoice", {"external_pos_reference": payload["external_pos_reference"]}) == 1
+			results.append(f"{suffix}: exact discount/VAT saved, accounting posted, retry idempotent")
 
 		from retail.retail_app.doctype.external_pos_rate_audit.external_pos_rate_audit import ExternalPOSRateAudit
 		with patch.object(ExternalPOSRateAudit, "insert", side_effect=frappe.ValidationError("Audit storage unavailable")):

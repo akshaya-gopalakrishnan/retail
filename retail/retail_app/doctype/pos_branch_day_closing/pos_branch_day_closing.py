@@ -215,6 +215,7 @@ def _get_counter_summary(branch, cashier_shifts):
 
 @frappe.whitelist()
 def make_day_closing(branch, business_date):
+	business_date = getdate(business_date)
 	existing = frappe.db.get_values(
 		"POS Branch Day Closing",
 		filters={"branch": branch, "business_date": business_date, "docstatus": ["!=", 2]},

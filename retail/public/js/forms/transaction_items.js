@@ -120,7 +120,12 @@
 		});
 	});
 
+	function isCompletedPos(frm) {
+		return frm?.doc?.doctype === "POS Invoice" && !!frm.doc.custom_pos_completed_payload;
+	}
+
 	async function refreshRowVatAmounts(frm) {
+		if (isCompletedPos(frm)) return;
 		const grid = frm.fields_dict.items?.grid;
 		grid?.update_docfield_property?.("custom_vat_amount", "read_only", 1);
 		for (const row of frm.doc.items || []) {
@@ -227,6 +232,7 @@
 	}
 
 	async function syncVatRates(frm, cdt, cdn, source) {
+		if (isCompletedPos(frm)) return;
 		if (!isEditableDraft(frm)) return;
 
 		const row = locals[cdt]?.[cdn];
@@ -321,6 +327,7 @@
 	}
 
 	async function syncVatTaxRows(frm) {
+		if (isCompletedPos(frm)) return;
 		if (!canSyncVatTaxRows(frm) || frm.__retail_syncing_vat_tax_rows) return;
 
 		frm.__retail_syncing_vat_tax_rows = true;
@@ -376,6 +383,7 @@
 	}
 
 	async function runErpnextTotals(frm) {
+		if (isCompletedPos(frm)) return;
 		if (!frm?.doc || frm.__retail_running_erpnext_totals) return;
 
 		frm.__retail_running_erpnext_totals = true;

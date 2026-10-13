@@ -86,7 +86,8 @@ def prepare(doc, method=None):
 	doc.ignore_pricing_rule = 1
 	doc.taxes_and_charges = None
 	doc.additional_discount_percentage = 0
-	doc.discount_amount = _signed(doc, payload.get("discount_amount"))
+	# Reported bill discount is a summary, never a second ERP deduction.
+	doc.discount_amount = 0
 	doc.apply_discount_on = "Net Total"
 	doc.disable_rounded_total = 1
 	# Use explicit tax amounts, assigned only to this company's configured accounts.
@@ -105,9 +106,14 @@ def prepare(doc, method=None):
 		doc.append("taxes", {"charge_type": "Actual", "account_head": account,
 			"description": row.get("description") or "POS reported VAT", "rate": 0,
 			"tax_amount": _signed(doc, row.get("tax_amount")), "cost_center": doc.cost_center})
-	for item in doc.get("items") or []:
+	for item, row in zip(doc.get("items") or [], payload.get("items") or []):
 		item.item_tax_template = None
 		item.item_tax_rate = "{}"
+		if row.get("net_amount") is not None:
+			item.rate = _signed(doc, row["net_amount"]) / item.qty if item.qty else 0
+			item.price_list_rate = 0
+			item.discount_amount = item.discount_percentage = 0
+			item.distributed_discount_amount = 0
 
 
 def _tax_account(doc):
@@ -129,6 +135,15 @@ def _signed(doc, value):
 	return -abs(flt(value)) if doc.is_return else flt(value)
 
 
+def exclusive_line_amount(row, vat_factor):
+	"""Accept inclusive terminal amounts and the older exclusive amount contract."""
+	amount = flt(row.get("amount"))
+	gross = flt(row.get("rate")) * abs(flt(row.get("qty")))
+	if vat_factor > 0 and abs(abs(amount) - abs(gross)) < 0.005:
+		return amount / vat_factor
+	return amount
+
+
 def restore(doc, method=None):
 	"""Restore submitted amounts after core derives stock/payment helper fields."""
 	payload = payload_for(doc)
@@ -136,9 +151,21 @@ def restore(doc, method=None):
 		return
 	factor = flt(doc.conversion_rate) or 1
 	for item, row in zip(doc.items, payload.get("items") or []):
-		# rate/amount are before invoice-level discount; net_amount is after it.
+		# POS amount follows rate_includes_vat; ERP amount is exclusive.
+		includes_vat = cint(row.get("rate_includes_vat", frappe.get_cached_value(
+			"Item", item.item_code, "custom_sales_rate_includes_vat")))
+		vat_factor = 1 + flt(row.get("vat_rate")) / 100 if includes_vat else 1
+		if vat_factor <= 0:
+			note_mismatch(doc, "Invalid POS VAT rate; explicit net amounts retained.")
+			vat_factor = 1
 		if row.get("amount") is not None:
-			item.amount = _signed(doc, row["amount"])
+			item.amount = flt(_signed(doc, exclusive_line_amount(row, vat_factor)), item.precision("amount"))
+		item.price_list_rate = flt(flt(row.get("rate")) / vat_factor, item.precision("price_list_rate"))
+		# Never let an ERP price/VAT comparison become a POS discount.
+		# Missing discount keys also mean zero, not an inferred difference.
+		item.discount_amount = flt(row.get("discount_amount"))
+		item.discount_percentage = flt(row.get("discount_percentage"))
+		item.distributed_discount_amount = 0
 		if row.get("net_amount") is not None:
 			item.net_amount = _signed(doc, row["net_amount"])
 		item.rate = item.amount / item.qty if item.qty else 0
@@ -147,8 +174,14 @@ def restore(doc, method=None):
 			item.set("base_" + field, flt(item.get(field) * factor, item.precision("base_" + field)))
 		vat = row.get("vat_amount", row.get("tax_amount"))
 		if vat is not None:
+			item.custom_vat_amount = _signed(doc, vat)
 			item.custom_amount_including_vat = item.net_amount + _signed(doc, vat)
 			item.custom_rate_including_vat = item.custom_amount_including_vat / item.qty if item.qty else 0
+	doc.discount_amount = _signed(doc, payload.get("discount_amount"))
+	line_discount = sum(flt(row.get("discount_amount")) * abs(flt(row.get("qty")))
+		for row in payload.get("items") or [])
+	if payload.get("discount_amount") is not None and abs(flt(payload["discount_amount"]) - line_discount) > 0.01:
+		note_mismatch(doc, "POS bill discount differs from item discount summary; explicit final POS totals retained.")
 	doc.total = sum(flt(row.amount) for row in doc.items)
 	doc.net_total = sum(flt(row.net_amount) for row in doc.items)
 	vat = payload.get("vat_amount")
@@ -166,8 +199,10 @@ def restore(doc, method=None):
 			"Item", item.item_code, "custom_sales_rate_includes_vat")))
 		for item, row in zip(doc.items, rows)
 	):
+		item_discount = sum(flt(row.get("discount_amount")) * abs(flt(row.get("qty"))) for row in rows)
+		additional_discount = max(flt(payload.get("discount_amount")) - item_discount, 0)
 		reported_total = sum((flt(row.get("rate")) - flt(row.get("discount_amount")))
-			* abs(flt(row.get("qty"))) for row in rows) - flt(payload.get("discount_amount"))
+			* abs(flt(row.get("qty"))) for row in rows) - additional_discount
 	doc.grand_total = _signed(doc, reported_total) if reported_total is not None else doc.net_total + doc.total_taxes_and_charges
 	# Explicit final total is authoritative. Allocate any difference to the final
 	# line only when POS did not send final per-line net amounts (legacy clients).
@@ -237,3 +272,43 @@ class RetailPOSInvoice(POSInvoice):
 		prepare(self)
 		super().calculate_taxes_and_totals()
 		restore(self)
+
+
+def repair_discount_display(invoice_name, dry_run=True):
+	"""Preview or repair one receipt's display; never touch accounting/stock."""
+	dry_run = cint(dry_run)
+	doc = frappe.get_doc("POS Invoice", invoice_name)
+	if doc.docstatus != 1 or not payload_for(doc):
+		frappe.throw("Repair requires a submitted completed POS receipt.")
+	fields = ("rate", "amount", "base_rate", "base_amount", "price_list_rate",
+		"discount_amount", "discount_percentage", "distributed_discount_amount",
+		"custom_vat_amount", "custom_rate_including_vat", "custom_amount_including_vat")
+	before = {item.name: {field: item.get(field) for field in fields} for item in doc.items}
+	restore(doc)
+	updates = []
+	for item in doc.items:
+		values = {field: flt(item.get(field), item.precision(field))
+			for field, old in before[item.name].items()
+			if flt(item.get(field), item.precision(field)) != flt(old, item.precision(field))}
+		if values:
+			updates.append({"item": item.name, "values": values})
+			if not dry_run:
+				frappe.db.set_value("POS Invoice Item", item.name, values, update_modified=False)
+	if updates and not dry_run:
+		frappe.db.set_value("POS Invoice", doc.name,
+			{"total": doc.total, "base_total": doc.base_total}, update_modified=False)
+	return {"invoice": doc.name, "dry_run": bool(dry_run), "items": updates}
+
+
+
+def repair_all_discount_displays(dry_run=True):
+	"""Upgrade old receipts using the same mapping as every future sync."""
+	changed = []
+	for name in frappe.get_all("POS Invoice", filters={
+		"docstatus": 1, "pos_sync_source": "Offline POS"}, pluck="name", order_by="name"):
+		if not frappe.db.get_value("POS Invoice", name, "custom_pos_completed_payload"):
+			continue
+		result = repair_discount_display(name, dry_run=dry_run)
+		if result["items"]:
+			changed.append(result)
+	return {"dry_run": bool(cint(dry_run)), "repaired_count": len(changed), "invoices": changed}

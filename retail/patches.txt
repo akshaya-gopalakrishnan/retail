@@ -63,3 +63,5 @@ retail.patches.setup_pos_settlements
 retail.patches.show_pos_settlement_types
 retail.patches.repair_recovered_pos_display
 retail.patches.repair_failed_pos_log_links
+retail.patches.resize_business_home_charts
+retail.patches.remove_sales_return_shortcut

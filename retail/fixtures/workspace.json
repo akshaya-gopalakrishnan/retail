@@ -2490,7 +2490,7 @@
     "parenttype": "Workspace"
    }
   ],
-  "content": "[{\"id\":\"hdr_sales\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Sales</span>\",\"col\":12}},{\"id\":\"sc_sales_invoice\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sales Invoice\",\"col\":3}},{\"id\":\"sc_customers\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Customers\",\"col\":3}},{\"id\":\"sc_quotation\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Quotation\",\"col\":3}},{\"id\":\"sc_sales_order\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sales Order\",\"col\":3}},{\"id\":\"sc_delivery_note\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Delivery Note\",\"col\":3}},{\"id\":\"sc_sales_return\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sales Return\",\"col\":3}},{\"id\":\"sc_daily_sales_summary\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Daily Sales Summary\",\"col\":3}},{\"id\":\"sc_counter_performance\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Counter Performance\",\"col\":3}},{\"id\":\"sc_daily_transaction_log\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Daily Transaction Log\",\"col\":3}},{\"id\":\"sp_sales_charts\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"chart_sales_order_trends\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Sales Order Trends\",\"col\":6}},{\"id\":\"chart_top_customers\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Top Customers\",\"col\":6}},{\"id\":\"sp_sales_cards\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"card_daily_sales\",\"type\":\"card\",\"data\":{\"card_name\":\"Daily Sales\",\"col\":4}},{\"id\":\"card_customers\",\"type\":\"card\",\"data\":{\"card_name\":\"Customers\",\"col\":4}},{\"id\":\"card_sales_reports\",\"type\":\"card\",\"data\":{\"card_name\":\"Sales Reports\",\"col\":4}}]",
+  "content": "[{\"id\":\"hdr_sales\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Sales</span>\",\"col\":12}},{\"id\":\"sc_sales_invoice\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sales Invoice\",\"col\":3}},{\"id\":\"sc_customers\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Customers\",\"col\":3}},{\"id\":\"sc_quotation\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Quotation\",\"col\":3}},{\"id\":\"sc_sales_order\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sales Order\",\"col\":3}},{\"id\":\"sc_delivery_note\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Delivery Note\",\"col\":3}},{\"id\":\"sc_daily_sales_summary\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Daily Sales Summary\",\"col\":3}},{\"id\":\"sc_counter_performance\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Counter Performance\",\"col\":3}},{\"id\":\"sc_daily_transaction_log\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Daily Transaction Log\",\"col\":3}},{\"id\":\"sp_sales_charts\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"chart_sales_order_trends\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Sales Order Trends\",\"col\":6}},{\"id\":\"chart_top_customers\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Top Customers\",\"col\":6}},{\"id\":\"sp_sales_cards\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"card_daily_sales\",\"type\":\"card\",\"data\":{\"card_name\":\"Daily Sales\",\"col\":4}},{\"id\":\"card_customers\",\"type\":\"card\",\"data\":{\"card_name\":\"Customers\",\"col\":4}},{\"id\":\"card_sales_reports\",\"type\":\"card\",\"data\":{\"card_name\":\"Sales Reports\",\"col\":4}}]",
   "custom_blocks": [],
   "docstatus": 0,
   "doctype": "Workspace",
@@ -2913,23 +2913,6 @@
     "kanban_board": null,
     "label": "Delivery Note",
     "link_to": "Delivery Note",
-    "parent": "Sales",
-    "parentfield": "shortcuts",
-    "parenttype": "Workspace",
-    "report_ref_doctype": null,
-    "restrict_to_domain": null,
-    "stats_filter": "[]",
-    "type": "DocType",
-    "url": null
-   },
-   {
-    "color": "Orange",
-    "doc_view": "List",
-    "format": null,
-    "icon": null,
-    "kanban_board": null,
-    "label": "Sales Return",
-    "link_to": "Sales Invoice",
     "parent": "Sales",
     "parentfield": "shortcuts",
     "parenttype": "Workspace",
@@ -4504,7 +4487,7 @@
     "parenttype": "Workspace"
    }
   ],
-  "content": "[{\"id\":\"hdr_owner_dashboard\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Dashboard</span>\",\"col\":12}},{\"id\":\"nc_todays_sales\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Today's Sales\",\"col\":3}},{\"id\":\"nc_todays_profit\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Today's Profit\",\"col\":3}},{\"id\":\"nc_invoice_count_today\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Invoice Count Today\",\"col\":3}},{\"id\":\"nc_return_amount_today\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Return Amount Today\",\"col\":3}},{\"id\":\"nc_low_stock_items\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Low Stock Items\",\"col\":3}},{\"id\":\"nc_out_of_stock_items\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Out of Stock Items\",\"col\":3}},{\"id\":\"nc_damage_amount_today\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Damage Amount Today\",\"col\":3}},{\"id\":\"nc_cash_in_hand_today\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Cash in Hand Today\",\"col\":3}},{\"id\":\"sp_owner_dashboard_1\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"chart_retail_top_selling_products\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Top Selling Products\",\"col\":4}},{\"id\":\"chart_retail_sales_by_counter\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Sales by Counter\",\"col\":4}},{\"id\":\"chart_retail_sales_trend_7_days\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Sales Trend 7 Days\",\"col\":4}},{\"id\":\"sp_owner_dashboard_2\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"sc_daily_sales_summary\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Daily Sales Summary\",\"col\":3}},{\"id\":\"sc_daily_transaction_log\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Daily Transaction Log\",\"col\":3}},{\"id\":\"sc_low_stock_reorder_report\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Low Stock Reorder Report\",\"col\":3}},{\"id\":\"sc_fast_moving_items\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Fast Moving Items\",\"col\":3}},{\"id\":\"sc_slow_moving_items\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Slow Moving Items\",\"col\":3}},{\"id\":\"sc_stock_adjustment_history\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Stock Adjustment History\",\"col\":3}},{\"id\":\"sc_cashier_wise_damage\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Cashier Wise Damage\",\"col\":3}},{\"id\":\"sc_reports\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Reports\",\"col\":3}}]",
+  "content": "[{\"id\":\"hdr_owner_dashboard\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Dashboard</span>\",\"col\":12}},{\"id\":\"nc_todays_sales\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Today's Sales\",\"col\":3}},{\"id\":\"nc_todays_profit\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Today's Profit\",\"col\":3}},{\"id\":\"nc_invoice_count_today\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Invoice Count Today\",\"col\":3}},{\"id\":\"nc_return_amount_today\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Return Amount Today\",\"col\":3}},{\"id\":\"nc_low_stock_items\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Low Stock Items\",\"col\":3}},{\"id\":\"nc_out_of_stock_items\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Out of Stock Items\",\"col\":3}},{\"id\":\"nc_damage_amount_today\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Damage Amount Today\",\"col\":3}},{\"id\":\"nc_cash_in_hand_today\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Cash in Hand Today\",\"col\":3}},{\"id\":\"sp_owner_dashboard_1\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"chart_retail_top_selling_products\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Top Selling Products\",\"col\":6}},{\"id\":\"chart_retail_sales_by_counter\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Sales by Counter\",\"col\":4}},{\"id\":\"chart_retail_sales_trend_7_days\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Sales Trend 7 Days\",\"col\":6}},{\"id\":\"sp_owner_dashboard_2\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"sc_daily_sales_summary\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Daily Sales Summary\",\"col\":3}},{\"id\":\"sc_daily_transaction_log\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Daily Transaction Log\",\"col\":3}},{\"id\":\"sc_low_stock_reorder_report\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Low Stock Reorder Report\",\"col\":3}},{\"id\":\"sc_fast_moving_items\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Fast Moving Items\",\"col\":3}},{\"id\":\"sc_slow_moving_items\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Slow Moving Items\",\"col\":3}},{\"id\":\"sc_stock_adjustment_history\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Stock Adjustment History\",\"col\":3}},{\"id\":\"sc_cashier_wise_damage\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Cashier Wise Damage\",\"col\":3}},{\"id\":\"sc_reports\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Reports\",\"col\":3}}]",
   "custom_blocks": [],
   "docstatus": 0,
   "doctype": "Workspace",
@@ -5074,7 +5057,7 @@
     "report_ref_doctype": null,
     "type": "Link"
    },
-      {
+   {
     "dependencies": null,
     "description": null,
     "hidden": 0,

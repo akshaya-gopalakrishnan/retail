@@ -584,12 +584,41 @@ def payment_mode_summary(filters):
 	return columns, rows
 
 
+def completed_discount_rows(rows):
+	"""Use immutable POS discounts, including receipts saved by older mappers."""
+	from retail.pos_completed_sale import exclusive_line_amount
+	result = []
+	seen = set()
+	for row in rows:
+		payload = frappe.parse_json(row.pop("completed_payload", None) or "{}")
+		index = cint(row.pop("item_index", 0)) - 1
+		if payload and 0 <= index < len(payload.get("items") or []):
+			item = payload["items"][index]
+			row.discount_amount = flt(item.get("discount_amount"))
+			row.discount_percentage = flt(item.get("discount_percentage"))
+			row.distributed_discount_amount = 0
+			# One invoice summary per bill, never one copy per item.
+			row.invoice_discount_amount = 0 if row.invoice_no in seen else flt(payload.get("discount_amount"))
+			seen.add(row.invoice_no)
+			factor = 1 + flt(item.get("vat_rate")) / 100 if cint(item.get("rate_includes_vat")) else 1
+			row.price_list_rate = flt(item.get("rate")) / factor if factor > 0 else 0
+			if item.get("amount") is not None:
+				row.rate = exclusive_line_amount(item, factor) / flt(item.get("qty")) if factor > 0 and flt(item.get("qty")) else 0
+			if not any(flt(row.get(key)) for key in ("discount_amount", "discount_percentage", "invoice_discount_amount")):
+				continue
+		row.line_discount_amount = flt(row.get("discount_amount")) * flt(row.get("qty"))
+		result.append(row)
+	return result
+
+
 def pos_discount_report(filters):
 	conditions, values = item_conditions(filters)
 	rows = frappe.db.sql(
 		f"""
 		select
 			pi.name as invoice_no,
+			pi.custom_pos_completed_payload as completed_payload,
+			pii.idx as item_index,
 			pi.posting_date,
 			pi.pos_branch as branch,
 			pi.pos_counter as counter,
@@ -610,17 +639,18 @@ def pos_discount_report(filters):
 		inner join `tabPOS Invoice` pi on pi.name = pii.parent
 		where {conditions}
 			and (
-				abs(coalesce(pii.discount_amount, 0)) > 0
+				coalesce(pi.custom_pos_completed_payload, '') != ''
+				or abs(coalesce(pii.discount_amount, 0)) > 0
 				or abs(coalesce(pii.discount_percentage, 0)) > 0
 				or abs(coalesce(pii.distributed_discount_amount, 0)) > 0
 				or abs(coalesce(pi.discount_amount, 0)) > 0
 			)
-		order by pi.posting_date desc, pi.posting_time desc, pi.creation desc
+		order by pi.posting_date desc, pi.posting_time desc, pi.creation desc, pii.idx
 		""",
 		values,
 		as_dict=True,
 	)
-	return discount_columns(), rows
+	return discount_columns(), completed_discount_rows(rows)
 
 
 def pos_price_override_report(filters):
@@ -1010,9 +1040,10 @@ def discount_columns():
 		{"label": _("Price List Rate"), "fieldname": "price_list_rate", "fieldtype": "Currency", "width": 120},
 		{"label": _("Rate"), "fieldname": "rate", "fieldtype": "Currency", "width": 100},
 		{"label": _("Discount %"), "fieldname": "discount_percentage", "fieldtype": "Percent", "width": 100},
-		{"label": _("Discount Amount"), "fieldname": "discount_amount", "fieldtype": "Currency", "width": 130},
+		{"label": _("Discount per Unit"), "fieldname": "discount_amount", "fieldtype": "Currency", "width": 130},
+		{"label": _("Line Discount Total"), "fieldname": "line_discount_amount", "fieldtype": "Currency", "width": 140},
 		{"label": _("Distributed Discount"), "fieldname": "distributed_discount_amount", "fieldtype": "Currency", "width": 140},
-		{"label": _("Invoice Discount"), "fieldname": "invoice_discount_amount", "fieldtype": "Currency", "width": 130},
+		{"label": _("Reported Bill Discount"), "fieldname": "invoice_discount_amount", "fieldtype": "Currency", "width": 130},
 		{"label": _("Net Sales"), "fieldname": "net_amount", "fieldtype": "Currency", "width": 120},
 	]
 

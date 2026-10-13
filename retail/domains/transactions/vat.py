@@ -49,7 +49,8 @@ def set_vat_rates(doc, method=None):
 		return  # Consolidation carries the original POS tax amounts.
 	from retail.pos_completed_sale import payload_for
 	if payload_for(doc):
-		set_row_vat_amounts(doc)
+		from retail.pos_completed_sale import restore
+		restore(doc)
 		return
 	prepare_external_pos_taxes(doc)
 
@@ -103,6 +104,10 @@ def set_vat_rates(doc, method=None):
 def set_row_vat_amounts(doc, method=None):
 	"""Store row VAT in document currency from quantity and exclusive rate."""
 	import json
+	from retail.pos_completed_sale import payload_for, restore
+	if payload_for(doc):
+		restore(doc)
+		return
 
 	for item in doc.get("items") or []:
 		if not item.meta.has_field("custom_vat_amount"):

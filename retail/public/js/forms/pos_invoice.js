@@ -1,5 +1,9 @@
 frappe.ui.form.on("POS Invoice", {
 	async refresh(frm) {
+		if (frm.doc.custom_pos_completed_payload) {
+			frm.set_df_property("discount_amount", "label", __("Discount"));
+			frm.fields_dict.items?.grid?.update_docfield_property("discount_amount", "label", __("Discount"));
+		}
 		if (frm.is_new()) return;
 		const name = frm.doc.name;
 		const { message: posting } = await frappe.call({

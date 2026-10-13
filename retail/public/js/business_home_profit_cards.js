@@ -38,6 +38,18 @@
 		if (!factory?.number_card || factory.number_card.retail_shared_profit) return;
 		const Base = factory.number_card;
 		class BusinessHomeNumberCard extends Base {
+			get_number_for_custom_card(res) {
+				const result = super.get_number_for_custom_card(res);
+				if (this.card_doc?.name === "Today's Sales" &&
+					this.card_doc.method === prefix + "get_today_sales") {
+					const value = typeof res === "object" ? res?.value : res;
+					if (typeof value === "number" && Number.isFinite(value)) {
+						this.formatted_number = value.toFixed(2);
+					}
+				}
+				return result;
+			}
+
 			async get_data() {
 				const route = frappe.get_route();
 				const card = cards[this.card_doc?.name];
