@@ -5,6 +5,9 @@ LABEL it.celestial.retail.image="1"
 
 USER root
 
+COPY apps/retail/deployment/docker/retail-entrypoint.sh /usr/local/bin/retail-entrypoint.sh
+RUN chmod 755 /usr/local/bin/retail-entrypoint.sh
+
 COPY --chown=frappe:frappe apps/hrms /home/frappe/frappe-bench/apps/hrms
 COPY --chown=frappe:frappe apps/retail /home/frappe/frappe-bench/apps/retail
 
@@ -19,3 +22,5 @@ RUN cd /home/frappe/frappe-bench \
 	&& ln -sfn /home/frappe/frappe-bench/apps/retail/retail/public assets/retail \
 	&& bench build --app hrms --app retail \
 	&& ./env/bin/python -m retail.build_asset_manifest
+
+ENTRYPOINT ["/usr/local/bin/retail-entrypoint.sh"]

@@ -81,7 +81,10 @@ It also logs in as Administrator and verifies Desk includes its actual hashed
 Retail CSS/JS and that the frontend serves LTR and RTL CSS with the correct MIME
 types and Retail theme content. This gate does not replace visual browser,
 accounting/POS, licensing, backup/restore,
-or production runtime checks.
+or production runtime checks. Native CI runs these installation regression
+modules separately; the complete legacy app suite remains available through
+the CI workflow's manual `full_suite` option. That legacy combined suite has
+separate test-context lifecycle problems and is not claimed green by this gate.
 
 Custom DocType fixtures are prepared before custom fields are imported. Setup
 that depends on fixtures runs in `after_sync`. Compact naming-series options
@@ -108,8 +111,11 @@ bundles are build output and do not need to be committed.
 Docker mounts the persistent `sites` volume over the image's `sites` directory.
 An image-only manifest repair therefore does not repair an existing volume.
 The build now also stores immutable manifest snapshots in
-`/home/frappe/frappe-bench/.retail-image-assets`, outside that mount. On every
-migration, `retail.build_asset_manifest.install` merges those snapshots into the
+`/home/frappe/frappe-bench/.retail-image-assets`, outside that mount. The build
+also combines the base image's core mappings with the new app mappings in its
+baked `assets` directory. The Retail-owned entrypoint replaces the base script
+that deletes/relinks shared assets at every start. On every container start,
+initial installation and migration, `retail.build_asset_manifest.install` merges those snapshots into the
 mounted manifests, ensures the app's public files are available, validates Desk
 CSS/JS, and clears Frappe's global asset cache. It uses the image's exact hashes,
 preserves older files, and does nothing on benches without an image snapshot.

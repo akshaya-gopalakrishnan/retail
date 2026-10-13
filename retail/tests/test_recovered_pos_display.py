@@ -78,6 +78,51 @@ class TestRecoveredPOSDisplay(unittest.TestCase):
 
 
 class TestDockerMountedAssets(unittest.TestCase):
+	def test_snapshot_combines_baked_core_and_new_app_mappings(self):
+		from retail.build_asset_manifest import snapshot
+
+		with tempfile.TemporaryDirectory() as folder:
+			bench = Path(folder)
+			assets = bench / "sites/assets"
+			baked = bench / "assets"
+			assets.mkdir(parents=True)
+			baked.mkdir()
+			core = {"desk.bundle.css": "/assets/frappe/dist/css/desk.bundle.CORE.css"}
+			app = {"retail_desk.bundle.css": "/assets/retail/dist/css/retail_desk.bundle.NEW.css"}
+			(baked / "assets.json").write_text(json.dumps(core))
+			(assets / "assets.json").write_text(json.dumps(app))
+			(assets / "assets-rtl.json").write_text("{}")
+			snapshot(bench)
+			for path in (assets, baked, bench / ".retail-image-assets"):
+				self.assertEqual(json.loads((path / "assets.json").read_text()), {**core, **app})
+
+	def test_legacy_image_local_assets_link_becomes_persistent_shared_directory(self):
+		from retail.build_asset_manifest import install, snapshot
+
+		with tempfile.TemporaryDirectory() as folder:
+			bench = Path(folder)
+			baked = bench / "assets"
+			baked.mkdir()
+			(bench / "sites").mkdir()
+			assets = bench / "sites/assets"
+			assets.symlink_to(baked, target_is_directory=True)
+			for app in ("retail", "hrms"):
+				public = bench / "apps" / app / app / "public"
+				public.mkdir(parents=True)
+				(baked / app).symlink_to(public, target_is_directory=True)
+			for subpath in ("css/retail_desk.bundle.NEW.css", "js/retail_desk.bundle.NEW.js"):
+				path = baked / "retail/dist" / subpath
+				path.parent.mkdir(parents=True, exist_ok=True)
+				path.write_text("asset")
+			(baked / "old-browser-asset.css").write_text("preserve")
+			repair(assets)
+			snapshot(bench)
+			self.assertTrue(install(bench))
+			self.assertFalse(assets.is_symlink())
+			self.assertEqual((assets / "old-browser-asset.css").read_text(), "preserve")
+			self.assertTrue(install(bench))
+			self.assertIn("retail_desk.bundle.css", json.loads((assets / "assets.json").read_text()))
+
 	def test_build_mapping_wins_over_old_hash_sorted_later(self):
 		with tempfile.TemporaryDirectory() as folder:
 			assets = Path(folder)

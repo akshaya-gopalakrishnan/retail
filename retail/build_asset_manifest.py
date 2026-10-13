@@ -52,12 +52,24 @@ def repair(assets):
 
 
 def snapshot(bench):
-	"""Keep mappings outside the sites volume so Docker cannot hide them."""
+	"""Bake the same core/app mappings for every new container and site volume."""
 	bench = Path(bench)
 	destination = bench / IMAGE_MANIFEST_DIRECTORY
 	destination.mkdir(exist_ok=True)
+	baked = bench / "assets"
 	for filename in ("assets.json", "assets-rtl.json"):
-		shutil.copyfile(bench / "sites/assets" / filename, destination / filename)
+		path = bench / "sites/assets" / filename
+		data = {}
+		if (baked / filename).is_file():
+			data.update(json.loads((baked / filename).read_text()))
+		data.update(json.loads(path.read_text()))
+		if filename == "assets-rtl.json":
+			data = clean_rtl_manifest(data)
+		content = json.dumps(data, indent=2) + "\n"
+		(destination / filename).write_text(content)
+		path.write_text(content)
+		if baked.is_dir():
+			(baked / filename).write_text(content)
 
 
 def install(bench=None):
@@ -70,17 +82,29 @@ def install(bench=None):
 	source = bench / IMAGE_MANIFEST_DIRECTORY
 	if not source.is_dir():
 		return False  # Ordinary development benches do not use image snapshots.
-	assets = bench / "sites/assets"
-	assets.mkdir(parents=True, exist_ok=True)
-	# Backend, nginx and workers can start together against one sites volume.
-	with (assets / ".retail-manifest.lock").open("a") as lock:
+	sites = bench / "sites"
+	sites.mkdir(parents=True, exist_ok=True)
+	# Lock outside assets: an older image may have made assets a shared symlink.
+	with (sites / ".retail-manifest.lock").open("a") as lock:
 		fcntl.flock(lock, fcntl.LOCK_EX)
+		assets = sites / "assets"
+		if assets.is_symlink():
+			previous = assets.resolve()
+			copied = Path(tempfile.mkdtemp(dir=sites, prefix=".retail-assets-"))
+			if previous.is_dir():
+				shutil.copytree(previous, copied, dirs_exist_ok=True, symlinks=True)
+			copied.chmod(0o775)
+			assets.unlink()
+			copied.replace(assets)
+		assets.mkdir(parents=True, exist_ok=True)
 		return _install_image_assets(bench, source, assets)
 
 
 def _install_image_assets(bench, source, assets):
-	for app in ("retail", "hrms"):
+	for app in ("frappe", "erpnext", "retail", "hrms"):
 		public = bench / "apps" / app / app / "public"
+		if not public.is_dir():
+			continue
 		destination = assets / app
 		if destination.is_symlink() and destination.resolve() != public.resolve():
 			destination.unlink()
@@ -122,6 +146,15 @@ def _install_image_assets(bench, source, assets):
 
 
 if __name__ == "__main__":
+	import argparse
+
+	parser = argparse.ArgumentParser()
+	parser.add_argument("--install-runtime", action="store_true")
+	args = parser.parse_args()
 	bench = Path.cwd()
-	repair(bench / "sites/assets")
-	snapshot(bench)
+	if args.install_runtime:
+		if not install(bench):
+			raise RuntimeError("Retail image asset snapshot missing; rebuild with the tracked Containerfile")
+	else:
+		repair(bench / "sites/assets")
+		snapshot(bench)

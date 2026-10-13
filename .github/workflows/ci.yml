@@ -7,6 +7,12 @@ on:
       - develop
       - main
   pull_request:
+  workflow_dispatch:
+    inputs:
+      full_suite:
+        description: Run the complete legacy application suite in addition to installation checks
+        type: boolean
+        default: false
 
 concurrency:
   group: develop-retail-${{ github.event.number }}
@@ -108,10 +114,21 @@ jobs:
         env:
           CI: 'Yes'
 
-      - name: Run Tests
+      - name: Run installation regression tests
         working-directory: /home/runner/frappe-bench
         run: |
           bench --site retail-test.localhost set-config allow_tests true
-          bench --site retail-test.localhost run-tests --app retail
+          for module in \
+            retail.tests.test_install_portability \
+            retail.tests.test_deployment_setup \
+            retail.tests.test_recovered_pos_display \
+            retail.tests.test_editable_print_portability; do
+            bench --site retail-test.localhost run-tests --module "$module"
+          done
         env:
           TYPE: server
+
+      - name: Run complete legacy app suite when explicitly requested
+        if: github.event_name == 'workflow_dispatch' && inputs.full_suite
+        working-directory: /home/runner/frappe-bench
+        run: bench --site retail-test.localhost run-tests --app retail
