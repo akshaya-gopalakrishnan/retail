@@ -1,0 +1,12 @@
+**/.git
+**/__pycache__
+**/*.pyc
+**/node_modules
+**/public/dist
+apps/retail/validation
+sites
+logs
+archived
+.env
+**/.env
+**/secrets

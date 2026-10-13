@@ -41,9 +41,9 @@ web_include_css = ["retail_website.bundle.css"]
 web_include_js = ["retail_website.bundle.js"]
 
 page_renderer = [
-    "retail.guest_entry.GuestLoginPage",
-    "retail.website_performance.DeskEntryPage",
-    "retail.website_performance.WebsiteScriptPage",
+	"retail.guest_entry.GuestLoginPage",
+	"retail.website_performance.DeskEntryPage",
+	"retail.website_performance.WebsiteScriptPage",
 ]
 website_path_resolver = ["retail.guest_entry.resolve_guest_entry"]
 
@@ -51,20 +51,20 @@ jinja = {"methods": ["retail.cdn.include_script", "retail.cdn.include_style"]}
 update_website_context = ["retail.cdn.update_website_context"]
 
 website_context = {
-    "brand_html": '<img src="/assets/retail/images/business-suite-app-icon.svg?v=3" class="retail-web-brand-icon" alt="CELESTA ERP"><span class="retail-web-brand">CELESTA</span>',
-    "favicon": "/assets/retail/images/business-suite-app-icon.svg?v=3",
-    "splash_image": "/assets/retail/images/retail-logo.svg?v=4",
+	"brand_html": '<img src="/assets/retail/images/business-suite-app-icon.svg?v=3" class="retail-web-brand-icon" alt="CELESTA ERP"><span class="retail-web-brand">CELESTA</span>',
+	"favicon": "/assets/retail/images/business-suite-app-icon.svg?v=3",
+	"splash_image": "/assets/retail/images/retail-logo.svg?v=4",
 }
 
 website_route_rules = [
-    {"from_route": "/me", "to_route": "retail-me"},
-    {"from_route": "/profile", "to_route": "retail-me"},
-    {"from_route": "/website", "to_route": "retail-home"},
+	{"from_route": "/me", "to_route": "retail-me"},
+	{"from_route": "/profile", "to_route": "retail-me"},
+	{"from_route": "/website", "to_route": "retail-home"},
 ]
 
 website_redirects = [
-    {"source": "/", "target": "/app", "redirect_http_status": 302},
-    {"source": "/index", "target": "/retail-home", "redirect_http_status": 302},
+	{"source": "/", "target": "/app", "redirect_http_status": 302},
+	{"source": "/index", "target": "/retail-home", "redirect_http_status": 302},
 ]
 
 boot_session = "retail.workspace_permissions.extend_bootinfo"
@@ -195,12 +195,16 @@ doctype_js = {
 # ------------
 
 # before_install = "retail.install.before_install"
-after_install = ["retail.patches.setup_pos_operator_privileges.execute", "retail.naming.install_retail_defaults", "retail.pos_credit.ensure_payment_invoice_field"]
+after_install = [
+	"retail.patches.setup_pos_operator_privileges.execute",
+	"retail.naming.install_retail_defaults",
+	"retail.pos_credit.ensure_payment_invoice_field",
+]
 
 # Print Format fixtures must exist before creating site-owned editable copies.
 after_sync = [
-    "retail.editable_print_formats.ensure_editable_print_formats",
-    "retail.setup.ensure_print_languages",
+	"retail.editable_print_formats.ensure_editable_print_formats",
+	"retail.setup.ensure_print_languages",
 ]
 
 # Uninstallation
@@ -268,10 +272,22 @@ has_permission = {
 # Hook on document methods and events
 
 doc_events = {
-	"Van Session": {"validate": "retail.van_assignment.validate_session", "before_update_after_submit": "retail.van_assignment.validate_session"},
-	"*": {"before_insert": "retail.document_codes.assign", "autoname": "retail.short_codes.autoname", "before_naming": "retail.short_codes.before_naming", "validate": ["retail.van_assignment.validate_transaction", "retail.document_codes.validate"], "before_submit": "retail.van_assignment.validate_transaction"},
+	"Van Session": {
+		"validate": "retail.van_assignment.validate_session",
+		"before_update_after_submit": "retail.van_assignment.validate_session",
+	},
+	"*": {
+		"before_insert": "retail.document_codes.assign",
+		"autoname": "retail.short_codes.autoname",
+		"before_naming": "retail.short_codes.before_naming",
+		"validate": ["retail.van_assignment.validate_transaction", "retail.document_codes.validate"],
+		"before_submit": "retail.van_assignment.validate_transaction",
+	},
 	"Employee": {
-		"validate": ["retail.pos_login.apply_employee_pos_login", "retail.pos_privileges.validate_employee_assignment"],
+		"validate": [
+			"retail.pos_login.apply_employee_pos_login",
+			"retail.pos_privileges.validate_employee_assignment",
+		],
 		"on_update": "retail.pos_login.sync_employee_pos_user",
 	},
 	"User": {
@@ -355,12 +371,12 @@ doc_events = {
 			"retail.domains.item.scale_item_validation.validate_scale_item",
 			"retail.domains.item.vat_pricing.update_item_vat_prices",
 		],
-        "on_update": [
+		"on_update": [
 			"retail.domains.item.item_price_sync.sync_simple_item_prices",
 			"retail.domains.item.average_purchase_rate.sync_average_purchase_rate_from_item",
 			"retail.domains.item.rate_audit.audit_item_master_rate_change",
-        ],
-    },
+		],
+	},
 	"Customer": {
 		"validate": "retail.van_customer.validate_van_customer_access",
 	},
@@ -418,8 +434,8 @@ doc_events = {
 			"retail.promotions.gift_voucher.restore_redeemed_gift_voucher",
 		],
 		"on_update_after_submit": "retail.domains.item.item_price_sync.sync_latest_transaction_item_prices",
-    },
-    "Delivery Note": {
+	},
+	"Delivery Note": {
 		"before_naming": "retail.naming.set_transaction_naming_series",
 		"validate": [
 			"retail.domains.foc.apply_foc_quantities",
@@ -430,7 +446,7 @@ doc_events = {
 		],
 		"on_cancel": "retail.domains.item.item_price_sync.recalculate_transaction_item_prices",
 		"on_update_after_submit": "retail.domains.item.item_price_sync.sync_latest_transaction_item_prices",
-    },
+	},
 	"Sales Order": {
 		"validate": [
 			"retail.domains.foc.apply_foc_quantities",
@@ -497,11 +513,11 @@ after_migrate = [
 	"retail.setup.ensure_default_print_formats",
 	"retail.setup.ensure_print_languages",
 	"retail.retail_app.report.pos_report_utils.ensure_pos_reports",
-    "retail.domains.transactions.vat.ensure_transaction_vat_rate_fields",
-    "retail.domains.purchase.order.backfill_balance_qty",
-    "retail.retail_app.report.damaged_and_expired_stock.damaged_and_expired_stock.ensure_report",
-    "retail.retail_app.report.item_family_list.item_family_list.ensure_setup",
-    "retail.retail_app.report.near_expiry_report.near_expiry_report.ensure_report",
+	"retail.domains.transactions.vat.ensure_transaction_vat_rate_fields",
+	"retail.domains.purchase.order.backfill_balance_qty",
+	"retail.retail_app.report.damaged_and_expired_stock.damaged_and_expired_stock.ensure_report",
+	"retail.retail_app.report.item_family_list.item_family_list.ensure_setup",
+	"retail.retail_app.report.near_expiry_report.near_expiry_report.ensure_report",
 	"retail.retail_app.report.negative_stock_report.negative_stock_report.ensure_report",
 	"retail.domains.item.average_purchase_rate.backfill_average_purchase_rates",
 	"retail.domains.item.average_purchase_rate.clear_average_purchase_rate_description",
@@ -636,63 +652,79 @@ override_whitelisted_methods = {
 # List of apps whose translatable strings should be excluded from this app's translations.
 # ignore_translatable_strings_from = []
 
+from retail.short_codes import PREFIXES as _retail_numbered_doctypes
+
 fixtures = [
-    {
-        "dt": "DocType",
-        "filters": [
-            ["name", "in", ("Counter",)]
-        ],
-    },
-    "Custom Field",
-    "Client Script",
-    "Server Script",
-    {
-        "dt": "Property Setter",
-        "filters": [["name", "not in", [
-            f"{dt}-main-default_print_format" for dt in (
-                "Sales Invoice", "Delivery Note", "Quotation", "Sales Order",
-                "Supplier Quotation", "Purchase Order", "Purchase Receipt",
-                "Purchase Invoice", "Material Request",
-            )
-        ]]],
-    },
-    {"dt": "Print Format", "filters": [["name", "not like", "% - Editable"], ["name", "not like", "% - A4"]]},
-    "List View Settings",
-    "Custom DocPerm",
+	{
+		"dt": "DocType",
+		"filters": [["name", "in", ("Counter",)]],
+	},
+	"Custom Field",
+	"Client Script",
+	"Server Script",
+	{
+		"dt": "Property Setter",
+		"filters": [
+			[
+				"name",
+				"not in",
+				[
+					*[
+						f"{dt}-naming_series-{prop}"
+						for dt in _retail_numbered_doctypes
+						for prop in ("options", "default")
+					],
+					*[
+						f"{dt}-main-default_print_format"
+						for dt in (
+							"Sales Invoice",
+							"Delivery Note",
+							"Quotation",
+							"Sales Order",
+							"Supplier Quotation",
+							"Purchase Order",
+							"Purchase Receipt",
+							"Purchase Invoice",
+							"Material Request",
+						)
+					],
+				],
+			]
+		],
+	},
+	{"dt": "Print Format", "filters": [["name", "not like", "% - Editable"], ["name", "not like", "% - A4"]]},
+	"List View Settings",
+	"Custom DocPerm",
 	"Workflow",
 	"Workflow State",
 	"Workflow Action Master",
 	{
 		"dt": "Workspace",
-		"filters": [
-			["module", "=", "Retail-app"]
-		],
+		"filters": [["module", "=", "Retail-app"]],
 	},
 	{
 		"dt": "Zebra Label Format",
-        "filters": [
-            ["name", "in", ("Shelf Label", "Barcode Label")]
-        ],
-    },
-    {
-        "dt": "Number Card",
-        "filters": [
-            [
-                "name",
-                "in",
-                (
-                    "Today's Sales",
-                    "Today's Profit",
-                    "Invoice Count Today",
-                    "Low Stock Items",
-                    "Out of Stock Items",
-                    "Return Amount Today",
-                    "Damage Amount Today",
-                    "Cash in Hand Today",
-                ),
-            ]
-        ],
-    },
+		"filters": [["name", "in", ("Shelf Label", "Barcode Label")]],
+	},
+	{
+		"dt": "Number Card",
+		"filters": [
+			[
+				"name",
+				"in",
+				(
+					"Today's Sales",
+					"Today's Profit",
+					"Invoice Count Today",
+					"Low Stock Items",
+					"Out of Stock Items",
+					"Return Amount Today",
+					"Damage Amount Today",
+					"Cash in Hand Today",
+				),
+			]
+		],
+	},
 ]
 # app_include_js = "/assets/retail/js/retail_navigation.js?v=15"
 
@@ -704,9 +736,11 @@ boot_session = [boot_session, "retail.document_codes.boot", "retail.column_prefe
 scheduler_events = {"hourly": ["retail.document_codes.backfill_missing"]}
 
 # Retail owns loyalty validation and ledger reversals; no ERPNext core edits.
-override_doctype_class = {"Sales Invoice": "retail.loyalty_sales_invoice.RetailSalesInvoice",
+override_doctype_class = {
+	"Sales Invoice": "retail.loyalty_sales_invoice.RetailSalesInvoice",
 	"POS Invoice": "retail.pos_completed_sale.RetailPOSInvoice",
-	"POS Closing Entry": "retail.pos_realtime.RetailPOSClosingEntry"}
+	"POS Closing Entry": "retail.pos_realtime.RetailPOSClosingEntry",
+}
 doc_events["POS Invoice"]["on_submit"].append("retail.pos_realtime.post_invoice")
 after_install.append("retail.loyalty_setup.install")
 after_migrate.append("retail.loyalty_setup.install")
@@ -717,10 +751,10 @@ auth_hooks = ["retail.module_access.guard_request"]
 permission_query_conditions["*"] = "retail.module_access.query_conditions"
 has_permission["*"] = "retail.module_access.has_permission"
 for _event in ("validate", "before_submit", "before_cancel", "on_trash", "before_update_after_submit"):
-    _existing = doc_events["*"].get(_event, [])
-    if isinstance(_existing, str):
-        _existing = [_existing]
-    doc_events["*"][_event] = ["retail.module_access.validate_document", *_existing]
+	_existing = doc_events["*"].get(_event, [])
+	if isinstance(_existing, str):
+		_existing = [_existing]
+	doc_events["*"][_event] = ["retail.module_access.validate_document", *_existing]
 after_migrate.append("retail.module_access.install")
 after_install.append("retail.module_access.install")
 
@@ -728,17 +762,25 @@ after_install.append("retail.company_bill_format.ensure_company_bill_format_fiel
 after_migrate.append("retail.company_bill_format.ensure_company_bill_format_fields")
 
 # Free goods must be normal document rows before ERPNext validates and posts.
-for _foc_doctype in ("Purchase Order", "Purchase Receipt", "Purchase Invoice",
-                     "Sales Order", "Delivery Note", "Sales Invoice", "POS Invoice", "Stock Entry"):
-    _foc_events = doc_events[_foc_doctype]
-    _before = _foc_events.get("before_validate", [])
-    if isinstance(_before, str):
-        _before = [_before]
-    _foc_events["before_validate"] = _before + ["retail.domains.foc.prepare_foc_items"]
-    _validate = _foc_events.get("validate", [])
-    if isinstance(_validate, str):
-        _validate = [_validate]
-    _foc_events["validate"] = _validate + ["retail.domains.foc.validate_foc_items"]
+for _foc_doctype in (
+	"Purchase Order",
+	"Purchase Receipt",
+	"Purchase Invoice",
+	"Sales Order",
+	"Delivery Note",
+	"Sales Invoice",
+	"POS Invoice",
+	"Stock Entry",
+):
+	_foc_events = doc_events[_foc_doctype]
+	_before = _foc_events.get("before_validate", [])
+	if isinstance(_before, str):
+		_before = [_before]
+	_foc_events["before_validate"] = [*_before, "retail.domains.foc.prepare_foc_items"]
+	_validate = _foc_events.get("validate", [])
+	if isinstance(_validate, str):
+		_validate = [_validate]
+	_foc_events["validate"] = [*_validate, "retail.domains.foc.validate_foc_items"]
 
 # Classify the original receipt independently of its accounting lifecycle status.
 doc_events["POS Invoice"]["validate"].append("retail.pos_transaction_display.set_transaction_type")
@@ -747,15 +789,16 @@ after_install.append("retail.pos_transaction_display.execute")
 # POS list filters, totals, and closed-session dates.
 after_install.append("retail.pos_list_settings.execute")
 for _dt, _handler in {
-    "POS Opening Entry": "retail.pos_list_settings.set_opening_summary",
-    "POS Closing Entry": "retail.pos_list_settings.set_closing_summary",
+	"POS Opening Entry": "retail.pos_list_settings.set_opening_summary",
+	"POS Closing Entry": "retail.pos_list_settings.set_closing_summary",
 }.items():
-    doc_events.setdefault(_dt, {}).setdefault("validate", []).append(_handler)
+	doc_events.setdefault(_dt, {}).setdefault("validate", []).append(_handler)
 for _event in ("on_submit", "on_cancel"):
-    doc_events.setdefault("POS Closing Entry", {}).setdefault(_event, []).append(
-        "retail.pos_list_settings.update_opening_end_date")
+	doc_events.setdefault("POS Closing Entry", {}).setdefault(_event, []).append(
+		"retail.pos_list_settings.update_opening_end_date"
+	)
 for _dt in ("POS Profile", "POS Branch Counter"):
-    doctype_list_js[_dt] = "public/js/list/pos_master_status.js"
+	doctype_list_js[_dt] = "public/js/list/pos_master_status.js"
 
 after_migrate.append("retail.pos_list_settings.configure")
 
@@ -763,60 +806,66 @@ after_migrate.append("retail.pos_list_settings.configure")
 # Keep these last so they run before legacy permission/controller hooks.
 has_permission["*"] = [has_permission["*"], "retail.access_control.has_permission"]
 permission_query_conditions["*"] = [
-    permission_query_conditions["*"], "retail.access_control.query_conditions"
+	permission_query_conditions["*"],
+	"retail.access_control.query_conditions",
 ]
 auth_hooks.insert(0, "retail.access_control.guard_request")
 for _event in ("before_validate", "validate", "before_save", "on_trash", "before_rename"):
-    _existing = doc_events["*"].get(_event, [])
-    if isinstance(_existing, str):
-        _existing = [_existing]
-    doc_events["*"][_event] = ["retail.access_control.validate_document", *_existing]
+	_existing = doc_events["*"].get(_event, [])
+	if isinstance(_existing, str):
+		_existing = [_existing]
+	doc_events["*"][_event] = ["retail.access_control.validate_document", *_existing]
 _existing_user_validate = doc_events["User"]["validate"]
 if isinstance(_existing_user_validate, str):
-    _existing_user_validate = [_existing_user_validate]
-doc_events["User"]["validate"] = [
-    "retail.access_control.prepare_super_user", *_existing_user_validate
-]
-override_whitelisted_methods.update({
-    "frappe.desk.search.get_names_for_mentions": "retail.access_control.get_names_for_mentions",
-    "frappe.core.doctype.user.user.reset_password": "retail.access_control.reset_password",
-})
+	_existing_user_validate = [_existing_user_validate]
+doc_events["User"]["validate"] = ["retail.access_control.prepare_super_user", *_existing_user_validate]
+override_whitelisted_methods.update(
+	{
+		"frappe.desk.search.get_names_for_mentions": "retail.access_control.get_names_for_mentions",
+		"frappe.core.doctype.user.user.reset_password": "retail.access_control.reset_password",
+	}
+)
 boot_session.append("retail.access_control.boot_session")
 after_install.append("retail.access_control.install")
 after_migrate.append("retail.access_control.install")
 for _access_doctype in ("User", "Employee"):
-    _scripts = doctype_js.get(_access_doctype, [])
-    if isinstance(_scripts, str):
-        _scripts = [_scripts]
-    doctype_js[_access_doctype] = [*_scripts, "public/js/forms/access_control.js"]
+	_scripts = doctype_js.get(_access_doctype, [])
+	if isinstance(_scripts, str):
+		_scripts = [_scripts]
+	doctype_js[_access_doctype] = [*_scripts, "public/js/forms/access_control.js"]
 
 # Preserve native permission popups while directing users to the right support contact.
 after_request = ["retail.permission_messages.after_request"]
 
 # Audited branch-day revisions and payment-method corrections (native forms).
 for _event in ("before_insert", "before_validate", "before_submit", "before_cancel", "on_trash"):
-    _handlers = doc_events.setdefault("POS Branch Day Closing", {}).get(_event, [])
-    if isinstance(_handlers, str):
-        _handlers = [_handlers]
-    doc_events["POS Branch Day Closing"][_event] = [*_handlers, "retail.pos_day_corrections.guard_day_document"]
+	_handlers = doc_events.setdefault("POS Branch Day Closing", {}).get(_event, [])
+	if isinstance(_handlers, str):
+		_handlers = [_handlers]
+	doc_events["POS Branch Day Closing"][_event] = [
+		*_handlers,
+		"retail.pos_day_corrections.guard_day_document",
+	]
 for _dt in ("POS Invoice", "Sales Invoice"):
-    for _event in ("before_validate", "before_cancel", "before_update_after_submit"):
-        _handlers = doc_events.setdefault(_dt, {}).get(_event, [])
-        if isinstance(_handlers, str):
-            _handlers = [_handlers]
-        doc_events[_dt][_event] = [*_handlers, "retail.pos_day_corrections.guard_corrected_document"]
+	for _event in ("before_validate", "before_cancel", "before_update_after_submit"):
+		_handlers = doc_events.setdefault(_dt, {}).get(_event, [])
+		if isinstance(_handlers, str):
+			_handlers = [_handlers]
+		doc_events[_dt][_event] = [*_handlers, "retail.pos_day_corrections.guard_corrected_document"]
 doc_events["POS Invoice"].setdefault("before_submit", []).append("retail.pos_day_corrections.guard_sale_day")
 after_install.append("retail.patches.setup_pos_day_corrections.execute")
 after_migrate.append("retail.patches.setup_pos_day_corrections.execute")
 
-doc_events.setdefault("POS Cashier Shift", {}).setdefault("before_validate", []).append("retail.pos_day_corrections.guard_closed_shift")
+doc_events.setdefault("POS Cashier Shift", {}).setdefault("before_validate", []).append(
+	"retail.pos_day_corrections.guard_closed_shift"
+)
 
 # Native collection corrections retain cancellation/amendment history.
 for _event in ("before_validate", "before_submit", "before_cancel", "before_update_after_submit", "on_trash"):
-    _handlers = doc_events.setdefault("Payment Entry", {}).get(_event, [])
-    if isinstance(_handlers, str):
-        _handlers = [_handlers]
-    doc_events["Payment Entry"][_event] = [*_handlers, "retail.pos_settlement_corrections.guard_payment"]
+	_handlers = doc_events.setdefault("Payment Entry", {}).get(_event, [])
+	if isinstance(_handlers, str):
+		_handlers = [_handlers]
+	doc_events["Payment Entry"][_event] = [*_handlers, "retail.pos_settlement_corrections.guard_payment"]
 
 # Selected license seats and emergency recovery.
 has_permission["Celesta License Settings"] = "retail.licensing.client.has_permission"
@@ -848,16 +897,37 @@ after_migrate.append("retail.auto_repeat_setup.install")
 doctype_js["User"].append("public/js/forms/sidebar_permissions.js")
 doc_events["User"]["validate"].append("retail.sidebar_permissions.validate_user")
 doc_events["User"].setdefault("on_update", []).append("retail.sidebar_permissions.user_updated")
-for _sidebar_event in ("before_validate", "before_save", "before_submit", "before_cancel", "on_trash", "before_update_after_submit"):
-    doc_events["*"].setdefault(_sidebar_event, []).append("retail.sidebar_permissions.validate_document")
+for _sidebar_event in (
+	"before_validate",
+	"before_save",
+	"before_submit",
+	"before_cancel",
+	"on_trash",
+	"before_update_after_submit",
+):
+	doc_events["*"].setdefault(_sidebar_event, []).append("retail.sidebar_permissions.validate_document")
 from retail.sidebar_registry import entries
-_sidebar_doctypes = {target for _entry in entries() for _kind, target in _entry["targets"] if _kind == "doctype"}
+
+_sidebar_doctypes = {
+	target for _entry in entries() for _kind, target in _entry["targets"] if _kind == "doctype"
+}
 for _sidebar_dt in _sidebar_doctypes:
-    for _mapping, _handler in (
-        (has_permission, "retail.sidebar_permissions.has_permission"),
-        (permission_query_conditions, "retail.sidebar_permissions.query_conditions"),
-    ):
-        _current = _mapping.get(_sidebar_dt, [])
-        if isinstance(_current, str):
-            _current = [_current]
-        _mapping[_sidebar_dt] = [*_current, _handler]
+	for _mapping, _handler in (
+		(has_permission, "retail.sidebar_permissions.has_permission"),
+		(permission_query_conditions, "retail.sidebar_permissions.query_conditions"),
+	):
+		_current = _mapping.get(_sidebar_dt, [])
+		if isinstance(_current, str):
+			_current = [_current]
+		_mapping[_sidebar_dt] = [*_current, _handler]
+
+# Frappe v15 imports fixtures/customizations between after_install and after_sync.
+# Run the existing setup only once those fields and workspace records exist.
+after_sync = [
+	"retail.build_asset_manifest.install",
+	"retail.install.ensure_workspace_routes",
+	*after_install,
+	*after_sync,
+]
+after_install = ["retail.install.prepare_fixture_doctypes"]
+after_migrate.append("retail.install.ensure_workspace_routes")

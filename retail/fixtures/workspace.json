@@ -6393,7 +6393,7 @@
   "roles": [],
   "sequence_id": 1.0,
   "shortcuts": [],
-  "title": "BOM"
+  "title": "Manufacturing BOM"
  },
  {
   "charts": [],
@@ -6428,7 +6428,7 @@
   "roles": [],
   "sequence_id": 2.0,
   "shortcuts": [],
-  "title": "Production Plan"
+  "title": "Manufacturing Production Plan"
  },
  {
   "charts": [],
@@ -6568,7 +6568,7 @@
   "roles": [],
   "sequence_id": 6.0,
   "shortcuts": [],
-  "title": "Quality Inspection"
+  "title": "Manufacturing Quality Inspection"
  },
  {
   "charts": [],
