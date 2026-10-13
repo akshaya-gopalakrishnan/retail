@@ -153,7 +153,7 @@ finally:
     frappe.destroy()
 opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
 def fetch(path, data=None):
-    request = urllib.request.Request("http://frontend" + path, data=data,
+    request = urllib.request.Request("http://frontend:8080" + path, data=data,
                                      headers={"Host": "retail-test.localhost"})
     return opener.open(request, timeout=30)
 for attempt in range(30):

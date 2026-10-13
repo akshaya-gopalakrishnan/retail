@@ -99,7 +99,6 @@ def create_site(site, origin, public_keys):
 		update_site_config("celesta_license_public_keys", public_keys)
 		update_site_config("celesta_license_state_path", f"/var/lib/celesta/{site}/license-state.json")
 		update_site_config("host_name", f"https://{site}")
-		frappe.db.commit()
 	finally:
 		frappe.destroy()
 

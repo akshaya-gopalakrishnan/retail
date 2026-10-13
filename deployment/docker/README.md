@@ -40,6 +40,17 @@ by the image's actual numeric service UID/GID with mode 0700. Only public keys,
 the HTTPS origin and the state path are configured; no signing private key,
 customer license credentials, or demo token is copied.
 
+Additional customers can share this production image and services while keeping
+separate databases, files and license-state directories:
+
+```bash
+python3 apps/retail/deployment/docker/manage.py create-site \
+  --directory /opt/retail-production/runtime --site NEXT_CUSTOMER_DOMAIN
+```
+
+Add each customer's own HTTPS/domain route. Image releases affect every site in
+that production project; do not use the production project for demo/staging.
+
 Choose a new directory **and project name** for a new environment. The example
 project cannot be used on a VPS that already has the manually created
 `retail-production` stack from INAYA provisioning: continue using that stack

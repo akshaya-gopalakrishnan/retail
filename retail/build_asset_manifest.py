@@ -101,6 +101,7 @@ def _install_image_assets(bench, source, assets):
 			mode="w", dir=path.parent, prefix=path.name + ".", delete=False
 		) as handle:
 			handle.write(json.dumps(data, indent=2) + "\n")
+			handle.flush()
 			temporary = Path(handle.name)
 		temporary.chmod(0o644)
 		temporary.replace(path)

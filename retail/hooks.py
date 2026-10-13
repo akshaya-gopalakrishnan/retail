@@ -736,7 +736,9 @@ boot_session = [boot_session, "retail.document_codes.boot", "retail.column_prefe
 scheduler_events = {"hourly": ["retail.document_codes.backfill_missing"]}
 
 # Retail owns loyalty validation and ledger reversals; no ERPNext core edits.
-override_doctype_class = {
+# Frappe v15 has no extend_doctype_class. Keep these existing scoped subclasses
+# for receipt immutability/loyalty/posting; replacing them changes business logic.
+override_doctype_class = {  # nosemgrep: frappe-semgrep-rules.rules.override-doctype-class
 	"Sales Invoice": "retail.loyalty_sales_invoice.RetailSalesInvoice",
 	"POS Invoice": "retail.pos_completed_sale.RetailPOSInvoice",
 	"POS Closing Entry": "retail.pos_realtime.RetailPOSClosingEntry",

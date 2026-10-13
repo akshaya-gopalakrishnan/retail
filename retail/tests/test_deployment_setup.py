@@ -131,3 +131,60 @@ class TestDeploymentSetup(unittest.TestCase):
 				with self.assertRaisesRegex(ValueError, "tracked Containerfile"):
 					manager.initialize(directory, args)
 			self.assertFalse(directory.exists())
+
+	def test_secret_is_readable_in_containers_but_protected_by_private_host_directories(self):
+		with tempfile.TemporaryDirectory() as folder:
+			directory = Path(folder) / "production"
+			args = argparse.Namespace(
+				site="first.example.com",
+				license_origin="https://license.example.com",
+				public_key=[base64.b64encode(bytes(32)).decode()],
+				project="retail-production",
+				port=8084,
+				image="candidate",
+			)
+			with patch.object(
+				manager.subprocess,
+				"check_output",
+				side_effect=[
+					json.dumps(
+						[{"Id": "sha256:verified", "Config": {"Labels": {"it.celestial.retail.image": "1"}}}]
+					),
+					"",
+				],
+			):
+				manager.initialize(directory, args)
+			self.assertEqual(directory.stat().st_mode & 0o777, 0o700)
+			self.assertEqual((directory / "secrets").stat().st_mode & 0o777, 0o700)
+			self.assertEqual((directory / "secrets/db-root-password").stat().st_mode & 0o777, 0o444)
+			config = json.loads((directory / "compose.json").read_text())
+			self.assertEqual(config["services"]["backend"]["image"], "sha256:verified")
+			self.assertNotIn("MYSQL_ROOT_PASSWORD", config["services"]["db"]["environment"])
+
+	def test_additional_customer_uses_its_own_site_without_reinitializing_stack(self):
+		with tempfile.TemporaryDirectory() as folder:
+			directory = Path(folder)
+			config = {
+				"project": "retail-production",
+				"site": "first.example.com",
+				"sites": ["first.example.com"],
+				"license_origin": "https://license.example.com",
+				"public_keys": [base64.b64encode(bytes(32)).decode()],
+			}
+			(directory / "deployment.json").write_text(json.dumps(config))
+			with (
+				patch.object(
+					manager.sys,
+					"argv",
+					["manage.py", "create-site", "--directory", folder, "--site", "second.example.com"],
+				),
+				patch.object(manager.getpass, "getpass", side_effect=["admin-password", "admin-password"]),
+				patch.object(manager.subprocess, "run") as runner,
+			):
+				manager.main()
+			commands = [call.args[0] for call in runner.call_args_list]
+			targets = [command[command.index("--site") + 1] for command in commands if "--site" in command]
+			self.assertEqual(targets, ["second.example.com"] * 4)
+			updated = json.loads((directory / "deployment.json").read_text())
+			self.assertEqual(updated["sites"], ["first.example.com", "second.example.com"])
+			self.assertEqual(updated["site"], "first.example.com")

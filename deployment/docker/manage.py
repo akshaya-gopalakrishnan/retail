@@ -188,7 +188,9 @@ def initialize(directory, args):
 	(directory / "secrets").mkdir(mode=0o700)
 	password = directory / "secrets/db-root-password"
 	password.write_text(secrets.token_hex(32) + "\n")
-	password.chmod(0o600)
+	# Private parent directory protects the file on the host; read-only mounts
+	# must also be readable by MariaDB after its entrypoint drops to mysql.
+	password.chmod(0o444)
 	metadata = {
 		"project": args.project,
 		"site": args.site,
@@ -196,6 +198,7 @@ def initialize(directory, args):
 		"port": args.port,
 		"license_origin": origin,
 		"public_keys": keys,
+		"sites": [],
 	}
 	(directory / "deployment.json").write_text(json.dumps(metadata, indent=2) + "\n")
 	(directory / "compose.json").write_text(
@@ -242,6 +245,7 @@ def main():
 		subprocess.run([*prefix, *command], env=env or environment, check=True)
 
 	compose("config", "--quiet")
+	site = validate_site(args.site or config["site"])
 	if args.action == "create-site":
 		admin = getpass.getpass("New site's Administrator password: ")
 		if not admin or admin != getpass.getpass("Confirm Administrator password: "):
@@ -258,7 +262,7 @@ def main():
 			"retail.deployment_setup",
 			"prepare-state",
 			"--site",
-			config["site"],
+			site,
 		)
 		command = [
 			"run",
@@ -274,18 +278,24 @@ def main():
 			"retail.deployment_setup",
 			"create-site",
 			"--site",
-			config["site"],
+			site,
 			"--license-origin",
 			config["license_origin"],
 		]
 		for key in config["public_keys"]:
 			command += ["--public-key", key]
 		compose(*command, env={**environment, "RETAIL_ADMIN_PASSWORD": admin})
-		compose("run", "--rm", "-T", "provisioner", "bench", "--site", config["site"], "migrate")
-		compose("run", "--rm", "-T", "provisioner", "bench", "--site", config["site"], "enable-scheduler")
+		compose("run", "--rm", "-T", "provisioner", "bench", "--site", site, "migrate")
+		compose("run", "--rm", "-T", "provisioner", "bench", "--site", site, "enable-scheduler")
+		config.setdefault("sites", [])
+		if site not in config["sites"]:
+			config["sites"].append(site)
+		(directory / "deployment.json").write_text(json.dumps(config, indent=2) + "\n")
 	elif args.action == "migrate":
-		compose("run", "--rm", "-T", "provisioner", "bench", "--site", config["site"], "migrate")
+		compose("run", "--rm", "-T", "provisioner", "bench", "--site", site, "migrate")
 	elif args.action == "up":
+		if not config.get("sites"):
+			raise ValueError("Create a site before starting application services")
 		compose("up", "-d")
 	else:
 		compose("ps", "-a")
