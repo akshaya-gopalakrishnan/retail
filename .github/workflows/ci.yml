@@ -21,11 +21,11 @@ jobs:
 
     services:
       redis-cache:
-        image: redis:alpine
+        image: redis:7-alpine
         ports:
           - 13000:6379
       redis-queue:
-        image: redis:alpine
+        image: redis:7-alpine
         ports:
           - 11000:6379
       mariadb:
@@ -78,7 +78,9 @@ jobs:
             ${{ runner.os }}-yarn-
 
       - name: Install MariaDB Client
-        run: sudo apt-get install mariadb-client-10.6
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mariadb-client
 
       - name: Setup
         run: |
