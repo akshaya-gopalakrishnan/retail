@@ -12,6 +12,12 @@
 			} catch { view._retail_list_order = []; }
 		}
 		const available = view.columns.map(column_key);
+		// Keep personal arrangements intact; only the default puts Status last.
+		if (!view._retail_list_order.length) {
+			const is_status = column => column.type === "Status" || column.df?.fieldname === "status";
+			return [...view.columns.filter(column => !is_status(column)),
+				...view.columns.filter(is_status)].map(column_key);
+		}
 		return [...view._retail_list_order.filter(name => available.includes(name)), ...available.filter(name => !view._retail_list_order.includes(name))];
 	}
 	function save_order(view) {

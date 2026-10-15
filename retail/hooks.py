@@ -953,3 +953,7 @@ after_migrate.append("retail.core_compat.setup.install")
 
 # Display warehouse titles while retaining native stock-value calculations.
 override_whitelisted_methods["erpnext.stock.dashboard_chart_source.warehouse_wise_stock_value.warehouse_wise_stock_value.get"] = "retail.chart_labels.warehouse_stock_value"
+
+# Seed once so subsequent Customize Form choices survive migrations.
+after_sync.append("retail.item_quick_entry.install")
+after_migrate.append("retail.item_quick_entry.install")
