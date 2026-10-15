@@ -53,8 +53,9 @@ not a purchased-module licence boundary.
 ## Protected administration
 
 Only Super Admin may edit roles, profiles, module assignments, user restrictions,
-POS operator privilege assignments, scripts, workflows or protected technical
-settings. A legacy System Manager account without Super Admin is also restricted.
+POS operator privilege assignments and protected administrator accounts.
+Import/export, workflows, reposting, customization and system tools retain native
+Frappe/ERPNext authorization. Retail sidebar restrictions remain in effect.
 Customer administrators can create unassigned users and maintain ordinary user
 details and passwords through the standard User form. Super Admin assigns their
 access. Role/module changes, including nested child records and native permission

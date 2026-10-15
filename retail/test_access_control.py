@@ -89,7 +89,7 @@ class TestAccessControl(unittest.TestCase):
 
     def test_legacy_system_manager_cannot_change_security(self):
         frappe.set_user(self.users["legacy_manager"])
-        for dt, name in (("Role Profile", "Administrator"), ("Role", "Employee"), ("System Settings", "System Settings")):
+        for dt, name in (("Role Profile", "Administrator"), ("Role", "Employee")):
             with self.subTest(doctype=dt):
                 doc = frappe.get_doc(dt, name)
                 self.assertFalse(access.has_permission(doc))
@@ -110,10 +110,6 @@ class TestAccessControl(unittest.TestCase):
         frappe.set_user(self.users["legacy_manager"])
         cases = [
             ("/api/method/frappe.core.page.permission_manager.permission_manager.update", {}),
-            ("/backups/private-database.sql.gz", {}),
-            ("/api/method/frappe.utils.backups.get_backup_encryption_key", {}),
-            ("/api/method/frappe.desk.doctype.system_console.system_console.execute_code", {}),
-            ("/api/method/run_doc_method", {"docs": '{"doctype": "System Console"}'}),
             ("/api/method/frappe.client.set_value", {"doctype": "Module Profile"}),
             ("/api/resource/Role%20Profile/Administrator", {}),
             ("/api/v2/document/User/" + self.users["super"], {}),
@@ -124,6 +120,28 @@ class TestAccessControl(unittest.TestCase):
             with self.subTest(path=path), patch.object(frappe.local, "request", frappe._dict(path=path), create=True), patch.object(frappe.local, "form_dict", frappe._dict(args), create=True):
                 with self.assertRaises(frappe.PermissionError):
                     access.guard_request()
+
+    def test_operational_tools_use_native_permissions(self):
+        frappe.set_user(self.users["legacy_manager"])
+        for dt in ("Data Import", "Data Export", "Workflow", "Workflow State",
+                   "Workflow Action Master", "Repost Accounting Ledger",
+                   "Repost Accounting Ledger Settings", "Repost Allowed Types",
+                   "System Settings", "Customize Form", "Workspace"):
+            with self.subTest(doctype=dt):
+                doc = frappe.get_doc({"doctype": dt})
+                self.assertIsNone(access.has_permission(doc, ptype="write"))
+                self.assertEqual(access.query_conditions(doctype=dt), "")
+                access.validate_document(doc)
+        for path, args in (
+            ("/api/method/frappe.core.doctype.data_import.data_import.form_start_import", {}),
+            ("/api/method/frappe.core.doctype.data_export.data_export.export_data", {}),
+            ("/api/method/frappe.desk.desk_page.getpage", {"name": "customize-form"}),
+            ("/api/method/run_doc_method", {"docs": '{"doctype": "Data Import"}'}),
+        ):
+            with self.subTest(path=path), patch.object(frappe.local, "request", frappe._dict(path=path), create=True), patch.object(frappe.local, "form_dict", frappe._dict(args), create=True):
+                access.guard_request()
+        frappe.set_user(self.users["staff"])
+        self.assertFalse(frappe.has_permission("Data Import", "create"))
 
     def test_role_profile_changes_propagate_using_native_behavior(self):
         profile = frappe.get_doc({"doctype": "Role Profile", "role_profile": "Access Test " + frappe.generate_hash(length=8), "roles": [{"role": "Stock User"}]}).insert()

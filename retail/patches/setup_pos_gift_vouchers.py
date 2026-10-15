@@ -1,6 +1,5 @@
 """Install only the voucher integration schema; preserve existing retail setup."""
 import frappe
-from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 
 
 def execute():
@@ -12,11 +11,8 @@ def execute():
 		frappe.throw("Duplicate POS references require reconciliation before voucher setup: " + frappe.as_json(duplicates))
 	for doctype in ("gift_voucher_ledger", "pos_sync_log"):
 		frappe.reload_doc("retail_app", "doctype", doctype, force=True)
-	create_custom_fields({"POS Invoice": [{
-		"fieldname": "custom_pos_completed_payload", "label": "Completed POS Payload",
-		"fieldtype": "Code", "options": "JSON", "read_only": 1, "hidden": 1, "no_copy": 1,
-		"insert_after": "external_pos_reference",
-	}]}, update=True)
+	from retail.pos_sync_schema import ensure_completed_payload_field
+	ensure_completed_payload_field()
 	from retail.promotions.gift_voucher import ensure_gift_voucher_invoice_fields
 	ensure_gift_voucher_invoice_fields()
 	frappe.db.sql("update `tabPOS Invoice` set external_pos_reference = NULL where external_pos_reference = ''")

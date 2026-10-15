@@ -363,6 +363,10 @@ def get_pos_sales_by_counter(
 		{"posting_date": posting_date, "no_counter": _("No Counter")},
 		as_dict=True,
 	)
+	from retail.chart_labels import names_for
+	names = names_for("POS Branch Counter", [row.counter for row in rows])
+	for row in rows:
+		row.counter = names.get(row.counter, row.counter)
 	return build_bar_chart(rows, "counter", "net_sales", _("Net Sales"))
 
 
@@ -530,6 +534,10 @@ def get_van_sales_by_van(
 		{"posting_date": posting_date, "no_van": _("No Van")},
 		as_dict=True,
 	)
+	from retail.chart_labels import names_for
+	names = names_for("Van Fleet", [row.van for row in rows])
+	for row in rows:
+		row.van = names.get(row.van, row.van)
 	return build_bar_chart(rows, "van", "net_sales", _("Net Sales"))
 
 

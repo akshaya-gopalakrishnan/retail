@@ -1,0 +1,28 @@
+name: Fresh Retail installation
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  fresh-install:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: apps/retail
+      - name: Use the supported HRMS release
+        run: |
+          git clone --filter=blob:none --no-checkout https://github.com/frappe/hrms.git apps/hrms
+          git -C apps/hrms checkout --detach e64a87695cf357a64b77867f9bbc47e0282c8b5d
+      - name: Build the candidate image from source
+        run: |
+          docker build -f apps/retail/deployment/docker/Containerfile \
+            --build-arg ERPNEXT_IMAGE=frappe/erpnext:v15.108.3 \
+            --label org.opencontainers.image.revision="${GITHUB_SHA}" \
+            -t retail-install-candidate .
+      - name: Install into an empty database and migrate twice
+        run: bash apps/retail/deployment/docker/validate_fresh_install.sh retail-install-candidate

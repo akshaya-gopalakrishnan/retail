@@ -65,3 +65,11 @@ retail.patches.repair_recovered_pos_display
 retail.patches.repair_failed_pos_log_links
 retail.patches.resize_business_home_charts
 retail.patches.remove_sales_return_shortcut
+
+retail.patches.promotion_hours_and_scope
+
+retail.patches.buy_get_promotion_scope
+retail.patches.remove_business_home_counter_chart
+retail.patches.items_fast_moving_chart
+retail.patches.accounts_unpaid_invoice_chart
+retail.patches.trim_workspace_charts

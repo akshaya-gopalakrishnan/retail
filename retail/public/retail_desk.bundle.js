@@ -8,6 +8,7 @@ import "./js/utils/column_preferences.js";
 import "./js/utils/scrollable_grid.js";
 import "./js/retail_keyboard.js";
 import "./js/document_code_list.js";
+import "./js/list_column_widths.js";
 import "./js/retail_navigation.js";
 import "./js/pages/van_stock_view.js";
 import "./js/van_document_wrapper.js";

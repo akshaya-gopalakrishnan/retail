@@ -19,9 +19,16 @@
 			const df = this.fields_map[entry.fieldname];
 			return df ? [{ ...df, columns: entry.columns, in_list_view: 1 }] : [];
 		});
-		const fields = this.user_defined_columns.length
+		let fields = this.user_defined_columns.length
 			? this.user_defined_columns
 			: this.editable_fields || this.docfields;
+		// A promotion's selected target stays visible even if saved columns omit it.
+		const target = this.retail_promotion_target;
+		if (target && this.fields_map[target]) {
+			fields = [this.fields_map[target], ...fields.filter(field =>
+				(typeof field === "string" ? field : field.fieldname) !== target)];
+			if (this.user_defined_columns.length) this.user_defined_columns = fields;
+		}
 		this.visible_columns = [];
 		const seen = new Set();
 		for (const field of fields) {
@@ -330,6 +337,7 @@
 		register("Sales Order", "items");
 		register("Sales Invoice", "items");
 		register("POS Invoice", "items");
+		register("Promo Price", "products", { pin_field: "item" });
 	}
 	boot();
 })();

@@ -1,19 +1,6 @@
 {
- "charts": [
-  {
-   "chart_name": "Promo Price Status",
-   "label": "Promo Price Status"
-  },
-  {
-   "chart_name": "Gift Voucher Promotion Status",
-   "label": "Gift Voucher Promotion Status"
-  },
-  {
-   "chart_name": "Gift Voucher Ledger Status",
-   "label": "Gift Voucher Ledger Status"
-  }
- ],
- "content": "[{\"id\":\"hdr_promotions\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Promotions</span>\",\"col\":12}},{\"id\":\"sc_promo_price\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Promo Price\",\"col\":3}},{\"id\":\"sc_buy_x_get_y_promotion\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Buy X Get Y Promotion\",\"col\":3}},{\"id\":\"sc_gift_voucher_promotion\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Gift Voucher Promotion\",\"col\":3}},{\"id\":\"sc_gift_voucher_ledger\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Gift Voucher Ledger\",\"col\":3}},{\"id\":\"sc_pricing_rule\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Pricing Rule\",\"col\":3}},{\"id\":\"sc_promotional_scheme\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Promotional Scheme\",\"col\":3}},{\"id\":\"sp_promotion_charts\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"chart_promo_price_status\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Promo Price Status\",\"col\":4}},{\"id\":\"chart_gift_voucher_promotion_status\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Gift Voucher Promotion Status\",\"col\":4}},{\"id\":\"chart_gift_voucher_ledger_status\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Gift Voucher Ledger Status\",\"col\":4}},{\"id\":\"sp_promotion_cards\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"card_promotion_setup\",\"type\":\"card\",\"data\":{\"card_name\":\"Promotion Setup\",\"col\":4}},{\"id\":\"card_promotion_history\",\"type\":\"card\",\"data\":{\"card_name\":\"Promotion History\",\"col\":4}}]",
+ "charts": [],
+ "content": "[{\"id\":\"hdr_promotions\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Promotions</span>\",\"col\":12}},{\"id\":\"sc_promo_price\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Promo Price\",\"col\":3}},{\"id\":\"sc_buy_x_get_y_promotion\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Buy X Get Y Promotion\",\"col\":3}},{\"id\":\"sc_gift_voucher_promotion\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Gift Voucher Promotion\",\"col\":3}},{\"id\":\"sc_gift_voucher_ledger\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Gift Voucher Ledger\",\"col\":3}},{\"id\":\"sc_pricing_rule\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Pricing Rule\",\"col\":3}},{\"id\":\"sc_promotional_scheme\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Promotional Scheme\",\"col\":3}},{\"id\":\"sp_promotion_charts\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"sp_promotion_cards\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"card_promotion_setup\",\"type\":\"card\",\"data\":{\"card_name\":\"Promotion Setup\",\"col\":4}},{\"id\":\"card_promotion_history\",\"type\":\"card\",\"data\":{\"card_name\":\"Promotion History\",\"col\":4}}]",
  "creation": "2026-08-25 09:24:35.646906",
  "custom_blocks": [],
  "docstatus": 0,

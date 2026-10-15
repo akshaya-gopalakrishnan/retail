@@ -5,6 +5,8 @@ from frappe import _
 from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 from frappe.utils import add_days, flt, getdate, nowdate
 
+from retail.promotions.schedule import is_active
+
 
 SALES_DOCTYPES = {"Sales Invoice", "POS Invoice"}
 
@@ -219,11 +221,8 @@ def cancel_issued_gift_vouchers(doc, method=None):
 
 
 def get_active_promotions(doc):
-	posting_date = getdate(doc.get("posting_date") or nowdate())
 	filters = {
 		"enabled": 1,
-		"active_from": ("<=", posting_date),
-		"active_to": (">=", posting_date),
 	}
 	if doc.get("company"):
 		filters["company"] = ("in", ["", doc.company])
@@ -244,7 +243,8 @@ def get_active_promotions(doc):
 		order_by="min_sales_value desc, creation asc",
 	)
 
-	return [frappe.get_doc("Gift Voucher Promotion", promotion.name) for promotion in promotions if promotion_matches_doc(promotion, doc)]
+	documents = [frappe.get_doc("Gift Voucher Promotion", promotion.name) for promotion in promotions]
+	return [promotion for promotion in documents if is_active(promotion, doc) and promotion_matches_doc(promotion, doc)]
 
 
 def promotion_matches_doc(promotion, doc):

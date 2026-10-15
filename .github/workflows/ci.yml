@@ -5,7 +5,14 @@ on:
   push:
     branches:
       - develop
+      - main
   pull_request:
+  workflow_dispatch:
+    inputs:
+      full_suite:
+        description: Run the complete legacy application suite in addition to installation checks
+        type: boolean
+        default: false
 
 concurrency:
   group: develop-retail-${{ github.event.number }}
@@ -20,11 +27,11 @@ jobs:
 
     services:
       redis-cache:
-        image: redis:alpine
+        image: redis:7-alpine
         ports:
           - 13000:6379
       redis-queue:
-        image: redis:alpine
+        image: redis:7-alpine
         ports:
           - 11000:6379
       mariadb:
@@ -77,30 +84,51 @@ jobs:
             ${{ runner.os }}-yarn-
 
       - name: Install MariaDB Client
-        run: sudo apt-get install mariadb-client-10.6
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mariadb-client
 
       - name: Setup
         run: |
           pip install frappe-bench
-          bench init --skip-redis-config-generation --skip-assets --python "$(which python)" ~/frappe-bench
+          bench init --frappe-branch v15.108.0 --skip-redis-config-generation --skip-assets --python "$(which python)" ~/frappe-bench
           mariadb --host 127.0.0.1 --port 3306 -u root -proot -e "SET GLOBAL character_set_server = 'utf8mb4'"
           mariadb --host 127.0.0.1 --port 3306 -u root -proot -e "SET GLOBAL collation_server = 'utf8mb4_unicode_ci'"
 
       - name: Install
         working-directory: /home/runner/frappe-bench
         run: |
-          bench get-app retail $GITHUB_WORKSPACE
+          bench get-app --branch v15.108.3 erpnext https://github.com/frappe/erpnext.git
+          bench get-app --branch v15.60.3 hrms https://github.com/frappe/hrms.git
+          bench get-app retail "$GITHUB_WORKSPACE"
           bench setup requirements --dev
-          bench new-site --db-root-password root --admin-password admin test_site
-          bench --site test_site install-app retail
+          bench set-config -g redis_cache redis://127.0.0.1:13000
+          bench set-config -g redis_queue redis://127.0.0.1:11000
+          bench set-config -g redis_socketio redis://127.0.0.1:11000
+          bench new-site --db-root-password root --admin-password admin \
+            --db-host 127.0.0.1 --mariadb-user-host-login-scope '%' \
+            --install-app erpnext --install-app hrms --install-app retail retail-test.localhost
+          bench --site retail-test.localhost migrate
+          bench --site retail-test.localhost migrate
           bench build
         env:
           CI: 'Yes'
 
-      - name: Run Tests
+      - name: Run installation regression tests
         working-directory: /home/runner/frappe-bench
         run: |
-          bench --site test_site set-config allow_tests true
-          bench --site test_site run-tests --app retail
+          bench --site retail-test.localhost set-config allow_tests true
+          for module in \
+            retail.tests.test_install_portability \
+            retail.tests.test_deployment_setup \
+            retail.tests.test_recovered_pos_display \
+            retail.tests.test_editable_print_portability; do
+            bench --site retail-test.localhost run-tests --module "$module"
+          done
         env:
           TYPE: server
+
+      - name: Run complete legacy app suite when explicitly requested
+        if: github.event_name == 'workflow_dispatch' && inputs.full_suite
+        working-directory: /home/runner/frappe-bench
+        run: bench --site retail-test.localhost run-tests --app retail

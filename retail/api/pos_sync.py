@@ -4,7 +4,7 @@ from decimal import Decimal, InvalidOperation
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import cint, flt, getdate, now_datetime, nowdate
+from frappe.utils import cint, flt, getdate, get_system_timezone, now_datetime, nowdate
 
 from erpnext.accounts.report.customer_ledger_summary.customer_ledger_summary import (
 	PartyLedgerSummaryReport,
@@ -13,6 +13,7 @@ from erpnext.accounts.party import get_due_date, get_party_account
 from erpnext.selling.doctype.customer.customer import check_credit_limit, get_credit_limit
 
 from retail.customer_credit_notes import add_credit_note_snapshots
+from retail.promotions.api_payload import matching_item_groups, promotion_payload
 from retail.domains.item.vat_pricing import get_item_tax_rate
 from retail.domains.item.arabic_name import fill_arabic_packing_names
 from retail.pos_rate_audit import create_for_pos_invoice
@@ -837,6 +838,7 @@ def _append_invoice_items(doc, payload, counter_doc, is_return=False):
 
 		item_code = _resolve_item(row)
 		item = frappe.get_cached_doc("Item", item_code)
+		from retail.pos_item_names import resolve_item_name
 		template = item.get("custom_tax")
 		requested_template = row.get("sales_vat_template") or row.get("item_tax_template")
 		# The POS may have billed using an older template. This is audit data only.
@@ -854,6 +856,8 @@ def _append_invoice_items(doc, payload, counter_doc, is_return=False):
 			"items",
 			{
 				"item_code": item_code,
+				"item_name": resolve_item_name(item, row),
+				"barcode": row.get("barcode"),
 				"item_tax_template": template,
 				"qty": qty,
 				"rate": rate - discount,
@@ -1123,11 +1127,17 @@ def _company_bill_format(company):
 
 
 def _promotion_doc_payload(doc, child_table, child_fields):
-	data = doc.as_dict()
+	data = promotion_payload(doc)
 	data[child_table] = [
 		{field: row.get(field) for field in child_fields}
 		for row in doc.get(child_table) or []
 	]
+	resolved_groups = {}
+	for row in data[child_table]:
+		group = row.get("item_group")
+		if group not in resolved_groups:
+			resolved_groups[group] = matching_item_groups(group)
+		row["matching_item_groups"] = resolved_groups[group]
 	data.pop("linked_schemes", None)
 	return data
 
@@ -1136,8 +1146,7 @@ def _get_promotion_docs(doctype, counter_doc, modified_after=None):
 	filters = []
 	if modified_after:
 		filters.append(["modified", ">", modified_after])
-	else:
-		filters.append(["active_to", ">=", nowdate()])
+
 	names = frappe.get_all(doctype, filters=filters, pluck="name", order_by="priority desc, modified desc")
 	docs = [frappe.get_doc(doctype, name) for name in names]
 	return [
@@ -1167,25 +1176,51 @@ def get_pos_promo_prices(branch=None, counter_code=None, modified_after=None):
 		"idx",
 		"item",
 		"barcode",
+		"brand",
 		"item_group",
 		"uom",
 		"price_list",
 		"qty",
 		"current_price",
 		"current_price_including_tax",
+		"purchase_price",
+		"purchase_price_including_tax",
 		"vat_rate",
 		"promo_price",
 		"promo_price_including_tax",
 		"discount_percent",
+		"discount_amount",
+		"discount_input",
 		"max_qty",
 	]
 	promotions = [
 		_promotion_doc_payload(doc, "products", child_fields)
 		for doc in _get_promotion_docs("Promo Price", counter_doc, modified_after)
 	]
+	for promotion in promotions:
+		for row in promotion["products"]:
+			percent = flt(row["discount_percent"])
+			for field in ("purchase_price", "purchase_price_including_tax", "discount_amount"):
+				row[field] = flt(row[field])
+			# Older promotions have no recorded input method or amount. Derive
+			# their display values from the saved selling-price snapshot only.
+			row["discount_input"] = row["discount_input"] or ("Percent" if percent else "")
+			if row["discount_input"] == "Percent":
+				row["discount_amount"] = flt(flt(row["current_price_including_tax"]) * percent / 100, 2)
+			# Keep fixed-rate inputs untouched: existing clients use zero prices
+			# plus discount_percent for discount rules. Previews are separate.
+			row["calculated_promo_price"] = (
+				flt(flt(row["current_price"]) * (1 - percent / 100), 2)
+				if percent else flt(row["promo_price"])
+			)
+			row["calculated_promo_price_including_tax"] = (
+				flt(flt(row["current_price_including_tax"]) * (1 - percent / 100), 2)
+				if percent else flt(row["promo_price_including_tax"])
+			)
 	return {
 		"status": "Success",
 		"server_time": now_datetime(),
+		"server_timezone": get_system_timezone(),
 		"branch": counter_doc.branch,
 		"counter": counter_doc.name,
 		"counter_code": counter_doc.counter_code,
@@ -1196,7 +1231,7 @@ def get_pos_promo_prices(branch=None, counter_code=None, modified_after=None):
 @frappe.whitelist()
 def get_pos_buy_x_get_y_promotions(branch=None, counter_code=None, modified_after=None):
 	_payload, counter_doc, modified_after = _pos_promotion_payload(branch, counter_code, modified_after)
-	child_fields = ["name", "idx", "add_to", "item", "item_group", "uom"]
+	child_fields = ["name", "idx", "add_to", "item", "item_group", "brand", "uom"]
 	promotions = [
 		_promotion_doc_payload(doc, "products", child_fields)
 		for doc in _get_promotion_docs("Buy X Get Y Promotion", counter_doc, modified_after)
@@ -1204,6 +1239,7 @@ def get_pos_buy_x_get_y_promotions(branch=None, counter_code=None, modified_afte
 	return {
 		"status": "Success",
 		"server_time": now_datetime(),
+		"server_timezone": get_system_timezone(),
 		"branch": counter_doc.branch,
 		"counter": counter_doc.name,
 		"counter_code": counter_doc.counter_code,
@@ -1418,6 +1454,7 @@ def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
 	return {
 		"status": "Success",
 		"server_time": now_datetime(),
+		"server_timezone": get_system_timezone(),
 		"counter": counter_doc.as_dict(),
 		"tax_config": _pos_tax_config(counter_doc),
 		"bill_format": _company_bill_format(counter_doc.company),
@@ -1452,6 +1489,8 @@ def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
 			],
 			limit_page_length=0,
 		),
+		"promo_prices": get_pos_promo_prices(branch, counter_code, modified_after)["promotions"],
+		"buy_x_get_y_promotions": get_pos_buy_x_get_y_promotions(branch, counter_code, modified_after)["promotions"],
 		"gift_voucher_promotions": get_gift_voucher_promotions({"branch": branch, "counter_code": counter_code})["promotions"],
 		"customers": _customer_master_rows(counter_doc.company, modified_filter),
 		"operators": _operator_master_rows(branch, modified_after),

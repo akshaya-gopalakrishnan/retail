@@ -158,8 +158,9 @@ def resolve_completed(payload):
 			terminal = payload.get("pos_terminal_id") or payload.get("terminal_id")
 			if terminal and doc.terminal_id != terminal:
 				frappe.throw("Permanent session belongs to another terminal.")
-			if payload.get("external_shift_reference") and frappe.db.get_value(
-				"POS Cashier Shift", doc.cashier_shift, "external_shift_reference") != payload["external_shift_reference"]:
+			# Compare the resolved identity, using the same database lookup as
+			# above; reference text may differ in case under the site's collation.
+			if payload.get("external_shift_reference") and doc.cashier_shift != result.get("cashier_shift"):
 				frappe.throw("Permanent session belongs to another shift.")
 			result.pos_shift_no = doc.pos_opening_entry
 		result[internal] = name

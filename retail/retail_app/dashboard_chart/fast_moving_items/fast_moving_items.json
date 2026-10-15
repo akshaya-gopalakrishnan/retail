@@ -1,0 +1,22 @@
+{
+ "chart_name": "Fast Moving Items",
+ "name": "Fast Moving Items",
+ "doctype": "Dashboard Chart",
+ "chart_type": "Report",
+ "report_name": "Fast Moving Items",
+ "document_type": "Sales Invoice",
+ "module": "Retail-app",
+ "is_public": 1,
+ "is_standard": 1,
+ "type": "Bar",
+ "timeseries": 0,
+ "use_report_chart": 0,
+ "x_field": "item_name",
+ "y_axis": [
+  {
+   "y_field": "net_qty"
+  }
+ ],
+ "filters_json": "{\"limit\": 10}",
+ "dynamic_filters_json": "{\"from_date\": \"frappe.datetime.add_days(frappe.datetime.get_today(), -30)\", \"to_date\": \"frappe.datetime.get_today()\"}"
+}
