@@ -92,6 +92,8 @@ Response example:
     "packing_details": [],
     "item_prices": [],
     "scale_barcode_formats": [],
+    "promo_prices": [],
+    "buy_x_get_y_promotions": [],
     "gift_voucher_promotions": [],
     "customers": [],
     "operators": [],
@@ -148,6 +150,8 @@ ID in `customer` and the unpaid bill amount in `credit_sale_amount`; do not send
 `Customer` as a cash/card payment row.
 
 Keep item/packing `disabled`, `is_fast_plu_item`, barcode, UOM, `conversion_factor`, `current_stock`, selling rates and VAT fields. Use `packing_name` for display. Selling rates include VAT; do not add VAT again.
+
+For .NET POS sales, send the selected barcode on each item row. Retail resolves the invoice name by Item Code + Barcode against that Item's packing rows. Only when barcode is missing, a packing sale's name is generated as original Item name + sold UOM + conversion factor (for example `Aqua Fresh Water 1.5 ltr - Pack x4`). Stock-unit sales with factor 1 retain the original name. A present unmatched barcode does not trigger this generated fallback; the submitted `item_name`, when supplied, is retained, otherwise the original Item name is used. This affects display identity only, not quantities or financial values.
 
 Save changed records without deleting records missing from a changes-only reply. Replace each returned item's full `packings` list and the full `scale_barcode_formats` list. Refresh all masters regularly because permission and customer-balance changes may not appear in a changes-only download.
 
@@ -1177,28 +1181,153 @@ Response example:
 
 ## Promotions, loyalty and gift vouchers
 
+### Dates, hours and scope for .NET
+
+The three promotion downloads below and `get_pos_master_data` include the new
+schedule fields. Master data returns `promo_prices`, `buy_x_get_y_promotions`,
+and `gift_voucher_promotions`. Promo Price and Buy X Get Y use the master
+`modified_after` filter; gift voucher promotions remain a full scoped snapshot.
+The response also includes `server_timezone` (for example `Asia/Dubai`). Use
+this timezone to interpret the sale time and the promotion hours.
+
+| JSON field | Format / meaning |
+| --- | --- |
+| `active_from`, `active_to` | Separate date values: `yyyy-MM-dd` or `null` for an unrestricted boundary. |
+| `active_from_time`, `active_to_time` | Separate daily time values: `HH:mm:ss` or `null` for an unrestricted boundary. Midnight is `00:00:00`, not null. |
+| `promotion_scope` | Promo Price: `ITEM`, `CATEGORY`, `BRAND`, or `WHOLE BILL`. Buy X Get Y: `ITEM`, `CATEGORY`, or `BRAND` for Buy Item rows. |
+| Product `item`, `item_group`, `brand` | Target Item, Category (Item Group), or Brand, according to the selected scope. |
+| Product `matching_item_groups` | Category names including the selected Category and all descendants. Empty for Item, Brand and Whole Bill rows. |
+
+Apply promotions to the bill's original sale date/time in `server_timezone`:
+
+- Dates only: valid all day within the dates, including both boundary dates.
+- Times only: recur daily, with no date restriction.
+- Both: the daily time window applies on every date in the date range.
+- Both time boundaries are inclusive. If the end is earlier than the start,
+  the window crosses midnight: `22:00:00`–`02:00:00` matches 23:00 and 01:00.
+- A null start or end is unrestricted on that side. Do not convert null to
+  midnight, today's date, or zero.
+- Skip `disabled: 1` Promo Price/Buy X Get Y offers and `enabled: 0` voucher
+  offers. Keep existing company, warehouse, quantity, value, price-list,
+  priority and free-item rules.
+
+For Promo Price and Buy X Get Y Buy Item rows, use only the selected scope (WHOLE BILL applies only to Promo Price):
+
+| `promotion_scope` | How .NET matches the product row |
+| --- | --- |
+| `ITEM` | Match the downloaded Item code against `products[].item`. |
+| `CATEGORY` | Match the Item master’s `item_group` against `products[].matching_item_groups`, which includes the selected Category and all descendants. |
+| `BRAND` | Match `products[].brand` against the Item master's `brand`. |
+| `WHOLE BILL` | One product row applies to all eligible bill items; Item, Category and Brand targets are blank. Apply the row's discount or price once per eligible item, without an additional bill header discount. |
+
+Gift voucher `excluded_item_groups` rows also include `matching_item_groups`.
+Exclude an Item when its Item master `item_group` occurs in any of these lists.
+For example, `{"item_group":"Beverages","matching_item_groups":["Beverages","Juice"]}`
+excludes both categories. This is a snapshot of the category tree; refresh the
+full promotion download after reorganizing categories.
+
+Example targets: ITEM `{ "item": "ITEM-001", "item_group": "", "brand": "" }`;
+CATEGORY `{ "item": "", "item_group": "Beverages", "brand": "" }`;
+BRAND `{ "item": "", "item_group": "", "brand": "Example Brand" }`;
+WHOLE BILL `{ "item": "", "item_group": "", "brand": "" }`.
+
+After updating the .NET response models and promotion matching, do one full
+promotion download **without `modified_after`** to refresh existing cached
+rules. Full downloads include disabled, expired, future and undated records;
+filter eligibility locally. Incremental replies update records by `name` and
+include changes that disable or expire a rule. Never reprice completed bills.
+
+
 ### Download special prices
 
 `GET /api/method/retail.api.pos_sync.get_pos_promo_prices?branch=Karama&counter_code=C001`
 
-Optional `modified_after`. Keep a separate saved time for each API. Apply the returned dates, scope and disabled flags; do not recalculate saved bills.
+Optional `modified_after`. Keep a separate saved time for each API. Apply the returned dates, scope and disabled flags; do not recalculate saved bills. The full download includes disabled, expired, future and undated promotions. Incremental downloads include modified records, so the POS can replace or disable its cached rules.
 
 Request body: none; use the URL values above.
 
-Response example:
+Response example (existing fields retained; new fields are additive):
 
 ```json
 {
   "message": {
     "status": "Success",
-    "server_time": "2026-09-30 09:00:00",
+    "server_time": "2026-10-14 09:00:00",
+    "server_timezone": "Asia/Dubai",
     "branch": "Karama",
     "counter": "Karama-C001",
     "counter_code": "C001",
-    "promotions": []
+    "promotions": [
+      {
+        "name": "Chicken offer",
+        "description": "Chicken offer",
+        "disabled": 0,
+        "active_from": "2026-10-14",
+        "active_to": "2026-10-31",
+        "active_from_time": "09:00:00",
+        "active_to_time": "12:00:00",
+        "promotion_scope": "ITEM",
+        "company": "Example Company",
+        "warehouse": "Stores - EC",
+        "min_qty": 1,
+        "max_qty": 10,
+        "min_sales_value": 0,
+        "priority": "1",
+        "notes": "Offer while stocks last",
+        "modified": "2026-10-14 08:00:00",
+        "products": [
+          {
+            "name": "example-product-row",
+            "idx": 1,
+            "item": "ITEM-001",
+            "item_group": "",
+            "brand": "",
+            "matching_item_groups": [],
+            "barcode": "BC0048800",
+            "qty": 1,
+            "uom": "Nos",
+            "price_list": "Standard Selling",
+            "current_price": 9.52,
+            "current_price_including_tax": 10.00,
+            "purchase_price": 4.76,
+            "purchase_price_including_tax": 5.00,
+            "vat_rate": 5,
+            "discount_input": "Amount",
+            "discount_amount": 1.00,
+            "discount_percent": 10.00,
+            "promo_price": 0,
+            "promo_price_including_tax": 0,
+            "calculated_promo_price": 8.57,
+            "calculated_promo_price_including_tax": 9.00,
+            "max_qty": 5
+          }
+        ]
+      }
+    ]
   }
 }
 ```
+
+Each product contains every Promo Price Item field. The parent includes the saved promotion details and Frappe document metadata; internal `linked_schemes` are excluded.
+
+| Form column | JSON field | Meaning |
+| --- | --- | --- |
+| Item / Category / Brand | `item` / `item_group` / `brand` | Use the target selected by `promotion_scope`; WHOLE BILL has no item target. Resolve names through master data. |
+| Cu.SP Ex.VAT / Cu.SP In.VAT | `current_price` / `current_price_including_tax` | Saved selling-price snapshot, using the form's Qty basis. |
+| Cu.PP Ex.VAT / Cu.PP In.VAT | `purchase_price` / `purchase_price_including_tax` | Saved purchase reference rates for the selected UOM; not stock valuation or COGS. |
+| Discount Amount | `discount_amount` | Amount against Cu.SP In.VAT; counterpart derived when percentage is the input. |
+| Discount % | `discount_percent` | Numeric percentage, not a formatted string; show with two decimals in .NET (`F2`). |
+| Discount input | `discount_input` | `Amount`, `Percent`, or empty for a fixed price/no discount. Clear the selected input before switching methods. |
+| Pro.P Ex.VAT / Pro.P In.VAT preview | `calculated_promo_price` / `calculated_promo_price_including_tax` | Two-decimal preview matching the form; zero is valid for 100% discount. |
+| Fixed promo price inputs | `promo_price` / `promo_price_including_tax` | Existing fixed-rate fields, unchanged. They remain zero/empty on discount-based offers. |
+| VAT %, Qty, UOM, Barcode, Price List | `vat_rate`, `qty`, `uom`, `barcode`, `price_list` | Saved row values. |
+| Max.Qty in One Sale | Product `max_qty` | Row limit; use the parent `max_qty` when the row limit is zero. |
+
+.NET must apply **one promotion method**: when `discount_percent` is nonzero, use that discount rule; do not also subtract `discount_amount` or apply a calculated preview as another discount. When it is zero, retain the existing fixed-price behavior. `discount_input` describes the form input; the percentage is still the existing discount-rule contract for POS clients. Item Group offers use the percentage against each matching item's price; their zero price previews are not fixed item rates.
+
+Calculated previews use the saved selling prices and percentage, rounded to two decimals. Purchase rates are saved snapshots and update when the promotion is saved; changing only the Item does not modify this promotion's incremental-download timestamp. Older percentage offers without `discount_input` return `Percent` and a derived amount. Numeric JSON values may appear as `10.0` rather than `10.00`; formatting belongs in the POS display. Dates retain `yyyy-MM-dd` strings.
+
+After deploying this update, download once **without `modified_after`** to refresh existing cached offers with the additional fields. Then resume incremental downloads. Add the six new product properties to the .NET response model: `purchase_price`, `purchase_price_including_tax`, `discount_amount`, `discount_input`, `calculated_promo_price`, and `calculated_promo_price_including_tax`.
 
 ### Download buy/get offers
 
@@ -1214,14 +1343,50 @@ Response example:
 {
   "message": {
     "status": "Success",
-    "server_time": "2026-09-30 09:00:00",
+    "server_time": "2026-10-14 09:00:00",
+    "server_timezone": "Asia/Dubai",
     "branch": "Karama",
     "counter": "Karama-C001",
     "counter_code": "C001",
-    "promotions": []
+    "promotions": [
+      {
+        "name": "Buy 2 Get 1",
+        "description": "Buy 2 Get 1",
+        "disabled": 0,
+        "promotion_scope": "ITEM",
+        "active_from": null,
+        "active_to": null,
+        "active_from_time": "09:00:00",
+        "active_to_time": "12:00:00",
+        "company": "Example Company",
+        "warehouse": "Stores - EC",
+        "buy_qty": 2,
+        "free_qty": 1,
+        "same_product_only": 1,
+        "priority": "1",
+        "modified": "2026-10-14 08:00:00",
+        "products": [
+          {
+            "name": "example-buy-row",
+            "idx": 1,
+            "add_to": "Buy Item",
+            "item": "ITEM-001",
+            "item_group": "",
+            "brand": "",
+            "matching_item_groups": [],
+            "uom": "Nos"
+          }
+        ]
+      }
+    ]
   }
 }
 ```
+
+Buy Item rows follow `promotion_scope`. Free Item rows always identify a specific
+`item`; their `item_group` and `brand` are blank. With `same_product_only: 1`,
+the free product is the qualifying purchased Item, including when qualification
+uses CATEGORY or BRAND. Quantity and free-quantity calculations are unchanged.
 
 ### Download loyalty programs
 
@@ -1503,7 +1668,7 @@ Response example:
 
 `POST /api/method/retail.api.gift_vouchers.get_gift_voucher_promotions`
 
-Also included in master data. Use a full download; `server_date` is not a changes-since timestamp.
+Also included in master data. Use a full download; `server_date` is not a changes-since timestamp. The standalone API also accepts `modified_after`; save `server_time` after storing its reply when using incremental downloads.
 
 Request JSON:
 
@@ -1514,7 +1679,32 @@ Request JSON:
 Response example:
 
 ```json
-{"message": {"promotions": [], "server_date": "2026-09-30"}}
+{
+  "message": {
+    "server_date": "2026-10-14",
+    "server_time": "2026-10-14 09:00:00",
+    "server_timezone": "Asia/Dubai",
+    "promotions": [
+      {
+        "name": "Spend 100 Get Voucher",
+        "description": "Spend 100 Get Voucher",
+        "enabled": 1,
+        "active_from": "2026-10-14",
+        "active_to": "2026-10-31",
+        "active_from_time": "18:00:00",
+        "active_to_time": "22:00:00",
+        "company": "Example Company",
+        "warehouse": "Stores - EC",
+        "min_sales_value": 100,
+        "voucher_amount": 10,
+        "multiply_with_sales_amount": 0,
+        "expiry_days": 30,
+        "modified": "2026-10-14 08:00:00",
+        "excluded_item_groups": []
+      }
+    ]
+  }
+}
 ```
 
 ## Sync checks

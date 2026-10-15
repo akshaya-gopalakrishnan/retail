@@ -4,7 +4,7 @@ import frappe
 from frappe import _
 from frappe.utils import flt, now_datetime, nowdate
 
-from erpnext.accounts.report.accounts_receivable.accounts_receivable import ReceivablePayableReport
+from retail.core_compat.accounts_receivable import ReceivablePayableReport
 from erpnext.accounts.utils import get_currency_precision
 
 

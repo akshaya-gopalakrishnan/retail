@@ -1,0 +1,74 @@
+.retail-list-resize, .retail-list-reorder { display: none; }
+
+@media (min-width: 768px) {
+	.retail-list-widths {
+		overflow-x: auto;
+		.list-row, .list-row-head {
+			width: var(--retail-list-width);
+			min-width: 100%;
+		}
+		.list-row-head {
+			min-width: calc(100% - var(--retail-list-gutter, 0px));
+		}
+		.list-row > .level-left, .list-row-head > .level-left:not(.checkbox-actions) {
+			flex: 1 0 auto;
+			min-width: 0;
+			overflow: visible;
+		}
+		.list-row > .level-right, .list-row-head > .level-right {
+			flex: 0 0 130px;
+			min-width: 130px;
+		}
+		.list-row-col {
+			order: var(--retail-list-column-order, 0);
+			flex: 0 0 var(--retail-list-column-width) !important;
+			width: var(--retail-list-column-width);
+			min-width: 0;
+			box-sizing: border-box;
+		}
+		.list-row-head .list-row-col {
+			position: relative;
+			padding-inline-end: 30px;
+		}
+		// Native numeric cells carry text-right; override it only in Retail lists.
+		.list-row-col.text-right,
+		.list-row-col.text-right div {
+			text-align: center !important;
+		}
+		.list-row-col.text-right.list-subject {
+			justify-content: center;
+		}
+		.list-row-head .list-row-col.text-right {
+			// Balance the space reserved for drag controls so labels stay centred.
+			padding-inline-start: 30px;
+		}
+		.retail-list-reorder {
+			display: block;
+			position: absolute;
+			inset-inline-end: 10px;
+			top: 0;
+			bottom: 0;
+			width: 18px;
+			cursor: grab;
+			text-align: center;
+			color: var(--text-muted);
+		}
+		.retail-list-reorder:active { cursor: grabbing; }
+		.retail-list-drop-target { box-shadow: inset 2px 0 var(--primary); }
+		.retail-list-resize {
+			display: block;
+			position: absolute;
+			inset-inline-end: 0;
+			top: 0;
+			bottom: 0;
+			width: 8px;
+			cursor: col-resize;
+			touch-action: none;
+			border-inline-end: 1px solid var(--border-color);
+		}
+		.retail-list-resize:focus, .retail-list-resize:hover {
+			border-color: var(--primary);
+			outline: none;
+		}
+	}
+}

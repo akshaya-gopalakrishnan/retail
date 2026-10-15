@@ -263,10 +263,57 @@ def run_query_report(
 	)
 
 	if report_name == "Stock Ledger":
+		add_stock_ledger_pos_item_names(result)
 		add_stock_ledger_movement_types(result)
 		add_stock_ledger_foc_markers(result)
 
+	from retail.chart_labels import report_labels
+	report_labels(result)
 	return result
+
+
+def add_stock_ledger_pos_item_names(result):
+	"""Resolve exact voucher details, including repeated items in one invoice."""
+	rows = (result or {}).get("result") or []
+	vouchers = get_voucher_filters(rows)
+	if not vouchers:
+		return
+	entries = frappe.get_all("Stock Ledger Entry", filters={
+		"voucher_no": ["in", tuple(vouchers)], "is_cancelled": 0, "docstatus": ["<", 2],
+	}, fields=["posting_datetime as date", "item_code", "warehouse", "voucher_type",
+		"voucher_no", "voucher_detail_no", "actual_qty", "stock_value_difference",
+		"qty_after_transaction"], order_by="posting_datetime, creation")
+	by_key = {}
+	for entry in entries:
+		by_key.setdefault(get_stock_ledger_row_key(entry), []).append(entry)
+	documents = {}
+	from retail.pos_item_names import resolve_item_name
+	for row in rows:
+		if not isinstance(row, dict):
+			continue
+		matches = by_key.get(get_stock_ledger_row_key(row)) or []
+		if not matches:
+			continue
+		entry = matches.pop(0)
+		if entry.voucher_type not in ("POS Invoice", "Sales Invoice"):
+			continue
+		key = (entry.voucher_type, entry.voucher_no)
+		if key not in documents:
+			documents[key] = frappe.get_doc(*key)
+		doc = documents[key]
+		if doc.get("pos_sync_source") != "Offline POS":
+			continue
+		line = next((line for line in doc.items if line.name == entry.voucher_detail_no
+			and line.item_code == entry.item_code), None)
+		if line:
+			payload = frappe.parse_json(doc.get("custom_pos_completed_payload") or "{}")
+			index = next(i for i, candidate in enumerate(doc.items) if candidate.name == line.name)
+			payload_rows = payload.get("items") or []
+			if index < len(payload_rows):
+				row["item_name"] = resolve_item_name(
+					frappe.get_cached_doc("Item", line.item_code), payload_rows[index])
+			else:
+				row["item_name"] = line.item_name
 
 
 def ensure_report_company_filter(filters):

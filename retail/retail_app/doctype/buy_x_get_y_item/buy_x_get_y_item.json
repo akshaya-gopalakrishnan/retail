@@ -5,12 +5,56 @@
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
- "field_order": ["add_to", "item", "item_group", "uom"],
+ "field_order": [
+  "add_to",
+  "item",
+  "item_group",
+  "brand",
+  "uom"
+ ],
  "fields": [
-  {"default": "Buy Item", "fieldname": "add_to", "fieldtype": "Select", "in_list_view": 1, "label": "Add To", "options": "Buy Item\nFree Item"},
-  {"fieldname": "item", "fieldtype": "Link", "in_list_view": 1, "label": "Item", "options": "Item"},
-  {"fieldname": "item_group", "fieldtype": "Link", "in_list_view": 1, "label": "Item Group", "options": "Item Group"},
-  {"fieldname": "uom", "fieldtype": "Link", "in_list_view": 1, "label": "UOM", "options": "UOM"}
+  {
+   "default": "Buy Item",
+   "fieldname": "add_to",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Add To",
+   "options": "Buy Item\nFree Item"
+  },
+  {
+   "fieldname": "item",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Item",
+   "options": "Item",
+   "depends_on": "eval:doc.add_to === 'Free Item' || ((parent.promotion_scope || 'ITEM') === 'ITEM')",
+   "read_only_depends_on": "eval:!(doc.add_to === 'Free Item' || ((parent.promotion_scope || 'ITEM') === 'ITEM'))"
+  },
+  {
+   "fieldname": "item_group",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Category",
+   "options": "Item Group",
+   "depends_on": "eval:doc.add_to !== 'Free Item' && ((parent.promotion_scope || 'ITEM') === 'CATEGORY')",
+   "read_only_depends_on": "eval:!(doc.add_to !== 'Free Item' && ((parent.promotion_scope || 'ITEM') === 'CATEGORY'))"
+  },
+  {
+   "fieldname": "uom",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "UOM",
+   "options": "UOM"
+  },
+  {
+   "fieldname": "brand",
+   "fieldtype": "Link",
+   "label": "Brand",
+   "options": "Brand",
+   "in_list_view": 1,
+   "depends_on": "eval:doc.add_to !== 'Free Item' && ((parent.promotion_scope || 'ITEM') === 'BRAND')",
+   "read_only_depends_on": "eval:!(doc.add_to !== 'Free Item' && ((parent.promotion_scope || 'ITEM') === 'BRAND'))"
+  }
  ],
  "istable": 1,
  "modified": "2026-08-21 00:00:00.000000",
@@ -22,4 +66,3 @@
  "sort_field": "modified",
  "sort_order": "DESC"
 }
-

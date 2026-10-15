@@ -1,5 +1,6 @@
 """Keep accounting in ERPNext and extend only Sales Invoice loyalty behavior."""
 import frappe
+from retail.core_compat.runtime import InvoicePriceProtection
 from frappe import _
 from frappe.utils import add_days, cint, flt, getdate
 from erpnext.accounts.doctype.sales_invoice.sales_invoice import SalesInvoice
@@ -7,7 +8,7 @@ from erpnext.accounts.doctype.loyalty_program.loyalty_program import get_loyalty
 from retail import loyalty
 
 
-class RetailSalesInvoice(SalesInvoice):
+class RetailSalesInvoice(InvoicePriceProtection, SalesInvoice):
     def set_title_field(self):
         super().set_title_field()
         from retail.pos_transaction_display import correct_consolidated_title

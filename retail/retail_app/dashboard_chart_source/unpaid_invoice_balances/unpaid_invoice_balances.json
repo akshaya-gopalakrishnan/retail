@@ -1,0 +1,7 @@
+{
+ "doctype": "Dashboard Chart Source",
+ "name": "Unpaid Invoice Balances",
+ "source_name": "Unpaid Invoice Balances",
+ "module": "Retail-app",
+ "timeseries": 0
+}

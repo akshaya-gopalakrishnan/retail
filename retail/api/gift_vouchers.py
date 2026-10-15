@@ -2,9 +2,10 @@
 from decimal import Decimal, InvalidOperation
 
 import frappe
-from frappe.utils import flt, getdate, nowdate
+from frappe.utils import flt, getdate, get_system_timezone, now_datetime, nowdate
 
 from retail import pos_operations
+from retail.promotions.api_payload import promotion_payload
 
 
 def money(value):
@@ -174,5 +175,6 @@ def get_gift_voucher_promotions(data=None, **kwargs):
 			continue
 		if doc.warehouse and doc.warehouse != counter.warehouse:
 			continue
-		rows.append(doc.as_dict())
-	return {"promotions": rows, "server_date": nowdate()}
+		rows.append(promotion_payload(doc))
+	return {"promotions": rows, "server_date": nowdate(),
+		"server_time": now_datetime(), "server_timezone": get_system_timezone()}

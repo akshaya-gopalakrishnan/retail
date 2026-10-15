@@ -76,6 +76,8 @@ def build_new_scheme(doc, apply_on):
 def add_product_to_scheme(scheme, row):
 	if row.item:
 		scheme.append("items", {"item_code": row.item, "uom": row.uom})
+	elif row.get("brand"):
+		scheme.append("brands", {"brand": row.brand, "uom": row.uom})
 	elif row.item_group:
 		scheme.append("item_groups", {"item_group": row.item_group, "uom": row.uom})
 

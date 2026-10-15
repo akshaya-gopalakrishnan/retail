@@ -1,6 +1,6 @@
 import unittest
 import frappe
-from erpnext.accounts.report.gross_profit.gross_profit import GrossProfitGenerator
+from retail.core_compat.gross_profit import GrossProfitGenerator
 
 
 class TestGrossProfitPostedCost(unittest.TestCase):

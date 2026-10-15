@@ -2,6 +2,7 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import flt
+from retail.promotions.schedule import sync_scheme_hours
 
 from retail.promotions.scheme_builder import (
 	add_product_to_scheme,
@@ -10,7 +11,6 @@ from retail.promotions.scheme_builder import (
 	retire_linked_schemes,
 	update_linked_schemes,
 	validate_active_dates,
-	validate_product_row,
 )
 
 
@@ -39,16 +39,22 @@ class BuyXGetYPromotion(Document):
 		if not self.same_product_only and not free_rows:
 			frappe.throw(_("Add at least one Free Item."))
 
-		apply_on = None
+		scope = self.get("promotion_scope") or ("CATEGORY" if buy_rows[0].item_group else "BRAND" if buy_rows[0].get("brand") else "ITEM")
+		self.promotion_scope = scope
+		target = {"ITEM": "item", "CATEGORY": "item_group", "BRAND": "brand"}.get(scope)
+		if not target:
+			frappe.throw(_("Select ITEM, CATEGORY or BRAND."))
 		for row in buy_rows:
-			validate_product_row(row)
-			row_apply_on = "Item Code" if row.item else "Item Group"
-			apply_on = apply_on or row_apply_on
-			if apply_on != row_apply_on:
-				frappe.throw(_("Use either Items or Item Groups for Buy Items in one promotion."))
+			if any(row.get(field) for field in ("item", "item_group", "brand") if field != target):
+				frappe.throw(_("Row #{0}: Only the selected promotion scope is allowed.").format(row.idx))
+			if not row.get(target):
+				frappe.throw(_("Row #{0}: Select {1}.").format(row.idx, scope))
+		for row in self.products:
+			if row.add_to not in ("Buy Item", "Free Item"):
+				frappe.throw(_("Row #{0}: Select Buy Item or Free Item.").format(row.idx))
 
 		for row in free_rows:
-			if row.item_group:
+			if row.item_group or row.get("brand"):
 				frappe.throw(_("Row #{0}: Free Item must be an Item.").format(row.idx))
 			if not row.item:
 				frappe.throw(_("Row #{0}: Select the Free Item.").format(row.idx))
@@ -57,7 +63,7 @@ class BuyXGetYPromotion(Document):
 		retire_linked_schemes(self)
 		buy_rows = self.get_buy_rows()
 		free_rows = self.get_free_rows()
-		apply_on = "Item Code" if buy_rows[0].item else "Item Group"
+		apply_on = {"ITEM": "Item Code", "CATEGORY": "Item Group", "BRAND": "Brand"}[self.promotion_scope]
 		scheme = build_base_scheme(self, apply_on)
 
 		for row in buy_rows:
@@ -73,6 +79,7 @@ class BuyXGetYPromotion(Document):
 
 		scheme.name = f"{self.name}-{frappe.generate_hash(length=6)}"
 		scheme.insert(ignore_permissions=True)
+		sync_scheme_hours(self, scheme)
 		self.append("linked_schemes", {"promotional_scheme": scheme.name})
 		update_linked_schemes(self)
 

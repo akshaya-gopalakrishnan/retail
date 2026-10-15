@@ -4,6 +4,7 @@ Only the authenticated sync service sets the immutable payload. Current ERP
 prices/promotions are comparison data, never the source of completed POS totals.
 """
 import frappe
+from retail.core_compat.runtime import InvoicePriceProtection
 from frappe.utils import cint, flt
 from erpnext.accounts.doctype.pos_invoice.pos_invoice import POSInvoice
 
@@ -149,6 +150,8 @@ def restore(doc, method=None):
 	payload = payload_for(doc)
 	if not payload:
 		return
+	from retail.pos_item_names import restore_item_names
+	restore_item_names(doc, payload)
 	factor = flt(doc.conversion_rate) or 1
 	for item, row in zip(doc.items, payload.get("items") or []):
 		# POS amount follows rate_includes_vat; ERP amount is exclusive.
@@ -242,7 +245,7 @@ def restore(doc, method=None):
 	doc.set_total_in_words()
 
 
-class RetailPOSInvoice(POSInvoice):
+class RetailPOSInvoice(InvoicePriceProtection, POSInvoice):
 	def before_cancel(self):
 		if payload_for(self):
 			frappe.throw("Completed POS bills cannot be cancelled; use an independently referenced return.")

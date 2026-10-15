@@ -34,6 +34,8 @@ def scan_barcode(search_value):
 
 @frappe.whitelist()
 def get_item_details(args, doc=None, for_validate=False, overwrite_warehouse=True):
+	from retail.core_compat.runtime import install
+	install()
 	args = frappe._dict(frappe.parse_json(args))
 	document = frappe.parse_json(doc) if doc else {}
 	barcode = args.get("barcode")

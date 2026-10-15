@@ -7,10 +7,13 @@ import frappe
 from frappe import _
 
 from retail.access_control import (
-    CUSTOMER_ADMIN, PROTECTED_DOCTYPES, TECHNICAL_EDIT_DOCTYPES,
+    CUSTOMER_ADMIN, PROTECTED_DOCTYPES,
     TECHNICAL_MODULES, is_protected_user, is_super_admin,
 )
 
+
+# Contact guidance only; authorization uses native permissions.
+TECHNICAL_EDIT_DOCTYPES = frozenset({"Report", "Page", "Workspace", "Print Format", "Print Style", "Web Page", "Web Form", "Notification", "Email Template", "Dashboard Chart Source", "Document Naming Rule", "Custom HTML Block"})
 
 def request_target(request):
     form = frappe.form_dict

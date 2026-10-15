@@ -1,0 +1,16 @@
+{
+ "doctype": "Dashboard Chart",
+ "name": "Unpaid Invoice Balances",
+ "chart_name": "Unpaid Invoice Balances",
+ "chart_type": "Custom",
+ "source": "Unpaid Invoice Balances",
+ "module": "Retail-app",
+ "document_type": "Sales Invoice",
+ "is_public": 1,
+ "is_standard": 1,
+ "type": "Bar",
+ "timeseries": 0,
+ "filters_json": "{}",
+ "dynamic_filters_json": "{\"company\": \"frappe.defaults.get_user_default(\\\"Company\\\")\"}",
+ "y_axis": []
+}

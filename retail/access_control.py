@@ -13,49 +13,29 @@ SUPER_ADMIN = "Super Admin"
 CUSTOMER_ADMIN = "Customer Administrator"
 SEED_MARKER = "retail.access_control.defaults.v1"
 
-# These configure security or executable/platform behavior, rather than business data.
+# Access setup is protected; operational tools use native permissions.
 PROTECTED_DOCTYPES = frozenset({
-    "Repost Accounting Ledger", "Repost Accounting Ledger Settings", "Repost Allowed Types",
     "Role", "Role Profile", "Module Profile", "Module Def", "User Type",
     "User Permission", "Custom DocPerm", "DocPerm", "Has Role", "Block Module",
-    "Role Permission for Page and Report", "Custom Role", "DocType", "DocField",
-    "Custom Field", "Property Setter", "Customize Form", "Client Script", "Server Script",
-    "System Settings", "System Console", "Console Log", "Website Settings", "Email Account", "Email Domain", "Social Login Key", "OAuth Client",
-    "OAuth Provider Settings", "Connected App", "Webhook", "LDAP Settings",
-    "Integration Request", "Scheduled Job Type", "Scheduled Job Log", "RQ Job",
-    "Document Naming Settings", "Data Import", "Data Export", "User Invitation",
-    "POS Operator Privilege", "Workflow", "Workflow State", "Workflow Action Master",
+    "Role Permission for Page and Report", "Custom Role", "POS Operator Privilege",
 })
 TECHNICAL_MODULES = frozenset({"Core", "Custom", "Integrations", "Automation", "Website", "Workflow"})
-TECHNICAL_EDIT_DOCTYPES = frozenset({"Report", "Page", "Workspace", "Print Format", "Print Style", "Web Page", "Web Form", "Notification", "Email Template", "Dashboard Chart Source", "Document Naming Rule", "Custom HTML Block"})
 ASSIGNMENT_FIELDS = ("role_profile_name", "module_profile", "user_type")
 ASSIGNMENT_TABLES = {"roles": "role", "block_modules": "module", "user_emails": "email_account"}
 PROTECTED_METHOD_PREFIXES = (
-    "erpnext.accounts.doctype.repost_accounting_ledger.",
-    "erpnext.accounts.doctype.repost_accounting_ledger_settings.",
     "frappe.core.page.permission_manager.", "frappe.permissions.",
-    "frappe.custom.", "frappe.desk.page.setup_wizard.",
     "frappe.core.doctype.role.", "frappe.core.doctype.role_profile.",
     "frappe.core.doctype.module_profile.", "frappe.core.doctype.module_def.",
     "frappe.core.doctype.user_type.", "frappe.core.doctype.user_permission.",
-    "frappe.core.doctype.user_invitation.", "frappe.core.doctype.data_import.",
-    "frappe.core.doctype.data_export.", "frappe.core.doctype.doctype.",
-    "frappe.core.doctype.server_script.", "frappe.core.doctype.system_settings.",
-    "frappe.core.doctype.scheduled_job_type.", "frappe.core.doctype.rq_job.",
-    "frappe.desk.form.customize_form.", "frappe.desk.doctype.system_console.", "frappe.desk.page.backups.",
-    "frappe.desk.doctype.bulk_update.", "frappe.utils.scheduler.", "frappe.utils.backups.",
-    "frappe.integrations.", "frappe.core.doctype.role_permission_for_page_and_report.",
+    "frappe.core.doctype.role_permission_for_page_and_report.",
 )
 PROTECTED_METHODS = frozenset({
     "frappe.core.doctype.user.user.get_role_profile",
     "frappe.core.doctype.user.user.get_module_profile",
     "frappe.core.doctype.user.user.get_all_roles",
     "frappe.core.doctype.user.user.get_perm_info",
-    "frappe.core.doctype.user.user.generate_keys",
-    "frappe.core.doctype.user.user.impersonate",
-    "frappe.core.doctype.user.user.reset_user_data",
 })
-PROTECTED_PAGES = frozenset({"permission-manager", "role-permission-manager", "permission-inspector", "customize-form", "background_jobs"})
+PROTECTED_PAGES = frozenset({"permission-manager", "role-permission-manager", "permission-inspector"})
 
 
 def is_super_admin(user=None):
@@ -95,7 +75,7 @@ def has_permission(doc, ptype=None, user=None, **kwargs):
         # Controller hooks may grant only permissions already present in DocPerm.
         # The seed supplies full native DocPerms for this role, at every field level.
         return True
-    if doc.doctype in PROTECTED_DOCTYPES or (doc.doctype in TECHNICAL_EDIT_DOCTYPES and ptype not in ("read", "select", "print", "report", "export")):
+    if doc.doctype in PROTECTED_DOCTYPES:
         return False
     if doc.doctype == "User" and is_protected_user(doc.name):
         return False
@@ -122,7 +102,7 @@ def validate_document(doc, method=None, *args, **kwargs):
         return
     if is_super_admin():
         return
-    if doc.doctype in PROTECTED_DOCTYPES or doc.doctype in TECHNICAL_EDIT_DOCTYPES:
+    if doc.doctype in PROTECTED_DOCTYPES:
         require_super_admin()
     previous = doc.get_doc_before_save()
     if method == "before_rename":
@@ -172,8 +152,6 @@ def guard_request():
         return
     form = frappe.form_dict
     path = unquote(frappe.request.path).replace("/api/v1/", "/api/", 1)
-    if path.startswith("/backups"):
-        require_super_admin()
     command = form.get("cmd") or (path.split("/method/", 1)[1] if "/method/" in path else "")
     if command in PROTECTED_METHODS or command.startswith(PROTECTED_METHOD_PREFIXES):
         require_super_admin()
