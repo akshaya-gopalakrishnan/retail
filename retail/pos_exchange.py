@@ -22,8 +22,10 @@ def split(payload):
     if payload.get("taxes"):
         frappe.throw("Exchange receipts must send VAT per item instead of taxes[].")
     sales, returns = [], {}
-    for source in payload.get("items") or []:
+    for source_idx, source in enumerate(payload.get("items") or [], 1):
         row = copy.deepcopy(source)
+        if "applied_promotions" in payload:
+            row["_promotion_source_row"] = source_idx
         qty = flt(row.get("qty"))
         if not qty:
             frappe.throw("Exchange item quantity must not be zero.")
@@ -123,6 +125,9 @@ def post_exchange(payload):
         if api._existing_invoice(child_ref):
             frappe.throw("Reference conflict: an exchange component reference is already used.")
         part = frappe._dict(copy.deepcopy(dict(payload)))
+        if "applied_promotions" in payload:
+            from retail.promotions.history import exchange_applications
+            part.applied_promotions = exchange_applications(payload, rows)
         part.update(items=rows, external_pos_reference=child_ref, payments=tender or [],
                     discount_amount=0, vat_amount=sum(r["vat_amount"] for r in rows),
                     grand_total=sum(r["net_amount"] + r["vat_amount"] for r in rows))

@@ -42,8 +42,8 @@ def validate_assignments(doc):
         try:
             rules = local_rules()
         except frappe.PermissionError:
-            from retail.access_control import require_super_admin
-            require_super_admin()
+            from retail.licensing.client import require_license_admin
+            require_license_admin()
             # Recovery assignments grant no access. Signed limits apply once valid.
             frappe.clear_messages()
             rules = None
@@ -78,8 +78,8 @@ RECOVERY_METHODS = {
 def recovery_required(user):
     if user in ("Administrator", "Guest"):
         return False
-    from retail.access_control import is_super_admin
-    if not is_super_admin(user):
+    from retail.licensing.client import can_manage_license
+    if not can_manage_license(user):
         return False
     try:
         local_rules()
@@ -154,8 +154,8 @@ def guard_request():
 @frappe.whitelist(methods=["GET", "POST"])
 def recovery_settings(license_key=None, users=None):
     """Only the licensing singleton can be read or changed by this endpoint."""
-    from retail.access_control import require_super_admin
-    require_super_admin()
+    from retail.licensing.client import require_license_admin
+    require_license_admin()
     doc = frappe.get_doc(DOCTYPE)
     if frappe.request.method == "POST":
         if license_key:
@@ -175,7 +175,7 @@ def recovery_page():
     csrf = escape(get_csrf_token(), quote=True)
     return """<!doctype html><html><head><meta charset="utf-8"><title>Celesta License Settings</title></head>
 <body><h1>Celesta License Settings</h1>
-<p>Administrator is the full emergency recovery account. Retail Super Admin has restricted licensing-repair access only while the license is invalid. Normal ERP access requires a valid license and an assigned seat.</p>
+<p>Administrator is the full emergency recovery account. Super Admin and Customer Administrator have restricted licensing-repair access only while the license is invalid. Normal ERP access requires a valid license and an assigned seat.</p>
 <p>Central URL, public pins and protected state path must be configured by the deployment operator.</p>
 <p>Max Devices and Max Sessions/User: Not enforced yet.</p>
 <form id="settings"><label>License Key <input id="key" type="password" autocomplete="off"></label>

@@ -89,7 +89,7 @@ class TestClient(unittest.TestCase):
 		self.assertEqual(doc.installation_id, installation)
 
 	def test_permissions(self):
-		for role in ("Customer Administrator", "System Manager", "Sales User"):
+		for role in ("System Manager", "Sales User"):
 			with patch("retail.access_control.frappe.get_roles", return_value=[role]):
 				self.assertFalse(
 					frappe.has_permission(

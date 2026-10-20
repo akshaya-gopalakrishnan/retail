@@ -153,13 +153,15 @@ Keep item/packing `disabled`, `is_fast_plu_item`, barcode, UOM, `conversion_fact
 
 For .NET POS sales, send the selected barcode on each item row. Retail resolves the invoice name by Item Code + Barcode against that Item's packing rows. Only when barcode is missing, a packing sale's name is generated as original Item name + sold UOM + conversion factor (for example `Aqua Fresh Water 1.5 ltr - Pack x4`). Stock-unit sales with factor 1 retain the original name. A present unmatched barcode does not trigger this generated fallback; the submitted `item_name`, when supplied, is retained, otherwise the original Item name is used. This affects display identity only, not quantities or financial values.
 
+Retail reports also add sold/transaction UOM, recorded barcode, packing name and sold quantity for ERP and .NET transactions. Item-detail rows use the exact source line; grouped rows show a packing breakdown. New submissions retain a Retail-owned identity snapshot. Missing historical barcodes remain "Not recorded"; the request payload and existing financial calculations are unchanged. See [Transaction identity in reports](TRANSACTION_IDENTITY_REPORTS.md) for coverage and historical-data rules.
+
 Save changed records without deleting records missing from a changes-only reply. Replace each returned item's full `packings` list and the full `scale_barcode_formats` list. Refresh all masters regularly because permission and customer-balance changes may not appear in a changes-only download.
 
 ### Set cashier PIN
 
 `POST /api/method/retail.api.pos_sync.set_cashier_quick_pin`
 
-System Manager only. Keep PINs as text so leading zeros remain.
+Super Admin, or Customer Administrator for their managed staff only. Customer Administrators need POS module access, Employee List and POS Cashier Shifts access, and Employee write permission. System Manager alone does not authorize PIN setup. Keep PINs as text so leading zeros remain.
 
 Request JSON:
 
@@ -1260,7 +1262,9 @@ Response example (existing fields retained; new fields are additive):
     "promotions": [
       {
         "name": "Chicken offer",
+        "promotion_version": "9aee4b401956750a4a3f31583fa74c0697fa4014e8e159cb17f37cb540571305",
         "description": "Chicken offer",
+        "enabled": 1,
         "disabled": 0,
         "active_from": "2026-10-14",
         "active_to": "2026-10-31",
@@ -1351,7 +1355,9 @@ Response example:
     "promotions": [
       {
         "name": "Buy 2 Get 1",
+        "promotion_version": "0b3fba1fb599019c5097f27c4bf00d74966af6f1d7f0064847a4b92c40a1dae9",
         "description": "Buy 2 Get 1",
+        "enabled": 1,
         "disabled": 0,
         "promotion_scope": "ITEM",
         "active_from": null,
@@ -1687,8 +1693,10 @@ Response example:
     "promotions": [
       {
         "name": "Spend 100 Get Voucher",
+        "promotion_version": "6bc750fc0ba2fd8c3322596a8b4180660ce64a325f45d18de5147f636635a60c",
         "description": "Spend 100 Get Voucher",
         "enabled": 1,
+        "disabled": 0,
         "active_from": "2026-10-14",
         "active_to": "2026-10-31",
         "active_from_time": "18:00:00",
@@ -2875,3 +2883,160 @@ omitted discount defaults to zero rather than a price/VAT difference. Retail for
 VAT/discount recalculation also skips completed snapshots. The batch helper
 `retail.pos_completed_sale.repair_all_discount_displays` defaults to preview and
 is idempotent when applied with `dry_run=0`.
+
+### Promotion usage history (additive; existing endpoints)
+
+All three existing promotion downloads (including master data) now include:
+
+- `enabled`: `1` when the master is enabled, otherwise `0`.
+- `disabled`: inverse of `enabled`; existing master flags remain compatible.
+- `promotion_version`: opaque version identifier. Store it alongside the cached rule.
+
+The download calls the promotion document ID `name` (the existing field).
+When sending a completed sale, copy this **parent** `name` into
+`applied_promotions[].promotion`; do not use a product child row's `name`.
+Copy the same parent's `promotion_version` into
+`applied_promotions[].promotion_version` unchanged:
+
+| Promotion download | Completed-sale request |
+|---|---|
+| `promotions[].name` | `applied_promotions[].promotion` |
+| `promotions[].promotion_version` | `applied_promotions[].promotion_version` |
+
+For example, a downloaded Promo Price with `name: "Chicken offer"` is returned
+as `promotion: "Chicken offer"`, with `promotion_type: "Promo Price"`.
+See the complete usage payload below. All version strings in examples are
+illustrative; clients must copy the actual value returned by ERP.
+
+Disabled, expired and future rules continue to be downloaded. POS replaces cached
+rules by ID, honors enabled/disabled, and evaluates date/hour boundaries against
+**original sale time in `server_timezone`**, including overnight daily windows.
+An offer expiring naturally does not change its modified timestamp; POS must
+check its schedule locally on every new sale. Download once without
+`modified_after` after this update, then resume existing incremental downloads.
+
+Add optional `applied_promotions` to the existing completed invoice, credit,
+return and exchange requests. Send `item_code` to identify each promotional
+item. The array belongs at invoice level, alongside `items`, not inside an item.
+The following is an excerpt of the existing request; retain the normal `items`,
+payments and other required fields. No endpoint or financial field changes:
+
+```json
+{
+  "posting_date": "2026-10-17",
+  "posting_time": "11:30:00",
+  "applied_promotions": [
+    {
+      "promotion_type": "Promo Price",
+      "promotion": "Chicken offer",
+      "promotion_version": "9aee4b401956750a4a3f31583fa74c0697fa4014e8e159cb17f37cb540571305",
+      "item_code": "I-48",
+      "quantity": 2,
+      "free_quantity": 0,
+      "discount_amount": 2,
+      "sales_amount": 18
+    }
+  ]
+}
+```
+
+ERP matches `item_code` to the invoice's `items` array. Only promotional items
+need entries: a bill with 10 item rows and 3 promotional rows sends all 10 rows
+in `items` and 3 entries in `applied_promotions`.
+If the item code occurs more than once, also send `barcode` and/or `uom` to
+identify exactly one row. `item_row` is an optional fallback only when those
+fields still match multiple rows, and remains supported for existing clients.
+Unmatched or ambiguous entries are retained as Review Required and excluded
+from summary amounts; the completed invoice is still accepted. When both
+`item_row` and item identity fields are sent, they must agree. Exchange matching
+uses the original mixed request before splitting sale and return rows.
+Retail also accepts the terminal's `items[].applied_promotions` format. Each
+nested entry supplies `promotion_type`, `promotion`, `promotion_version`, and
+`promotion_discount_amount`. Retail takes item identity, `qty`, and final
+`net_amount` from the parent item. `promotion_discount_amount` is the total
+promotion discount for that line, not per unit; it includes VAT when the parent
+has `rate_includes_vat: 1`, using its `vat_rate` to convert to exclusive VAT for
+reports. For example, a discount of 1 at 5% VAT reports 0.95, with parent
+`qty: 1` and `net_amount: 8.57` reporting quantity 1 and net sales 8.57.
+An explicit nested `discount_amount` is already exclusive VAT and takes
+precedence over the alias. Missing discount evidence stays Review Required;
+Retail never infers it from current prices. An explicit invoice-level
+`applied_promotions` array takes precedence over nested arrays, including `[]`,
+so clients sending both formats cannot double count. Existing `item_row`
+clients remain supported. Nested arrays travel with their parent lines when
+an exchange is split. The metadata never changes posted invoice amounts.
+Existing saved nested evidence is read by promotion reports without saving
+submitted invoices. POS Discount Report displays a separate Promotion Discount
+(Ex VAT) column; it is not added again to reported financial discounts.
+
+The optional `item_row` is the 1-based position in request `items`; omit it when
+the item code (with barcode/UOM if needed) identifies one row. One entry per promotion
+and item row; bill-wide offers must allocate their discounts to affected rows
+with consistent rounding. `quantity` is in the sold packing/UOM; `free_quantity`
+is included within that quantity, not added to it. `discount_amount` is the
+promotion-only total for that row (not per-unit), and `sales_amount` is the
+attributed final row net amount, both **excluding VAT** in invoice currency.
+Manual discounts must not be reported as promotion discounts. Multiple offers
+on one row have separate entries; attributed sales overlap across those offers.
+For Buy X Get Y, send entries for qualifying and free rows, with free quantities
+and actual promotion discount on the free row. Gift voucher issuance/redemption
+continues through the existing voucher fields/APIs and Gift Voucher Ledger;
+voucher face value must not be included as a current-sale promotion discount.
+
+Send `[]` when the client supports tracking and no promotion was applied. Omit
+this property only for legacy clients: reports show those bills as Not Reported,
+not proof of zero promotion usage. Save the evidence locally at bill completion;
+never reconstruct it from current rules at sync time. Existing duplicate receipt
+handling remains in effect. This metadata never applies a second discount.
+
+Returns send promotion entries with `original_item_row` identifying the original
+sale payload's item row and the original promotion ID/version. ERP signs returned
+quantities and amounts negatively and labels matching references Return Linked.
+These are POS-reported reversals, not a new promotion evaluated on return date.
+Mixed exchange entries use item codes matched against the original mixed
+request (or its positions when the optional `item_row` is supplied); ERP remaps
+metadata to the existing split invoices without changing amounts.
+
+ERP stores master revisions from installation onward. Sale schedule checks use
+the rule revision effective at payload `posting_date` + `posting_time`, never
+arrival time. Disabled-at-sale, stale/missing versions, out-of-window sales,
+missing timestamps or pre-install history are Review Required; the completed
+sale still posts using existing financial behavior. Historical attribution is
+never guessed. A valid old sale arriving after expiry/disable is Schedule Valid
+when its original version and original sale time match retained history.
+
+Reports: **Promotions → Promotion History → Promotion Sales Summary / Detail**.
+Reports cover submitted Offline POS invoices, exclude cancelled documents, retain
+POS invoice links after consolidation, separate currencies, and respect invoice
+permissions. Schedule Valid verifies enabled status, company/warehouse and time
+window only; item eligibility and discount arithmetic remain POS-reported.
+Summary amounts are net of reported returns; receipt counts are distinct per
+group. Do not sum attributed sales across promotions because they may overlap.
+Unposted/queued transactions are monitored through existing POS sync logs.
+
+### Sales item eligibility in master downloads
+
+`get_pos_master_data` sends only Items with `is_sales_item = 1`, including their packing details, barcodes and selling prices. This applies to full and incremental downloads. After this update, perform a full master download and replace the cached item catalogue (including related packings, barcodes and prices) to remove previously downloaded non-sales items. Incremental omission alone does not remove an existing cached item. Completed bills remain unchanged.
+
+### Item-master scale sales layout
+
+Retail sales forms and the existing `retail.api.scale_item_api.parse_barcode`
+endpoint support the prefix-99 master layout described in
+`retail/docs/scale_barcode_sales.md`. Exact saved barcodes take precedence.
+Dynamic decoding requires a checked Scale Item, an enabled sales Item, and a
+7-digit master barcode starting with `99`. Existing download fields `barcode`,
+`is_scalable_item` and `scale_barcode_type` identify the master and its selected
+type. No new POS sale-sync endpoint or completed-sale recalculation is introduced.
+
+Weight/Quantity labels contain master 7 + value 5 + trailing digit 1 (13 total).
+Price contains master 7 + price 6 + trailing digit 1 (14 total). Weight+UPrice
+and Weight+TotPrice contain master 7 + weight 5 + price 6 + trailing digit 1
+(19 total). Price has two implied decimal places, so `305000` is 3,050.00.
+Weight has three decimals for Kg. The final digit is excluded without checksum
+validation. The Item master's selected type determines interpretation.
+
+The existing `scale_barcode_formats` collection describes legacy configured
+formats; it is not a replacement for this Item-master layout. External .NET
+clients must explicitly adopt the six-digit price layout in their scanner and
+configure the scale identically. This Retail implementation does not modify the
+.NET executable or reinterpret already completed POS payloads.

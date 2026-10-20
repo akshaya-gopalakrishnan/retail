@@ -5,22 +5,33 @@ after Allow Modules. It uses Frappe's native MultiCheck control and ordinary Use
 Save. The editor fills the form width and uses five desktop columns, three below
 1200px, two below 768px and one below 480px.
 
-Only Administrator and the existing protected **Super Admin** identity can change
-the selection. That identity is the assigned role, not the editable Role Profile
-label. Existing `retail.access_control` protections prevent customer administrators
-from assigning or changing this exemption. Assigned Super Admin users retain native full access.
-Authorized administrators can edit and save selections on exempt User records;
-the editor displays the saved selection. The built-in Administrator now follows
-its saved selections for sidebar visibility and direct URL/API restrictions.
-With no saved configuration it retains legacy access. Its own User form, document
-load and save remain reachable for permission recovery, subject to native checks;
-this exception does not grant access to the User list or other users.
+Administrator and the assigned **Super Admin** role retain unrestricted access,
+regardless of saved selections. Only they can change a client administrator's
+maximum access. The editable Role Profile name does not grant this exemption.
+
+A **Customer Administrator** can create and manage their own staff users and
+assign any subset of their own roles, allowed native modules and Retail sidebar
+choices. Unassigned choices and Super Admin are absent from their editors.
+The Retail checklist is the client-facing Allow Modules editor; the broad native
+framework module checklist and profile-definition selectors stay out of this view.
+Native module blocks are inherited from the manager. The same limits are checked
+on the server, including direct API writes. Their
+own profile stays editable, but they cannot change their own access limits.
+
+The `Managed By` User field records responsibility. It is set automatically for
+users created by a client administrator; a Super Admin can attach existing staff
+through this field. Existing users owned by that administrator are also recognized.
+Other users and protected administrator accounts cannot be managed by them.
+Removing access from a manager removes it from managed staff and their descendants;
+adding access does not automatically add it to existing staff.
 
 ## Persistence and migration
 
 The Retail install/migrate hook creates three User Custom Fields: a section, HTML
 editor and hidden `retail_sidebar_permissions` Long Text field at permission level 1.
-No core source or DocPerm is changed and no roles are automatically assigned.
+No core source is changed and no roles are automatically assigned. Delegation adds
+the Managed By field and native Customer Administrator User read/write permission
+at level 1, guarded by the ownership and assignment checks.
 
 An empty field preserves the user's existing native/Retail permissions. Changing
 and saving any checkbox creates versioned JSON with an explicit allowed identifier
@@ -28,8 +39,9 @@ list. An empty list restricts every checklist menu; unlisted access retains nati
 one child is selected; changing a parent selects or clears its children. New registry
 identifiers are absent from existing selections and default to denied.
 
-Administrative API writes may clear the field to restore legacy unrestricted menu
-selection. This still retains all existing native role, module, Van Sales, POS and
+Super Admin API writes may clear the field to restore legacy unrestricted menu
+selection. A client administrator clearing a staff selection inherits their own
+allowed list instead of removing the ceiling. This still retains all existing native role, module, Van Sales, POS and
 Celesta access checks.
 
 Deploy with:
@@ -156,3 +168,17 @@ Item forms and transaction forms also retain narrowly mapped margin/VAT lookups,
 stock-dashboard reads, Arabic name translation, payment-reference indicators and
 two stock-preference fields. These preserve selected-menu and native permission
 requirements; settings writes and arbitrary settings reads remain restricted.
+
+### Delegated staff POS setup
+
+Customer Administrators with POS access and the Employee List and POS Cashier
+Shifts capabilities can select an existing active POS Operator Privilege profile
+and set a four-digit cashier PIN for staff they manage. Linked staff users must
+be managed by that administrator; an employee without a linked user must have
+been created by them. Super Admin can attach existing staff through Managed By.
+Protected users and other administrators' staff cannot be targeted or relinked to
+bypass this check. Profile creation, editing and deletion remain Super Admin only.
+The dropdown returns active profile names without granting access to profile forms.
+User role/module/sidebar ceilings and their cascading reductions remain unchanged.
+POS action presets are separate from backend role/module permissions; selecting a
+preset does not grant a staff user additional backend roles or modules.

@@ -1,0 +1,25 @@
+{
+ "doctype": "Report",
+ "name": "Promotion Sales Summary",
+ "report_name": "Promotion Sales Summary",
+ "module": "Retail-app",
+ "is_standard": "Yes",
+ "report_type": "Script Report",
+ "ref_doctype": "POS Invoice",
+ "disabled": 0,
+ "add_total_row": 0,
+ "roles": [
+  {
+   "role": "Accounts Manager"
+  },
+  {
+   "role": "Accounts User"
+  },
+  {
+   "role": "Sales Manager"
+  },
+  {
+   "role": "System Manager"
+  }
+ ]
+}

@@ -77,8 +77,10 @@ def has_permission(doc, ptype=None, user=None, **kwargs):
         return True
     if doc.doctype in PROTECTED_DOCTYPES:
         return False
-    if doc.doctype == "User" and is_protected_user(doc.name):
-        return False
+    if doc.doctype == "User":
+        from retail.delegated_access import is_customer_admin, user_visible
+        if is_protected_user(doc.name) or (is_customer_admin(user) and not doc.is_new() and not user_visible(doc.name, user)):
+            return False
     return None
 
 
@@ -88,7 +90,12 @@ def query_conditions(user=None, doctype=None):
     if doctype in PROTECTED_DOCTYPES:
         return "1=0"
     if doctype == "User":
-        return "`tabUser`.`name` != 'Administrator' AND NOT EXISTS (SELECT 1 FROM `tabHas Role` celesta_role WHERE celesta_role.parenttype = 'User' AND celesta_role.parent = `tabUser`.`name` AND celesta_role.role = 'Super Admin')"
+        from retail.delegated_access import is_customer_admin, MANAGER_FIELD
+        scope = ""
+        if is_customer_admin(user):
+            actor = frappe.db.escape(user or frappe.session.user)
+            scope = f" AND (`tabUser`.`name` = {actor} OR `tabUser`.`{MANAGER_FIELD}` = {actor} OR (IFNULL(`tabUser`.`{MANAGER_FIELD}`, '') = '' AND `tabUser`.`owner` = {actor}))"
+        return "`tabUser`.`name` != 'Administrator' AND NOT EXISTS (SELECT 1 FROM `tabHas Role` celesta_role WHERE celesta_role.parenttype = 'User' AND celesta_role.parent = `tabUser`.`name` AND celesta_role.role = 'Super Admin')" + scope
     return ""
 
 
@@ -106,10 +113,16 @@ def validate_document(doc, method=None, *args, **kwargs):
         require_super_admin()
     previous = doc.get_doc_before_save()
     if method == "before_rename":
-        if doc.doctype == "User" and is_protected_user(doc.name):
-            require_super_admin()
+        if doc.doctype == "User":
+            from retail.delegated_access import is_customer_admin, user_visible
+            if is_protected_user(doc.name) or (is_customer_admin() and not user_visible(doc.name)):
+                require_super_admin()
         return
     if doc.doctype == "User":
+        from retail.delegated_access import validate_user as validate_delegated_user
+        delegated = validate_delegated_user(doc, previous)
+        if not delegated and (doc.get("retail_access_manager") or "") != ((previous.get("retail_access_manager") if previous else None) or ""):
+            require_super_admin()
         if is_protected_user(doc.name) or SUPER_ADMIN in _table_values(doc, "roles", "role"):
             require_super_admin()
         for field in ASSIGNMENT_FIELDS:
@@ -121,10 +134,10 @@ def validate_document(doc, method=None, *args, **kwargs):
                 continue
             if field == "user_type" and method != "before_validate" and old in ("System User", "Website User") and new in ("System User", "Website User"):
                 continue
-            if (old or "") != (new or ""):
+            if (old or "") != (new or "") and not delegated:
                 require_super_admin()
         for field, key in ASSIGNMENT_TABLES.items():
-            if _table_values(doc, field, key) != _table_values(previous, field, key):
+            if _table_values(doc, field, key) != _table_values(previous, field, key) and not delegated:
                 require_super_admin()
     if doc.doctype == "DocShare" and (doc.get("share_doctype") in PROTECTED_DOCTYPES or (doc.get("share_doctype") == "User" and is_protected_user(doc.get("share_name")))):
         require_super_admin()
@@ -133,7 +146,8 @@ def validate_document(doc, method=None, *args, **kwargs):
             if is_protected_user(doc.get(field)) or (previous and is_protected_user(previous.get(field))):
                 require_super_admin()
         if (doc.get("pos_operator_privilege") or "") != ((previous.get("pos_operator_privilege") if previous else None) or ""):
-            require_super_admin()
+            from retail.pos_privileges import require_employee_pos_management
+            require_employee_pos_management(doc)
 
 
 def prepare_super_user(doc, method=None):
@@ -153,7 +167,8 @@ def guard_request():
     form = frappe.form_dict
     path = unquote(frappe.request.path).replace("/api/v1/", "/api/", 1)
     command = form.get("cmd") or (path.split("/method/", 1)[1] if "/method/" in path else "")
-    if command in PROTECTED_METHODS or command.startswith(PROTECTED_METHOD_PREFIXES):
+    editor_read = command in {"frappe.core.doctype.user.user.get_all_roles", "frappe.core.doctype.user.user.get_perm_info"}
+    if not editor_read and (command in PROTECTED_METHODS or command.startswith(PROTECTED_METHOD_PREFIXES)):
         require_super_admin()
     dt = form.get("doctype") or form.get("dt")
     name = form.get("name") or form.get("docname")
@@ -177,12 +192,15 @@ def guard_request():
                     deny_technical_access()
     if dt in PROTECTED_DOCTYPES:
         require_super_admin()
-    if dt == "User" and isinstance(name, str) and is_protected_user(name):
-        deny_technical_access()
+    if dt == "User" and isinstance(name, str):
+        from retail.delegated_access import is_customer_admin, user_visible
+        if is_protected_user(name) or (is_customer_admin() and frappe.db.exists("User", name) and not user_visible(name)):
+            deny_technical_access()
     # User RPC methods may not load/check a User document at all.
     if command.startswith("frappe.core.doctype.user.user."):
         target = form.get("user") or form.get("user_name") or form.get("uid")
-        if target and is_protected_user(target):
+        from retail.delegated_access import is_customer_admin, user_visible
+        if target and (is_protected_user(target) or (is_customer_admin() and frappe.db.exists("User", target) and not user_visible(target))):
             # Public password recovery keeps the native non-enumerating response.
             if command != "frappe.core.doctype.user.user.reset_password":
                 deny_technical_access()
@@ -209,7 +227,10 @@ def reset_password(user):
 
 
 def boot_session(bootinfo):
+    from retail.delegated_access import is_customer_admin, roles
     bootinfo.can_manage_access = is_super_admin()
+    bootinfo.can_delegate_access = is_super_admin() or is_customer_admin()
+    bootinfo.retail_assignable_roles = None if is_super_admin() else sorted(roles())
 
 
 def install():

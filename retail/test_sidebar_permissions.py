@@ -33,6 +33,41 @@ class TestSidebarPermissions(unittest.TestCase):
                 identifiers.add(group["id"])
         self.configurations[user or frappe.session.user] = json.dumps({"version": 1, "allowed": sorted(identifiers)})
 
+    def test_own_profile_without_user_list(self):
+        self.select()
+        user = frappe.session.user
+        for command in ("frappe.desk.form.load.getdoc", "frappe.client.get"):
+            frappe.form_dict.clear()
+            frappe.form_dict.update(cmd=command, doctype="User", name=user)
+            access.guard_request()
+        for command in ("frappe.desk.form.save.savedocs", "frappe.client.save"):
+            frappe.form_dict.clear()
+            frappe.form_dict.update(cmd=command, doc=json.dumps({"doctype": "User", "name": user}))
+            access.guard_request()
+        frappe.form_dict.clear()
+        original_path = frappe.request.path
+        try:
+            frappe.request.path = "/app/user/" + user
+            access.guard_request()
+        finally:
+            frappe.request.path = original_path
+
+    def test_personal_settings_helpers_without_user_list(self):
+        self.select()
+        for method in ("get_timezones", "switch_theme", "update_password", "test_password_strength"):
+            frappe.form_dict.clear()
+            frappe.form_dict.update(cmd="frappe.core.doctype.user.user." + method)
+            access.guard_request()
+
+    def test_other_users_remain_blocked(self):
+        self.select()
+        for command, name in (("frappe.desk.form.load.getdoc", "other@example.test"),
+                              ("frappe.client.get_list", None)):
+            frappe.form_dict.clear()
+            frappe.form_dict.update(cmd=command, doctype="User", name=name)
+            with self.assertRaises(frappe.PermissionError):
+                access.guard_request()
+
     def test_exact_menu_labels_and_order(self):
         expected = {
             "Business Home": [],
@@ -83,27 +118,14 @@ class TestSidebarPermissions(unittest.TestCase):
         with self.assertRaises(frappe.PermissionError):
             access.require_document(frappe._dict(doctype="Sales Invoice", is_return=0))
 
-    def test_administrator_saved_selection_is_enforced_with_own_editor_recovery(self):
+    def test_administrator_is_unrestricted_even_with_saved_selection(self):
         frappe.session.user = "Administrator"
         self.select("Sales Invoices")
         with patch.object(access, "is_super_admin", return_value=True):
-            self.assertFalse(access.target_allowed("doctype", "Customer"))
-            frappe.local.form_dict = frappe._dict(doctype="Customer")
-            with self.assertRaises(frappe.PermissionError):
-                access.guard_request()
-            frappe.request.path = "/app/user/Administrator"
-            access.guard_request()
-            frappe.request.path = "/api/method/frappe.desk.form.load.getdoc"
-            frappe.local.form_dict = frappe._dict(doctype="User", name="Administrator")
-            access.guard_request()
-            frappe.local.form_dict.name = "someone@example.test"
-            with self.assertRaises(frappe.PermissionError):
-                access.guard_request()
-            frappe.request.path = "/api/method/frappe.desk.form.save.savedocs"
-            frappe.local.form_dict = frappe._dict(doc='{"doctype":"User","name":"Administrator"}')
-            access.guard_request()
-            self.configurations["Administrator"] = None
             self.assertIsNone(access.selection())
+            self.assertTrue(access.target_allowed("doctype", "Customer"))
+            frappe.form_dict.update(doctype="Customer")
+            access.guard_request()
 
     def test_stock_entry_purpose_and_van_isolation(self):
         self.select("Stock Adjustments")
@@ -154,12 +176,13 @@ class TestSidebarPermissions(unittest.TestCase):
         doc = Mock()
         doc.get_doc_before_save.return_value = frappe._dict({access.FIELD: ""})
         doc.get.return_value = json.dumps({"version": 1, "allowed": []})
-        with self.assertRaises(frappe.PermissionError):
-            access.validate_user(doc)
-        self.admin.assert_called_once()
+        with patch("retail.delegated_access.require_sidebar_assignment", side_effect=frappe.PermissionError) as delegate:
+            with self.assertRaises(frappe.PermissionError):
+                access.validate_user(doc)
+            delegate.assert_called_once_with(doc)
 
     def test_normalize_parent_and_reject_unknown_identifier(self):
-        self.admin.side_effect = None
+        self.patch(access, "is_super_admin", return_value=True)
         doc = Mock()
         doc.get_doc_before_save.return_value = None
         doc.get.return_value = json.dumps({"version": 1, "allowed": ["workspace:sales_invoices"]})

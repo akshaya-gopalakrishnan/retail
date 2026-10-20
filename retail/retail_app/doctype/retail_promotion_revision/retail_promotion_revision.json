@@ -1,0 +1,50 @@
+{
+ "doctype": "DocType",
+ "name": "Retail Promotion Revision",
+ "module": "Retail-app",
+ "autoname": "hash",
+ "engine": "InnoDB",
+ "field_order": [
+  "promotion_type",
+  "promotion",
+  "effective_from",
+  "rule_json"
+ ],
+ "fields": [
+  {
+   "fieldname": "promotion_type",
+   "label": "Promotion Type",
+   "fieldtype": "Data",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "promotion",
+   "label": "Promotion",
+   "fieldtype": "Data",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "effective_from",
+   "label": "Effective From",
+   "fieldtype": "Datetime",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "rule_json",
+   "label": "Rule Snapshot",
+   "fieldtype": "Code",
+   "options": "JSON",
+   "reqd": 1
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1
+  }
+ ],
+ "track_changes": 0
+}

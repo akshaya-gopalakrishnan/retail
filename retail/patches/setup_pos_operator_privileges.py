@@ -10,7 +10,7 @@ def execute():
 		{"fieldname": "pos_settings_tab", "label": "POS Settings", "fieldtype": "Tab Break", "insert_after": "old_parent"},
 		{"fieldname": "pos_login_section", "label": "POS Login", "fieldtype": "Section Break", "insert_after": "pos_settings_tab", "collapsible": 0},
 		{"fieldname": "pos_privileges_section", "label": "POS Operator Privileges", "fieldtype": "Section Break", "insert_after": "pos_quick_pin_hash"},
-		{"fieldname": "pos_operator_privilege", "label": "POS Operator Privilege", "fieldtype": "Link", "options": "POS Operator Privilege", "insert_after": "pos_privileges_section", "no_copy": 1, "description": "Select a shared permission profile. Only System Managers can change this assignment. No profile means no POS actions are allowed."},
+		{"fieldname": "pos_operator_privilege", "label": "POS Operator Privilege", "fieldtype": "Link", "options": "POS Operator Privilege", "insert_after": "pos_privileges_section", "no_copy": 1, "description": "Select a shared permission profile. Super Admin and Customer Administrators can select an existing profile for their staff. Only Super Admin can create or edit profiles. No profile means no POS actions are allowed."},
 		{"fieldname": "pos_privileges_preview", "label": "Allowed POS Actions", "fieldtype": "HTML", "insert_after": "pos_operator_privilege"},
 	]}, update=True)
 	frappe.clear_cache(doctype="Employee")

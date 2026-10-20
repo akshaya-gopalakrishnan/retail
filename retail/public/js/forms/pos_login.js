@@ -21,8 +21,11 @@
 	}
 
 	async function show_privileges(frm) {
-		frm.set_df_property("pos_operator_privilege", "read_only", !frappe.user.has_role("System Manager"));
-		frm.set_query("pos_operator_privilege", () => ({ filters: { disabled: 0 } }));
+		frm.set_df_property("pos_operator_privilege", "read_only", !(frappe.boot.can_manage_access || frappe.user.has_role("Customer Administrator")));
+		frm.set_query("pos_operator_privilege", () => ({
+			query: "retail.pos_privileges.available_profiles",
+		}));
+		frm.set_df_property("pos_operator_privilege", "only_select", !frappe.boot.can_manage_access);
 		const field = frm.fields_dict.pos_privileges_preview;
 		if (!field) return;
 		field.$wrapper.empty();

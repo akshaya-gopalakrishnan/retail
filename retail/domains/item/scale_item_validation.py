@@ -25,6 +25,10 @@ def is_scale_item(doc) -> bool:
 def ensure_item_barcode(doc, method=None):
 	"""Ensure Item custom barcode is always populated and unique."""
 	barcode = (doc.get("custom_barcode") or "").strip()
+	previous = doc.get_doc_before_save()
+	if previous and is_scale_item(previous) != is_scale_item(doc):
+		if barcode == (previous.get("custom_barcode") or "").strip():
+			barcode = ""
 
 	if barcode:
 		existing = frappe.db.exists("Item", {"custom_barcode": barcode, "name": ["!=", doc.get("name") or ""]})
@@ -33,12 +37,12 @@ def ensure_item_barcode(doc, method=None):
 		doc.custom_barcode = barcode
 		return
 
-	doc.custom_barcode = get_unique_item_barcode(doc.get("name"))
+	doc.custom_barcode = get_unique_item_barcode(doc.get("name"), scale_item=is_scale_item(doc))
 
 
-def get_unique_item_barcode(exclude_name=None):
+def get_unique_item_barcode(exclude_name=None, scale_item=False):
 	for _ in range(BARCODE_GENERATION_MAX_ATTEMPTS):
-		barcode = generate_random_barcode()
+		barcode = generate_random_barcode(scale_item=scale_item)
 
 		exists = frappe.db.exists("Item", {"custom_barcode": barcode, "name": ["!=", exclude_name or ""]})
 		item_barcode_exists = frappe.db.exists("Item Barcode", {"barcode": barcode})
@@ -48,8 +52,10 @@ def get_unique_item_barcode(exclude_name=None):
 	raise frappe.ValidationError("Unable to generate unique barcode. Please retry.")
 
 
-def generate_random_barcode():
-	return f"BC{secrets.randbelow(10**7):07d}"
+def generate_random_barcode(scale_item=False):
+	if scale_item:
+		return f"99{secrets.randbelow(10**5):05d}"
+	return str(10**12 + secrets.randbelow(9 * 10**12))
 
 
 def validate_scale_item(doc, method=None):

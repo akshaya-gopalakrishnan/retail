@@ -26,11 +26,25 @@ class RetailReport(Report):
                 "naming_by": ["Buying Settings", "supp_master_name"] if payable
                 else ["Selling Settings", "cust_master_name"],
             })
+        if self.name == "Item-wise Sales Register":
+            from erpnext.accounts.report.item_wise_sales_register.item_wise_sales_register import _execute
+            from retail.report_transaction_identity import enrich_report
+
+            result = _execute(frappe._dict(filters or {}), additional_table_columns=[{
+                "fieldname": "name", "label": "Source Item Row", "fieldtype": "Data",
+                "hidden": 1, "_doctype": "Sales Invoice Item",
+            }])
+            for row in result[1]:
+                if isinstance(row, dict) and row.get("invoice") and row.get("name"):
+                    row["retail_source_detail"] = row["name"]
+            return enrich_report(self.name, result, filters)
         if self.name == "Gross Profit":
             from retail.core_compat.gross_profit import execute
 
             return execute(frappe._dict(filters or {}))
-        return super().execute_module(filters)
+        from retail.report_transaction_identity import enrich_report
+
+        return enrich_report(self.name, super().execute_module(filters), filters)
 
 
 @frappe.whitelist()

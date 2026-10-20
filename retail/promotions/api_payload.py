@@ -1,10 +1,14 @@
 """Stable date/time and target fields for Retail's external POS clients."""
 import frappe
-from frappe.utils import getdate, get_time
+from frappe.utils import cint, getdate, get_time
 
 
 def promotion_payload(doc):
 	data = doc.as_dict()
+	from retail.promotions.history import version
+	data["promotion_version"] = version(doc)
+	data["enabled"] = cint(doc.get("enabled")) if doc.doctype == "Gift Voucher Promotion" else int(not cint(doc.get("disabled")))
+	data["disabled"] = int(not data["enabled"])
 	for field in ("active_from", "active_to"):
 		value = doc.get(field)
 		data[field] = getdate(value).isoformat() if value else None

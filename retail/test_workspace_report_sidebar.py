@@ -7,6 +7,7 @@ from retail import workspace_permissions, module_access
 
 class TestWorkspaceReportSidebar(unittest.TestCase):
 	def setUp(self):
+		self.patch(frappe, "get_roles", return_value=[])
 		self.patch(__import__("retail.sidebar_permissions", fromlist=["selection"]), "selection", return_value=None)
 		self.patch(module_access, "allowed", return_value=True)
 		self.patch(frappe.local, "flags", new=frappe._dict(in_test=True), create=True)
@@ -97,6 +98,35 @@ class TestWorkspaceReportSidebar(unittest.TestCase):
 		self.assertEqual(bootinfo.allowed_workspaces, pages)
 		self.assertEqual(bootinfo.retail_allowed_workspace_reports, ["Accounts Receivable"])
 		self.assertEqual(bootinfo.retail_workspace_sidebar_groups["Accounts Receivable"], "Accounts")
+
+	def test_boot_builds_report_navigation_once_and_rechecks_next_boot(self):
+		self.allow_report("Accounts Receivable")
+		self.patch(workspace_permissions, "_get_role_allowed_sidebar_workspaces", return_value={"Reports"})
+		self.patch(workspace_permissions, "_workspace_has_permitted_content", return_value=False)
+		self.patch(workspace_permissions, "_workspace_has_route_permission", return_value=False)
+		loader = self.patch(workspace_permissions, "get_permitted_report_sidebar_items",
+			wraps=workspace_permissions.get_permitted_report_sidebar_items)
+		def boot():
+			info = frappe._dict(allowed_workspaces=[frappe._dict(name="Reports", title="Reports", public=1)])
+			workspace_permissions.extend_bootinfo(info)
+			return info
+		self.assertEqual(boot().retail_allowed_workspace_reports, ["Accounts Receivable"])
+		self.assertEqual(loader.call_count, 1)
+		self.reports["Accounts Receivable"].disabled = 1
+		self.assertEqual(boot().retail_allowed_workspace_reports, [])
+		self.assertEqual(loader.call_count, 2)
+
+	def test_sidebar_only_builds_navigation_with_standard_loaders(self):
+		workspace = object.__new__(workspace_permissions.SidebarWorkspace)
+		for name in ("get_links", "get_shortcuts", "get_onboardings", "get_quick_lists"):
+			self.patch(workspace, name, return_value=[name])
+		for name in ("get_charts", "get_number_cards", "get_custom_blocks"):
+			self.patch(workspace, name, side_effect=AssertionError("Unopened widget loaded"))
+		workspace.build_workspace()
+		self.assertEqual(workspace.cards, {"items": ["get_links"]})
+		self.assertEqual(workspace.shortcuts, {"items": ["get_shortcuts"]})
+		self.assertEqual(workspace.onboardings, {"items": ["get_onboardings"]})
+		self.assertEqual(workspace.quick_lists, {"items": ["get_quick_lists"]})
 
 	def test_promotions_loyalty_links_are_nested_and_permission_checked(self):
 		self.patch(workspace_permissions, "get_standard_workspace_sidebar_items", return_value={

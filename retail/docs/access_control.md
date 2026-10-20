@@ -53,7 +53,10 @@ not a purchased-module licence boundary.
 ## Protected administration
 
 Only Super Admin may edit roles, profiles, module assignments, user restrictions,
-POS operator privilege assignments and protected administrator accounts.
+POS operator privilege definitions and protected administrator accounts.
+Customer Administrators with POS access may select existing active POS privilege
+profiles and set cashier PINs for their managed staff; they cannot create or edit
+those profile definitions. See `sidebar_permissions.md` for the ownership checks.
 Import/export, workflows, reposting, customization and system tools retain native
 Frappe/ERPNext authorization. Retail sidebar restrictions remain in effect.
 Customer administrators can create unassigned users and maintain ordinary user

@@ -403,9 +403,19 @@ def extend_bootinfo(bootinfo):
 	# Keep home and inner-page workspace navigation consistent.
 	# Frappe already calculated standard workspace permissions for this boot.
 	# Apply Retail filtering to that result instead of repeating the full scan.
+	report_pages = None
 	if "allowed_workspaces" in bootinfo:
+		reports_root = next(
+			(page for page in bootinfo.allowed_workspaces if page.get("title") == "Reports"), None
+		)
+		if reports_root and _workspace_sidebar_is_allowed(
+			reports_root, set(bootinfo.retail_blocked_modules), allowed_workspaces
+		):
+			# Reuse only within this boot. Never cache permission decisions across
+			# requests or users, and keep the unfiltered report-access list intact.
+			report_pages = get_permitted_report_sidebar_items()
 		bootinfo.allowed_workspaces = _filter_workspace_sidebar_items(
-			{"pages": bootinfo.allowed_workspaces}
+			{"pages": bootinfo.allowed_workspaces}, report_pages=report_pages
 		).get("pages", [])
 	else:
 		bootinfo.allowed_workspaces = get_workspace_sidebar_items().get("pages", [])
@@ -416,7 +426,11 @@ def extend_bootinfo(bootinfo):
 		"has_create_access": frappe.has_permission(doctype="Workspace", ptype="create"),
 	}
 	bootinfo.retail_allowed_workspace_reports = (
-		[page["route"][1] for page in get_permitted_report_sidebar_items() if page.get("is_report_link")]
+		[
+			page["route"][1]
+			for page in (report_pages if report_pages is not None else get_permitted_report_sidebar_items())
+			if page.get("is_report_link")
+		]
 		if any(page.get("title") == "Reports" for page in bootinfo.allowed_workspaces)
 		else []
 	)
@@ -538,6 +552,15 @@ class SidebarWorkspace(Workspace):
 	get_links mirrors Frappe's processing so every discovered item still passes
 	is_item_allowed and _prepare_item. No framework globals are patched.
 	"""
+
+	def build_workspace(self):
+		# Sidebar visibility consumes navigation only. Loading chart, card and
+		# HTML definitions here repeats widget permission work for unopened
+		# workspaces; the standard loader still handles those when opened.
+		self.cards = {"items": self.get_links()}
+		self.shortcuts = {"items": self.get_shortcuts()}
+		self.onboardings = {"items": self.get_onboardings()}
+		self.quick_lists = {"items": self.get_quick_lists()}
 
 	def _prepare_item(self, item):
 		# Only navigation presence is consumed by the sidebar filter. Loading
@@ -676,7 +699,7 @@ def get_workspace_sidebar_items():
 	return _filter_workspace_sidebar_items(get_standard_workspace_sidebar_items())
 
 
-def _filter_workspace_sidebar_items(sidebar):
+def _filter_workspace_sidebar_items(sidebar, report_pages=None):
 	from copy import deepcopy
 
 	# Keep the framework's original result intact for other boot consumers.
@@ -691,7 +714,8 @@ def _filter_workspace_sidebar_items(sidebar):
 	pages = [frappe._dict(page, is_workspace_link=1) if page.get("title") == "Reports" else page for page in pages]
 	reports_root = next((page for page in pages if page.get("title") == "Reports"), None)
 	if reports_root and _workspace_sidebar_is_allowed(reports_root, blocked_modules, allowed_workspaces):
-		report_pages = get_permitted_report_sidebar_items()
+		if report_pages is None:
+			report_pages = get_permitted_report_sidebar_items()
 		report_names = {page["name"] for page in report_pages}
 		pages = [page for page in pages if page.get("name") not in report_names] + report_pages
 

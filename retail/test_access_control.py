@@ -16,13 +16,15 @@ class TestAccessControl(unittest.TestCase):
         frappe.set_user("Administrator")
         frappe.flags.in_test = True
         access.install()
+        from retail.delegated_access import install
+        install()
         cls.users = {}
         cls.module_profile = frappe.get_doc({"doctype": "Module Profile", "module_profile_name": "Access Test " + frappe.generate_hash(length=8)}).insert().name
         cls.gravatar = patch("frappe.core.doctype.user.user.update_gravatar")
         cls.gravatar.start()
         for label, roles in {
             "super": ["Super Admin", "System Manager"],
-            "customer": ["Customer Administrator"],
+            "customer": ["Customer Administrator", "Sales User", "Stock User"],
             "legacy_manager": ["System Manager"],
             "staff": ["Sales User"],
         }.items():
@@ -30,6 +32,9 @@ class TestAccessControl(unittest.TestCase):
                 "doctype": "User", "email": f"access-{label}-{frappe.generate_hash(length=8)}@example.com",
                 "first_name": f"Access Test {label}", "send_welcome_email": 0,
                 "user_type": "System User", "roles": [{"role": role} for role in roles],
+                "retail_access_manager": cls.users.get("customer") if label == "staff" else None,
+                "block_modules": [{"module": "Manufacturing"}] if label in ("customer", "staff") else [],
+                "retail_sidebar_permissions": '{"version":1,"allowed":["workspace:sales","workspace:sales_invoices","workspace:settings","workspace:user_list"]}' if label in ("customer", "staff") else None,
             }).insert(ignore_permissions=True)
             cls.users[label] = user.name
 
@@ -59,7 +64,7 @@ class TestAccessControl(unittest.TestCase):
         access.install()
         self.assertEqual([r.role for r in frappe.get_doc("Role Profile", "Administrator").roles], ["Employee"])
 
-    def test_customer_cannot_assign_roles_profiles_or_modules_even_ignoring_permissions(self):
+    def test_customer_cannot_assign_access_outside_ceiling_even_ignoring_permissions(self):
         for field, value in (("role_profile_name", "Super Admin"), ("module_profile", self.module_profile), ("roles", [{"role": "Super Admin"}]), ("block_modules", [{"module": "POS"}])):
             with self.subTest(field=field):
                 frappe.set_user(self.users["customer"])
@@ -177,3 +182,86 @@ class TestAccessControl(unittest.TestCase):
         share = frappe.get_doc({"doctype": "DocShare", "share_doctype": "User", "share_name": self.users["super"], "user": self.users["customer"], "read": 1})
         with self.assertRaises(frappe.PermissionError):
             share.insert(ignore_permissions=True)
+
+    def test_customer_assigns_own_roles_and_sidebar_to_new_staff(self):
+        from retail.delegated_access import get_all_roles
+        from retail.sidebar_permissions import get_editor
+        frappe.set_user(self.users["customer"])
+        available = get_all_roles()
+        self.assertIn("Sales User", available)
+        self.assertNotIn("Super Admin", available)
+        self.assertNotIn("System Manager", available)
+        visible = {row["id"] for group in get_editor() for row in [group, *group["children"]]}
+        self.assertIn("workspace:sales_invoices", visible)
+        self.assertNotIn("workspace:van_sales", visible)
+        user = frappe.get_doc({"doctype": "User", "email": f"delegated-{frappe.generate_hash(length=8)}@example.com",
+            "first_name": "Delegated", "send_welcome_email": 0, "user_type": "System User",
+            "roles": [{"role": "Sales User"}],
+            "retail_sidebar_permissions": '{"version":1,"allowed":["workspace:sales","workspace:sales_invoices"]}'}).insert()
+        self.assertEqual(user.retail_access_manager, self.users["customer"])
+        self.assertIn("Manufacturing", [row.module for row in user.block_modules])
+        self.assertEqual([row.role for row in user.roles], ["Sales User"])
+        user.roles = []
+        user.append("roles", {"role": "Stock User"})
+        user.save()
+        self.assertIn("Stock User", frappe.get_roles(user.name))
+
+    def test_customer_cannot_expand_self_or_delegate_hidden_sidebar(self):
+        frappe.set_user(self.users["customer"])
+        own = frappe.get_doc("User", frappe.session.user)
+        own.append("roles", {"role": "Accounts User"})
+        with self.assertRaises(frappe.PermissionError):
+            own.save(ignore_permissions=True)
+        staff = frappe.get_doc("User", self.users["staff"])
+        staff.retail_sidebar_permissions = '{"version":1,"allowed":["workspace:van_sales"]}'
+        with self.assertRaises(frappe.PermissionError):
+            staff.save(ignore_permissions=True)
+        staff.reload()
+        staff.retail_sidebar_permissions = None
+        staff.save()
+        from retail.sidebar_permissions import selection
+        self.assertNotIn("workspace:van_sales", selection(staff.name))
+
+    def test_customer_cannot_manage_unrelated_users(self):
+        frappe.set_user(self.users["customer"])
+        unrelated = self.users["legacy_manager"]
+        self.assertNotIn(unrelated, frappe.get_list("User", pluck="name", limit_page_length=0))
+        self.assertFalse(frappe.has_permission("User", "write", unrelated))
+        doc = frappe.get_doc("User", unrelated)
+        doc.first_name = "Unauthorized"
+        with self.assertRaises(frappe.PermissionError):
+            doc.save(ignore_permissions=True)
+
+    def test_customer_cannot_forge_staff_ownership(self):
+        frappe.set_user(self.users["customer"])
+        for field, value in (("retail_access_manager", frappe.session.user), ("owner", frappe.session.user)):
+            doc = frappe.get_doc("User", self.users["legacy_manager"])
+            doc.set(field, value)
+            with self.assertRaises(frappe.PermissionError):
+                doc.save(ignore_permissions=True)
+
+    def test_super_admin_reduction_cascades_to_staff(self):
+        from retail.sidebar_permissions import selection
+        parent = frappe.get_doc("User", self.users["customer"])
+        parent.set("roles", [{"role": "Customer Administrator"}, {"role": "Stock User"}])
+        parent.retail_sidebar_permissions = '{"version":1,"allowed":["workspace:settings","workspace:user_list"]}'
+        parent.save()
+        staff = frappe.get_doc("User", self.users["staff"])
+        self.assertNotIn("Sales User", [row.role for row in staff.roles])
+        self.assertNotIn("workspace:sales_invoices", selection(staff.name))
+
+    def test_customer_own_profile_remains_editable(self):
+        frappe.set_user(self.users["customer"])
+        own = frappe.get_doc("User", frappe.session.user)
+        own.first_name = "Personal profile update"
+        own.save()
+        self.assertEqual(frappe.db.get_value("User", own.name, "first_name"), "Personal profile update")
+
+    def test_linking_existing_staff_applies_manager_ceiling(self):
+        user = frappe.get_doc("User", self.users["legacy_manager"])
+        user.retail_access_manager = self.users["customer"]
+        user.save()
+        self.assertNotIn("System Manager", frappe.get_roles(user.name))
+        self.assertIn("Manufacturing", [row.module for row in user.block_modules])
+        from retail.sidebar_permissions import selection
+        self.assertNotIn("workspace:van_sales", selection(user.name))

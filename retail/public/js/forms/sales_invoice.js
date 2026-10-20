@@ -188,6 +188,10 @@
 				} else {
 					await frappe.model.set_value(cdt, cdn, "item_code", item.item_code);
 				}
+				if (item.scale_barcode_type) {
+					await frappe.model.set_value(cdt, cdn, "uom", item.uom);
+					await retail.scale_sales.apply(frm, row, item);
+				}
 				frm.refresh_field("items");
 			},
 			item_code(frm, cdt, cdn) {

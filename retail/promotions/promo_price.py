@@ -129,6 +129,8 @@ def apply_inclusive_promo_prices(doc, method=None):
 
 	changed = False
 	for item in doc.get("items") or []:
+		if item.flags.get("retail_scale_price"):
+			continue  # A label carrying its own price keeps that price.
 		promo_row = get_matching_inclusive_promo_row(doc, item, promotions)
 		if not promo_row:
 			continue

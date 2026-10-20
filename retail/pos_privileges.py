@@ -71,9 +71,11 @@ def validate_employee_assignment(doc, method=None):
 	previous = doc.get_doc_before_save()
 	old_profile = previous.get("pos_operator_privilege") if previous else None
 	if doc.get("pos_operator_privilege") != old_profile:
-		from retail.access_control import require_super_admin
-
-		require_super_admin()
+		require_employee_pos_management(doc)
+		if doc.get("pos_operator_privilege") and frappe.db.get_value(
+			"POS Operator Privilege", doc.pos_operator_privilege, "disabled"
+		):
+			frappe.throw(_("Select an active POS Operator Privilege profile."))
 
 
 @frappe.whitelist()
@@ -83,3 +85,50 @@ def get_privilege_preview(employee, profile_name=None):
 		{"label": PRIVILEGE_LABELS[code], "allowed": allowed}
 		for code, allowed in profile_privileges(profile_name).items()
 	]
+
+
+def require_employee_pos_management(doc):
+	"""Delegate staff POS setup, never profile definitions or access ceilings."""
+	from retail.access_control import is_super_admin, is_protected_user, deny_technical_access
+	from retail.delegated_access import is_customer_admin, manages
+	from retail.module_access import require
+	from retail.sidebar_permissions import target_allowed
+	if is_super_admin():
+		return
+	if not is_customer_admin():
+		deny_technical_access()
+	require("POS")
+	if not target_allowed("doctype", "Employee") or not target_allowed("doctype", "POS Cashier Shift"):
+		deny_technical_access()
+	doc.check_permission("create" if doc.is_new() else "write")
+	previous = doc.get_doc_before_save()
+	saved = previous or (frappe.get_doc("Employee", doc.name) if not doc.is_new() else doc)
+	# Never let a request replace a saved link to take ownership of an employee.
+	for employee in (saved, doc):
+		linked = {employee.get("user_id"), employee.get("pos_login_user")} - {None, ""}
+		if any(is_protected_user(user) for user in linked):
+			deny_technical_access()
+		if linked:
+			if not all(manages(frappe.get_doc("User", user)) for user in linked):
+				deny_technical_access()
+		elif not doc.is_new() and employee.owner != frappe.session.user:
+			deny_technical_access()
+
+
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
+def available_profiles(doctype, txt, searchfield, start, page_len, filters=None):
+	"""Dropdown only; the protected profile documents remain inaccessible."""
+	from retail.access_control import is_super_admin, deny_technical_access
+	from retail.delegated_access import is_customer_admin
+	from retail.module_access import require
+	from retail.sidebar_permissions import target_allowed
+	if not is_super_admin():
+		if not is_customer_admin() or not target_allowed("doctype", "Employee") or not target_allowed("doctype", "POS Cashier Shift"):
+			deny_technical_access()
+		require("POS")
+		if not frappe.has_permission("Employee", "write"):
+			deny_technical_access()
+	return [[row.name] for row in frappe.get_all("POS Operator Privilege",
+		filters={"disabled": 0, "name": ["like", "%" + txt + "%"]},
+		fields=["name"], order_by="name", start=start, page_length=min(int(page_len), 50))]

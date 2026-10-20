@@ -9,4 +9,7 @@ def execute(filters=None):
 	filters = frappe._dict(filters or {})
 	filters.setdefault("valuation_field_type", "Currency")
 	columns, data = stock_ledger_execute(filters)
-	return add_packing_columns(columns), expand_rows_with_packings(data)
+	from retail.report_transaction_identity import enrich_stock_ledger
+	from retail.transaction_identity import append_columns, columns as identity_columns
+	enrich_stock_ledger(data)
+	return append_columns(add_packing_columns(columns), identity_columns(sold=False)), expand_rows_with_packings(data)

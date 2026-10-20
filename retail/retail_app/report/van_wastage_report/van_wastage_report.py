@@ -13,6 +13,7 @@ def get_data(filters):
 		{
 			"posting_date": row.posting_date,
 			"stock_entry": row.stock_entry,
+			"retail_source_detail": row.retail_source_detail,
 			"van_session": row.van_session,
 			"van": row.van,
 			"driver": row.driver,

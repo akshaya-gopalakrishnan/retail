@@ -3,11 +3,13 @@ frappe.ui.form.on("User", {
     refresh(frm) {
         const field = frm.fields_dict.retail_sidebar_permissions_html;
         if (!field || frm.doc.user_type !== "System User") return;
-        const groups = frappe.boot.retail_sidebar_registry || [];
+        const groups = frappe.boot.retail_sidebar_editor_registry || [];
         const protectedUser = frm.doc.name !== "Administrator" &&
             (frm.doc.roles || []).some(row => row.role === "Super Admin");
         const canManage = Boolean(frappe.boot.can_manage_access ||
-            frappe.session.user === "Administrator" ||
+            (frappe.boot.can_delegate_access && frm.doc.name !== frappe.session.user &&
+                (frm.is_new() || frm.doc.retail_access_manager === frappe.session.user ||
+                    (!frm.doc.retail_access_manager && frm.doc.owner === frappe.session.user))) ||
             (frappe.user_roles || []).includes("Super Admin"));
         const disabled = !canManage;
         const all = groups.flatMap(group => [group, ...group.children]);
@@ -73,9 +75,6 @@ frappe.ui.form.on("User", {
         }
         wrapper.find("input, button").prop("disabled", disabled);
         updateParents();
-        if (disabled) $('<p class="text-muted small">')
-            .text(__("Sign in as Administrator or an assigned Super Admin to change these selections."))
-            .appendTo(wrapper);
         if (protectedUser) $('<p class="text-muted small">').text(__("Celesta Super Administrator retains full access regardless of these selections.")).appendTo(wrapper);
         else if (!frm.doc.retail_sidebar_permissions) $('<p class="text-muted small">')
             .text(__("Existing access is preserved until you change and save this selection. Native roles still control permitted operations."))

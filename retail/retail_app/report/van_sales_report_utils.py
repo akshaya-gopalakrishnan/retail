@@ -109,6 +109,7 @@ def get_van_sales_items(filters):
 		f"""
 		select
 			si.name as sales_invoice,
+			sii.name as retail_source_detail,
 			si.posting_date,
 			si.customer,
 			si.customer_name,
@@ -150,6 +151,7 @@ def get_van_stock_items(filters, stock_type=None):
 		f"""
 		select
 			se.name as stock_entry,
+			sed.name as retail_source_detail,
 			se.posting_date,
 			se.stock_entry_type,
 			se.custom_van_stock_entry_type as van_stock_entry_type,

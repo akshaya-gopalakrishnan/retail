@@ -104,7 +104,11 @@
 		custom_average_purchase_rate(frm) { refreshMargin(frm); },
 		custom_b2b(frm) { refreshMargin(frm); },
 		is_scale_item(frm) { return setScaleItemDefaults(frm); },
-		custom_scale_item(frm) { return setScaleItemDefaults(frm); },
+		async custom_scale_item(frm) {
+			await frm.set_value("custom_barcode", cint(frm.doc.custom_scale_item)
+				? generateScaleItemBarcode() : generateItemBarcode());
+			return setScaleItemDefaults(frm);
+		},
 		custom_scale_barcode_type(frm) { return syncInternalScaleType(frm); },
 		validate(frm) {
 			ensureItemBarcode(frm);
@@ -115,7 +119,8 @@
 
 	function ensureItemBarcode(frm) {
 		if (frm.doc.custom_barcode) return;
-		frm.set_value("custom_barcode", generateItemBarcode());
+		frm.set_value("custom_barcode", cint(frm.doc.custom_scale_item)
+			? generateScaleItemBarcode() : generateItemBarcode());
 		const newBarcode = frm.doc.custom_barcode;
 		if (newBarcode) {
 			frappe.show_alert({
@@ -161,13 +166,11 @@
 	}
 
 	function generateScaleItemBarcode() {
-		const randomPart = String(Math.floor(Math.random() * 100000)).padStart(5, "0");
-		return `99${randomPart}`;
+		return `99${String(Math.floor(Math.random() * 100000)).padStart(5, "0")}`;
 	}
 
 	function generateItemBarcode() {
-		const randomPart = String(Math.floor(Math.random() * 100000)).padStart(7, "0");
-		return `BC${randomPart}`;
+		return String(1000000000000 + Math.floor(Math.random() * 9000000000000));
 	}
 
 	function addZebraLabelButton(frm) {

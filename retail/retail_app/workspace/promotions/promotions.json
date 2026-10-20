@@ -76,10 +76,30 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Promotion History",
-   "link_count": 1,
+   "link_count": 3,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Promotion Sales Summary",
+   "link_count": 0,
+   "link_to": "Promotion Sales Summary",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Promotion Sales Detail",
+   "link_count": 0,
+   "link_to": "Promotion Sales Detail",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
   },
   {
    "hidden": 0,

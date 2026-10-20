@@ -9,7 +9,7 @@ import frappe
 import requests
 from frappe.utils import convert_utc_to_system_timezone
 
-from retail.access_control import is_super_admin, require_super_admin
+from retail.access_control import CUSTOMER_ADMIN, deny_technical_access, is_super_admin
 from retail.licensing.signature import RULE_FIELDS
 from retail.licensing.state import verify_protected, transition_context
 
@@ -52,8 +52,18 @@ def _alert_refresh_failure():
                        "email_content": "Open Celesta License Settings and use Sync/Verify. Check the license server endpoint and refresh logs. New logins require a valid signed token; the subscription expiry date alone does not authorize login."}).insert(ignore_permissions=True)
 
 
+def can_manage_license(user=None):
+    user = user or frappe.session.user
+    return is_super_admin(user) or (user != "Guest" and CUSTOMER_ADMIN in frappe.get_roles(user))
+
+
+def require_license_admin():
+    if not can_manage_license():
+        deny_technical_access()
+
+
 def has_permission(doc, ptype=None, user=None, **kwargs):
-    return is_super_admin(user)
+    return can_manage_license(user)
 
 
 @contextmanager
@@ -75,13 +85,13 @@ def _local_time(timestamp):
 
 @frappe.whitelist(methods=["POST"])
 def activate():
-    require_super_admin()
+    require_license_admin()
     return _sync("activate")
 
 
 @frappe.whitelist(methods=["POST"])
 def verify():
-    require_super_admin()
+    require_license_admin()
     return _sync("verify")
 
 
