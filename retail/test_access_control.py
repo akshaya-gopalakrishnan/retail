@@ -265,3 +265,31 @@ class TestAccessControl(unittest.TestCase):
         self.assertIn("Manufacturing", [row.module for row in user.block_modules])
         from retail.sidebar_permissions import selection
         self.assertNotIn("workspace:van_sales", selection(user.name))
+
+    def test_customer_pos_profile_picker_request_and_validation(self):
+        from frappe.desk.search import search_link
+        from retail.pos_privileges import validate_profile_link
+        customer = frappe.get_doc('User', self.users['customer'])
+        customer.append('roles', {'role': 'POS Manager'})
+        customer.retail_sidebar_permissions = None
+        customer.save()
+        profile = frappe.get_doc({'doctype': 'POS Operator Privilege',
+            'profile_name': 'Picker Test ' + frappe.generate_hash(length=8)}).insert()
+        frappe.set_user(customer.name)
+        args = {'doctype': 'POS Operator Privilege', 'txt': profile.name,
+                'query': 'retail.pos_privileges.available_profiles'}
+        with patch.object(frappe.local, 'request', frappe._dict(path='/api/method/frappe.desk.search.search_link'), create=True), patch.object(frappe.local, 'form_dict', frappe._dict(args), create=True):
+            access.guard_request()
+            self.assertIn(profile.name, [row['value'] for row in search_link(**args)])
+        args = {'doctype': 'POS Operator Privilege', 'docname': profile.name, 'fields': '[]'}
+        with patch.object(frappe.local, 'request', frappe._dict(path='/api/method/frappe.client.validate_link'), create=True), patch.object(frappe.local, 'form_dict', frappe._dict(args), create=True):
+            access.guard_request()
+            self.assertEqual(validate_profile_link(**args), {'name': profile.name})
+            with self.assertRaises(frappe.PermissionError):
+                validate_profile_link(args['doctype'], profile.name, '["change_price"]')
+        for command in ('frappe.client.get', 'frappe.client.set_value', 'frappe.desk.search.search_link'):
+            with patch.object(frappe.local, 'request', frappe._dict(path='/api/method/' + command), create=True), patch.object(frappe.local, 'form_dict', frappe._dict(doctype='POS Operator Privilege'), create=True):
+                with self.assertRaises(frappe.PermissionError):
+                    access.guard_request()
+        self.assertFalse(frappe.has_permission('POS Operator Privilege', 'create'))
+        self.assertFalse(frappe.has_permission('POS Operator Privilege', 'write'))

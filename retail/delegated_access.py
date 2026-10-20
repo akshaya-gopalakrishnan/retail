@@ -1,5 +1,6 @@
 """Delegate existing User editors within the assigning administrator's access."""
 import json
+from contextlib import contextmanager
 
 import frappe
 
@@ -167,14 +168,37 @@ def apply_ceiling(doc, manager):
     doc.set(SIDEBAR_FIELD, json.dumps({"version": 1, "allowed": sorted(selected & limit)}, separators=(",", ":")))
 
 
+@contextmanager
+def _staff_sync_administrator():
+    """Isolate set_user: it resets the session and user-specific request caches.
+
+    Never call set_user on the browser session object, which is also referenced
+    by Session.data and persisted at the end of the request. Restore original
+    objects (including form_dict) on both success and failure, also when nested.
+    """
+    fields = ("session", "cache", "form_dict", "jenv", "role_permissions",
+              "new_doc_templates", "user_perms")
+    missing = object()
+    saved = {field: getattr(frappe.local, field, missing) for field in fields}
+    try:
+        frappe.local.session = frappe._dict(data=frappe._dict())
+        frappe.set_user("Administrator")
+        yield
+    finally:
+        for field, value in saved.items():
+            if value is missing:
+                if hasattr(frappe.local, field):
+                    delattr(frappe.local, field)
+            else:
+                setattr(frappe.local, field, value)
+
+
 def sync_children(doc, method=None):
     """Removing an administrator's access also removes it from managed staff."""
     previous = doc.get_doc_before_save()
     if not previous or not assignment_changed(doc, previous):
         return
-    actor = frappe.session.user
-    try:
-        frappe.set_user("Administrator")
+    with _staff_sync_administrator():
         frappe.clear_cache(user=doc.name)
         children = frappe.get_all("User", filters={MANAGER_FIELD: doc.name}, pluck="name")
         # Adopt older users that this administrator created before delegation existed.
@@ -189,8 +213,7 @@ def sync_children(doc, method=None):
             apply_ceiling(child, doc.name)
             if child.as_dict() != child_previous:
                 child.save(ignore_permissions=True)
-    finally:
-        frappe.set_user(actor)
+
 
 
 def validate_manager(doc, method=None):
