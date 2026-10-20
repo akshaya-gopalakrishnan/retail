@@ -104,6 +104,10 @@ def _table_values(doc, field, key):
 
 
 def validate_document(doc, method=None, *args, **kwargs):
+    if doc.doctype == "User Permission":
+        from retail.employee_permissions import automatic_permission_allowed
+        if automatic_permission_allowed(doc):
+            return
     # Only the authenticated correction service may invoke this narrow native repost.
     if doc.doctype == "Repost Accounting Ledger" and frappe.flags.get("retail_day_correction"):
         return

@@ -47,6 +47,8 @@ class TestInstallPortability(unittest.TestCase):
 
 	def test_fixture_dependencies_are_prepared_before_install_setup(self):
 		self.assertEqual(hooks.after_install, ["retail.install.prepare_fixture_doctypes"])
+		self.assertIn("retail.delegated_access.install", hooks.after_sync)
+		self.assertIn("retail.delegated_access.install", hooks.after_migrate)
 		for setup in ("retail.loyalty_setup.install", "retail.pos_transaction_display.execute"):
 			self.assertIn(setup, hooks.after_sync)
 		self.assertLess(

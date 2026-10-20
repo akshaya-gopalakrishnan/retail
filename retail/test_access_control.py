@@ -293,3 +293,41 @@ class TestAccessControl(unittest.TestCase):
                     access.guard_request()
         self.assertFalse(frappe.has_permission('POS Operator Privilege', 'create'))
         self.assertFalse(frappe.has_permission('POS Operator Privilege', 'write'))
+
+    def test_customer_employee_automatic_permissions_are_scoped(self):
+        customer = frappe.get_doc('User', self.users['customer'])
+        company = frappe.db.get_value('Company', {}, 'name')
+        frappe.get_doc({'doctype': 'Employee', 'first_name': 'Manager',
+            'gender': 'Male', 'date_of_birth': '1990-01-01',
+            'date_of_joining': '2026-01-01', 'company': company,
+            'user_id': customer.name, 'create_user_permission': 0}).insert()
+        customer.reload()
+        customer.append_roles('HR Manager')
+        customer.retail_sidebar_permissions = None
+        customer.save()
+        company = frappe.db.get_value('Company', {}, 'name')
+        self.assertTrue(company)
+        frappe.set_user(customer.name)
+        employee = frappe.get_doc({
+            'doctype': 'Employee', 'first_name': 'Scoped Staff',
+            'gender': 'Male', 'date_of_birth': '1990-01-01',
+            'date_of_joining': '2026-01-01', 'company': company,
+            'status': 'Active', 'user_id': self.users['staff'],
+            'create_user_permission': 1,
+        })
+        employee.insert()
+        for allow, value in [('Employee', employee.name), ('Company', company)]:
+            self.assertTrue(frappe.db.exists('User Permission', {
+                'user': self.users['staff'], 'allow': allow, 'for_value': value}))
+        direct = frappe.get_doc({'doctype': 'User Permission', 'user': self.users['staff'],
+                                 'allow': 'Company', 'for_value': company})
+        with self.assertRaises(frappe.PermissionError):
+            direct.insert(ignore_permissions=True)
+        employee.create_user_permission = 0
+        employee.save()
+        self.assertFalse(frappe.db.exists('User Permission', {
+            'user': self.users['staff'], 'allow': 'Employee', 'for_value': employee.name}))
+        employee.user_id = self.users['legacy_manager']
+        employee.create_user_permission = 1
+        with self.assertRaises(frappe.PermissionError):
+            employee.save()
