@@ -190,7 +190,12 @@ def guard_request():
                     require_super_admin()
                 if document.get("doctype") == "User" and is_protected_user(document.get("name")):
                     deny_technical_access()
-    if dt in PROTECTED_DOCTYPES:
+    profile_picker = dt == "POS Operator Privilege" and (
+        (command in {"frappe.desk.search.search_link", "frappe.desk.search.search_widget"}
+         and form.get("query") == "retail.pos_privileges.available_profiles")
+        or (command == "frappe.client.validate_link" and not frappe.parse_json(form.get("fields") or "[]"))
+    )
+    if dt in PROTECTED_DOCTYPES and not profile_picker:
         require_super_admin()
     if dt == "User" and isinstance(name, str):
         from retail.delegated_access import is_customer_admin, user_visible

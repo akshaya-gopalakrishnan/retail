@@ -999,3 +999,6 @@ for _scale_sales_type in ("Sales Invoice", "POS Invoice", "Sales Order", "Delive
     doc_events[_scale_sales_type]["before_validate"] = [
         *_scale_handlers, "retail.domains.item.scale_sales.prepare_precision",
     ]
+
+# Existing POS profile selection never grants profile-document administration.
+override_whitelisted_methods["frappe.client.validate_link"] = "retail.pos_privileges.validate_profile_link"

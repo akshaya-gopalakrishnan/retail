@@ -132,3 +132,19 @@ def available_profiles(doctype, txt, searchfield, start, page_len, filters=None)
 	return [[row.name] for row in frappe.get_all("POS Operator Privilege",
 		filters={"disabled": 0, "name": ["like", "%" + txt + "%"]},
 		fields=["name"], order_by="name", start=start, page_length=min(int(page_len), 50))]
+
+
+@frappe.whitelist()
+def validate_profile_link(doctype, docname, fields=None):
+	"""Allow the picker to validate a name without exposing profile fields."""
+	from frappe.client import validate_link as native
+	from retail.access_control import is_super_admin, deny_technical_access
+	if doctype != "POS Operator Privilege" or is_super_admin():
+		return native(doctype, docname, fields)
+	if frappe.parse_json(fields or "[]"):
+		deny_technical_access()
+	# Reuse the dropdown's authorization; match exactly rather than wildcard text.
+	available_profiles(doctype, "", "name", 0, 1)
+	if not frappe.db.exists(doctype, {"name": docname, "disabled": 0}):
+		frappe.throw(_("Select an active POS Operator Privilege profile."))
+	return {"name": docname}
