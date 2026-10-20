@@ -66,6 +66,10 @@ def apply_employee_pos_login(doc, method=None):
 
 	quick_pin = doc.get("pos_quick_pin")
 	if quick_pin:
+		from retail.delegated_access import is_customer_admin
+		if is_customer_admin():
+			from retail.pos_privileges import require_employee_pos_management
+			require_employee_pos_management(doc)
 		validate_quick_pin(quick_pin)
 		salt, pin_hash = make_quick_pin_hash(quick_pin)
 		doc.pos_quick_pin_salt = salt
@@ -96,6 +100,10 @@ def apply_user_pos_login(doc, method=None):
 	if not frappe.db.exists("Employee", employee):
 		frappe.throw(_("POS Cashier Employee {0} was not found.").format(employee))
 
+	from retail.delegated_access import is_customer_admin
+	if is_customer_admin():
+		from retail.pos_privileges import require_employee_pos_management
+		require_employee_pos_management(frappe.get_doc("Employee", employee))
 	values = {
 		"pos_login_enabled": cint(doc.get("pos_login_enabled")),
 		"pos_login_user": doc.name,

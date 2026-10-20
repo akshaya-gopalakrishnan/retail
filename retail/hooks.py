@@ -47,7 +47,7 @@ page_renderer = [
 ]
 website_path_resolver = ["retail.guest_entry.resolve_guest_entry"]
 
-jinja = {"methods": ["retail.cdn.include_script", "retail.cdn.include_style"]}
+jinja = {"methods": ["retail.cdn.include_script", "retail.cdn.include_style", "retail.print_item_tax.item_tax_for_print", "retail.pos_day_closing_print.day_closing_print_data"]}
 update_website_context = ["retail.cdn.update_website_context"]
 
 website_context = {
@@ -957,3 +957,45 @@ override_whitelisted_methods["erpnext.stock.dashboard_chart_source.warehouse_wis
 # Seed once so subsequent Customize Form choices survive migrations.
 after_sync.append("retail.item_quick_entry.install")
 after_migrate.append("retail.item_quick_entry.install")
+
+# Preserve transaction display facts without changing ERPNext-owned fields.
+after_sync.append("retail.transaction_identity.install")
+after_migrate.append("retail.transaction_identity.install")
+for _identity_doctype in ("Sales Invoice", "POS Invoice", "Delivery Note",
+                          "Purchase Invoice", "Purchase Receipt", "Stock Entry"):
+    _identity_handlers = doc_events.setdefault(_identity_doctype, {}).get("before_submit", [])
+    if isinstance(_identity_handlers, str):
+        _identity_handlers = [_identity_handlers]
+    doc_events[_identity_doctype]["before_submit"] = [
+        *_identity_handlers, "retail.transaction_identity.snapshot_document",
+    ]
+
+# Record promotion master revisions and audit POS evidence without changing totals.
+after_migrate.append("retail.promotions.history.install")
+after_sync.append("retail.promotions.history.install")
+for _promotion_type in ("Promo Price", "Buy X Get Y Promotion", "Gift Voucher Promotion"):
+    _revision_handlers = doc_events.setdefault(_promotion_type, {}).get("on_update", [])
+    if isinstance(_revision_handlers, str):
+        _revision_handlers = [_revision_handlers]
+    doc_events[_promotion_type]["on_update"] = [*_revision_handlers, "retail.promotions.history.record_revision"]
+doc_events["POS Invoice"].setdefault("before_submit", []).append("retail.promotions.history.capture")
+
+# Client administrators delegate only their own assigned access to managed staff.
+override_whitelisted_methods.update({
+    "frappe.core.doctype.user.user.get_all_roles": "retail.delegated_access.get_all_roles",
+    "frappe.core.doctype.user.user.get_perm_info": "retail.delegated_access.get_perm_info",
+})
+doc_events["User"].setdefault("onload", []).append("retail.delegated_access.onload")
+doc_events["User"]["validate"].append("retail.delegated_access.validate_manager")
+doc_events["User"].setdefault("on_update", []).append("retail.delegated_access.sync_children")
+after_install.append("retail.delegated_access.install")
+after_migrate.append("retail.delegated_access.install")
+
+# Keep scale-derived quantities and rates precise within the sales document.
+for _scale_sales_type in ("Sales Invoice", "POS Invoice", "Sales Order", "Delivery Note", "Quotation"):
+    _scale_handlers = doc_events.setdefault(_scale_sales_type, {}).get("before_validate", [])
+    if isinstance(_scale_handlers, str):
+        _scale_handlers = [_scale_handlers]
+    doc_events[_scale_sales_type]["before_validate"] = [
+        *_scale_handlers, "retail.domains.item.scale_sales.prepare_precision",
+    ]

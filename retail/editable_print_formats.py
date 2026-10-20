@@ -9,6 +9,7 @@ import frappe
 from frappe.custom.doctype.property_setter.property_setter import make_property_setter
 
 SOURCES = {
+	"POS Branch Day Closing": "POS Branch Day Closing - Retail",
 	"Sales Invoice": "Sales Invoice - Copy",
 	"Delivery Note": "Delivery Note- Copy",
 	"Quotation": "Sales Quotation",
@@ -130,6 +131,33 @@ def editable_html(source):
 	return source
 
 
+DEFAULT_HEADER_CSS = '/* Retail default header colours: editable per format */\n.print-format table thead th,\n.print-format .item-table th,\n.print-format .po-address-title {\n    background-color: #2d6dc4 !important;\n    color: #fff !important;\n    -webkit-print-color-adjust: exact;\n    print-color-adjust: exact;\n}\n.print-format table thead th *,\n.print-format .item-table th * {\n    color: #fff !important;\n}'
+
+def editable_layout(source, css=""):
+	"""Keep format-owned styles in the UI's Custom CSS field."""
+	source = editable_html(source)
+	styles = re.findall(r"<style\b[^>]*>(.*?)</style>", source, flags=re.S | re.I)
+	source = re.sub(r"<style\b[^>]*>.*?</style>\s*", "", source, flags=re.S | re.I)
+	# Convert static inline styles to classes so the CSS editor owns styling.
+	def move_style(match):
+		tag, quote, style = match.groups()
+		if "{{" in style or "{%" in style:
+			return match[0]
+		class_name = f"retail-style-{len(styles)}"
+		styles.append(f".{class_name} {{ {html.unescape(style)} }}")
+		if re.search(r'\bclass=[\"\']', tag):
+			tag = re.sub(r"(\bclass=[\"'])(.*?)([\"'])", lambda m: m[1] + m[2] + " " + class_name + m[3], tag, count=1)
+		else:
+			tag += f' class="{class_name}"'
+		return tag
+
+	source = re.sub(r"(<[^>]*?)\sstyle=([\"'])(.*?)\2", move_style, source, flags=re.S | re.I)
+	combined_css = "\n\n".join(part.strip() for part in [css or "", *styles] if part.strip())
+	if "/* Retail default header colours: editable per format */" not in combined_css:
+		combined_css += "\n\n" + DEFAULT_HEADER_CSS
+	return source, combined_css
+
+
 def ensure_editable_print_formats():
 	if not frappe.db.table_exists("Print Format"):
 		return
@@ -153,18 +181,9 @@ def ensure_editable_print_formats():
 			target.print_format_builder = 0
 			target.print_format_builder_beta = 0
 			target.print_format_for = "DocType"
-			target.html = editable_html(source.html or "")
+			target.html, target.css = editable_layout(source.html or "", source.css or "")
 			target.insert(ignore_permissions=True)
-		# Upgrade translation expressions in place, preserving user-written layout.
-		existing = frappe.get_doc("Print Format", name)
-		updated_html = editable_html(existing.html or "")
-		if updated_html != existing.html:
-			existing.html = updated_html
-			existing.save(ignore_permissions=True)
-		legacy = frappe.get_doc("Print Format", source_name)
-		legacy_html = editable_html(legacy.html or "")
-		if legacy_html != legacy.html:
-			frappe.db.set_value("Print Format", source_name, "html", legacy_html)
+		# Existing site-owned HTML and CSS must remain byte-for-byte unchanged.
 		current = frappe.get_meta(doctype).default_print_format
 		if current and current not in (source_name, name, previous_name, "Standard"):
 			continue

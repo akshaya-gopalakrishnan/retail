@@ -170,6 +170,8 @@ def execute(filters=None):
 	else:
 		get_data_when_not_grouped_by_invoice(gross_profit_data, filters, group_wise_columns, data)
 
+	from retail.transaction_identity import append_columns, columns as identity_columns
+	columns = append_columns(columns, identity_columns(grouped=filters.group_by != "Invoice"))
 	return columns, data
 
 
@@ -204,6 +206,9 @@ def get_data_when_grouped_by_invoice(columns, gross_profit_data, filters, group_
 		for col in group_wise_columns.get(scrub(filters.group_by)):
 			row[column_names[col]] = src.get(col)
 
+		from retail.transaction_identity import FIELDS
+		if src.get("indent") == 1:
+			row.update({field: src.get(field) for field in FIELDS})
 		data.append(row)
 
 	total_gross_profit = flt(
@@ -251,7 +256,7 @@ def get_data_when_not_grouped_by_invoice(gross_profit_data, filters, group_wise_
 		total_base_amount += src.base_amount or 0.00
 		total_buying_amount += src.buying_amount or 0.00
 
-		row = [src.get(col) for col in group_columns] + [filters.currency]
+		row = [src.get(col) for col in group_columns] + [filters.currency, src.get("retail_packing_breakdown")]
 
 		data.append(row)
 
@@ -271,7 +276,7 @@ def get_data_when_not_grouped_by_invoice(gross_profit_data, filters, group_wise_
 		"gross_profit_percent": flt(gross_profit_percent, currency_precision),
 	}
 
-	total_row = [total_row.get(col, None) for col in [*group_columns, "currency"]]
+	total_row = [total_row.get(col, None) for col in [*group_columns, "currency"]] + [None]
 	data.append(total_row)
 
 
@@ -508,6 +513,13 @@ class GrossProfitGenerator:
 		self.average_buying_rate = {}
 		self.filters = frappe._dict(filters)
 		self.load_invoice_items()
+		from retail.transaction_identity import IdentityLookup
+		_identity = IdentityLookup({("Sales Invoice", row.parent) for row in self.si_list})
+		for _row in self.si_list:
+			_line = next((line for line in _identity.lines.get(("Sales Invoice", _row.parent), [])
+			              if line.name == _row.item_row), None)
+			if _line:
+				_row.update(_identity.values(("Sales Invoice", _row.parent), _line))
 		self.get_delivery_notes()
 
 		self.load_product_bundle()
@@ -606,6 +618,10 @@ class GrossProfitGenerator:
 			else:
 				row.gross_profit_percent = 0.0
 
+			# Display sold quantity follows this report's existing net-return treatment.
+			if row.get("retail_transaction_uom") and flt(row.get("retail_transaction_factor")):
+				row.retail_transaction_qty = flt(row.qty) / flt(row.retail_transaction_factor)
+
 			# add to grouped
 			self.grouped.setdefault(row.get(scrub(self.filters.group_by)), []).append(row)
 
@@ -633,7 +649,9 @@ class GrossProfitGenerator:
 			row.buying_amount = flt(flt(row.qty) * flt(row.buying_rate), self.currency_precision)
 
 	def get_average_rate_based_on_group_by(self):
+		from retail.transaction_identity import packing_breakdown
 		for key in list(self.grouped):
+			_breakdown = packing_breakdown([r for r in self.grouped[key] if r.get("retail_transaction_uom")])
 			if self.filters.get("group_by") == "Payment Term":
 				for i, row in enumerate(self.grouped[key]):
 					invoice_portion = 0
@@ -653,6 +671,7 @@ class GrossProfitGenerator:
 						self.set_average_based_on_payment_term_portion(new_row, row, invoice_portion, True)
 
 				new_row = self.set_average_rate(new_row)
+				new_row.retail_packing_breakdown = _breakdown
 				self.grouped_data.append(new_row)
 			elif self.filters.get("group_by") != "Invoice":
 				for i, row in enumerate(self.grouped[key]):
@@ -671,6 +690,7 @@ class GrossProfitGenerator:
 								(new_row.allocated_amount + row.allocated_amount), self.currency_precision
 							)
 				new_row = self.set_average_rate(new_row)
+				new_row.retail_packing_breakdown = _breakdown
 				self.grouped_data.append(new_row)
 
 	def set_average_based_on_payment_term_portion(self, new_row, row, invoice_portion, aggr=False):

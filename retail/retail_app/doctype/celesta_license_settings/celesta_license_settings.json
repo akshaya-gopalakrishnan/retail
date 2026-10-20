@@ -128,10 +128,16 @@
    "label": "Licensed Users",
    "fieldtype": "Table",
    "options": "Celesta Licensed User",
-   "description": "Administrator is the full emergency recovery account. Retail Super Admin has restricted licensing-repair access only when the license is invalid. Normal ERP access requires a valid license and an assigned seat. Only the first Allowed Users rows have access."
+   "description": "Administrator is the full emergency recovery account. Super Admin and Customer Administrator have restricted licensing-repair access only when the license is invalid. Normal ERP access requires a valid license and an assigned seat. Only the first Allowed Users rows have access."
   }
  ],
  "permissions": [
+  {
+   "role": "Customer Administrator",
+   "read": 1,
+   "write": 1,
+   "create": 1
+  },
   {
    "role": "Super Admin",
    "read": 1,

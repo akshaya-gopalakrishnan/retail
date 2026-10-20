@@ -21,7 +21,7 @@ class TestPOSPrivileges(unittest.TestCase):
 
 	def test_default_deny_and_corrected_code(self):
 		permissions = profile_privileges(None)
-		self.assertEqual(len(permissions), 37)
+		self.assertEqual(len(permissions), 41)
 		self.assertFalse(any(permissions.values()))
 		self.assertIn("WARRANTY_LOOKUP", permissions)
 		self.assertNotIn("WARRENTY_LOOKUP", permissions)
@@ -38,13 +38,13 @@ class TestPOSPrivileges(unittest.TestCase):
 		rows = add_operator_privileges([frappe._dict(pos_operator_privilege=self.profile.name, disabled=1)])
 		self.assertFalse(any(rows[0].privileges.values()))
 
-	def test_assignment_requires_system_manager(self):
+	def test_assignment_requires_super_admin_or_delegated_customer(self):
 		doc = frappe.new_doc("Employee")
 		doc.pos_operator_privilege = self.profile.name
-		with patch("retail.pos_privileges.frappe.get_roles", return_value=["Employee"]):
+		with patch("retail.access_control.is_super_admin", return_value=False), patch("retail.delegated_access.is_customer_admin", return_value=False):
 			with self.assertRaises(frappe.PermissionError):
 				validate_employee_assignment(doc)
-		with patch("retail.pos_privileges.frappe.get_roles", return_value=["System Manager"]):
+		with patch("retail.access_control.is_super_admin", return_value=True):
 			validate_employee_assignment(doc)
 
 	def test_profile_changes_refresh_operator_sync(self):

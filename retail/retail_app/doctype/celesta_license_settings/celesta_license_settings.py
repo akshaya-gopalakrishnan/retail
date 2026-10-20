@@ -3,17 +3,16 @@ import uuid
 import frappe
 from frappe.model.document import Document
 
-from retail.access_control import require_super_admin
-from retail.licensing.client import DISPLAY_FIELDS, DOCTYPE, settings_lock, used_users
+from retail.licensing.client import DISPLAY_FIELDS, DOCTYPE, require_license_admin, settings_lock, used_users
 
 
 class CelestaLicenseSettings(Document):
     def onload(self):
-        require_super_admin()
+        require_license_admin()
         self.used_licensed_users = used_users()
 
     def validate(self):
-        require_super_admin()
+        require_license_admin()
         from retail.licensing.enforcement import validate_assignments
         validate_assignments(self)
         previous = frappe.db.get_singles_dict(DOCTYPE)
@@ -30,6 +29,6 @@ class CelestaLicenseSettings(Document):
         self.used_licensed_users = len(self.get("licensed_users", []))
 
     def save(self, *args, **kwargs):
-        require_super_admin()
+        require_license_admin()
         with settings_lock():
             return super().save(*args, **kwargs)

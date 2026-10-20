@@ -57,6 +57,7 @@ def get_stock_entry_rows(filters):
 		f"""
 		select
 			se.name as document_no,
+			sed.name as retail_source_detail,
 			se.posting_date,
 			se.posting_time,
 			se.company,
@@ -106,6 +107,7 @@ def make_stock_entry_row(row, warehouse, net_qty):
 			"posting_time": row.posting_time,
 			"source": _("Stock Entry"),
 			"document_type": "Stock Entry",
+			"retail_source_detail": row.retail_source_detail,
 			"document_no": row.document_no,
 			"status": _("Cancelled") if row.docstatus == 2 else _("Submitted"),
 			"adjustment_type": get_stock_entry_adjustment_type(row, net_qty),

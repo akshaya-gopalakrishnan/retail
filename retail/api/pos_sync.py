@@ -1089,13 +1089,15 @@ def _pos_selling_price(item, uom=None, barcode=None):
 	return None
 
 
-def _pos_item_prices(fields, modified_filter, changed_item_codes):
+def _pos_item_prices(fields, modified_filter, changed_item_codes, sales_item_codes=None):
 	# Gross prices may change on Item/packing even when Item Price is unchanged.
 	or_filters = list(modified_filter)
 	if or_filters and changed_item_codes:
 		or_filters.append(["item_code", "in", changed_item_codes])
 	rows = frappe.get_all(
-		"Item Price", fields=[*fields, "selling"], or_filters=or_filters, limit_page_length=0
+		"Item Price", fields=[*fields, "selling"],
+		filters=[["item_code", "in", sales_item_codes]] if sales_item_codes is not None else [],
+		or_filters=or_filters, limit_page_length=0
 	)
 	items = {}
 	for row in rows:
@@ -1320,6 +1322,8 @@ def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
 	modified_after = payload.get("modified_after")
 	counter_doc = _counter(branch, counter_code)
 	modified_filter = [["modified", ">", modified_after]] if modified_after else []
+	# Filter related rows too, including independently modified barcodes/prices.
+	sales_item_codes = frappe.get_all("Item", filters={"is_sales_item": 1}, pluck="name")
 	packing_fields = [
 		"name",
 		"packing_code",
@@ -1347,6 +1351,7 @@ def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
 	packing_filters = [
 		["parenttype", "=", "Item"],
 		["parentfield", "=", "custom_retail_packing_detail"],
+		["parent", "in", sales_item_codes],
 	]
 	if modified_after:
 		packing_filters.append(["modified", ">", modified_after])
@@ -1404,7 +1409,7 @@ def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
 
 	items = frappe.get_all(
 		"Item",
-		filters=[] if item_or_filters else modified_filter,
+		filters=[["is_sales_item", "=", 1], *([] if item_or_filters else modified_filter)],
 		or_filters=item_or_filters,
 		fields=item_fields,
 		limit_page_length=0,
@@ -1461,12 +1466,12 @@ def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
 		"items": items,
 			"item_barcodes": frappe.get_all(
 				"Item Barcode",
-				filters=modified_filter,
+				filters=[*modified_filter, ["parent", "in", sales_item_codes]],
 				fields=["parent as item_code", "barcode", "uom", "modified"],
 				limit_page_length=0,
 			),
 			"packing_details": packing_details,
-		"item_prices": _pos_item_prices(item_price_fields, modified_filter, item_codes),
+		"item_prices": _pos_item_prices(item_price_fields, modified_filter, item_codes, sales_item_codes),
 		"scale_barcode_formats": frappe.get_all(
 			"Scale Barcode Format",
 			filters={"enabled": 1},
@@ -1613,14 +1618,13 @@ def _packing_current_stock(item_stock, conversion_factor):
 
 @frappe.whitelist()
 def set_cashier_quick_pin(data=None, **kwargs):
-	_assert_pos_user()
-	if "System Manager" not in frappe.get_roles():
-		frappe.throw(_("Only System Manager can set cashier quick PIN."))
 	payload = _as_dict(data, **kwargs)
 	employee = payload.get("cashier_employee") or payload.get("employee")
 	quick_pin = payload.get("quick_pin") or payload.get("password")
 	if not employee or not frappe.db.exists("Employee", employee):
 		frappe.throw(_("Cashier Employee is required."))
+	from retail.pos_privileges import require_employee_pos_management
+	require_employee_pos_management(frappe.get_doc("Employee", employee))
 	validate_quick_pin(quick_pin)
 	if not frappe.get_meta("Employee").has_field("pos_quick_pin_hash"):
 		frappe.throw(_("POS quick PIN fields are not installed. Run migration."))

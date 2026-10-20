@@ -15,6 +15,8 @@ ROOT_GROUPS = {"", None, "All Item Groups"}
 def execute(filters=None):
 	filters = get_filters(filters)
 	rows = get_sales_rows(filters)
+	from retail.report_transaction_identity import enrich_profitability_rows
+	enrich_profitability_rows(rows)
 	group_map = get_item_group_map()
 	data = build_report_data(rows, group_map, filters)
 	from retail.retail_app.report.profitability import profitability_columns, profit_values, profitability_total
@@ -120,6 +122,8 @@ def build_report_data(rows, group_map, filters):
 		add_amounts(grouped[key], row)
 
 	data = list(grouped.values())
+	for row in data:
+		set_packing_breakdown(row)
 	data.sort(key=lambda row: (row.get("department") or "", row.get("sub_department") or "", row.get("category") or "", row.get("sub_category") or "", row.get("family") or "", row.get("full_path") or "", row.get("item_name") or ""))
 	return data
 
@@ -168,6 +172,7 @@ def build_tree_data(rows, group_map, filters):
 	for key in sorted(group_paths):
 		path = group_paths[key]
 		out = frappe._dict(group_totals[key])
+		set_packing_breakdown(out)
 		out.group_or_item = path[-1]
 		out.full_path = " > ".join(path)
 		out.indent = len(path) - 1
@@ -182,6 +187,8 @@ def build_tree_data(rows, group_map, filters):
 			out.full_path = " > ".join(path)
 			out.indent = len(path)
 			out.invoice_count = row.invoice_count
+			from retail.transaction_identity import packing_breakdown
+			out.retail_packing_breakdown = packing_breakdown([row])
 			for field in AMOUNT_FIELDS:
 				out[field] = row.get(field)
 			data.append(out)
@@ -213,7 +220,15 @@ def set_path_fields(out, path):
 		out[frappe.scrub(label)] = path[index] if len(path) > index else ""
 
 
+def set_packing_breakdown(row):
+	from retail.transaction_identity import packing_breakdown
+	row.retail_packing_breakdown = packing_breakdown(row.pop("_retail_identity_members", []))
+
+
 def add_amounts(target, source):
+	from retail.transaction_identity import FIELDS
+	if "retail_transaction_uom" in source:
+		target.setdefault("_retail_identity_members", []).append({k: source.get(k) for k in FIELDS})
 	target.source_status = "; ".join(sorted(set(filter(None, [target.get("source_status"), source.get("source_status")]))))
 	target.invoice_count = flt(target.get("invoice_count")) + flt(source.get("invoice_count"))
 	for field in AMOUNT_FIELDS:

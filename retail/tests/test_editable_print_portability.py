@@ -40,6 +40,15 @@ class TestEditablePrintPortability(unittest.TestCase):
 		self.assertNotIn("Arab Scale", result)
 		self.assertNotIn("old-account", result)
 
+	def test_styles_move_to_css(self):
+		html, css = formats.editable_layout('<style>.box { padding: 4px; }</style><div class="box" style="color: red;">Hello</div>', '.base { margin: 0; }')
+		self.assertNotIn('<style', html)
+		self.assertNotIn('style=', html)
+		self.assertIn('class="box retail-style-', html)
+		self.assertIn('color: red;', css)
+		self.assertIn('.box { padding: 4px; }', css)
+		self.assertIn('.base { margin: 0; }', css)
+
 	def test_fresh_site_creates_editable_copy_and_default(self):
 		target = SimpleNamespace(insert=Mock(), custom_document_code="PF2-37")
 		with (
@@ -49,6 +58,7 @@ class TestEditablePrintPortability(unittest.TestCase):
 		):
 			frappe.db.exists.side_effect = lambda dt, name: name == "Sales Invoice - Copy"
 			frappe.get_doc.return_value.html = "<div>Invoice</div>"
+			frappe.get_doc.return_value.css = ".invoice { color: blue; }"
 			frappe.copy_doc.return_value = target
 			frappe.get_meta.return_value.default_print_format = None
 			formats.ensure_editable_print_formats()
@@ -56,6 +66,8 @@ class TestEditablePrintPortability(unittest.TestCase):
 			self.assertEqual(target.standard, "No")
 			self.assertEqual(target.custom_format, 1)
 			self.assertIsNone(target.custom_document_code)
+			self.assertNotIn("<style", target.html)
+			self.assertIn(".invoice { color: blue; }", target.css)
 			target.insert.assert_called_once_with(ignore_permissions=True)
 			setter.assert_called_once()
 
@@ -67,10 +79,14 @@ class TestEditablePrintPortability(unittest.TestCase):
 		):
 			frappe.db.exists.return_value = True
 			frappe.get_doc.return_value.html = "<div>My Company</div>"
+			frappe.get_doc.return_value.css = ".mine { color: red; }"
 			frappe.get_meta.return_value.default_print_format = "My Company Invoice"
 			formats.ensure_editable_print_formats()
 			frappe.copy_doc.assert_not_called()
-			self.assertIn("My Company", frappe.get_doc.return_value.html)
+			self.assertEqual("<div>My Company</div>", frappe.get_doc.return_value.html)
+			self.assertEqual(".mine { color: red; }", frappe.get_doc.return_value.css)
+			frappe.get_doc.return_value.save.assert_not_called()
+			frappe.db.set_value.assert_not_called()
 			setter.assert_not_called()
 
 

@@ -336,11 +336,17 @@ def aggregate_profitability(rows, fields):
         row.source_status = "; ".join(sorted({m.source_status for m in members if m.source_status != "Recorded / Posted"})) or "Recorded / Posted"
         if all(m.is_return for m in members):
             row.profit_percent = None
+        from retail.transaction_identity import packing_breakdown
+        identities = [m for m in members if "retail_transaction_uom" in m]
+        if identities:
+            row.retail_packing_breakdown = packing_breakdown(identities)
         result.append(row)
     return result
 
 
 def report_result(rows, columns, groups=None):
+    from retail.report_transaction_identity import enrich_profitability_rows
+    enrich_profitability_rows(rows)
     data = aggregate_profitability(rows, groups) if groups else rows
     if data:
         total = profitability_total(rows, next((c["fieldname"] for c in columns if c.get("fieldtype") in ("Data", "Link")), columns[0]["fieldname"]))
@@ -350,6 +356,9 @@ def report_result(rows, columns, groups=None):
             if any(field in row for row in rows):
                 total[field] = sum(flt(row.get(field)) for row in rows)
         data.append(total)
+    from retail.transaction_identity import append_columns, columns as identity_columns
+    if any("retail_transaction_uom" in row for row in rows):
+        columns = append_columns(columns, identity_columns(grouped=bool(groups)))
     return profitability_columns(columns), data, None, None, None, True
 
 

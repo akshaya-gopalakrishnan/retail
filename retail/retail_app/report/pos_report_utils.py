@@ -587,6 +587,8 @@ def payment_mode_summary(filters):
 def completed_discount_rows(rows):
 	"""Use immutable POS discounts, including receipts saved by older mappers."""
 	from retail.pos_completed_sale import exclusive_line_amount
+	from retail.promotions.history import applications_for, resolve_item_row
+	import math
 	result = []
 	seen = set()
 	for row in rows:
@@ -594,6 +596,23 @@ def completed_discount_rows(rows):
 		index = cint(row.pop("item_index", 0)) - 1
 		if payload and 0 <= index < len(payload.get("items") or []):
 			item = payload["items"][index]
+			row.promotion_discount_amount = 0
+			promotion_keys = set()
+			applications = applications_for(payload)
+			for application in applications if isinstance(applications, list) else []:
+				if not isinstance(application, dict):
+					continue
+				position, error = resolve_item_row(application, payload['items'])
+				key = (str(application.get('promotion_type')), str(application.get('promotion')), position)
+				if error or position != index + 1 or key in promotion_keys:
+					continue
+				promotion_keys.add(key)
+				try:
+					amount = float(application.get('discount_amount') or 0)
+					if math.isfinite(amount):
+						row.promotion_discount_amount += (-1 if flt(item.get('qty')) < 0 else 1) * abs(amount)
+				except (ValueError, TypeError, OverflowError):
+					pass
 			row.discount_amount = flt(item.get("discount_amount"))
 			row.discount_percentage = flt(item.get("discount_percentage"))
 			row.distributed_discount_amount = 0
@@ -604,7 +623,7 @@ def completed_discount_rows(rows):
 			row.price_list_rate = flt(item.get("rate")) / factor if factor > 0 else 0
 			if item.get("amount") is not None:
 				row.rate = exclusive_line_amount(item, factor) / flt(item.get("qty")) if factor > 0 and flt(item.get("qty")) else 0
-			if not any(flt(row.get(key)) for key in ("discount_amount", "discount_percentage", "invoice_discount_amount")):
+			if not any(flt(row.get(key)) for key in ("discount_amount", "discount_percentage", "invoice_discount_amount", "promotion_discount_amount")):
 				continue
 		row.line_discount_amount = flt(row.get("discount_amount")) * flt(row.get("qty"))
 		result.append(row)
@@ -624,6 +643,7 @@ def pos_discount_report(filters):
 			pi.pos_counter as counter,
 			pi.pos_cashier_employee as cashier_employee,
 			pi.pos_cashier as cashier,
+			pii.name as retail_source_detail,
 			pii.item_code,
 			pii.item_name,
 			pii.qty,
@@ -664,6 +684,7 @@ def pos_price_override_report(filters):
 			pi.pos_counter as counter,
 			pi.pos_cashier_employee as cashier_employee,
 			pi.pos_cashier as cashier,
+			pii.name as retail_source_detail,
 			pii.item_code,
 			pii.item_name,
 			pii.qty,
@@ -1044,6 +1065,7 @@ def discount_columns():
 		{"label": _("Line Discount Total"), "fieldname": "line_discount_amount", "fieldtype": "Currency", "width": 140},
 		{"label": _("Distributed Discount"), "fieldname": "distributed_discount_amount", "fieldtype": "Currency", "width": 140},
 		{"label": _("Reported Bill Discount"), "fieldname": "invoice_discount_amount", "fieldtype": "Currency", "width": 130},
+		{"label": _("Promotion Discount (Ex VAT)"), "fieldname": "promotion_discount_amount", "fieldtype": "Currency", "width": 180},
 		{"label": _("Net Sales"), "fieldname": "net_amount", "fieldtype": "Currency", "width": 120},
 	]
 

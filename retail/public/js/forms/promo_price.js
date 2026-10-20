@@ -110,8 +110,80 @@
 			frm.dirty();
 		}
 		grid?.update_docfield_property("discount_amount", "read_only", scope !== "ITEM" ? 1 : 0);
+		prepareScopeLayout(frm, scope);
 		grid?.reset_grid();
 		frm.refresh_field("products");
+	}
+
+	// Presentation only: all promotion values still use the existing child rows.
+	function prepareScopeLayout(frm, scope) {
+		const grid = frm.fields_dict.products?.grid;
+		if (!grid) return;
+		const optional = ["max_qty", "price_list", "promo_price", "promo_price_including_tax"];
+		grid._promo_scope_defaults ??= Object.fromEntries(grid.docfields.map(df => [
+			df.fieldname, { hidden: df.hidden || 0, in_list_view: df.in_list_view || 0 },
+		]));
+		for (const df of grid.docfields) {
+			if (["item", "item_group", "brand"].includes(df.fieldname)) continue;
+			const original = grid._promo_scope_defaults[df.fieldname];
+			const relevant = df.fieldname === "discount_percent" || optional.includes(df.fieldname);
+			const restriction = ["max_qty", "price_list"].includes(df.fieldname);
+			// Preserve populated restrictions and fixed rates on existing promotions.
+			const populated = (frm.doc.products || []).some(row => row[df.fieldname]);
+			grid.update_docfield_property(df.fieldname, "hidden", scope === "ITEM"
+				? original.hidden : relevant && (df.fieldname === "discount_percent" || restriction || populated) ? 0 : 1);
+			grid.update_docfield_property(df.fieldname, "in_list_view", scope === "ITEM"
+				? original.in_list_view : relevant && (df.fieldname === "discount_percent" || populated) ? 1 : 0);
+		}
+		frm.set_df_property("products", "label", scope === "BRAND" ? __("Brands")
+			: scope === "CATEGORY" ? __("Categories") : __("Items"));
+		frm.set_df_property("products_section", "label", scope === "ITEM" ? __("Items and Promo Prices")
+			: scope === "WHOLE BILL" ? __("Whole Bill Discount") : __("Promotion Discounts"));
+		const wholeBill = scope === "WHOLE BILL" && (frm.doc.products || []).length <= 1;
+		frm.toggle_display("products", !wholeBill);
+		frm._whole_bill_controls?.remove();
+		frm._whole_bill_controls = null;
+		if (!wholeBill) return;
+
+		const wrapper = $('<div class="whole-bill-discount"></div>')
+			.insertBefore(frm.fields_dict.products.$wrapper);
+		frm._whole_bill_controls = wrapper;
+		const row = frm.doc.products?.[0];
+		const controls = {};
+		for (const fieldname of ["discount_percent", ...optional.filter(field => row?.[field])]) {
+			const df = grid.get_docfield(fieldname);
+			const control = frappe.ui.form.make_control({
+				parent: wrapper,
+				df: {
+					fieldname, fieldtype: df.fieldtype, label: df.label, options: df.options,
+					precision: df.precision,
+					async onchange() {
+						const product = frm.doc.products?.[0] || frm.add_child("products");
+						try {
+							await frappe.model.set_value(product.doctype, product.name, fieldname, control.get_value());
+						} finally {
+							frm.dirty();
+							updateLocks();
+						}
+					},
+				},
+				render_input: true,
+			});
+			controls[fieldname] = control;
+			control.set_input(row?.[fieldname] || (df.fieldtype === "Link" ? "" : 0));
+		}
+		function updateLocks() {
+			const product = frm.doc.products?.[0];
+			const readOnly = !frm.perm?.[0]?.write;
+			for (const [field, control] of Object.entries(controls)) {
+				control.df.read_only = readOnly || (field === "discount_percent"
+					? !!(flt(product?.promo_price) || flt(product?.promo_price_including_tax))
+					: field.startsWith("promo_price") ? !!flt(product?.discount_percent) : false);
+				control.refresh();
+				control.set_input(product?.[field] || (control.df.fieldtype === "Link" ? "" : 0));
+			}
+		}
+		updateLocks();
 	}
 
 	function synchronizeDiscount(frm, cdt, cdn, source) {

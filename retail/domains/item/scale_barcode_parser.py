@@ -23,6 +23,22 @@ class ScaleBarcodeResult:
 
 def parse_scale_barcode(barcode, price_list=None, currency=None):
 	barcode = normalize_barcode(barcode)
+	# Share exact-match precedence and the Item master type with sales scanning.
+	from retail.domains.item.packing_scan import scan_barcode
+	from retail.domains.item.scale_sales import sale_values
+	scan = scan_barcode(barcode)
+	if scan.get("scale_barcode_type"):
+		rate = get_item_rate(scan["item_code"], price_list=price_list, uom=scan["uom"], currency=currency)
+		values = sale_values(scan, rate)
+		return ScaleBarcodeResult(item_code=scan["item_code"], plu=scan["master_barcode"],
+			qty=values["qty"], weight=values["qty"] if "WEIGHT" in scan["scale_barcode_type"] else 0,
+			rate=values["rate"], amount=values["amount"], uom=scan["uom"], prefix="99",
+			barcode_type=scan["scale_barcode_type"], value=scan["scale_amount"] if scan["scale_qty"] is None else scan["scale_qty"])
+	if scan:
+		return None
+	if barcode.startswith("99"):
+		# Prefix 99 belongs to the checked Item master layout, never a legacy PLU.
+		return None
 	formats = get_matching_formats(barcode)
 	if not formats:
 		return None
@@ -150,6 +166,7 @@ def get_scale_item(plu, prefix):
 			"scale_plu_number": plu,
 			"scale_prefix": prefix,
 			"scale_enabled": 1,
+			"custom_scale_item": 1,
 			"disabled": 0,
 		},
 		["name", "stock_uom", "scale_uom", "scale_barcode_type"],

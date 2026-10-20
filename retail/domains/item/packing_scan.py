@@ -24,12 +24,23 @@ def resolve_packing(barcode, item_code=None):
 
 
 @frappe.whitelist()
-def scan_barcode(search_value):
+def scan_barcode(search_value, ctx=None):
+	search_value = str(search_value or "").strip()
 	packing = resolve_packing(search_value)
 	if packing:
 		return {"item_code": packing.parent, "barcode": search_value,
 			"uom": packing.uom, "conversion_factor": packing.conversion_factor}
-	return standard_scan_barcode(search_value)
+	# Exact identities always win, even if they resemble a printed scale label.
+	item = frappe.db.get_value("Item", {"custom_barcode": search_value, "disabled": 0},
+		["name", "stock_uom"], as_dict=True)
+	if item:
+		frappe.get_doc("Item", item.name).check_permission("read")
+		return {"item_code": item.name, "barcode": search_value, "uom": item.stock_uom}
+	standard = standard_scan_barcode(search_value, ctx=ctx)
+	if standard:
+		return standard
+	from retail.domains.item.scale_sales import resolve_label
+	return resolve_label(search_value) or {}
 
 
 @frappe.whitelist()

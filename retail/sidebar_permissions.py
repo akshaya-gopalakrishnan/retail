@@ -21,7 +21,7 @@ VAN_FLAGS = {"Sales Invoice": "custom_is_van_sale", "Stock Entry": "custom_is_va
 
 def selection(user=None):
     user = user or frappe.session.user
-    if user != "Administrator" and is_super_admin(user):
+    if is_super_admin(user):
         return None
     value = frappe.get_cached_doc("User", user).get(FIELD)
     if not value:
@@ -87,7 +87,9 @@ def validate_user(doc, method=None):
     old = previous.get(FIELD) or "" if previous else ""
     if value == old:
         return
-    require_super_admin()
+    if not is_super_admin():
+        from retail.delegated_access import require_sidebar_assignment
+        require_sidebar_assignment(doc)
     if not value:
         return
     try:
@@ -120,15 +122,22 @@ def user_updated(doc, method=None):
 
 @frappe.whitelist()
 def get_editor():
-    require_super_admin()
-    return registry()
+    selected = selection()
+    return registry() if selected is None else [
+        dict(group, children=[child for child in group["children"] if child["id"] in selected])
+        for group in registry() if group["id"] in selected
+    ]
 
 
 def boot(bootinfo):
     bootinfo.retail_sidebar_routes = routes()
     bootinfo.retail_sidebar_labels = labels()
-    bootinfo.retail_sidebar_registry = registry()
     selected = selection()
+    bootinfo.retail_sidebar_registry = registry()  # Navigation needs the complete route index.
+    bootinfo.retail_sidebar_editor_registry = registry() if selected is None else [
+        dict(group, children=[child for child in group["children"] if child["id"] in selected])
+        for group in registry() if group["id"] in selected
+    ]
     bootinfo.retail_sidebar_selection = None if selected is None else sorted(selected)
     bootinfo.retail_sidebar_targets = {
         kind: sorted({target for entry in entries() for target_kind, target in entry["targets"]
@@ -311,6 +320,12 @@ UTILITY_METHODS = frozenset({
     "frappe.desk.search.set_recent_search",
     "frappe.desk.form.utils.getdoctype", "frappe.desk.form.utils.get_linked_doctypes",
     "frappe.model.utils.user_settings.save", "frappe.model.utils.user_settings.get",
+    # Personal preferences and password checks retain native authentication.
+    "frappe.core.doctype.user.user.get_timezones", "frappe.core.doctype.user.user.switch_theme",
+    "frappe.core.doctype.user.user.update_password", "frappe.core.doctype.user.user.test_password_strength",
+    "frappe.core.doctype.user.user.verify_password",
+    # These two endpoints are overridden with filtered, read-only role helpers.
+    "frappe.core.doctype.user.user.get_all_roles", "frappe.core.doctype.user.user.get_perm_info",
     "frappe.client.get_time_zone", "frappe.auth.get_logged_user", "frappe.auth.logout",
     "frappe.ping", "ping", "logout", "login",
 })
@@ -323,18 +338,18 @@ def guard_request():
     path = unquote(frappe.request.path).replace("/api/v1/", "/api/", 1)
     command = form.get("cmd") or (path.split("/method/", 1)[1] if "/method/" in path else "")
     frappe.flags.retail_sidebar_documents = set()
-    # Keep only the built-in administrator's own configuration reachable.
-    # Native User action/field permissions still apply; this grants no list access.
-    if frappe.session.user == "Administrator":
-        if path.rstrip("/") == "/app/user/Administrator":
+    # Personal profiles do not depend on access to the staff User List.
+    # Native permissions and access-control validation still protect fields.
+    if frappe.session.user != "Guest":
+        if path.rstrip("/") == "/app/user/" + frappe.session.user:
             return
         if command in ("frappe.desk.form.load.getdoc", "frappe.client.get") and (
-            form.get("doctype") == "User" and form.get("name") == "Administrator"
+            form.get("doctype") == "User" and form.get("name") == frappe.session.user
         ):
             return
         if command in ("frappe.desk.form.save.savedocs", "frappe.client.save"):
             payload = _json(form.get("doc"))
-            if isinstance(payload, dict) and payload.get("doctype") == "User" and payload.get("name") == "Administrator":
+            if isinstance(payload, dict) and payload.get("doctype") == "User" and payload.get("name") == frappe.session.user:
                 return
     if path.startswith("/private/files/"):
         links = frappe.get_all("File", filters={"file_url": path},
@@ -370,6 +385,8 @@ def guard_request():
             entry = next((entry for entry in entries() if frappe.scrub(entry["workspace"]).replace("_", "-") == slug), None)
             if entry and not enabled(entry["id"]):
                 deny()
+        return
+    if command == "frappe.core.doctype.user.user.reset_password" and form.get("user") == frappe.session.user:
         return
     if command in UTILITY_METHODS:
         return

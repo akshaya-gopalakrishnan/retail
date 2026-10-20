@@ -39,7 +39,12 @@ def get_data(filters):
 			row.wastage_qty += qty
 			row.wastage_amount += amount
 
-	for item in get_van_sales_items(filters):
+	from retail.transaction_identity import IdentityLookup, FIELDS, packing_breakdown
+	sales_items = get_van_sales_items(filters)
+	def source_ref(item):
+		return ("Sales Invoice", item.sales_invoice)
+	IdentityLookup({source_ref(item) for item in sales_items}).enrich(sales_items, source_ref)
+	for item in sales_items:
 		key = get_key(item)
 		row = rows[key]
 		row.posting_date = item.posting_date
@@ -51,6 +56,7 @@ def get_data(filters):
 		row.item_name = item.item_name
 		row.uom = item.stock_uom or item.uom
 		row.sales_qty += signed_qty(item)
+		row.setdefault("_retail_sold_identities", []).append({key: item.get(key) for key in FIELDS})
 
 	apply_opening_qty(rows, filters)
 
@@ -64,6 +70,7 @@ def get_data(filters):
 			- flt(row.offloaded_qty)
 			- flt(row.wastage_qty)
 		)
+		row.retail_packing_breakdown = packing_breakdown(row.pop("_retail_sold_identities", []))
 		data.append(row)
 
 	data.sort(key=lambda row: (row.posting_date, row.van or "", row.item_code or ""), reverse=True)
