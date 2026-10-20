@@ -988,7 +988,7 @@ override_whitelisted_methods.update({
 doc_events["User"].setdefault("onload", []).append("retail.delegated_access.onload")
 doc_events["User"]["validate"].append("retail.delegated_access.validate_manager")
 doc_events["User"].setdefault("on_update", []).append("retail.delegated_access.sync_children")
-after_install.append("retail.delegated_access.install")
+after_sync.append("retail.delegated_access.install")
 after_migrate.append("retail.delegated_access.install")
 
 # Keep scale-derived quantities and rates precise within the sales document.
