@@ -8,6 +8,20 @@ from retail.access_control import deny_technical_access, is_protected_user, is_s
 from retail.delegated_access import is_customer_admin, manages
 
 _permission_scope = ContextVar("retail_employee_permission_scope", default=None)
+_employee_user_scope = ContextVar("retail_employee_user_scope", default=None)
+
+
+def automatic_employee_role_allowed(doc):
+    return _employee_user_scope.get() == (frappe.session.user, doc.name)
+
+
+def update_employee_user(self):
+    require_managed_employee(self)
+    token = _employee_user_scope.set((frappe.session.user, self.user_id))
+    try:
+        return Employee.update_user(self)
+    finally:
+        _employee_user_scope.reset(token)
 
 
 def automatic_permission_allowed(doc):
@@ -39,6 +53,7 @@ def prepare_employee(doc, method=None):
             require_managed_employee(doc)
         from types import MethodType
         doc.update_user_permissions = MethodType(update_user_permissions, doc)
+        doc.update_user = MethodType(update_employee_user, doc)
 
 
 def update_user_permissions(self):

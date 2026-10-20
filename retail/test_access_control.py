@@ -297,11 +297,6 @@ class TestAccessControl(unittest.TestCase):
     def test_customer_employee_automatic_permissions_are_scoped(self):
         customer = frappe.get_doc('User', self.users['customer'])
         company = frappe.db.get_value('Company', {}, 'name')
-        frappe.get_doc({'doctype': 'Employee', 'first_name': 'Manager',
-            'gender': 'Male', 'date_of_birth': '1990-01-01',
-            'date_of_joining': '2026-01-01', 'company': company,
-            'user_id': customer.name, 'create_user_permission': 0}).insert()
-        customer.reload()
         customer.append_roles('HR Manager')
         customer.retail_sidebar_permissions = None
         customer.save()

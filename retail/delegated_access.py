@@ -77,6 +77,11 @@ def validate_user(doc, previous):
     doc.set(MANAGER_FIELD, actor)
     # Presets must not be a way to add roles or modules beyond the ceiling.
     allowed = roles()
+    # Native Employee saving adds this role to the managed linked user.
+    # This scope exists only around that server-side operation.
+    from retail.employee_permissions import automatic_employee_role_allowed
+    if automatic_employee_role_allowed(doc):
+        allowed.add("Employee")
     if doc.get("role_profile_name"):
         profile_roles = {row.role for row in frappe.get_doc("Role Profile", doc.role_profile_name).roles}
         if not profile_roles <= allowed:
