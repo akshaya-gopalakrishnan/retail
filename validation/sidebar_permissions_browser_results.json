@@ -1,0 +1,46 @@
+{
+  "measurements": [
+    {
+      "viewport": 1600,
+      "columns": 5,
+      "width": 1195,
+      "available": 1195,
+      "scrollWidth": 1195,
+      "groups": 12,
+      "checked": 88
+    },
+    {
+      "viewport": 1024,
+      "columns": 3,
+      "width": 619,
+      "available": 619,
+      "scrollWidth": 619,
+      "groups": 12,
+      "checked": 88
+    },
+    {
+      "viewport": 600,
+      "columns": 2,
+      "width": 468,
+      "available": 468,
+      "scrollWidth": 468,
+      "groups": 12,
+      "checked": 88
+    },
+    {
+      "viewport": 390,
+      "columns": 1,
+      "width": 318,
+      "available": 318,
+      "scrollWidth": 318,
+      "groups": 12,
+      "checked": 88
+    }
+  ],
+  "checkbox_and_save_checks": "passed",
+  "restricted_invoice_form": "passed",
+  "restricted_sidebar": "Sales\nSales Invoices",
+  "restricted_api_status": 403,
+  "restricted_url_status": 403,
+  "runtime_errors": []
+}

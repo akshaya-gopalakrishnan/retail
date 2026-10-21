@@ -1,0 +1,1216 @@
+{
+  "site": "retail-test.localhost",
+  "tests": [
+    {
+      "stage": "FIFO: A purchase",
+      "voucher_type": "Purchase Invoice",
+      "voucher": "PI-29",
+      "items": [
+        {
+          "name": "7oo9ja15ie",
+          "qty": 10.0,
+          "custom_foc_qty": 2.0,
+          "custom_foc_parent": null,
+          "rate": 10.0,
+          "stock_qty": 10.0,
+          "base_net_amount": 100.0
+        },
+        {
+          "name": "7opclt8832",
+          "qty": 2.0,
+          "custom_foc_qty": 0.0,
+          "custom_foc_parent": "fe949417cd22efac87e3",
+          "rate": 0.0,
+          "stock_qty": 2.0,
+          "base_net_amount": 0.0
+        }
+      ],
+      "sle": [
+        {
+          "name": "f4728c1ece",
+          "voucher_detail_no": "7oo9ja15ie",
+          "actual_qty": 10.0,
+          "stock_value_difference": 100.0,
+          "incoming_rate": 10.0,
+          "stock_queue": "[[10.0, 10.0]]"
+        },
+        {
+          "name": "ab7b0b7c64",
+          "voucher_detail_no": "7opclt8832",
+          "actual_qty": 2.0,
+          "stock_value_difference": 0.0,
+          "incoming_rate": 0.0,
+          "stock_queue": "[[10.0, 10.0], [2.0, 0.0]]"
+        }
+      ],
+      "gl": [
+        {
+          "name": "c3fc81c8d9",
+          "account": "Stock in Hand - N",
+          "account_type": "Stock",
+          "debit": 100.0,
+          "credit": 0.0
+        },
+        {
+          "name": "f6b88bc4b4",
+          "account": "Trade Payable - N",
+          "account_type": "Payable",
+          "debit": 0.0,
+          "credit": 100.0
+        }
+      ],
+      "received_or_sold_qty": 12.0,
+      "sle_value": 100.0,
+      "stock_gl": 100.0,
+      "cogs_gl": 0
+    },
+    {
+      "stage": "FIFO: B/C partial sale",
+      "voucher_type": "Sales Invoice",
+      "voucher": "SI-61",
+      "items": [
+        {
+          "name": "7otko7hvon",
+          "qty": 6.0,
+          "custom_foc_qty": 0.0,
+          "custom_foc_parent": null,
+          "rate": 20.0,
+          "stock_qty": 6.0,
+          "base_net_amount": 120.0
+        }
+      ],
+      "sle": [
+        {
+          "name": "a5cdf97a17",
+          "voucher_detail_no": "7otko7hvon",
+          "actual_qty": -6.0,
+          "stock_value_difference": -60.0,
+          "incoming_rate": 0.0,
+          "stock_queue": "[[4.0, 10.0], [2.0, 0.0]]"
+        }
+      ],
+      "gl": [
+        {
+          "name": "1efa8679a3",
+          "account": "Stock in Hand - N",
+          "account_type": "Stock",
+          "debit": 0.0,
+          "credit": 60.0
+        },
+        {
+          "name": "4d097b1274",
+          "account": "Sales from Other Region - N",
+          "account_type": "Income Account",
+          "debit": 0.0,
+          "credit": 120.0
+        },
+        {
+          "name": "988f0b4662",
+          "account": "Cost of Goods Sold in Trading - N",
+          "account_type": "Cost of Goods Sold",
+          "debit": 60.0,
+          "credit": 0.0
+        },
+        {
+          "name": "ce58c1c359",
+          "account": "Trade in Opening Fees - N",
+          "account_type": "Receivable",
+          "debit": 120.0,
+          "credit": 0.0
+        }
+      ],
+      "received_or_sold_qty": -6.0,
+      "sle_value": -60.0,
+      "stock_gl": -60.0,
+      "cogs_gl": 60.0,
+      "service_cogs": 60.0,
+      "report_cogs": 60.0
+    },
+    {
+      "stage": "FIFO: D split-SLE FOC sale",
+      "voucher_type": "Sales Invoice",
+      "voucher": "SI-62",
+      "items": [
+        {
+          "name": "7p1k47rtdf",
+          "qty": 3.0,
+          "custom_foc_qty": 1.0,
+          "custom_foc_parent": null,
+          "rate": 20.0,
+          "stock_qty": 3.0,
+          "base_net_amount": 60.0
+        },
+        {
+          "name": "7p2qbncnqv",
+          "qty": 1.0,
+          "custom_foc_qty": 0.0,
+          "custom_foc_parent": "a23f7e1a52afab3d224c",
+          "rate": 0.0,
+          "stock_qty": 1.0,
+          "base_net_amount": 0.0
+        }
+      ],
+      "sle": [
+        {
+          "name": "2bfe5ac1f1",
+          "voucher_detail_no": "7p1k47rtdf",
+          "actual_qty": -3.0,
+          "stock_value_difference": -30.0,
+          "incoming_rate": 0.0,
+          "stock_queue": "[[1.0, 10.0], [2.0, 0.0]]"
+        },
+        {
+          "name": "9a213f6f6f",
+          "voucher_detail_no": "7p2qbncnqv",
+          "actual_qty": -1.0,
+          "stock_value_difference": -10.0,
+          "incoming_rate": 0.0,
+          "stock_queue": "[[2.0, 0.0]]"
+        }
+      ],
+      "gl": [
+        {
+          "name": "0034531cef",
+          "account": "Trade in Opening Fees - N",
+          "account_type": "Receivable",
+          "debit": 60.0,
+          "credit": 0.0
+        },
+        {
+          "name": "2129c2608d",
+          "account": "Sales from Other Region - N",
+          "account_type": "Income Account",
+          "debit": 0.0,
+          "credit": 60.0
+        },
+        {
+          "name": "670b4509ba",
+          "account": "Cost of Goods Sold in Trading - N",
+          "account_type": "Cost of Goods Sold",
+          "debit": 40.0,
+          "credit": 0.0
+        },
+        {
+          "name": "7e5288aca6",
+          "account": "Stock in Hand - N",
+          "account_type": "Stock",
+          "debit": 0.0,
+          "credit": 40.0
+        }
+      ],
+      "received_or_sold_qty": -4.0,
+      "sle_value": -40.0,
+      "stock_gl": -40.0,
+      "cogs_gl": 40.0,
+      "service_cogs": 40.0,
+      "report_cogs": 40.0
+    },
+    {
+      "stage": "E cancellation",
+      "voucher": "SI-62",
+      "original_status": 1,
+      "cancelled_status": 2,
+      "items": [
+        {
+          "name": "7p1k47rtdf",
+          "qty": 3.0,
+          "custom_foc_qty": 1.0,
+          "custom_foc_parent": null,
+          "rate": 20.0,
+          "stock_qty": 3.0,
+          "base_net_amount": 60.0
+        },
+        {
+          "name": "7p2qbncnqv",
+          "qty": 1.0,
+          "custom_foc_qty": 0.0,
+          "custom_foc_parent": "a23f7e1a52afab3d224c",
+          "rate": 0.0,
+          "stock_qty": 1.0,
+          "base_net_amount": 0.0
+        }
+      ],
+      "original_sle": [
+        {
+          "name": "2bfe5ac1f1",
+          "voucher_type": "Sales Invoice",
+          "voucher_no": "SI-62",
+          "voucher_detail_no": "7p1k47rtdf",
+          "actual_qty": -3.0,
+          "stock_value_difference": -30.0,
+          "is_cancelled": 0,
+          "posting_date": "2026-09-21",
+          "posting_time": "12:00:00",
+          "creation": "2026-09-21 16:01:58.808661"
+        },
+        {
+          "name": "9a213f6f6f",
+          "voucher_type": "Sales Invoice",
+          "voucher_no": "SI-62",
+          "voucher_detail_no": "7p2qbncnqv",
+          "actual_qty": -1.0,
+          "stock_value_difference": -10.0,
+          "is_cancelled": 0,
+          "posting_date": "2026-09-21",
+          "posting_time": "12:00:00",
+          "creation": "2026-09-21 16:01:58.826597"
+        }
+      ],
+      "original_sle_after": [
+        {
+          "name": "2bfe5ac1f1",
+          "voucher_type": "Sales Invoice",
+          "voucher_no": "SI-62",
+          "voucher_detail_no": "7p1k47rtdf",
+          "actual_qty": -3.0,
+          "stock_value_difference": -30.0,
+          "is_cancelled": 1,
+          "posting_date": "2026-09-21",
+          "posting_time": "12:00:00",
+          "creation": "2026-09-21 16:01:58.808661"
+        },
+        {
+          "name": "9a213f6f6f",
+          "voucher_type": "Sales Invoice",
+          "voucher_no": "SI-62",
+          "voucher_detail_no": "7p2qbncnqv",
+          "actual_qty": -1.0,
+          "stock_value_difference": -10.0,
+          "is_cancelled": 1,
+          "posting_date": "2026-09-21",
+          "posting_time": "12:00:00",
+          "creation": "2026-09-21 16:01:58.826597"
+        }
+      ],
+      "cancellation_sle": [
+        {
+          "name": "03bbb6c861",
+          "voucher_type": "Sales Invoice",
+          "voucher_no": "SI-62",
+          "voucher_detail_no": "7p1k47rtdf",
+          "actual_qty": 3.0,
+          "stock_value_difference": 0.0,
+          "is_cancelled": 1,
+          "posting_date": "2026-09-21",
+          "posting_time": "12:00:00",
+          "creation": "2026-09-21 16:01:59.140097"
+        },
+        {
+          "name": "99b012f968",
+          "voucher_type": "Sales Invoice",
+          "voucher_no": "SI-62",
+          "voucher_detail_no": "7p2qbncnqv",
+          "actual_qty": 1.0,
+          "stock_value_difference": 0.0,
+          "is_cancelled": 1,
+          "posting_date": "2026-09-21",
+          "posting_time": "12:00:00",
+          "creation": "2026-09-21 16:01:59.153816"
+        }
+      ],
+      "original_gl": [
+        {
+          "name": "0034531cef",
+          "account": "Trade in Opening Fees - N",
+          "account_type": "Receivable",
+          "debit": 60.0,
+          "credit": 0.0,
+          "is_cancelled": 0,
+          "voucher_type": "Sales Invoice",
+          "voucher_no": "SI-62",
+          "posting_date": "2026-09-21",
+          "creation": "2026-09-21 16:01:58.877195"
+        },
+        {
+          "name": "2129c2608d",
+          "account": "Sales from Other Region - N",
+          "account_type": "Income Account",
+          "debit": 0.0,
+          "credit": 60.0,
+          "is_cancelled": 0,
+          "voucher_type": "Sales Invoice",
+          "voucher_no": "SI-62",
+          "posting_date": "2026-09-21",
+          "creation": "2026-09-21 16:01:58.880318"
+        },
+        {
+          "name": "7e5288aca6",
+          "account": "Stock in Hand - N",
+          "account_type": "Stock",
+          "debit": 0.0,
+          "credit": 40.0,
+          "is_cancelled": 0,
+          "voucher_type": "Sales Invoice",
+          "voucher_no": "SI-62",
+          "posting_date": "2026-09-21",
+          "creation": "2026-09-21 16:01:58.883278"
+        },
+        {
+          "name": "670b4509ba",
+          "account": "Cost of Goods Sold in Trading - N",
+          "account_type": "Cost of Goods Sold",
+          "debit": 40.0,
+          "credit": 0.0,
+          "is_cancelled": 0,
+          "voucher_type": "Sales Invoice",
+          "voucher_no": "SI-62",
+          "posting_date": "2026-09-21",
+          "creation": "2026-09-21 16:01:58.886958"
+        }
+      ],
+      "after_gl": [
+        {
+          "name": "0034531cef",
+          "account": "Trade in Opening Fees - N",
+          "account_type": "Receivable",
+          "debit": 60.0,
+          "credit": 0.0,
+          "is_cancelled": 1,
+          "voucher_type": "Sales Invoice",
+          "voucher_no": "SI-62",
+          "posting_date": "2026-09-21",
+          "creation": "2026-09-21 16:01:58.877195"
+        },
+        {
+          "name": "2129c2608d",
+          "account": "Sales from Other Region - N",
+          "account_type": "Income Account",
+          "debit": 0.0,
+          "credit": 60.0,
+          "is_cancelled": 1,
+          "voucher_type": "Sales Invoice",
+          "voucher_no": "SI-62",
+          "posting_date": "2026-09-21",
+          "creation": "2026-09-21 16:01:58.880318"
+        },
+        {
+          "name": "7e5288aca6",
+          "account": "Stock in Hand - N",
+          "account_type": "Stock",
+          "debit": 0.0,
+          "credit": 40.0,
+          "is_cancelled": 1,
+          "voucher_type": "Sales Invoice",
+          "voucher_no": "SI-62",
+          "posting_date": "2026-09-21",
+          "creation": "2026-09-21 16:01:58.883278"
+        },
+        {
+          "name": "670b4509ba",
+          "account": "Cost of Goods Sold in Trading - N",
+          "account_type": "Cost of Goods Sold",
+          "debit": 40.0,
+          "credit": 0.0,
+          "is_cancelled": 1,
+          "voucher_type": "Sales Invoice",
+          "voucher_no": "SI-62",
+          "posting_date": "2026-09-21",
+          "creation": "2026-09-21 16:01:58.886958"
+        },
+        {
+          "name": "b26b1c6b60",
+          "account": "Trade in Opening Fees - N",
+          "account_type": "Receivable",
+          "debit": 0.0,
+          "credit": 60.0,
+          "is_cancelled": 1,
+          "voucher_type": "Sales Invoice",
+          "voucher_no": "SI-62",
+          "posting_date": "2026-09-21",
+          "creation": "2026-09-21 16:01:59.178989"
+        },
+        {
+          "name": "70d201917d",
+          "account": "Sales from Other Region - N",
+          "account_type": "Income Account",
+          "debit": 60.0,
+          "credit": 0.0,
+          "is_cancelled": 1,
+          "voucher_type": "Sales Invoice",
+          "voucher_no": "SI-62",
+          "posting_date": "2026-09-21",
+          "creation": "2026-09-21 16:01:59.187346"
+        },
+        {
+          "name": "64d76c16f3",
+          "account": "Cost of Goods Sold in Trading - N",
+          "account_type": "Cost of Goods Sold",
+          "debit": 0.0,
+          "credit": 40.0,
+          "is_cancelled": 1,
+          "voucher_type": "Sales Invoice",
+          "voucher_no": "SI-62",
+          "posting_date": "2026-09-21",
+          "creation": "2026-09-21 16:01:59.190206"
+        },
+        {
+          "name": "56c2174bd5",
+          "account": "Stock in Hand - N",
+          "account_type": "Stock",
+          "debit": 40.0,
+          "credit": 0.0,
+          "is_cancelled": 1,
+          "voucher_type": "Sales Invoice",
+          "voucher_no": "SI-62",
+          "posting_date": "2026-09-21",
+          "creation": "2026-09-21 16:01:59.193165"
+        }
+      ],
+      "before_sale": {
+        "bin": {
+          "actual_qty": 6.0,
+          "stock_value": 40.0
+        },
+        "sle": [
+          {
+            "name": "f4728c1ece",
+            "voucher_type": "Purchase Invoice",
+            "voucher_no": "PI-29",
+            "actual_qty": 10.0,
+            "stock_value_difference": 100.0,
+            "is_cancelled": 0,
+            "qty_after_transaction": 10.0,
+            "stock_value": 100.0
+          },
+          {
+            "name": "ab7b0b7c64",
+            "voucher_type": "Purchase Invoice",
+            "voucher_no": "PI-29",
+            "actual_qty": 2.0,
+            "stock_value_difference": 0.0,
+            "is_cancelled": 0,
+            "qty_after_transaction": 12.0,
+            "stock_value": 100.0
+          },
+          {
+            "name": "a5cdf97a17",
+            "voucher_type": "Sales Invoice",
+            "voucher_no": "SI-61",
+            "actual_qty": -6.0,
+            "stock_value_difference": -60.0,
+            "is_cancelled": 0,
+            "qty_after_transaction": 6.0,
+            "stock_value": 40.0
+          }
+        ]
+      },
+      "after_sale": {
+        "bin": {
+          "actual_qty": 2.0,
+          "stock_value": 0.0
+        },
+        "sle": [
+          {
+            "name": "f4728c1ece",
+            "voucher_type": "Purchase Invoice",
+            "voucher_no": "PI-29",
+            "actual_qty": 10.0,
+            "stock_value_difference": 100.0,
+            "is_cancelled": 0,
+            "qty_after_transaction": 10.0,
+            "stock_value": 100.0
+          },
+          {
+            "name": "ab7b0b7c64",
+            "voucher_type": "Purchase Invoice",
+            "voucher_no": "PI-29",
+            "actual_qty": 2.0,
+            "stock_value_difference": 0.0,
+            "is_cancelled": 0,
+            "qty_after_transaction": 12.0,
+            "stock_value": 100.0
+          },
+          {
+            "name": "a5cdf97a17",
+            "voucher_type": "Sales Invoice",
+            "voucher_no": "SI-61",
+            "actual_qty": -6.0,
+            "stock_value_difference": -60.0,
+            "is_cancelled": 0,
+            "qty_after_transaction": 6.0,
+            "stock_value": 40.0
+          },
+          {
+            "name": "2bfe5ac1f1",
+            "voucher_type": "Sales Invoice",
+            "voucher_no": "SI-62",
+            "actual_qty": -3.0,
+            "stock_value_difference": -30.0,
+            "is_cancelled": 0,
+            "qty_after_transaction": 3.0,
+            "stock_value": 10.0
+          },
+          {
+            "name": "9a213f6f6f",
+            "voucher_type": "Sales Invoice",
+            "voucher_no": "SI-62",
+            "actual_qty": -1.0,
+            "stock_value_difference": -10.0,
+            "is_cancelled": 0,
+            "qty_after_transaction": 2.0,
+            "stock_value": 0.0
+          }
+        ]
+      },
+      "after_cancel": {
+        "bin": {
+          "actual_qty": 6.0,
+          "stock_value": 40.0
+        },
+        "sle": [
+          {
+            "name": "f4728c1ece",
+            "voucher_type": "Purchase Invoice",
+            "voucher_no": "PI-29",
+            "actual_qty": 10.0,
+            "stock_value_difference": 100.0,
+            "is_cancelled": 0,
+            "qty_after_transaction": 10.0,
+            "stock_value": 100.0
+          },
+          {
+            "name": "ab7b0b7c64",
+            "voucher_type": "Purchase Invoice",
+            "voucher_no": "PI-29",
+            "actual_qty": 2.0,
+            "stock_value_difference": 0.0,
+            "is_cancelled": 0,
+            "qty_after_transaction": 12.0,
+            "stock_value": 100.0
+          },
+          {
+            "name": "a5cdf97a17",
+            "voucher_type": "Sales Invoice",
+            "voucher_no": "SI-61",
+            "actual_qty": -6.0,
+            "stock_value_difference": -60.0,
+            "is_cancelled": 0,
+            "qty_after_transaction": 6.0,
+            "stock_value": 40.0
+          },
+          {
+            "name": "2bfe5ac1f1",
+            "voucher_type": "Sales Invoice",
+            "voucher_no": "SI-62",
+            "actual_qty": -3.0,
+            "stock_value_difference": -30.0,
+            "is_cancelled": 1,
+            "qty_after_transaction": 3.0,
+            "stock_value": 10.0
+          },
+          {
+            "name": "9a213f6f6f",
+            "voucher_type": "Sales Invoice",
+            "voucher_no": "SI-62",
+            "actual_qty": -1.0,
+            "stock_value_difference": -10.0,
+            "is_cancelled": 1,
+            "qty_after_transaction": 2.0,
+            "stock_value": 0.0
+          },
+          {
+            "name": "03bbb6c861",
+            "voucher_type": "Sales Invoice",
+            "voucher_no": "SI-62",
+            "actual_qty": 3.0,
+            "stock_value_difference": 0.0,
+            "is_cancelled": 1,
+            "qty_after_transaction": 0.0,
+            "stock_value": 0.0
+          },
+          {
+            "name": "99b012f968",
+            "voucher_type": "Sales Invoice",
+            "voucher_no": "SI-62",
+            "actual_qty": 1.0,
+            "stock_value_difference": 0.0,
+            "is_cancelled": 1,
+            "qty_after_transaction": 0.0,
+            "stock_value": 0.0
+          }
+        ]
+      },
+      "reposts": [
+        {
+          "name": "7p795bn7u4",
+          "creation": "2026-09-21 16:01:59.196906",
+          "modified": "2026-09-21 16:01:59.224210",
+          "modified_by": "Administrator",
+          "owner": "Administrator",
+          "docstatus": 1,
+          "idx": 0,
+          "based_on": "Item and Warehouse",
+          "voucher_type": null,
+          "voucher_no": null,
+          "item_code": "I-40",
+          "warehouse": "FOC-LIFECYCLE-873b358c - N",
+          "posting_date": "2026-09-21",
+          "posting_time": "12:00:00",
+          "status": "Completed",
+          "company": "nesto",
+          "allow_negative_stock": 1,
+          "via_landed_cost_voucher": 0,
+          "allow_zero_rate": 0,
+          "recreate_stock_ledgers": 0,
+          "amended_from": null,
+          "error_log": null,
+          "items_to_be_repost": "[\n {\n  \"item_code\": \"I-40\",\n  \"posting_date\": \"2026-09-21\",\n  \"posting_time\": \"12:00:00\",\n  \"warehouse\": \"FOC-LIFECYCLE-873b358c - N\"\n }\n]",
+          "total_reposting_count": 1,
+          "current_index": 1,
+          "gl_reposting_index": 0,
+          "reposting_data_file": null,
+          "total_vouchers": 0,
+          "vouchers_posted": 0,
+          "_user_tags": null,
+          "_comments": null,
+          "_assign": null,
+          "_liked_by": null,
+          "custom_document_code": "RIV-51"
+        },
+        {
+          "name": "7p4grdvdkv",
+          "creation": "2026-09-21 16:01:58.894881",
+          "modified": "2026-09-21 16:01:59.041112",
+          "modified_by": "Administrator",
+          "owner": "Administrator",
+          "docstatus": 1,
+          "idx": 0,
+          "based_on": "Item and Warehouse",
+          "voucher_type": null,
+          "voucher_no": null,
+          "item_code": "I-40",
+          "warehouse": "FOC-LIFECYCLE-873b358c - N",
+          "posting_date": "2026-09-21",
+          "posting_time": "12:00:00",
+          "status": "Completed",
+          "company": "nesto",
+          "allow_negative_stock": 1,
+          "via_landed_cost_voucher": 0,
+          "allow_zero_rate": 0,
+          "recreate_stock_ledgers": 0,
+          "amended_from": null,
+          "error_log": null,
+          "items_to_be_repost": "[\n {\n  \"item_code\": \"I-40\",\n  \"posting_date\": \"2026-09-21\",\n  \"posting_time\": \"12:00:00\",\n  \"warehouse\": \"FOC-LIFECYCLE-873b358c - N\"\n }\n]",
+          "total_reposting_count": 1,
+          "current_index": 1,
+          "gl_reposting_index": 1,
+          "reposting_data_file": null,
+          "total_vouchers": 0,
+          "vouchers_posted": 0,
+          "_user_tags": null,
+          "_comments": null,
+          "_assign": null,
+          "_liked_by": null,
+          "custom_document_code": "RIV-50"
+        }
+      ],
+      "assertions": "passed"
+    },
+    {
+      "stage": "Moving Average: purchase",
+      "voucher_type": "Purchase Invoice",
+      "voucher": "PI-30",
+      "items": [
+        {
+          "name": "7p96ds3l4m",
+          "qty": 10.0,
+          "custom_foc_qty": 2.0,
+          "custom_foc_parent": null,
+          "rate": 10.0,
+          "stock_qty": 10.0,
+          "base_net_amount": 100.0
+        },
+        {
+          "name": "7pa65ebhsh",
+          "qty": 2.0,
+          "custom_foc_qty": 0.0,
+          "custom_foc_parent": "d7a68d39b1a88d2f840e",
+          "rate": 0.0,
+          "stock_qty": 2.0,
+          "base_net_amount": 0.0
+        }
+      ],
+      "sle": [
+        {
+          "name": "3635450dfa",
+          "voucher_detail_no": "7p96ds3l4m",
+          "actual_qty": 10.0,
+          "stock_value_difference": 100.0,
+          "incoming_rate": 10.0,
+          "stock_queue": "[]"
+        },
+        {
+          "name": "b2e286d9a7",
+          "voucher_detail_no": "7pa65ebhsh",
+          "actual_qty": 2.0,
+          "stock_value_difference": 0.0,
+          "incoming_rate": 0.0,
+          "stock_queue": "[]"
+        }
+      ],
+      "gl": [
+        {
+          "name": "4514937cf3",
+          "account": "Trade Payable - N",
+          "account_type": "Payable",
+          "debit": 0.0,
+          "credit": 100.0
+        },
+        {
+          "name": "bb1966719b",
+          "account": "Stock in Hand - N",
+          "account_type": "Stock",
+          "debit": 100.0,
+          "credit": 0.0
+        }
+      ],
+      "received_or_sold_qty": 12.0,
+      "sle_value": 100.0,
+      "stock_gl": 100.0,
+      "cogs_gl": 0
+    },
+    {
+      "stage": "Moving Average: different-rate purchase",
+      "voucher_type": "Purchase Invoice",
+      "voucher": "PI-31",
+      "items": [
+        {
+          "name": "7pdmlibelq",
+          "qty": 8.0,
+          "custom_foc_qty": 0.0,
+          "custom_foc_parent": null,
+          "rate": 20.0,
+          "stock_qty": 8.0,
+          "base_net_amount": 160.0
+        }
+      ],
+      "sle": [
+        {
+          "name": "48593c4045",
+          "voucher_detail_no": "7pdmlibelq",
+          "actual_qty": 8.0,
+          "stock_value_difference": 160.0,
+          "incoming_rate": 20.0,
+          "stock_queue": "[]"
+        }
+      ],
+      "gl": [
+        {
+          "name": "0ddd20cb01",
+          "account": "Stock in Hand - N",
+          "account_type": "Stock",
+          "debit": 160.0,
+          "credit": 0.0
+        },
+        {
+          "name": "f9efee163a",
+          "account": "Trade Payable - N",
+          "account_type": "Payable",
+          "debit": 0.0,
+          "credit": 160.0
+        }
+      ],
+      "received_or_sold_qty": 8.0,
+      "sle_value": 160.0,
+      "stock_gl": 160.0,
+      "cogs_gl": 0
+    },
+    {
+      "stage": "Moving Average: partial sale",
+      "voucher_type": "Sales Invoice",
+      "voucher": "SI-63",
+      "items": [
+        {
+          "name": "7pgil626bf",
+          "qty": 5.0,
+          "custom_foc_qty": 0.0,
+          "custom_foc_parent": null,
+          "rate": 30.0,
+          "stock_qty": 5.0,
+          "base_net_amount": 150.0
+        }
+      ],
+      "sle": [
+        {
+          "name": "291ff52270",
+          "voucher_detail_no": "7pgil626bf",
+          "actual_qty": -5.0,
+          "stock_value_difference": -65.0,
+          "incoming_rate": 0.0,
+          "stock_queue": "[]"
+        }
+      ],
+      "gl": [
+        {
+          "name": "2735e2f052",
+          "account": "Sales from Other Region - N",
+          "account_type": "Income Account",
+          "debit": 0.0,
+          "credit": 150.0
+        },
+        {
+          "name": "59b00f7b2d",
+          "account": "Trade in Opening Fees - N",
+          "account_type": "Receivable",
+          "debit": 150.0,
+          "credit": 0.0
+        },
+        {
+          "name": "75ac5a166c",
+          "account": "Stock in Hand - N",
+          "account_type": "Stock",
+          "debit": 0.0,
+          "credit": 65.0
+        },
+        {
+          "name": "b4b7454be3",
+          "account": "Cost of Goods Sold in Trading - N",
+          "account_type": "Cost of Goods Sold",
+          "debit": 65.0,
+          "credit": 0.0
+        }
+      ],
+      "received_or_sold_qty": -5.0,
+      "sle_value": -65.0,
+      "stock_gl": -65.0,
+      "cogs_gl": 65.0,
+      "service_cogs": 65.0,
+      "report_cogs": 65.0,
+      "stock_after": {
+        "bin": {
+          "actual_qty": 15.0,
+          "stock_value": 195.0
+        },
+        "sle": [
+          {
+            "name": "3635450dfa",
+            "voucher_type": "Purchase Invoice",
+            "voucher_no": "PI-30",
+            "actual_qty": 10.0,
+            "stock_value_difference": 100.0,
+            "is_cancelled": 0,
+            "qty_after_transaction": 10.0,
+            "stock_value": 100.0
+          },
+          {
+            "name": "b2e286d9a7",
+            "voucher_type": "Purchase Invoice",
+            "voucher_no": "PI-30",
+            "actual_qty": 2.0,
+            "stock_value_difference": 0.0,
+            "is_cancelled": 0,
+            "qty_after_transaction": 12.0,
+            "stock_value": 100.0
+          },
+          {
+            "name": "48593c4045",
+            "voucher_type": "Purchase Invoice",
+            "voucher_no": "PI-31",
+            "actual_qty": 8.0,
+            "stock_value_difference": 160.0,
+            "is_cancelled": 0,
+            "qty_after_transaction": 20.0,
+            "stock_value": 260.0
+          },
+          {
+            "name": "291ff52270",
+            "voucher_type": "Sales Invoice",
+            "voucher_no": "SI-63",
+            "actual_qty": -5.0,
+            "stock_value_difference": -65.0,
+            "is_cancelled": 0,
+            "qty_after_transaction": 15.0,
+            "stock_value": 195.0
+          }
+        ]
+      }
+    },
+    {
+      "stage": "Reposting: backdated purchase",
+      "transactions": [
+        {
+          "voucher_type": "Purchase Invoice",
+          "voucher": "PI-32",
+          "items": [
+            {
+              "name": "7pj7mj4t0f",
+              "qty": 6.0,
+              "custom_foc_qty": 0.0,
+              "custom_foc_parent": null,
+              "rate": 5.0,
+              "stock_qty": 6.0,
+              "base_net_amount": 30.0
+            }
+          ],
+          "sle": [
+            {
+              "name": "c65cde5fec",
+              "voucher_detail_no": "7pj7mj4t0f",
+              "actual_qty": 6.0,
+              "stock_value_difference": 30.0,
+              "incoming_rate": 5.0,
+              "stock_queue": "[]"
+            }
+          ],
+          "gl": [
+            {
+              "name": "b45e8cbc02",
+              "account": "Trade Payable - N",
+              "account_type": "Payable",
+              "debit": 0.0,
+              "credit": 30.0
+            },
+            {
+              "name": "e1d9a8d4c3",
+              "account": "Stock in Hand - N",
+              "account_type": "Stock",
+              "debit": 30.0,
+              "credit": 0.0
+            }
+          ],
+          "received_or_sold_qty": 6.0,
+          "sle_value": 30.0,
+          "stock_gl": 30.0,
+          "cogs_gl": 0
+        },
+        {
+          "voucher_type": "Purchase Invoice",
+          "voucher": "PI-30",
+          "items": [
+            {
+              "name": "7p96ds3l4m",
+              "qty": 10.0,
+              "custom_foc_qty": 2.0,
+              "custom_foc_parent": null,
+              "rate": 10.0,
+              "stock_qty": 10.0,
+              "base_net_amount": 100.0
+            },
+            {
+              "name": "7pa65ebhsh",
+              "qty": 2.0,
+              "custom_foc_qty": 0.0,
+              "custom_foc_parent": "d7a68d39b1a88d2f840e",
+              "rate": 0.0,
+              "stock_qty": 2.0,
+              "base_net_amount": 0.0
+            }
+          ],
+          "sle": [
+            {
+              "name": "3635450dfa",
+              "voucher_detail_no": "7p96ds3l4m",
+              "actual_qty": 10.0,
+              "stock_value_difference": 100.0,
+              "incoming_rate": 10.0,
+              "stock_queue": "[]"
+            },
+            {
+              "name": "b2e286d9a7",
+              "voucher_detail_no": "7pa65ebhsh",
+              "actual_qty": 2.0,
+              "stock_value_difference": 0.0,
+              "incoming_rate": 0.0,
+              "stock_queue": "[]"
+            }
+          ],
+          "gl": [
+            {
+              "name": "4514937cf3",
+              "account": "Trade Payable - N",
+              "account_type": "Payable",
+              "debit": 0.0,
+              "credit": 100.0
+            },
+            {
+              "name": "bb1966719b",
+              "account": "Stock in Hand - N",
+              "account_type": "Stock",
+              "debit": 100.0,
+              "credit": 0.0
+            }
+          ],
+          "received_or_sold_qty": 12.0,
+          "sle_value": 100.0,
+          "stock_gl": 100.0,
+          "cogs_gl": 0
+        },
+        {
+          "voucher_type": "Purchase Invoice",
+          "voucher": "PI-31",
+          "items": [
+            {
+              "name": "7pdmlibelq",
+              "qty": 8.0,
+              "custom_foc_qty": 0.0,
+              "custom_foc_parent": null,
+              "rate": 20.0,
+              "stock_qty": 8.0,
+              "base_net_amount": 160.0
+            }
+          ],
+          "sle": [
+            {
+              "name": "48593c4045",
+              "voucher_detail_no": "7pdmlibelq",
+              "actual_qty": 8.0,
+              "stock_value_difference": 160.0,
+              "incoming_rate": 20.0,
+              "stock_queue": "[]"
+            }
+          ],
+          "gl": [
+            {
+              "name": "0ddd20cb01",
+              "account": "Stock in Hand - N",
+              "account_type": "Stock",
+              "debit": 160.0,
+              "credit": 0.0
+            },
+            {
+              "name": "f9efee163a",
+              "account": "Trade Payable - N",
+              "account_type": "Payable",
+              "debit": 0.0,
+              "credit": 160.0
+            }
+          ],
+          "received_or_sold_qty": 8.0,
+          "sle_value": 160.0,
+          "stock_gl": 160.0,
+          "cogs_gl": 0
+        },
+        {
+          "voucher_type": "Sales Invoice",
+          "voucher": "SI-63",
+          "items": [
+            {
+              "name": "7pgil626bf",
+              "qty": 5.0,
+              "custom_foc_qty": 0.0,
+              "custom_foc_parent": null,
+              "rate": 30.0,
+              "stock_qty": 5.0,
+              "base_net_amount": 150.0
+            }
+          ],
+          "sle": [
+            {
+              "name": "291ff52270",
+              "voucher_detail_no": "7pgil626bf",
+              "actual_qty": -5.0,
+              "stock_value_difference": -55.77,
+              "incoming_rate": 0.0,
+              "stock_queue": "[]"
+            }
+          ],
+          "gl": [
+            {
+              "name": "7d171a0263",
+              "account": "Sales from Other Region - N",
+              "account_type": "Income Account",
+              "debit": 0.0,
+              "credit": 150.0
+            },
+            {
+              "name": "8c4e6d0bb2",
+              "account": "Trade in Opening Fees - N",
+              "account_type": "Receivable",
+              "debit": 150.0,
+              "credit": 0.0
+            },
+            {
+              "name": "ab4122ed64",
+              "account": "Stock in Hand - N",
+              "account_type": "Stock",
+              "debit": 0.0,
+              "credit": 55.77
+            },
+            {
+              "name": "fb28d00e53",
+              "account": "Cost of Goods Sold in Trading - N",
+              "account_type": "Cost of Goods Sold",
+              "debit": 55.77,
+              "credit": 0.0
+            }
+          ],
+          "received_or_sold_qty": -5.0,
+          "sle_value": -55.77,
+          "stock_gl": -55.77,
+          "cogs_gl": 55.77,
+          "service_cogs": 55.77,
+          "report_cogs": 55.77
+        }
+      ],
+      "stock_after": {
+        "bin": {
+          "actual_qty": 21.0,
+          "stock_value": 234.23
+        },
+        "sle": [
+          {
+            "name": "c65cde5fec",
+            "voucher_type": "Purchase Invoice",
+            "voucher_no": "PI-32",
+            "actual_qty": 6.0,
+            "stock_value_difference": 30.0,
+            "is_cancelled": 0,
+            "qty_after_transaction": 6.0,
+            "stock_value": 30.0
+          },
+          {
+            "name": "3635450dfa",
+            "voucher_type": "Purchase Invoice",
+            "voucher_no": "PI-30",
+            "actual_qty": 10.0,
+            "stock_value_difference": 100.0,
+            "is_cancelled": 0,
+            "qty_after_transaction": 16.0,
+            "stock_value": 130.0
+          },
+          {
+            "name": "b2e286d9a7",
+            "voucher_type": "Purchase Invoice",
+            "voucher_no": "PI-30",
+            "actual_qty": 2.0,
+            "stock_value_difference": 0.0,
+            "is_cancelled": 0,
+            "qty_after_transaction": 18.0,
+            "stock_value": 130.0
+          },
+          {
+            "name": "48593c4045",
+            "voucher_type": "Purchase Invoice",
+            "voucher_no": "PI-31",
+            "actual_qty": 8.0,
+            "stock_value_difference": 160.0,
+            "is_cancelled": 0,
+            "qty_after_transaction": 26.0,
+            "stock_value": 290.0
+          },
+          {
+            "name": "291ff52270",
+            "voucher_type": "Sales Invoice",
+            "voucher_no": "SI-63",
+            "actual_qty": -5.0,
+            "stock_value_difference": -55.77,
+            "is_cancelled": 0,
+            "qty_after_transaction": 21.0,
+            "stock_value": 234.23
+          }
+        ]
+      },
+      "reposts": [
+        {
+          "name": "7pl5cf9soc",
+          "status": "Completed"
+        }
+      ],
+      "expected_cogs": 55.76923076923077,
+      "assertions": "passed"
+    }
+  ],
+  "status": "passed",
+  "run": "FOC-LIFECYCLE-873b358c",
+  "transactions_rolled_back": true
+}

@@ -1,0 +1,259 @@
+[
+  {
+    "report": "daily_profit_report",
+    "rows": 74,
+    "columns": [
+      "Invoice",
+      "Net Sales",
+      "COGS",
+      "Gross Profit",
+      "Gross Profit Margin %"
+    ],
+    "last_row": {
+      "sales_group": "Total",
+      "net_sales": 79228.45000000003,
+      "cost_amount": null,
+      "missing_cost_rows": 13.0,
+      "gross_profit": null,
+      "profit_percent": null
+    }
+  },
+  {
+    "report": "daily_sales_summary",
+    "rows": 36,
+    "columns": [
+      "Date",
+      "Counter",
+      "Invoice Count",
+      "Return Count",
+      "Sales Before Returns (excl. VAT, after discounts)",
+      "Return Amount",
+      "Net Sales",
+      "COGS",
+      "Gross Profit",
+      "Gross Profit Margin %",
+      "Items Sold",
+      "Paid Amount",
+      "Outstanding Amount",
+      "Average Bill Value"
+    ],
+    "last_row": {
+      "posting_date": null,
+      "counter": "Total",
+      "invoice_count": 59.0,
+      "return_count": 14.0,
+      "gross_sales": 82428.6,
+      "return_amount": 3200.15,
+      "net_sales": 79228.45000000001,
+      "paid_amount": 22458.5,
+      "outstanding_amount": 55687.81,
+      "average_bill_value": 1342.855084745763,
+      "items_sold": 211.0,
+      "net_item_sales": 79228.45000000001,
+      "gross_profit": null,
+      "cost_amount": null,
+      "missing_cost_rows": 13.0,
+      "profit_percent": null,
+      "is_total_row": 1
+    }
+  },
+  {
+    "report": "pos_invoice_profit",
+    "rows": 25,
+    "columns": [
+      "POS Invoice",
+      "Posting Date",
+      "Customer",
+      "Type",
+      "Net Sales (excl. VAT)",
+      "COGS",
+      "Gross Profit",
+      "Gross Profit Margin %",
+      "Cost Status",
+      "Consolidated Sales Invoice"
+    ],
+    "last_row": {
+      "pos_invoice": "Total",
+      "net_amount": 8296.249999999998,
+      "cost_amount": null,
+      "gross_profit": null,
+      "margin_percent": null,
+      "cost_status": "Cost unavailable"
+    }
+  },
+  {
+    "report": "van_profit_report",
+    "rows": 3,
+    "columns": [
+      "Item",
+      "Item Name",
+      "Van",
+      "Driver",
+      "Driver Name",
+      "Qty",
+      "Net Sales",
+      "COGS",
+      "Gross Profit",
+      "Gross Profit Margin %"
+    ],
+    "last_row": {
+      "item_code": "Total",
+      "is_total_row": 1,
+      "qty": 17.0,
+      "net_sales": 215.25,
+      "cost_amount": 203.25,
+      "missing_cost_rows": 0.0,
+      "gross_profit": 12.0,
+      "profit_percent": 5.574912891986063
+    }
+  },
+  {
+    "report": "van_daily_sales_summary",
+    "rows": 5,
+    "columns": [
+      "Date",
+      "Van Session",
+      "Van",
+      "Driver",
+      "Driver Name",
+      "Invoices",
+      "Returns",
+      "Sales Before Returns (excl. VAT, after discounts)",
+      "Return Amount",
+      "Net Sales",
+      "COGS",
+      "Gross Profit",
+      "Gross Profit Margin %",
+      "Items Sold",
+      "Paid",
+      "Outstanding",
+      "Average Bill"
+    ],
+    "last_row": {
+      "posting_date": "Total",
+      "is_total_row": 1,
+      "invoice_count": 7.0,
+      "return_count": 2.0,
+      "gross_sales": 282.4,
+      "return_amount": 67.15,
+      "net_sales": 215.25,
+      "items_sold": 17.0,
+      "net_item_sales": 215.25,
+      "cost_amount": 203.25,
+      "missing_cost_rows": 0.0,
+      "gross_profit": 12.0,
+      "profit_percent": 5.574912891986063,
+      "paid_amount": 210.01,
+      "outstanding_amount": 9.990000000000002,
+      "average_bill_value": 30.75,
+      "driver_name": "Total"
+    }
+  },
+  {
+    "report": "van_detailed_sales_summary",
+    "rows": 9,
+    "columns": [
+      "Date",
+      "Invoice",
+      "Customer",
+      "Customer Name",
+      "Van Session",
+      "Van",
+      "Driver",
+      "Item",
+      "Item Name",
+      "Warehouse",
+      "Qty",
+      "UOM",
+      "Net Rate",
+      "Net Sales",
+      "COGS",
+      "Gross Profit",
+      "Gross Profit Margin %"
+    ],
+    "last_row": {
+      "posting_date": "2026-08-08",
+      "sales_invoice": "VS-1",
+      "customer": "C-8",
+      "customer_name": "Business Demo Customer",
+      "van_session": "VSS-1",
+      "van": "Van-123",
+      "driver": "DR-1",
+      "driver_name": "Driver 1",
+      "item_code": "I-1",
+      "item_name": "Water",
+      "warehouse": "Van 1-warehouse  - N",
+      "qty": 1.0,
+      "uom": "Nos",
+      "net_rate": 10.0,
+      "net_amount": 10.0,
+      "cost_amount": 9.0,
+      "gross_profit": 1.0,
+      "profit_percent": 10.0
+    }
+  },
+  {
+    "report": "margin_by_movement",
+    "rows": 95,
+    "columns": [
+      "Date",
+      "Movement Type",
+      "Item",
+      "Item Name",
+      "Qty",
+      "Net Sales",
+      "COGS",
+      "Gross Profit",
+      "Gross Profit Margin %",
+      "Customer",
+      "POS Profile",
+      "Cashier / User",
+      "Voucher Type",
+      "Voucher"
+    ],
+    "last_row": {
+      "item_code": "Total",
+      "is_total_row": 1,
+      "sales_amount": null,
+      "cost_amount": 5477.159999999999,
+      "gross_profit": null,
+      "margin_percent": null
+    }
+  },
+  {
+    "report": "pos_item_wise_sales",
+    "rows": 11,
+    "columns": [
+      "Item",
+      "Item Name",
+      "Item Group",
+      "Warehouse",
+      "Sold Qty",
+      "Return Qty",
+      "Net Qty",
+      "Net Sales",
+      "COGS",
+      "Gross Profit",
+      "Gross Profit Margin %",
+      "Cost Status",
+      "Invoice Count"
+    ]
+  },
+  {
+    "report": "pos_category_sales",
+    "rows": 5,
+    "columns": [
+      "Item Group",
+      "Item Count",
+      "Invoice Count",
+      "Sold Qty",
+      "Return Qty",
+      "Net Qty",
+      "Net Sales",
+      "COGS",
+      "Gross Profit",
+      "Gross Profit Margin %",
+      "Cost Status"
+    ]
+  }
+]

@@ -1,0 +1,1010 @@
+{
+  "info": {
+    "name": "Offline POS \u2014 Manual Test \u2014 retail-test.localhost",
+    "description": "Run requests ONE AT A TIME in numbered order. Creates test transactions. Uses Karama / counter01 / T01 / E-6, then counter02 / T02. Enter only test API credentials in the supplied environment. References stay fixed for retries. Day closing affects the branch/date; review its preview before submitting. Clear run_id only when starting a genuinely new test, never to retry a completed operation.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "run_id",
+      "value": ""
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// References and dates are created ONCE and kept for retries.",
+          "if (!pm.collectionVariables.get(\"run_id\")) {",
+          "  const local = new Date(Date.now() + 4 * 3600000).toISOString();",
+          "  const day = local.slice(0, 10);",
+          "  const id = String(Date.now());",
+          "  pm.collectionVariables.set(\"run_id\", id);",
+          "  pm.collectionVariables.set(\"business_date\", day);",
+          "  pm.collectionVariables.set(\"opened_at\", local.slice(0, 19).replace(\"T\", \" \"));",
+          "  pm.collectionVariables.set(\"sale_time\", local.slice(11, 19));",
+          "  const later = new Date(Date.now() + 4 * 3600000 + 2000).toISOString();",
+          "  pm.collectionVariables.set(\"return_date\", later.slice(0, 10));",
+          "  pm.collectionVariables.set(\"return_time\", later.slice(11, 19));",
+          "  [\"SHIFT\", \"CS\", \"SHIFTOPEN\", \"SALE\", \"CREDIT\", \"COLLECTION\", \"DEPOSIT\", \"CASHIN\", \"CASHOUT\", \"RETURN\", \"PAUSE\", \"CS2\", \"RESUME\", \"SHIFTCLOSE\", \"DAYCLOSE\"].forEach(type => {",
+          "    pm.collectionVariables.set(type.toLowerCase() + \"_ref\", \"KAR-counter01-T01-\" + type + \"-\" + day.replace(/-/g, \"\") + \"-\" + id);",
+          "  });",
+          "  [\"CS2\", \"RESUME\", \"SHIFTCLOSE\"].forEach(type => {",
+          "    const label = type === \"CS2\" ? \"CS\" : type;",
+          "    pm.collectionVariables.set(type.toLowerCase() + \"_ref\", \"KAR-counter02-T02-\" + label + \"-\" + day.replace(/-/g, \"\") + \"-\" + id);",
+          "  });",
+          "}"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "01 \u2014 Check connection",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Host",
+            "value": "retail-test.localhost"
+          },
+          {
+            "key": "Authorization",
+            "value": "token {{api_key}}:{{api_secret}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/api/method/retail.api.pos_sync.health_check?branch=Karama&counter_code=counter01",
+        "description": "Use the test site only. No records are created."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const result = pm.response.json().message;",
+              "pm.test(\"Request reached ERP\", () => pm.expect(pm.response.code).to.eql(200));",
+              "pm.test(\"ERP returned a reply\", () => pm.expect(result).to.be.an(\"object\"));",
+              "pm.test(\"Counter is ready\", () => pm.expect(result.status).to.eql(\"OK\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 \u2014 Check cashier and counter",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Host",
+            "value": "retail-test.localhost"
+          },
+          {
+            "key": "Authorization",
+            "value": "token {{api_key}}:{{api_secret}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/api/method/retail.api.pos_sync.get_cashier_shift_status",
+        "description": "Before a fresh run this should say OpenNewShift. Stop if the cashier/counter already belongs to another test; do not close another shift.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"branch\": \"Karama\",\n  \"counter_code\": \"counter01\",\n  \"cashier_employee\": \"E-6\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const result = pm.response.json().message;",
+              "pm.test(\"Request reached ERP\", () => pm.expect(pm.response.code).to.eql(200));",
+              "pm.test(\"ERP returned a reply\", () => pm.expect(result).to.be.an(\"object\"));",
+              "pm.test(\"ERP accepted the request\", () => pm.expect(result.status).to.eql(\"Success\"));",
+              "pm.test(\"Ready for a NEW test\", () => pm.expect(result.recommended_action).to.eql(\"OpenNewShift\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 \u2014 Send bill BEFORE opening (expected failure)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Host",
+            "value": "retail-test.localhost"
+          },
+          {
+            "key": "Authorization",
+            "value": "token {{api_key}}:{{api_secret}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/api/method/retail.api.pos_sync.create_pos_invoice",
+        "description": "This intentionally sends a locally saved bill before its opening. No invoice should be created. Request 05 sends EXACTLY the same body after opening.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"branch\": \"Karama\",\n  \"counter_code\": \"counter01\",\n  \"pos_terminal_id\": \"T01\",\n  \"cashier_employee\": \"E-6\",\n  \"external_shift_reference\": \"{{shift_ref}}\",\n  \"external_session_reference\": \"{{cs_ref}}\",\n  \"external_pos_reference\": \"{{sale_ref}}\",\n  \"customer\": \"C-1\",\n  \"posting_date\": \"{{business_date}}\",\n  \"posting_time\": \"{{sale_time}}\",\n  \"discount_amount\": 0,\n  \"vat_amount\": 0.5,\n  \"grand_total\": 10.5,\n  \"items\": [\n    {\n      \"item_code\": \"I-1\",\n      \"qty\": 1,\n      \"rate\": 10.5,\n      \"rate_includes_vat\": 1,\n      \"discount_amount\": 0,\n      \"amount\": 10,\n      \"net_amount\": 10,\n      \"vat_rate\": 5,\n      \"vat_amount\": 0.5\n    }\n  ],\n  \"payments\": [\n    {\n      \"mode_of_payment\": \"Cash\",\n      \"amount\": 10.5\n    }\n  ],\n  \"issued_vouchers\": []\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const result = pm.response.json().message;",
+              "pm.test(\"Request reached ERP\", () => pm.expect(pm.response.code).to.eql(200));",
+              "pm.test(\"ERP returned a reply\", () => pm.expect(result).to.be.an(\"object\"));",
+              "pm.test(\"Bill waits for opening\", () => { pm.expect(result.status).to.eql(\"Failed\"); pm.expect(result.error_code).to.eql(\"BlockedDependency\"); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 \u2014 Send the opening",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Host",
+            "value": "retail-test.localhost"
+          },
+          {
+            "key": "Authorization",
+            "value": "token {{api_key}}:{{api_secret}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/api/method/retail.api.pos_sync.open_cashier_shift",
+        "description": "Creates a real TEST shift and session with AED 100 opening cash. POS references already exist; no ERP IDs are sent.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"branch\": \"Karama\",\n  \"counter_code\": \"counter01\",\n  \"pos_terminal_id\": \"T01\",\n  \"cashier_employee\": \"E-6\",\n  \"external_shift_reference\": \"{{shift_ref}}\",\n  \"external_session_reference\": \"{{cs_ref}}\",\n  \"external_pos_reference\": \"{{shiftopen_ref}}\",\n  \"business_date\": \"{{business_date}}\",\n  \"opened_at\": \"{{opened_at}}\",\n  \"opening_balances\": [\n    {\n      \"mode_of_payment\": \"Cash\",\n      \"opening_amount\": 100\n    }\n  ]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const result = pm.response.json().message;",
+              "pm.test(\"Request reached ERP\", () => pm.expect(pm.response.code).to.eql(200));",
+              "pm.test(\"ERP returned a reply\", () => pm.expect(result).to.be.an(\"object\"));",
+              "pm.test(\"ERP accepted the request\", () => pm.expect(result.status).to.eql(\"Success\"));",
+              "pm.test(\"ERP returned all three mappings\", () => {",
+              "  pm.expect(result.cashier_shift).to.match(/^PSH-[1-9][0-9]*$/);",
+              "  pm.expect(result.counter_session).to.match(/^PCS-[1-9][0-9]*$/);",
+              "  pm.expect(result.pos_opening_entry).to.match(/^POE-[1-9][0-9]*$/);",
+              "});",
+              "if (result.status === \"Success\") {",
+              "  [\"cashier_shift\", \"counter_session\", \"pos_opening_entry\"].forEach(k => pm.collectionVariables.set(k, result[k]));",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 \u2014 Send the SAME saved bill",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Host",
+            "value": "retail-test.localhost"
+          },
+          {
+            "key": "Authorization",
+            "value": "token {{api_key}}:{{api_secret}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/api/method/retail.api.pos_sync.create_pos_invoice",
+        "description": "",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"branch\": \"Karama\",\n  \"counter_code\": \"counter01\",\n  \"pos_terminal_id\": \"T01\",\n  \"cashier_employee\": \"E-6\",\n  \"external_shift_reference\": \"{{shift_ref}}\",\n  \"external_session_reference\": \"{{cs_ref}}\",\n  \"external_pos_reference\": \"{{sale_ref}}\",\n  \"customer\": \"C-1\",\n  \"posting_date\": \"{{business_date}}\",\n  \"posting_time\": \"{{sale_time}}\",\n  \"discount_amount\": 0,\n  \"vat_amount\": 0.5,\n  \"grand_total\": 10.5,\n  \"items\": [\n    {\n      \"item_code\": \"I-1\",\n      \"qty\": 1,\n      \"rate\": 10.5,\n      \"rate_includes_vat\": 1,\n      \"discount_amount\": 0,\n      \"amount\": 10,\n      \"net_amount\": 10,\n      \"vat_rate\": 5,\n      \"vat_amount\": 0.5\n    }\n  ],\n  \"payments\": [\n    {\n      \"mode_of_payment\": \"Cash\",\n      \"amount\": 10.5\n    }\n  ],\n  \"issued_vouchers\": []\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const result = pm.response.json().message;",
+              "pm.test(\"Request reached ERP\", () => pm.expect(pm.response.code).to.eql(200));",
+              "pm.test(\"ERP returned a reply\", () => pm.expect(result).to.be.an(\"object\"));",
+              "pm.test(\"ERP accepted the request\", () => pm.expect(result.status).to.eql(\"Success\"));",
+              "pm.test(\"Bill posted once\", () => pm.expect(result.grand_total).to.eql(10.5));",
+              "if (result.invoice_name) pm.collectionVariables.set(\"sale_invoice\", result.invoice_name);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 \u2014 Retry the bill (no second sale)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Host",
+            "value": "retail-test.localhost"
+          },
+          {
+            "key": "Authorization",
+            "value": "token {{api_key}}:{{api_secret}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/api/method/retail.api.pos_sync.create_pos_invoice",
+        "description": "",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"branch\": \"Karama\",\n  \"counter_code\": \"counter01\",\n  \"pos_terminal_id\": \"T01\",\n  \"cashier_employee\": \"E-6\",\n  \"external_shift_reference\": \"{{shift_ref}}\",\n  \"external_session_reference\": \"{{cs_ref}}\",\n  \"external_pos_reference\": \"{{sale_ref}}\",\n  \"customer\": \"C-1\",\n  \"posting_date\": \"{{business_date}}\",\n  \"posting_time\": \"{{sale_time}}\",\n  \"discount_amount\": 0,\n  \"vat_amount\": 0.5,\n  \"grand_total\": 10.5,\n  \"items\": [\n    {\n      \"item_code\": \"I-1\",\n      \"qty\": 1,\n      \"rate\": 10.5,\n      \"rate_includes_vat\": 1,\n      \"discount_amount\": 0,\n      \"amount\": 10,\n      \"net_amount\": 10,\n      \"vat_rate\": 5,\n      \"vat_amount\": 0.5\n    }\n  ],\n  \"payments\": [\n    {\n      \"mode_of_payment\": \"Cash\",\n      \"amount\": 10.5\n    }\n  ],\n  \"issued_vouchers\": []\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const result = pm.response.json().message;",
+              "pm.test(\"Request reached ERP\", () => pm.expect(pm.response.code).to.eql(200));",
+              "pm.test(\"ERP returned a reply\", () => pm.expect(result).to.be.an(\"object\"));",
+              "pm.test(\"ERP accepted the request\", () => pm.expect(result.status).to.eql(\"Success\"));",
+              "pm.test(\"Original result returned\", () => {",
+              "  pm.expect(result.duplicate).to.eql(true);",
+              "  pm.expect(result.invoice_name).to.eql(pm.collectionVariables.get(\"sale_invoice\"));",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "07 \u2014 Same reference, changed amount (expected conflict)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Host",
+            "value": "retail-test.localhost"
+          },
+          {
+            "key": "Authorization",
+            "value": "token {{api_key}}:{{api_secret}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/api/method/retail.api.pos_sync.create_pos_invoice",
+        "description": "Deliberate negative test. Does not change the original bill. Never use a new reference to bypass a conflict.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"branch\": \"Karama\",\n  \"counter_code\": \"counter01\",\n  \"pos_terminal_id\": \"T01\",\n  \"cashier_employee\": \"E-6\",\n  \"external_shift_reference\": \"{{shift_ref}}\",\n  \"external_session_reference\": \"{{cs_ref}}\",\n  \"external_pos_reference\": \"{{sale_ref}}\",\n  \"customer\": \"C-1\",\n  \"posting_date\": \"{{business_date}}\",\n  \"posting_time\": \"{{sale_time}}\",\n  \"discount_amount\": 0,\n  \"vat_amount\": 0.5,\n  \"grand_total\": 11.5,\n  \"items\": [\n    {\n      \"item_code\": \"I-1\",\n      \"qty\": 1,\n      \"rate\": 10.5,\n      \"rate_includes_vat\": 1,\n      \"discount_amount\": 0,\n      \"amount\": 10,\n      \"net_amount\": 10,\n      \"vat_rate\": 5,\n      \"vat_amount\": 0.5\n    }\n  ],\n  \"payments\": [\n    {\n      \"mode_of_payment\": \"Cash\",\n      \"amount\": 10.5\n    }\n  ],\n  \"issued_vouchers\": []\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const result = pm.response.json().message;",
+              "pm.test(\"Request reached ERP\", () => pm.expect(pm.response.code).to.eql(200));",
+              "pm.test(\"ERP returned a reply\", () => pm.expect(result).to.be.an(\"object\"));",
+              "pm.test(\"Changed details are rejected\", () => { pm.expect(result.status).to.eql(\"Failed\"); pm.expect(result.error).to.include(\"Reference conflict\"); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "08 \u2014 Credit sale",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Host",
+            "value": "retail-test.localhost"
+          },
+          {
+            "key": "Authorization",
+            "value": "token {{api_key}}:{{api_secret}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/api/method/retail.api.pos_sync.create_credit_pos_invoice",
+        "description": "",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"branch\": \"Karama\",\n  \"counter_code\": \"counter01\",\n  \"pos_terminal_id\": \"T01\",\n  \"cashier_employee\": \"E-6\",\n  \"external_shift_reference\": \"{{shift_ref}}\",\n  \"external_session_reference\": \"{{cs_ref}}\",\n  \"external_pos_reference\": \"{{credit_ref}}\",\n  \"customer\": \"C-1\",\n  \"posting_date\": \"{{business_date}}\",\n  \"posting_time\": \"{{sale_time}}\",\n  \"discount_amount\": 0,\n  \"vat_amount\": 0.5,\n  \"grand_total\": 10.5,\n  \"items\": [\n    {\n      \"item_code\": \"I-1\",\n      \"qty\": 1,\n      \"rate\": 10.5,\n      \"rate_includes_vat\": 1,\n      \"discount_amount\": 0,\n      \"amount\": 10,\n      \"net_amount\": 10,\n      \"vat_rate\": 5,\n      \"vat_amount\": 0.5\n    }\n  ],\n  \"issued_vouchers\": []\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const result = pm.response.json().message;",
+              "pm.test(\"Request reached ERP\", () => pm.expect(pm.response.code).to.eql(200));",
+              "pm.test(\"ERP returned a reply\", () => pm.expect(result).to.be.an(\"object\"));",
+              "pm.test(\"ERP accepted the request\", () => pm.expect(result.status).to.eql(\"Success\"));",
+              "pm.test(\"Customer owes 10.50\", () => pm.expect(result.outstanding_amount).to.eql(10.5));",
+              "if (result.invoice_name) pm.collectionVariables.set(\"credit_invoice\", result.invoice_name);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "09 \u2014 Collect AED 5 from the credit customer",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Host",
+            "value": "retail-test.localhost"
+          },
+          {
+            "key": "Authorization",
+            "value": "token {{api_key}}:{{api_secret}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/api/method/retail.api.pos_sync.pay_customer_invoice",
+        "description": "",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"branch\": \"Karama\",\n  \"counter_code\": \"counter01\",\n  \"pos_terminal_id\": \"T01\",\n  \"cashier_employee\": \"E-6\",\n  \"external_shift_reference\": \"{{shift_ref}}\",\n  \"external_session_reference\": \"{{cs_ref}}\",\n  \"external_pos_reference\": \"{{collection_ref}}\",\n  \"invoice_external_reference\": \"{{credit_ref}}\",\n  \"payment_mode\": \"Cash\",\n  \"amount\": 5,\n  \"posting_date\": \"{{business_date}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const result = pm.response.json().message;",
+              "pm.test(\"Request reached ERP\", () => pm.expect(pm.response.code).to.eql(200));",
+              "pm.test(\"ERP returned a reply\", () => pm.expect(result).to.be.an(\"object\"));",
+              "pm.test(\"ERP accepted the request\", () => pm.expect(result.status).to.eql(\"Success\"));",
+              "pm.test(\"Customer now owes 5.50\", () => pm.expect(result.invoice_outstanding_amount).to.eql(5.5));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "10 \u2014 Customer deposit AED 5",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Host",
+            "value": "retail-test.localhost"
+          },
+          {
+            "key": "Authorization",
+            "value": "token {{api_key}}:{{api_secret}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/api/method/retail.api.pos_sync.create_customer_deposit",
+        "description": "",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"branch\": \"Karama\",\n  \"counter_code\": \"counter01\",\n  \"pos_terminal_id\": \"T01\",\n  \"cashier_employee\": \"E-6\",\n  \"external_shift_reference\": \"{{shift_ref}}\",\n  \"external_session_reference\": \"{{cs_ref}}\",\n  \"external_pos_reference\": \"{{deposit_ref}}\",\n  \"customer\": \"C-1\",\n  \"payment_mode\": \"Cash\",\n  \"amount\": 5,\n  \"posting_date\": \"{{business_date}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const result = pm.response.json().message;",
+              "pm.test(\"Request reached ERP\", () => pm.expect(pm.response.code).to.eql(200));",
+              "pm.test(\"ERP returned a reply\", () => pm.expect(result).to.be.an(\"object\"));",
+              "pm.test(\"ERP accepted the request\", () => pm.expect(result.status).to.eql(\"Success\"));",
+              "pm.test(\"Deposit is unallocated\", () => pm.expect(result.unallocated_amount).to.eql(5));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "11 \u2014 Cash In AED 10",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Host",
+            "value": "retail-test.localhost"
+          },
+          {
+            "key": "Authorization",
+            "value": "token {{api_key}}:{{api_secret}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/api/method/retail.api.pos_sync.create_pos_cash_movement",
+        "description": "",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"branch\": \"Karama\",\n  \"counter_code\": \"counter01\",\n  \"pos_terminal_id\": \"T01\",\n  \"cashier_employee\": \"E-6\",\n  \"external_shift_reference\": \"{{shift_ref}}\",\n  \"external_session_reference\": \"{{cs_ref}}\",\n  \"external_pos_reference\": \"{{cashin_ref}}\",\n  \"movement_type\": \"Cash In\",\n  \"amount\": 10,\n  \"business_date\": \"{{business_date}}\",\n  \"description\": \"Manual offline POS test\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const result = pm.response.json().message;",
+              "pm.test(\"Request reached ERP\", () => pm.expect(pm.response.code).to.eql(200));",
+              "pm.test(\"ERP returned a reply\", () => pm.expect(result).to.be.an(\"object\"));",
+              "pm.test(\"ERP accepted the request\", () => pm.expect(result.status).to.eql(\"Success\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "12 \u2014 Cash Out AED 5",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Host",
+            "value": "retail-test.localhost"
+          },
+          {
+            "key": "Authorization",
+            "value": "token {{api_key}}:{{api_secret}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/api/method/retail.api.pos_sync.create_pos_cash_movement",
+        "description": "",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"branch\": \"Karama\",\n  \"counter_code\": \"counter01\",\n  \"pos_terminal_id\": \"T01\",\n  \"cashier_employee\": \"E-6\",\n  \"external_shift_reference\": \"{{shift_ref}}\",\n  \"external_session_reference\": \"{{cs_ref}}\",\n  \"external_pos_reference\": \"{{cashout_ref}}\",\n  \"movement_type\": \"Cash Out\",\n  \"amount\": 5,\n  \"business_date\": \"{{business_date}}\",\n  \"description\": \"Manual offline POS test\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const result = pm.response.json().message;",
+              "pm.test(\"Request reached ERP\", () => pm.expect(pm.response.code).to.eql(200));",
+              "pm.test(\"ERP returned a reply\", () => pm.expect(result).to.be.an(\"object\"));",
+              "pm.test(\"ERP accepted the request\", () => pm.expect(result.status).to.eql(\"Success\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "13 \u2014 Return the original cash sale",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Host",
+            "value": "retail-test.localhost"
+          },
+          {
+            "key": "Authorization",
+            "value": "token {{api_key}}:{{api_secret}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/api/method/retail.api.pos_sync.create_pos_return_invoice",
+        "description": "",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"branch\": \"Karama\",\n  \"counter_code\": \"counter01\",\n  \"pos_terminal_id\": \"T01\",\n  \"cashier_employee\": \"E-6\",\n  \"external_shift_reference\": \"{{shift_ref}}\",\n  \"external_session_reference\": \"{{cs_ref}}\",\n  \"external_pos_reference\": \"{{return_ref}}\",\n  \"customer\": \"C-1\",\n  \"posting_date\": \"{{return_date}}\",\n  \"posting_time\": \"{{return_time}}\",\n  \"discount_amount\": 0,\n  \"vat_amount\": -0.5,\n  \"grand_total\": -10.5,\n  \"items\": [\n    {\n      \"item_code\": \"I-1\",\n      \"qty\": 1,\n      \"rate\": 10.5,\n      \"rate_includes_vat\": 1,\n      \"discount_amount\": 0,\n      \"amount\": 10,\n      \"net_amount\": 10,\n      \"vat_rate\": 5,\n      \"vat_amount\": 0.5\n    }\n  ],\n  \"payments\": [\n    {\n      \"mode_of_payment\": \"Cash\",\n      \"amount\": 10.5\n    }\n  ],\n  \"issued_vouchers\": [],\n  \"original_external_pos_reference\": \"{{sale_ref}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const result = pm.response.json().message;",
+              "pm.test(\"Request reached ERP\", () => pm.expect(pm.response.code).to.eql(200));",
+              "pm.test(\"ERP returned a reply\", () => pm.expect(result).to.be.an(\"object\"));",
+              "pm.test(\"ERP accepted the request\", () => pm.expect(result.status).to.eql(\"Success\"));",
+              "pm.test(\"Refund posted\", () => { pm.expect(result.return_invoice).to.match(/^POS-[1-9][0-9]*$/); pm.expect(result.grand_total).to.eql(-10.5); });",
+              "if (result.return_invoice) pm.collectionVariables.set(\"return_invoice\", result.return_invoice);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "14 \u2014 Pause and release counter01",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Host",
+            "value": "retail-test.localhost"
+          },
+          {
+            "key": "Authorization",
+            "value": "token {{api_key}}:{{api_secret}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/api/method/retail.api.pos_sync.pause_cashier_shift",
+        "description": "Counted cash assumes you ran steps 04\u201313 once. Physical cash: 100 + 10.50 + 5 collection + 5 deposit + 10 cash in - 5 cash out - 10.50 refund = 115. Review any difference shown by ERP.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"branch\": \"Karama\",\n  \"counter_code\": \"counter01\",\n  \"pos_terminal_id\": \"T01\",\n  \"cashier_employee\": \"E-6\",\n  \"external_shift_reference\": \"{{shift_ref}}\",\n  \"external_session_reference\": \"{{cs_ref}}\",\n  \"external_pos_reference\": \"{{pause_ref}}\",\n  \"business_date\": \"{{business_date}}\",\n  \"release_counter\": 1,\n  \"closing_balances\": [\n    {\n      \"mode_of_payment\": \"Cash\",\n      \"closing_amount\": 115\n    }\n  ]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const result = pm.response.json().message;",
+              "pm.test(\"Request reached ERP\", () => pm.expect(pm.response.code).to.eql(200));",
+              "pm.test(\"ERP returned a reply\", () => pm.expect(result).to.be.an(\"object\"));",
+              "pm.test(\"ERP accepted the request\", () => pm.expect(result.status).to.eql(\"Success\"));",
+              "pm.test(\"Counter released\", () => pm.expect(result.counter_released).to.eql(true));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "15 \u2014 Resume at counter02",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Host",
+            "value": "retail-test.localhost"
+          },
+          {
+            "key": "Authorization",
+            "value": "token {{api_key}}:{{api_secret}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/api/method/retail.api.pos_sync.resume_cashier_shift",
+        "description": "One shift continues at another counter. Only the external session reference changes.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"branch\": \"Karama\",\n  \"counter_code\": \"counter02\",\n  \"pos_terminal_id\": \"T02\",\n  \"cashier_employee\": \"E-6\",\n  \"external_shift_reference\": \"{{shift_ref}}\",\n  \"external_session_reference\": \"{{cs2_ref}}\",\n  \"external_pos_reference\": \"{{resume_ref}}\",\n  \"business_date\": \"{{business_date}}\",\n  \"opening_balances\": [\n    {\n      \"mode_of_payment\": \"Cash\",\n      \"opening_amount\": 115\n    }\n  ]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const result = pm.response.json().message;",
+              "pm.test(\"Request reached ERP\", () => pm.expect(pm.response.code).to.eql(200));",
+              "pm.test(\"ERP returned a reply\", () => pm.expect(result).to.be.an(\"object\"));",
+              "pm.test(\"ERP accepted the request\", () => pm.expect(result.status).to.eql(\"Success\"));",
+              "pm.test(\"Same shift, new counter session\", () => {",
+              "  pm.expect(result.cashier_shift).to.eql(pm.collectionVariables.get(\"cashier_shift\"));",
+              "  pm.expect(result.counter_session).not.to.eql(pm.collectionVariables.get(\"counter_session\"));",
+              "});",
+              "if (result.counter_session) pm.collectionVariables.set(\"second_counter_session\",result.counter_session);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "16 \u2014 Close the cashier shift",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Host",
+            "value": "retail-test.localhost"
+          },
+          {
+            "key": "Authorization",
+            "value": "token {{api_key}}:{{api_secret}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/api/method/retail.api.pos_sync.close_cashier_shift",
+        "description": "",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"branch\": \"Karama\",\n  \"counter_code\": \"counter02\",\n  \"pos_terminal_id\": \"T02\",\n  \"cashier_employee\": \"E-6\",\n  \"external_shift_reference\": \"{{shift_ref}}\",\n  \"external_session_reference\": \"{{cs2_ref}}\",\n  \"external_pos_reference\": \"{{shiftclose_ref}}\",\n  \"business_date\": \"{{business_date}}\",\n  \"closing_balances\": [\n    {\n      \"mode_of_payment\": \"Cash\",\n      \"closing_amount\": 115\n    }\n  ]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const result = pm.response.json().message;",
+              "pm.test(\"Request reached ERP\", () => pm.expect(pm.response.code).to.eql(200));",
+              "pm.test(\"ERP returned a reply\", () => pm.expect(result).to.be.an(\"object\"));",
+              "pm.test(\"ERP accepted the request\", () => pm.expect(result.status).to.eql(\"Success\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "17 \u2014 CHECK counted cash against ERP (known issue)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Host",
+            "value": "retail-test.localhost"
+          },
+          {
+            "key": "Authorization",
+            "value": "token {{api_key}}:{{api_secret}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/api/resource/POS%20Cashier%20Shift/{{cashier_shift}}",
+        "description": "Read-only check of the closed shift. The planned cash is AED 115. Current expected-cash logic omits the AED 5 collection and AED 5 deposit, so a failed cash test requires review. Do not submit Day Close until reconciled."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const shift = pm.response.json().data;",
+              "pm.test(\"Shift closed\", () => pm.expect(shift.status).to.eql(\"Closed\"));",
+              "pm.test(\"Counted cash is AED 115\", () => pm.expect(shift.closing_amount).to.eql(115));",
+              "pm.test(\"ERP expected cash includes deposits and collections\", () => pm.expect(shift.expected_cash).to.eql(115));",
+              "pm.test(\"Cash difference is zero\", () => pm.expect(shift.variance).to.eql(0));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "18 \u2014 Recover replies after a lost connection",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Host",
+            "value": "retail-test.localhost"
+          },
+          {
+            "key": "Authorization",
+            "value": "token {{api_key}}:{{api_secret}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/api/method/retail.api.pos_sync.get_sync_status",
+        "description": "",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"external_references\": [\n    \"{{shiftopen_ref}}\",\n    \"{{sale_ref}}\",\n    \"{{credit_ref}}\",\n    \"{{collection_ref}}\",\n    \"{{deposit_ref}}\",\n    \"{{cashin_ref}}\",\n    \"{{cashout_ref}}\",\n    \"{{return_ref}}\",\n    \"{{pause_ref}}\",\n    \"{{resume_ref}}\",\n    \"{{shiftclose_ref}}\"\n  ]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const result = pm.response.json().message;",
+              "pm.test(\"Request reached ERP\", () => pm.expect(pm.response.code).to.eql(200));",
+              "pm.test(\"ERP returned a reply\", () => pm.expect(result).to.be.an(\"object\"));",
+              "pm.test(\"ERP accepted the request\", () => pm.expect(result.status).to.eql(\"Success\"));",
+              "pm.test(\"All operations are recorded\", () => Object.values(result.references).forEach(row => pm.expect(row.status).to.eql(\"Synced\")));",
+              "pm.test(\"Opening mapping can be recovered\", () => pm.expect(result.references[pm.collectionVariables.get(\"shiftopen_ref\")].response.cashier_shift).to.eql(pm.collectionVariables.get(\"cashier_shift\")));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "19 \u2014 PREVIEW branch day closing",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Host",
+            "value": "retail-test.localhost"
+          },
+          {
+            "key": "Authorization",
+            "value": "token {{api_key}}:{{api_secret}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/api/method/retail.api.pos_sync.make_branch_day_closing",
+        "description": "Creates/refreshes a draft summary. Review totals and cash differences in ERP. Do not submit if there is unrelated unfinished work for Karama.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"branch\": \"Karama\",\n  \"business_date\": \"{{business_date}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const result = pm.response.json().message;",
+              "pm.test(\"Request reached ERP\", () => pm.expect(pm.response.code).to.eql(200));",
+              "pm.test(\"ERP returned a reply\", () => pm.expect(result).to.be.an(\"object\"));",
+              "pm.test(\"No open shifts or active sessions\", () => {",
+              "  pm.expect(result.open_shift_count).to.eql(0);",
+              "  pm.expect(result.active_counter_session_count).to.eql(0);",
+              "});",
+              "if(result.name) pm.collectionVariables.set(\"day_closing\",result.name);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "20 \u2014 SUBMIT branch day closing (run last)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Host",
+            "value": "retail-test.localhost"
+          },
+          {
+            "key": "Authorization",
+            "value": "token {{api_key}}:{{api_secret}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/api/method/retail.api.pos_sync.submit_branch_day_closing",
+        "description": "Closes Karama for this test date. Run manually only after reviewing step 19 and confirming all test work is sent.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"branch\": \"Karama\",\n  \"business_date\": \"{{business_date}}\",\n  \"external_pos_reference\": \"{{dayclose_ref}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const result = pm.response.json().message;",
+              "pm.test(\"Request reached ERP\", () => pm.expect(pm.response.code).to.eql(200));",
+              "pm.test(\"ERP returned a reply\", () => pm.expect(result).to.be.an(\"object\"));",
+              "pm.test(\"Day closed\", () => pm.expect(result.docstatus).to.eql(1));",
+              "if(result.name) pm.collectionVariables.set(\"day_closing\",result.name);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "21 \u2014 Retry day closing (same result)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Host",
+            "value": "retail-test.localhost"
+          },
+          {
+            "key": "Authorization",
+            "value": "token {{api_key}}:{{api_secret}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/api/method/retail.api.pos_sync.submit_branch_day_closing",
+        "description": "",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"branch\": \"Karama\",\n  \"business_date\": \"{{business_date}}\",\n  \"external_pos_reference\": \"{{dayclose_ref}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const result = pm.response.json().message;",
+              "pm.test(\"Request reached ERP\", () => pm.expect(pm.response.code).to.eql(200));",
+              "pm.test(\"ERP returned a reply\", () => pm.expect(result).to.be.an(\"object\"));",
+              "pm.test(\"No second closing\", () => {",
+              "  pm.expect(result.duplicate).to.eql(true);",
+              "  pm.expect(result.name).to.eql(pm.collectionVariables.get(\"day_closing\"));",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

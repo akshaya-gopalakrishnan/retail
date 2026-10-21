@@ -1,0 +1,679 @@
+{
+  "site": "retail-test.localhost",
+  "server": "http://retail-test.localhost:8000",
+  "menu_routes": 88,
+  "document_routes": 5,
+  "denied_requests": 0,
+  "permission_popups": 0,
+  "focused_unit_tests": 51,
+  "restricted_user": {
+    "measurements": [
+      {
+        "viewport": 1600,
+        "columns": 5,
+        "width": 1195,
+        "available": 1195,
+        "scrollWidth": 1195,
+        "groups": 12,
+        "checked": 88
+      },
+      {
+        "viewport": 1024,
+        "columns": 3,
+        "width": 619,
+        "available": 619,
+        "scrollWidth": 619,
+        "groups": 12,
+        "checked": 88
+      },
+      {
+        "viewport": 600,
+        "columns": 2,
+        "width": 468,
+        "available": 468,
+        "scrollWidth": 468,
+        "groups": 12,
+        "checked": 88
+      },
+      {
+        "viewport": 390,
+        "columns": 1,
+        "width": 318,
+        "available": 318,
+        "scrollWidth": 318,
+        "groups": 12,
+        "checked": 88
+      }
+    ],
+    "checkbox_and_save_checks": "passed",
+    "restricted_invoice_form": "passed",
+    "restricted_sidebar": "Sales\nSales Invoices",
+    "restricted_api_status": 403,
+    "restricted_url_status": 403,
+    "runtime_errors": []
+  },
+  "routes": [
+    {
+      "route": "business-home",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "items",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "items-list",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "item-family-list",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "item-groups",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "price-lists",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "brands",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "sales",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "customers",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "quotations",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "sales-orders",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "sales-invoices",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "sales-returns",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "delivery-notes",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "purchases",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "suppliers",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "request-for-quotations",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "supplier-quotations",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "purchase-orders",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "purchase-receipts",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "purchase-invoices",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "purchase-returns",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "material-requests",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "stocks",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "warehouses",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "stock-adjustments",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "stock-take",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "serials-&-batches",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "stock-status",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "accounts",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": [
+        {
+          "text": "NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.\n    at r2.value (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:53399:34)\n    at r2.value (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:53389:72)\n    at ResizeObserver.boundDrawFn (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:53374:19)",
+          "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+          "line": 53398
+        },
+        {
+          "text": "NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.\n    at r2.value (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:53399:34)\n    at r2.value (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:53389:72)\n    at ResizeObserver.boundDrawFn (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:53374:19)",
+          "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+          "line": 53398
+        }
+      ]
+    },
+    {
+      "route": "bank-accounts",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "payments",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "taxes",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "journal-entries",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "accounts-receivable",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "accounts-payable",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "manufacturing",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "bom",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "production-plan",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "work-orders",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "job-cards",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "stock-entries",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "quality-inspection",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "manufacturing-reports",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "manufacturing-setup",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "pos",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "pos-invoices",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "pos-profiles",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "pos-counters",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "pos-cashier-shifts",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "pos-counter-sessions",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "pos-opening-entries",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "pos-closing-entries",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "pos-branch-day-closings",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "pos-sync-logs",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "pos-reports",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "van-sales",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "van-sales-fleet-link",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "van-sales-driver-link",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "van-sales-sessions-link",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "van-sales-stock-view-link",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "stock-request",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "van-sales-stock-entries-link",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "van-sales-invoice-link",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "van-sales-payments-link",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "van-sales-customers-link",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "van-sales-items-link",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "van-sales-warehouses-link",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "van-sales-reports",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "reports",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "sales-reports",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "purchase-reports",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "stock-reports",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "accounts-reports",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "pos-sales-reports",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "manufacturing-module-reports",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "promotions",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": [
+        {
+          "text": "NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.\n    at r2.value (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:53399:34)\n    at r2.value (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:53389:72)\n    at ResizeObserver.boundDrawFn (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:53374:19)",
+          "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+          "line": 53398
+        },
+        {
+          "text": "NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.\n    at r2.value (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:53399:34)\n    at r2.value (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:53389:72)\n    at ResizeObserver.boundDrawFn (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:53374:19)",
+          "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+          "line": 53398
+        },
+        {
+          "text": "NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.\n    at r2.value (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:53399:34)\n    at r2.value (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:53389:72)\n    at ResizeObserver.boundDrawFn (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:53374:19)",
+          "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+          "line": 53398
+        }
+      ]
+    },
+    {
+      "route": "promotions-promo-price-link",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": [
+        {
+          "text": "SyntaxError: \"undefined\" is not valid JSON\n    at JSON.parse (<anonymous>)\n    at Workspace.show_page (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:46526:45)\n    at Workspace.show (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:46448:12)\n    at HTMLDivElement.<anonymous> (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:46193:24)\n    at HTMLDivElement.dispatch (http://retail-test.localhost:8000/assets/frappe/dist/js/libs.bundle.LLRFRX7M.js:2841:105)\n    at elemData.handle (http://retail-test.localhost:8000/assets/frappe/dist/js/libs.bundle.LLRFRX7M.js:2729:118)\n    at Object.trigger (http://retail-test.localhost:8000/assets/frappe/dist/js/libs.bundle.LLRFRX7M.js:4922:24)\n    at HTMLDivElement.<anonymous> (http://retail-test.localhost:8000/assets/frappe/dist/js/libs.bundle.LLRFRX7M.js:4972:29)\n    at jQuery2.each (http://retail-test.localhost:8000/assets/frappe/dist/js/libs.bundle.LLRFRX7M.js:231:30)\n    at jQuery2.fn.init.each (http://retail-test.localhost:8000/assets/frappe/dist/js/libs.bundle.LLRFRX7M.js:119:28)",
+          "url": "http://retail-test.localhost:8000/app/promotions-promo-price-link",
+          "line": 0
+        }
+      ]
+    },
+    {
+      "route": "promotions-buy-x-get-y-promotion-link",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": [
+        {
+          "text": "SyntaxError: \"undefined\" is not valid JSON\n    at JSON.parse (<anonymous>)\n    at Workspace.show_page (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:46526:45)\n    at Workspace.show (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:46448:12)\n    at HTMLDivElement.<anonymous> (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:46193:24)\n    at HTMLDivElement.dispatch (http://retail-test.localhost:8000/assets/frappe/dist/js/libs.bundle.LLRFRX7M.js:2841:105)\n    at elemData.handle (http://retail-test.localhost:8000/assets/frappe/dist/js/libs.bundle.LLRFRX7M.js:2729:118)\n    at Object.trigger (http://retail-test.localhost:8000/assets/frappe/dist/js/libs.bundle.LLRFRX7M.js:4922:24)\n    at HTMLDivElement.<anonymous> (http://retail-test.localhost:8000/assets/frappe/dist/js/libs.bundle.LLRFRX7M.js:4972:29)\n    at jQuery2.each (http://retail-test.localhost:8000/assets/frappe/dist/js/libs.bundle.LLRFRX7M.js:231:30)\n    at jQuery2.fn.init.each (http://retail-test.localhost:8000/assets/frappe/dist/js/libs.bundle.LLRFRX7M.js:119:28)",
+          "url": "http://retail-test.localhost:8000/app/promotions-buy-x-get-y-promotion-link",
+          "line": 0
+        }
+      ]
+    },
+    {
+      "route": "promotions-gift-voucher-promotion-link",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": [
+        {
+          "text": "SyntaxError: \"undefined\" is not valid JSON\n    at JSON.parse (<anonymous>)\n    at Workspace.show_page (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:46526:45)\n    at Workspace.show (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:46448:12)\n    at HTMLDivElement.<anonymous> (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:46193:24)\n    at HTMLDivElement.dispatch (http://retail-test.localhost:8000/assets/frappe/dist/js/libs.bundle.LLRFRX7M.js:2841:105)\n    at elemData.handle (http://retail-test.localhost:8000/assets/frappe/dist/js/libs.bundle.LLRFRX7M.js:2729:118)\n    at Object.trigger (http://retail-test.localhost:8000/assets/frappe/dist/js/libs.bundle.LLRFRX7M.js:4922:24)\n    at HTMLDivElement.<anonymous> (http://retail-test.localhost:8000/assets/frappe/dist/js/libs.bundle.LLRFRX7M.js:4972:29)\n    at jQuery2.each (http://retail-test.localhost:8000/assets/frappe/dist/js/libs.bundle.LLRFRX7M.js:231:30)\n    at jQuery2.fn.init.each (http://retail-test.localhost:8000/assets/frappe/dist/js/libs.bundle.LLRFRX7M.js:119:28)",
+          "url": "http://retail-test.localhost:8000/app/promotions-gift-voucher-promotion-link",
+          "line": 0
+        }
+      ]
+    },
+    {
+      "route": "promotions-gift-voucher-ledger-link",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": [
+        {
+          "text": "SyntaxError: \"undefined\" is not valid JSON\n    at JSON.parse (<anonymous>)\n    at Workspace.show_page (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:46526:45)\n    at Workspace.show (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:46448:12)\n    at HTMLDivElement.<anonymous> (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:46193:24)\n    at HTMLDivElement.dispatch (http://retail-test.localhost:8000/assets/frappe/dist/js/libs.bundle.LLRFRX7M.js:2841:105)\n    at elemData.handle (http://retail-test.localhost:8000/assets/frappe/dist/js/libs.bundle.LLRFRX7M.js:2729:118)\n    at Object.trigger (http://retail-test.localhost:8000/assets/frappe/dist/js/libs.bundle.LLRFRX7M.js:4922:24)\n    at HTMLDivElement.<anonymous> (http://retail-test.localhost:8000/assets/frappe/dist/js/libs.bundle.LLRFRX7M.js:4972:29)\n    at jQuery2.each (http://retail-test.localhost:8000/assets/frappe/dist/js/libs.bundle.LLRFRX7M.js:231:30)\n    at jQuery2.fn.init.each (http://retail-test.localhost:8000/assets/frappe/dist/js/libs.bundle.LLRFRX7M.js:119:28)",
+          "url": "http://retail-test.localhost:8000/app/promotions-gift-voucher-ledger-link",
+          "line": 0
+        }
+      ]
+    },
+    {
+      "route": "promotions-loyalty-program-link",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": [
+        {
+          "text": "SyntaxError: \"undefined\" is not valid JSON\n    at JSON.parse (<anonymous>)\n    at Workspace.show_page (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:46526:45)\n    at Workspace.show (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:46448:12)\n    at HTMLDivElement.<anonymous> (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:46193:24)\n    at HTMLDivElement.dispatch (http://retail-test.localhost:8000/assets/frappe/dist/js/libs.bundle.LLRFRX7M.js:2841:105)\n    at elemData.handle (http://retail-test.localhost:8000/assets/frappe/dist/js/libs.bundle.LLRFRX7M.js:2729:118)\n    at Object.trigger (http://retail-test.localhost:8000/assets/frappe/dist/js/libs.bundle.LLRFRX7M.js:4922:24)\n    at HTMLDivElement.<anonymous> (http://retail-test.localhost:8000/assets/frappe/dist/js/libs.bundle.LLRFRX7M.js:4972:29)\n    at jQuery2.each (http://retail-test.localhost:8000/assets/frappe/dist/js/libs.bundle.LLRFRX7M.js:231:30)\n    at jQuery2.fn.init.each (http://retail-test.localhost:8000/assets/frappe/dist/js/libs.bundle.LLRFRX7M.js:119:28)",
+          "url": "http://retail-test.localhost:8000/app/promotions-loyalty-program-link",
+          "line": 0
+        }
+      ]
+    },
+    {
+      "route": "settings",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": [
+        {
+          "text": "NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.\n    at r2.value (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:53399:34)\n    at r2.value (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:53389:72)\n    at ResizeObserver.boundDrawFn (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:53374:19)",
+          "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+          "line": 53398
+        }
+      ]
+    },
+    {
+      "route": "business-profile",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "branding",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "system-rules",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "user-list",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "employee-list",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "item/I-48",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "customer/C-15",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "sales-invoice/PSI-15",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "purchase-invoice/PI-35",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    },
+    {
+      "route": "stock-entry/SE-30",
+      "denied_requests": [],
+      "permission_popup": false,
+      "runtime_errors": []
+    }
+  ],
+  "note": "Two chart ResizeObserver removeChild console errors occurred during rapid navigation in Accounts; no permission popup or denied request occurred."
+}

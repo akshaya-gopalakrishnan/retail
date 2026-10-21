@@ -1,0 +1,263 @@
+[
+  {
+    "case": "Administrator",
+    "identical_payloads": true,
+    "pages": 149,
+    "before_cold": {
+      "ms": 4495.07,
+      "sql": 3535,
+      "discovery_queries": 47,
+      "max_identical_discovery": 19
+    },
+    "before_warm": {
+      "ms": 119.13,
+      "sql": 41,
+      "discovery_queries": 38,
+      "max_identical_discovery": 19
+    },
+    "after_cold": {
+      "ms": 4463.34,
+      "sql": 3490,
+      "discovery_queries": 2,
+      "max_identical_discovery": 1
+    },
+    "after_warm": {
+      "ms": 123.98,
+      "sql": 5,
+      "discovery_queries": 2,
+      "max_identical_discovery": 1
+    }
+  },
+  {
+    "case": "Celesta Super Administrator",
+    "identical_payloads": true,
+    "pages": 149,
+    "before_cold": {
+      "ms": 5613.28,
+      "sql": 3814,
+      "discovery_queries": 41,
+      "max_identical_discovery": 19
+    },
+    "before_warm": {
+      "ms": 315.71,
+      "sql": 144,
+      "discovery_queries": 38,
+      "max_identical_discovery": 19
+    },
+    "after_cold": {
+      "ms": 7097.97,
+      "sql": 3775,
+      "discovery_queries": 2,
+      "max_identical_discovery": 1
+    },
+    "after_warm": {
+      "ms": 233.34,
+      "sql": 108,
+      "discovery_queries": 2,
+      "max_identical_discovery": 1
+    }
+  },
+  {
+    "case": "Customer Administrator",
+    "identical_payloads": true,
+    "pages": 29,
+    "before_cold": {
+      "ms": 4336.65,
+      "sql": 3029,
+      "discovery_queries": 16,
+      "max_identical_discovery": 7
+    },
+    "before_warm": {
+      "ms": 882.37,
+      "sql": 249,
+      "discovery_queries": 14,
+      "max_identical_discovery": 7
+    },
+    "after_cold": {
+      "ms": 4314.66,
+      "sql": 3015,
+      "discovery_queries": 2,
+      "max_identical_discovery": 1
+    },
+    "after_warm": {
+      "ms": 1216.79,
+      "sql": 237,
+      "discovery_queries": 2,
+      "max_identical_discovery": 1
+    }
+  },
+  {
+    "case": "Store Manager preset",
+    "identical_payloads": true,
+    "pages": 33,
+    "before_cold": {
+      "ms": 3819.17,
+      "sql": 3414,
+      "discovery_queries": 26,
+      "max_identical_discovery": 13
+    },
+    "before_warm": {
+      "ms": 577.46,
+      "sql": 325,
+      "discovery_queries": 26,
+      "max_identical_discovery": 13
+    },
+    "after_cold": {
+      "ms": 4033.21,
+      "sql": 3390,
+      "discovery_queries": 2,
+      "max_identical_discovery": 1
+    },
+    "after_warm": {
+      "ms": 555.88,
+      "sql": 301,
+      "discovery_queries": 2,
+      "max_identical_discovery": 1
+    }
+  },
+  {
+    "case": "restricted module preset",
+    "identical_payloads": true,
+    "pages": 19,
+    "before_cold": {
+      "ms": 4270.65,
+      "sql": 3266,
+      "discovery_queries": 20,
+      "max_identical_discovery": 10
+    },
+    "before_warm": {
+      "ms": 660.14,
+      "sql": 275,
+      "discovery_queries": 20,
+      "max_identical_discovery": 10
+    },
+    "after_cold": {
+      "ms": 4243.82,
+      "sql": 3248,
+      "discovery_queries": 2,
+      "max_identical_discovery": 1
+    },
+    "after_warm": {
+      "ms": 484.08,
+      "sql": 257,
+      "discovery_queries": 2,
+      "max_identical_discovery": 1
+    }
+  },
+  {
+    "case": "Driver/Van live",
+    "identical_payloads": true,
+    "pages": 34,
+    "before_cold": {
+      "ms": 4079.04,
+      "sql": 3315,
+      "discovery_queries": 16,
+      "max_identical_discovery": 8
+    },
+    "before_warm": {
+      "ms": 684.63,
+      "sql": 310,
+      "discovery_queries": 16,
+      "max_identical_discovery": 8
+    },
+    "after_cold": {
+      "ms": 4897.45,
+      "sql": 3300,
+      "discovery_queries": 2,
+      "max_identical_discovery": 1
+    },
+    "after_warm": {
+      "ms": 692.55,
+      "sql": 296,
+      "discovery_queries": 2,
+      "max_identical_discovery": 1
+    }
+  },
+  {
+    "case": "Van Sales User preset",
+    "identical_payloads": true,
+    "pages": 14,
+    "before_cold": {
+      "ms": 3203.18,
+      "sql": 3076,
+      "discovery_queries": 6,
+      "max_identical_discovery": 3
+    },
+    "before_warm": {
+      "ms": 356.29,
+      "sql": 231,
+      "discovery_queries": 6,
+      "max_identical_discovery": 3
+    },
+    "after_cold": {
+      "ms": 3226.32,
+      "sql": 3072,
+      "discovery_queries": 2,
+      "max_identical_discovery": 1
+    },
+    "after_warm": {
+      "ms": 334.67,
+      "sql": 227,
+      "discovery_queries": 2,
+      "max_identical_discovery": 1
+    }
+  },
+  {
+    "case": "Cashier preset",
+    "identical_payloads": true,
+    "pages": 6,
+    "before_cold": {
+      "ms": 3643.94,
+      "sql": 3133,
+      "discovery_queries": 16,
+      "max_identical_discovery": 8
+    },
+    "before_warm": {
+      "ms": 378.03,
+      "sql": 257,
+      "discovery_queries": 16,
+      "max_identical_discovery": 8
+    },
+    "after_cold": {
+      "ms": 3241.58,
+      "sql": 3119,
+      "discovery_queries": 2,
+      "max_identical_discovery": 1
+    },
+    "after_warm": {
+      "ms": 349.3,
+      "sql": 243,
+      "discovery_queries": 2,
+      "max_identical_discovery": 1
+    }
+  },
+  {
+    "case": "Normal User preset",
+    "identical_payloads": true,
+    "pages": 1,
+    "before_cold": {
+      "ms": 3447.87,
+      "sql": 2996,
+      "discovery_queries": 2,
+      "max_identical_discovery": 1
+    },
+    "before_warm": {
+      "ms": 327.66,
+      "sql": 231,
+      "discovery_queries": 2,
+      "max_identical_discovery": 1
+    },
+    "after_cold": {
+      "ms": 3042.47,
+      "sql": 2996,
+      "discovery_queries": 2,
+      "max_identical_discovery": 1
+    },
+    "after_warm": {
+      "ms": 367.65,
+      "sql": 231,
+      "discovery_queries": 2,
+      "max_identical_discovery": 1
+    }
+  }
+]

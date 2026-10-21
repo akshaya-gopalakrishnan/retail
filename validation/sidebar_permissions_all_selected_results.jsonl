@@ -1,0 +1,11 @@
+{"route":"business-home","denied_requests":[],"runtime_errors":[]}
+{"route":"item","denied_requests":[],"runtime_errors":[]}
+{"route":"customer","denied_requests":[],"runtime_errors":[]}
+{"route":"sales-invoice","denied_requests":[],"runtime_errors":[]}
+{"route":"purchase-invoice","denied_requests":[],"runtime_errors":[]}
+{"route":"stock-entry","denied_requests":[],"runtime_errors":[]}
+{"route":"item/I-48","denied_requests":[],"runtime_errors":[]}
+{"route":"customer/C-15","denied_requests":[],"runtime_errors":[]}
+{"route":"sales-invoice/PSI-15","denied_requests":[],"runtime_errors":[]}
+{"route":"purchase-invoice/PI-35","denied_requests":[],"runtime_errors":[]}
+{"route":"stock-entry/SE-30","denied_requests":[],"runtime_errors":[]}

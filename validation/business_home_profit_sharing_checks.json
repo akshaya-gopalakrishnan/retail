@@ -1,0 +1,20 @@
+{
+  "site": "retail-test.localhost",
+  "backend_regression_tests": 29,
+  "scenario_fixtures": ["normal sales", "returns", "discounts", "credit sales", "multiple items", "VAT exclusive", "VAT inclusive", "POS linked", "consolidated POS", "unavailable costs", "failed repost", "queued repost", "stale POS links", "branch", "counter", "company"],
+  "sizes": [10, 100, 500, 1000],
+  "scenario_scope": "Existing invoice_rows/calculation code with fixture database inputs, then exact legacy versus shared adapter equality. Filters have separate equality fixtures. Does not certify real posting/reposting lifecycle for all scenarios.",
+  "frontend_harness": "one request; split effective contexts; ignored nested filters; late initial widget sharing; refresh freshness; shared failure/retry; other pages and API fallback",
+  "live_browser": {
+    "status": "blocked by automatic approval review",
+    "reason": "Reading Administrator session ID from database for browser authentication was rejected as credential/session probing",
+    "cold_cards_ready": null,
+    "warm_cards_ready": null,
+    "spa_cards_ready": null,
+    "observed_request_count": null,
+    "observed_values_equal": null
+  },
+  "persistent_accounting_cache": false,
+  "page_snapshot": "Successful initial promises remain only in the page JS map; route changes and explicit widget refresh discard snapshots; rejected requests are discarded. Server grouping is request-local.",
+  "get_profit_summary_modified": false
+}

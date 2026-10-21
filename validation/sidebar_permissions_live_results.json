@@ -1,0 +1,94 @@
+{
+  "site": "retail-test.localhost",
+  "checks": [
+    "installation is idempotent and does not restrict existing users",
+    "section follows Allow Modules in Roles & Permissions",
+    "native list Sales Invoice for invoice returns 200",
+    "native list Customer for invoice returns 403",
+    "native list Sales Invoice for customer returns 403",
+    "native list Customer for customer returns 200",
+    "native list Sales Invoice for multiple returns 200",
+    "native list Customer for multiple returns 200",
+    "native list Sales Invoice for none returns 403",
+    "native list Customer for none returns 403",
+    "invoice list contains only non-return non-van records",
+    "direct URL document loader is denied",
+    "unauthorized insert is denied before processing",
+    "unauthorized set_value is denied before processing",
+    "unauthorized delete is denied before processing",
+    "unauthorized submit is denied before processing",
+    "return insertion is denied",
+    "unknown RPC with permitted payload is denied",
+    "unselected report is denied",
+    "unselected page is denied",
+    "unselected POS integration is denied",
+    "purchase receipt selection cannot create a return",
+    "stock adjustment selection cannot create manufacturing entry",
+    "checked menu cannot bypass missing native roles",
+    "native session login succeeds with a persisted selection",
+    "logged-in session retains denied invoice access",
+    "self-escalation by User save is denied",
+    "permission change takes effect without logout",
+    "saved selection and parent survive reload",
+    "background and linked native permissions remain unchanged",
+    "customer-only sidebar contains Customer and no invoice or home",
+    "fully restricted sidebar has no pages",
+    "Administrator exemption is verified",
+    "protected Celesta Super Administrator exemption is verified",
+    "new and existing permission/navigation Python suites pass",
+    "POS realtime posting rollback regression passes",
+    "POS completed settlement rollback regression passes"
+  ],
+  "tests_run": 39,
+  "pos_regressions": {
+    "POS realtime posting": {
+      "passed": [
+        "paid receipt: immediate balanced GL, stock ledger, Bin, stock API and report costs; retry posts once",
+        "partial and credit receipts: stock, cash and outstanding balances posted immediately",
+        "independent POS and accounting sequences; backend SI counter unchanged"
+      ],
+      "business_data": "rolled back"
+    },
+    "POS exchange accounting/stock": {
+      "baseline_failure": "{'status': 'Success', 'accepted': True, 'accepted_transaction': 'ccgn1mugei', 'settlement_status': 'Reconciliation Exception', 'external_shift_reference': 'Business Demo Branch-COUNTER-1-DEMO-POS-01-SHIFT-20261007-000002', 'external_session_reference': 'Business Demo Branch-COUNTER-1-DEMO-POS-01-SESSION-20261007-000002', 'duplicate': False}",
+      "business_data": "rolled back"
+    },
+    "POS completed settlement": {
+      "passed": [
+        "normal cash/card sale",
+        "full credit sale",
+        "partial cash + credit sale",
+        "reusable credit-note issuance",
+        "return reducing original debt without reusable credit",
+        "offline credit note redeemed later",
+        "sale before referenced credit note",
+        "credit note before original sale",
+        "redemption before both original sale and return",
+        "exact retry returns durable acceptance receipt",
+        "conflicting duplicate reference",
+        "partial/exhausted ERP credit retains requested settlement",
+        "multiple credit notes in one sale",
+        "one credit note across multiple sales",
+        "repeated settlement recovery never duplicates allocation",
+        "late sync after shift close",
+        "late sync after day close",
+        "credit-limit/customer-balance change is advisory",
+        "reconciliation failure then successful recovery",
+        "native customer outstanding and no double deduction of open credits",
+        "reporting preserves historical requested and accounting applied amounts",
+        "transaction and payment reports distinguish non-cash settlements",
+        "mixed exchange path",
+        "cash and card refunds",
+        "missing shift/session does not block completed sale",
+        "completed bill cannot be cancelled",
+        "accepted posting failure recovers without terminal resend"
+      ],
+      "business_data": "rolled back"
+    }
+  },
+  "baseline_limitations": [
+    "POS exchange accounting/stock"
+  ],
+  "pos_results_reused": true,
+  "legacy_test_limitation": "Full test_pos_realtime.run_integration attempts cancellation of a completed bill, which the existing immutable-completed-sale guard rejects. The posting/idempotency subset, exchange and settlement suites are run instead."
+}

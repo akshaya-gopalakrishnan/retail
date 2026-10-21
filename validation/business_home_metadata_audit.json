@@ -1,0 +1,2077 @@
+{
+  "site": "retail-test.localhost",
+  "date": "2026-10-08",
+  "environment": {
+    "browser": "Chromium 1228, headless",
+    "user": "Administrator",
+    "viewport": "390x844",
+    "device_scale_factor": 3,
+    "mobile": true,
+    "network_throttling": "none",
+    "cpu_throttling": "none",
+    "observation_window_seconds": 18
+  },
+  "findings": {
+    "exact_duplicate_doctypes": [
+      "Sales Invoice"
+    ],
+    "chart_request_order_before": [
+      "Sales Trend 7 Days",
+      "Top Selling Products",
+      "Sales by Counter"
+    ],
+    "metadata_consumed": [
+      "frappe.get_meta(document_type).fields",
+      "fields.find(fieldname == value_based_on)",
+      "matching field.fieldtype",
+      "matching field.options"
+    ],
+    "saved_chart_value_based_on": null,
+    "saved_chart_custom_options": null,
+    "saved_chart_currency": null,
+    "other_startup_getdoctype_http_requests": [],
+    "non_http_metadata_calls": [
+      "Page (already loaded)"
+    ],
+    "unreproduced_user_evidence": "Additional 1.3-1.7 second getdoctype requests and 5.01 second LCP were not reproduced; original names/initiators cannot be identified from timings alone.",
+    "out_of_scope_company_requests": "Before navigate-away Business Profile generated 2 Company requests; after generated 1. This was a separate route and was not optimized.",
+    "lcp_limit": "Before cold 796ms; first after cold 12120ms; repeat after cold 764ms. No reliable LCP improvement established."
+  },
+  "captures": {
+    "before-cold": {
+      "label": "cold",
+      "requests": [
+        {
+          "url": "http://retail-test.localhost:8000/api/method/frappe.desk.form.load.getdoctype?doctype=Sales%20Invoice&with_parent=1&cached_timestamp=&_=1791435971306",
+          "doctype": "Sales Invoice",
+          "start": 1582.737408,
+          "initiator": {
+            "type": "script",
+            "stack": {
+              "callFrames": [
+                {
+                  "functionName": "send",
+                  "scriptId": "7",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/libs.bundle.LLRFRX7M.js",
+                  "lineNumber": 5654,
+                  "columnNumber": 22
+                },
+                {
+                  "functionName": "ajax",
+                  "scriptId": "7",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/libs.bundle.LLRFRX7M.js",
+                  "lineNumber": 5385,
+                  "columnNumber": 26
+                },
+                {
+                  "functionName": "frappe.request.call",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 30721,
+                  "columnNumber": 13
+                },
+                {
+                  "functionName": "frappe.call",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 30561,
+                  "columnNumber": 26
+                },
+                {
+                  "functionName": "with_doctype",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 39004,
+                  "columnNumber": 22
+                },
+                {
+                  "functionName": "frappe.model.with_doctype",
+                  "scriptId": "5",
+                  "url": "",
+                  "lineNumber": 1,
+                  "columnNumber": 744
+                },
+                {
+                  "functionName": "render",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 50152,
+                  "columnNumber": 23
+                }
+              ]
+            }
+          },
+          "status": 200,
+          "mime": "application/json",
+          "responseTime": 1583.092624,
+          "duration": 358.0460000000585,
+          "transferred": 778691,
+          "bodyBytes": 778146
+        },
+        {
+          "url": "http://retail-test.localhost:8000/api/method/frappe.desk.form.load.getdoctype?doctype=Sales%20Invoice&with_parent=1&cached_timestamp=&_=1791435971308",
+          "doctype": "Sales Invoice",
+          "start": 1582.744001,
+          "initiator": {
+            "type": "script",
+            "stack": {
+              "callFrames": [
+                {
+                  "functionName": "send",
+                  "scriptId": "7",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/libs.bundle.LLRFRX7M.js",
+                  "lineNumber": 5654,
+                  "columnNumber": 22
+                },
+                {
+                  "functionName": "ajax",
+                  "scriptId": "7",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/libs.bundle.LLRFRX7M.js",
+                  "lineNumber": 5385,
+                  "columnNumber": 26
+                },
+                {
+                  "functionName": "frappe.request.call",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 30721,
+                  "columnNumber": 13
+                },
+                {
+                  "functionName": "frappe.call",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 30561,
+                  "columnNumber": 26
+                },
+                {
+                  "functionName": "with_doctype",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 39004,
+                  "columnNumber": 22
+                },
+                {
+                  "functionName": "frappe.model.with_doctype",
+                  "scriptId": "5",
+                  "url": "",
+                  "lineNumber": 1,
+                  "columnNumber": 744
+                },
+                {
+                  "functionName": "render",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 50152,
+                  "columnNumber": 23
+                }
+              ]
+            }
+          },
+          "status": 200,
+          "mime": "application/json",
+          "responseTime": 1583.160545,
+          "duration": 419.20099999993,
+          "transferred": 778691,
+          "bodyBytes": 778146
+        },
+        {
+          "url": "http://retail-test.localhost:8000/api/method/frappe.desk.form.load.getdoctype?doctype=Sales%20Invoice&with_parent=1&cached_timestamp=&_=1791435971310",
+          "doctype": "Sales Invoice",
+          "start": 1582.751959,
+          "initiator": {
+            "type": "script",
+            "stack": {
+              "callFrames": [
+                {
+                  "functionName": "send",
+                  "scriptId": "7",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/libs.bundle.LLRFRX7M.js",
+                  "lineNumber": 5654,
+                  "columnNumber": 22
+                },
+                {
+                  "functionName": "ajax",
+                  "scriptId": "7",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/libs.bundle.LLRFRX7M.js",
+                  "lineNumber": 5385,
+                  "columnNumber": 26
+                },
+                {
+                  "functionName": "frappe.request.call",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 30721,
+                  "columnNumber": 13
+                },
+                {
+                  "functionName": "frappe.call",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 30561,
+                  "columnNumber": 26
+                },
+                {
+                  "functionName": "with_doctype",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 39004,
+                  "columnNumber": 22
+                },
+                {
+                  "functionName": "frappe.model.with_doctype",
+                  "scriptId": "5",
+                  "url": "",
+                  "lineNumber": 1,
+                  "columnNumber": 744
+                },
+                {
+                  "functionName": "render",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 50152,
+                  "columnNumber": 23
+                }
+              ]
+            }
+          },
+          "status": 200,
+          "mime": "application/json",
+          "responseTime": 1583.220501,
+          "duration": 471.15499999995336,
+          "transferred": 778691,
+          "bodyBytes": 778146
+        }
+      ],
+      "requestCount": 84,
+      "xhrCount": 42,
+      "audit": {
+        "calls": [
+          {
+            "doctype": "Page",
+            "start": 735.6000000000931,
+            "kind": "with_doctype",
+            "stack": "Error\n    at frappe.model.with_doctype (<anonymous>:2:715)\n    at Object.show (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:42964:20)\n    at Object.render_page (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:35609:33)\n    at Object.render (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:35592:14)\n    at Object.route (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:35487:12)"
+          },
+          {
+            "widget": "Sales Trend 7 Days",
+            "doctype": "Sales Invoice",
+            "start": 2872.5,
+            "kind": "render"
+          },
+          {
+            "doctype": "Sales Invoice",
+            "start": 2873,
+            "kind": "with_doctype",
+            "stack": "Error\n    at frappe.model.with_doctype (<anonymous>:2:715)\n    at ChartWidget.render (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:50153:24)"
+          },
+          {
+            "widget": "Top Selling Products",
+            "doctype": "Sales Invoice",
+            "start": 2879.5,
+            "kind": "render"
+          },
+          {
+            "doctype": "Sales Invoice",
+            "start": 2879.8000000000466,
+            "kind": "with_doctype",
+            "stack": "Error\n    at frappe.model.with_doctype (<anonymous>:2:715)\n    at ChartWidget.render (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:50153:24)"
+          },
+          {
+            "widget": "Sales by Counter",
+            "doctype": "Sales Invoice",
+            "start": 2887.5,
+            "kind": "render"
+          },
+          {
+            "doctype": "Sales Invoice",
+            "start": 2887.8000000000466,
+            "kind": "with_doctype",
+            "stack": "Error\n    at frappe.model.with_doctype (<anonymous>:2:715)\n    at ChartWidget.render (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:50153:24)"
+          }
+        ],
+        "lcp": 796,
+        "route": [
+          "Workspaces",
+          "Business Home"
+        ],
+        "charts": [
+          {
+            "title": "Top Selling Products",
+            "svg": true
+          },
+          {
+            "title": "Sales by Counter",
+            "svg": true
+          },
+          {
+            "title": "Sales Trend 7 Days",
+            "svg": true
+          }
+        ],
+        "resources": [
+          {
+            "url": "http://retail-test.localhost:8000/api/method/frappe.desk.form.load.getdoctype?doctype=Sales%20Invoice&with_parent=1&cached_timestamp=&_=1791435971306",
+            "start": 2873.9000000001397,
+            "duration": 357.89999999990687,
+            "transferSize": 778446,
+            "encodedBodySize": 778146,
+            "decodedBodySize": 778146
+          },
+          {
+            "url": "http://retail-test.localhost:8000/api/method/frappe.desk.form.load.getdoctype?doctype=Sales%20Invoice&with_parent=1&cached_timestamp=&_=1791435971308",
+            "start": 2880.5,
+            "duration": 419,
+            "transferSize": 778446,
+            "encodedBodySize": 778146,
+            "decodedBodySize": 778146
+          },
+          {
+            "url": "http://retail-test.localhost:8000/api/method/frappe.desk.form.load.getdoctype?doctype=Sales%20Invoice&with_parent=1&cached_timestamp=&_=1791435971310",
+            "start": 2888.600000000093,
+            "duration": 470.80000000004657,
+            "transferSize": 778446,
+            "encodedBodySize": 778146,
+            "decodedBodySize": 778146
+          }
+        ]
+      }
+    },
+    "before-warm": {
+      "label": "warm",
+      "requests": [
+        {
+          "url": "http://retail-test.localhost:8000/api/method/frappe.desk.form.load.getdoctype?doctype=Sales%20Invoice&with_parent=1&cached_timestamp=2026-09-09%2015%3A26%3A50.075776&_=1791435989297",
+          "doctype": "Sales Invoice",
+          "start": 1600.629894,
+          "initiator": {
+            "type": "script",
+            "stack": {
+              "callFrames": [
+                {
+                  "functionName": "send",
+                  "scriptId": "7",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/libs.bundle.LLRFRX7M.js",
+                  "lineNumber": 5654,
+                  "columnNumber": 22
+                },
+                {
+                  "functionName": "ajax",
+                  "scriptId": "7",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/libs.bundle.LLRFRX7M.js",
+                  "lineNumber": 5385,
+                  "columnNumber": 26
+                },
+                {
+                  "functionName": "frappe.request.call",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 30721,
+                  "columnNumber": 13
+                },
+                {
+                  "functionName": "frappe.call",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 30561,
+                  "columnNumber": 26
+                },
+                {
+                  "functionName": "with_doctype",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 39004,
+                  "columnNumber": 22
+                },
+                {
+                  "functionName": "frappe.model.with_doctype",
+                  "scriptId": "5",
+                  "url": "",
+                  "lineNumber": 1,
+                  "columnNumber": 744
+                },
+                {
+                  "functionName": "render",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 50152,
+                  "columnNumber": 23
+                }
+              ]
+            }
+          },
+          "status": 200,
+          "mime": "application/json",
+          "responseTime": 1600.98424,
+          "duration": 363.8260000000173,
+          "transferred": 778691,
+          "bodyBytes": 778146
+        },
+        {
+          "url": "http://retail-test.localhost:8000/api/method/frappe.desk.form.load.getdoctype?doctype=Sales%20Invoice&with_parent=1&cached_timestamp=2026-09-09%2015%3A26%3A50.075776&_=1791435989299",
+          "doctype": "Sales Invoice",
+          "start": 1600.634657,
+          "initiator": {
+            "type": "script",
+            "stack": {
+              "callFrames": [
+                {
+                  "functionName": "send",
+                  "scriptId": "7",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/libs.bundle.LLRFRX7M.js",
+                  "lineNumber": 5654,
+                  "columnNumber": 22
+                },
+                {
+                  "functionName": "ajax",
+                  "scriptId": "7",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/libs.bundle.LLRFRX7M.js",
+                  "lineNumber": 5385,
+                  "columnNumber": 26
+                },
+                {
+                  "functionName": "frappe.request.call",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 30721,
+                  "columnNumber": 13
+                },
+                {
+                  "functionName": "frappe.call",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 30561,
+                  "columnNumber": 26
+                },
+                {
+                  "functionName": "with_doctype",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 39004,
+                  "columnNumber": 22
+                },
+                {
+                  "functionName": "frappe.model.with_doctype",
+                  "scriptId": "5",
+                  "url": "",
+                  "lineNumber": 1,
+                  "columnNumber": 744
+                },
+                {
+                  "functionName": "render",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 50152,
+                  "columnNumber": 23
+                }
+              ]
+            }
+          },
+          "status": 200,
+          "mime": "application/json",
+          "responseTime": 1600.923184,
+          "duration": 291.70399999998153,
+          "transferred": 778691,
+          "bodyBytes": 778146
+        },
+        {
+          "url": "http://retail-test.localhost:8000/api/method/frappe.desk.form.load.getdoctype?doctype=Sales%20Invoice&with_parent=1&cached_timestamp=2026-09-09%2015%3A26%3A50.075776&_=1791435989301",
+          "doctype": "Sales Invoice",
+          "start": 1600.650498,
+          "initiator": {
+            "type": "script",
+            "stack": {
+              "callFrames": [
+                {
+                  "functionName": "send",
+                  "scriptId": "7",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/libs.bundle.LLRFRX7M.js",
+                  "lineNumber": 5654,
+                  "columnNumber": 22
+                },
+                {
+                  "functionName": "ajax",
+                  "scriptId": "7",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/libs.bundle.LLRFRX7M.js",
+                  "lineNumber": 5385,
+                  "columnNumber": 26
+                },
+                {
+                  "functionName": "frappe.request.call",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 30721,
+                  "columnNumber": 13
+                },
+                {
+                  "functionName": "frappe.call",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 30561,
+                  "columnNumber": 26
+                },
+                {
+                  "functionName": "with_doctype",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 39004,
+                  "columnNumber": 22
+                },
+                {
+                  "functionName": "frappe.model.with_doctype",
+                  "scriptId": "5",
+                  "url": "",
+                  "lineNumber": 1,
+                  "columnNumber": 744
+                },
+                {
+                  "functionName": "render",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 50152,
+                  "columnNumber": 23
+                }
+              ]
+            }
+          },
+          "status": 200,
+          "mime": "application/json",
+          "responseTime": 1600.984933,
+          "duration": 345.00500000012835,
+          "transferred": 778691,
+          "bodyBytes": 778146
+        }
+      ],
+      "requestCount": 84,
+      "xhrCount": 42,
+      "audit": {
+        "calls": [
+          {
+            "doctype": "Page",
+            "start": 339.29999999981374,
+            "kind": "with_doctype",
+            "stack": "Error\n    at frappe.model.with_doctype (<anonymous>:2:715)\n    at Object.show (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:42964:20)\n    at Object.render_page (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:35609:33)\n    at Object.render (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:35592:14)\n    at Object.route (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:35487:12)"
+          },
+          {
+            "widget": "Top Selling Products",
+            "doctype": "Sales Invoice",
+            "start": 1849.1999999999534,
+            "kind": "render"
+          },
+          {
+            "doctype": "Sales Invoice",
+            "start": 1849.3999999999069,
+            "kind": "with_doctype",
+            "stack": "Error\n    at frappe.model.with_doctype (<anonymous>:2:715)\n    at ChartWidget.render (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:50153:24)"
+          },
+          {
+            "widget": "Sales by Counter",
+            "doctype": "Sales Invoice",
+            "start": 1855.1999999999534,
+            "kind": "render"
+          },
+          {
+            "doctype": "Sales Invoice",
+            "start": 1855.3999999999069,
+            "kind": "with_doctype",
+            "stack": "Error\n    at frappe.model.with_doctype (<anonymous>:2:715)\n    at ChartWidget.render (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:50153:24)"
+          },
+          {
+            "widget": "Sales Trend 7 Days",
+            "doctype": "Sales Invoice",
+            "start": 1872.0999999998603,
+            "kind": "render"
+          },
+          {
+            "doctype": "Sales Invoice",
+            "start": 1872.3999999999069,
+            "kind": "with_doctype",
+            "stack": "Error\n    at frappe.model.with_doctype (<anonymous>:2:715)\n    at ChartWidget.render (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:50153:24)"
+          }
+        ],
+        "lcp": 408,
+        "route": [
+          "Workspaces",
+          "Business Home"
+        ],
+        "charts": [
+          {
+            "title": "Top Selling Products",
+            "svg": true
+          },
+          {
+            "title": "Sales by Counter",
+            "svg": true
+          },
+          {
+            "title": "Sales Trend 7 Days",
+            "svg": true
+          }
+        ],
+        "resources": [
+          {
+            "url": "http://retail-test.localhost:8000/api/method/frappe.desk.form.load.getdoctype?doctype=Sales%20Invoice&with_parent=1&cached_timestamp=2026-09-09%2015%3A26%3A50.075776&_=1791435989297",
+            "start": 1854,
+            "duration": 363.5999999998603,
+            "transferSize": 778446,
+            "encodedBodySize": 778146,
+            "decodedBodySize": 778146
+          },
+          {
+            "url": "http://retail-test.localhost:8000/api/method/frappe.desk.form.load.getdoctype?doctype=Sales%20Invoice&with_parent=1&cached_timestamp=2026-09-09%2015%3A26%3A50.075776&_=1791435989299",
+            "start": 1858.6999999999534,
+            "duration": 291.5,
+            "transferSize": 778446,
+            "encodedBodySize": 778146,
+            "decodedBodySize": 778146
+          },
+          {
+            "url": "http://retail-test.localhost:8000/api/method/frappe.desk.form.load.getdoctype?doctype=Sales%20Invoice&with_parent=1&cached_timestamp=2026-09-09%2015%3A26%3A50.075776&_=1791435989301",
+            "start": 1874.5999999998603,
+            "duration": 344.80000000004657,
+            "transferSize": 778446,
+            "encodedBodySize": 778146,
+            "decodedBodySize": 778146
+          }
+        ]
+      }
+    },
+    "before-away": {
+      "label": "away",
+      "requests": [
+        {
+          "url": "http://retail-test.localhost:8000/api/method/frappe.desk.form.load.getdoctype?doctype=Company&with_parent=1&cached_timestamp=&_=1791435989302",
+          "doctype": "Company",
+          "start": 1617.273672,
+          "initiator": {
+            "type": "script",
+            "stack": {
+              "callFrames": [
+                {
+                  "functionName": "send",
+                  "scriptId": "7",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/libs.bundle.LLRFRX7M.js",
+                  "lineNumber": 5654,
+                  "columnNumber": 22
+                },
+                {
+                  "functionName": "ajax",
+                  "scriptId": "7",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/libs.bundle.LLRFRX7M.js",
+                  "lineNumber": 5385,
+                  "columnNumber": 26
+                },
+                {
+                  "functionName": "frappe.request.call",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 30721,
+                  "columnNumber": 13
+                },
+                {
+                  "functionName": "frappe.call",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 30561,
+                  "columnNumber": 26
+                },
+                {
+                  "functionName": "with_doctype",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 39004,
+                  "columnNumber": 22
+                },
+                {
+                  "functionName": "frappe.model.with_doctype",
+                  "scriptId": "5",
+                  "url": "",
+                  "lineNumber": 1,
+                  "columnNumber": 744
+                },
+                {
+                  "functionName": "set_body",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 51666,
+                  "columnNumber": 19
+                },
+                {
+                  "functionName": "refresh",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 49512,
+                  "columnNumber": 11
+                },
+                {
+                  "functionName": "make_widget",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 49583,
+                  "columnNumber": 11
+                },
+                {
+                  "functionName": "make",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 49562,
+                  "columnNumber": 11
+                },
+                {
+                  "functionName": "Widget",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 49506,
+                  "columnNumber": 11
+                },
+                {
+                  "functionName": "QuickListWidget",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 51517,
+                  "columnNumber": 6
+                },
+                {
+                  "functionName": "frappe.widget.make_widget",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 51792,
+                  "columnNumber": 13
+                },
+                {
+                  "functionName": "add_widget",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 51941,
+                  "columnNumber": 40
+                },
+                {
+                  "functionName": "make",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 51938,
+                  "columnNumber": 11
+                },
+                {
+                  "functionName": "SingleWidgetGroup",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 51935,
+                  "columnNumber": 11
+                },
+                {
+                  "functionName": "make",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 48285,
+                  "columnNumber": 26
+                },
+                {
+                  "functionName": "render",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 49245,
+                  "columnNumber": 28
+                },
+                {
+                  "functionName": "value",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 9885,
+                  "columnNumber": 133
+                },
+                {
+                  "functionName": "w3",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 9709,
+                  "columnNumber": 359
+                },
+                {
+                  "functionName": "value",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 13012,
+                  "columnNumber": 254
+                },
+                {
+                  "functionName": "value",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 13017,
+                  "columnNumber": 30
+                },
+                {
+                  "functionName": "",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 14676,
+                  "columnNumber": 40
+                },
+                {
+                  "functionName": "p2",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 17873,
+                  "columnNumber": 49
+                },
+                {
+                  "functionName": "",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 17955,
+                  "columnNumber": 27
+                },
+                {
+                  "functionName": "",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 17896,
+                  "columnNumber": 30
+                },
+                {
+                  "functionName": "n2",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 8820,
+                  "columnNumber": 29
+                },
+                {
+                  "functionName": "s2",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 8832,
+                  "columnNumber": 18
+                },
+                {
+                  "functionName": "",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 8837,
+                  "columnNumber": 16
+                },
+                {
+                  "functionName": "",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 8829,
+                  "columnNumber": 21
+                },
+                {
+                  "functionName": "value",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 14691,
+                  "columnNumber": 26
+                },
+                {
+                  "functionName": "function",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 14654,
+                  "columnNumber": 38
+                },
+                {
+                  "functionName": "",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 8460,
+                  "columnNumber": 80
+                },
+                {
+                  "functionName": "p2",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 17873,
+                  "columnNumber": 49
+                },
+                {
+                  "functionName": "",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 17955,
+                  "columnNumber": 27
+                },
+                {
+                  "functionName": "",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 17896,
+                  "columnNumber": 30
+                },
+                {
+                  "functionName": "n2",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 8820,
+                  "columnNumber": 29
+                },
+                {
+                  "functionName": "s2",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 8832,
+                  "columnNumber": 18
+                },
+                {
+                  "functionName": "",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 8837,
+                  "columnNumber": 16
+                },
+                {
+                  "functionName": "",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 8829,
+                  "columnNumber": 21
+                },
+                {
+                  "functionName": "a3",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 8475,
+                  "columnNumber": 36
+                },
+                {
+                  "functionName": "",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 8486,
+                  "columnNumber": 63
+                },
+                {
+                  "functionName": "p2",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 17873,
+                  "columnNumber": 49
+                },
+                {
+                  "functionName": "",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 17955,
+                  "columnNumber": 27
+                },
+                {
+                  "functionName": "",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 17896,
+                  "columnNumber": 30
+                },
+                {
+                  "functionName": "n2",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 8820,
+                  "columnNumber": 29
+                },
+                {
+                  "functionName": "s2",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 8832,
+                  "columnNumber": 18
+                }
+              ]
+            }
+          },
+          "status": 200,
+          "mime": "application/json",
+          "responseTime": 1617.337431,
+          "duration": 64.51300000003357,
+          "transferred": 192113,
+          "bodyBytes": 191568
+        },
+        {
+          "url": "http://retail-test.localhost:8000/api/method/frappe.desk.form.load.getdoctype?doctype=Company&with_parent=1&cached_timestamp=&_=1791436023313",
+          "doctype": "Company",
+          "start": 1635.230746,
+          "initiator": {
+            "type": "script",
+            "stack": {
+              "callFrames": [
+                {
+                  "functionName": "send",
+                  "scriptId": "7",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/libs.bundle.LLRFRX7M.js",
+                  "lineNumber": 5654,
+                  "columnNumber": 22
+                },
+                {
+                  "functionName": "ajax",
+                  "scriptId": "7",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/libs.bundle.LLRFRX7M.js",
+                  "lineNumber": 5385,
+                  "columnNumber": 26
+                },
+                {
+                  "functionName": "frappe.request.call",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 30721,
+                  "columnNumber": 13
+                },
+                {
+                  "functionName": "frappe.call",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 30561,
+                  "columnNumber": 26
+                },
+                {
+                  "functionName": "with_doctype",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 39004,
+                  "columnNumber": 22
+                },
+                {
+                  "functionName": "frappe.model.with_doctype",
+                  "scriptId": "5",
+                  "url": "",
+                  "lineNumber": 1,
+                  "columnNumber": 744
+                },
+                {
+                  "functionName": "set_body",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 51666,
+                  "columnNumber": 19
+                },
+                {
+                  "functionName": "refresh",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 49512,
+                  "columnNumber": 11
+                },
+                {
+                  "functionName": "make_widget",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 49583,
+                  "columnNumber": 11
+                },
+                {
+                  "functionName": "make",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 49562,
+                  "columnNumber": 11
+                },
+                {
+                  "functionName": "Widget",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 49506,
+                  "columnNumber": 11
+                },
+                {
+                  "functionName": "QuickListWidget",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 51517,
+                  "columnNumber": 6
+                },
+                {
+                  "functionName": "frappe.widget.make_widget",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 51792,
+                  "columnNumber": 13
+                },
+                {
+                  "functionName": "add_widget",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 51941,
+                  "columnNumber": 40
+                },
+                {
+                  "functionName": "make",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 51938,
+                  "columnNumber": 11
+                },
+                {
+                  "functionName": "SingleWidgetGroup",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 51935,
+                  "columnNumber": 11
+                },
+                {
+                  "functionName": "make",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 48285,
+                  "columnNumber": 26
+                },
+                {
+                  "functionName": "render",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 49245,
+                  "columnNumber": 28
+                },
+                {
+                  "functionName": "value",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 9885,
+                  "columnNumber": 133
+                },
+                {
+                  "functionName": "w3",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 9709,
+                  "columnNumber": 359
+                },
+                {
+                  "functionName": "value",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 13012,
+                  "columnNumber": 254
+                },
+                {
+                  "functionName": "value",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 13017,
+                  "columnNumber": 30
+                },
+                {
+                  "functionName": "",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 14676,
+                  "columnNumber": 40
+                },
+                {
+                  "functionName": "p2",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 17873,
+                  "columnNumber": 49
+                },
+                {
+                  "functionName": "",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 17955,
+                  "columnNumber": 27
+                },
+                {
+                  "functionName": "",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 17896,
+                  "columnNumber": 30
+                },
+                {
+                  "functionName": "n2",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 8820,
+                  "columnNumber": 29
+                },
+                {
+                  "functionName": "s2",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 8832,
+                  "columnNumber": 18
+                },
+                {
+                  "functionName": "",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 8837,
+                  "columnNumber": 16
+                },
+                {
+                  "functionName": "",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 8829,
+                  "columnNumber": 21
+                },
+                {
+                  "functionName": "value",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 14691,
+                  "columnNumber": 26
+                },
+                {
+                  "functionName": "function",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 14654,
+                  "columnNumber": 38
+                },
+                {
+                  "functionName": "",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 8460,
+                  "columnNumber": 80
+                },
+                {
+                  "functionName": "p2",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 17873,
+                  "columnNumber": 49
+                },
+                {
+                  "functionName": "",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 17955,
+                  "columnNumber": 27
+                },
+                {
+                  "functionName": "",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 17896,
+                  "columnNumber": 30
+                },
+                {
+                  "functionName": "n2",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 8820,
+                  "columnNumber": 29
+                },
+                {
+                  "functionName": "s2",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 8832,
+                  "columnNumber": 18
+                },
+                {
+                  "functionName": "",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 8837,
+                  "columnNumber": 16
+                },
+                {
+                  "functionName": "",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 8829,
+                  "columnNumber": 21
+                },
+                {
+                  "functionName": "a3",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 8475,
+                  "columnNumber": 36
+                },
+                {
+                  "functionName": "",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 8486,
+                  "columnNumber": 63
+                },
+                {
+                  "functionName": "p2",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 17873,
+                  "columnNumber": 49
+                },
+                {
+                  "functionName": "",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 17955,
+                  "columnNumber": 27
+                },
+                {
+                  "functionName": "",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 17896,
+                  "columnNumber": 30
+                },
+                {
+                  "functionName": "n2",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 8820,
+                  "columnNumber": 29
+                },
+                {
+                  "functionName": "s2",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 8832,
+                  "columnNumber": 18
+                }
+              ]
+            }
+          },
+          "status": 200,
+          "mime": "application/json",
+          "responseTime": 1635.278164,
+          "duration": 49.185000000079526,
+          "transferred": 192113,
+          "bodyBytes": 191568
+        }
+      ],
+      "requestCount": 60,
+      "xhrCount": 16,
+      "audit": {
+        "calls": [
+          {
+            "doctype": "Page",
+            "start": 706.3000000000466,
+            "kind": "with_doctype",
+            "stack": "Error\n    at frappe.model.with_doctype (<anonymous>:2:715)\n    at Object.show (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:42964:20)\n    at Object.render_page (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:35609:33)\n    at Object.render (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:35592:14)\n    at Object.route (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:35487:12)"
+          },
+          {
+            "doctype": "Company",
+            "start": 1934.3000000000466,
+            "kind": "with_doctype",
+            "stack": "Error\n    at frappe.model.with_doctype (<anonymous>:2:715)\n    at QuickListWidget.set_body (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:51667:20)\n    at QuickListWidget.refresh (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:49513:12)\n    at QuickListWidget.make_widget (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:49584:12)\n    at QuickListWidget.make (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:49563:12)\n    at new Widget (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:49507:12)\n    at new QuickListWidget (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:51518:7)\n    at frappe.widget.make_widget (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:51793:14)\n    at SingleWidgetGroup.add_widget (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:51942:41)\n    at SingleWidgetGroup.make (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:51939:12)"
+          }
+        ],
+        "lcp": 792,
+        "route": [
+          "Workspaces",
+          "Business Profile"
+        ],
+        "charts": [],
+        "resources": [
+          {
+            "url": "http://retail-test.localhost:8000/api/method/frappe.desk.form.load.getdoctype?doctype=Company&with_parent=1&cached_timestamp=&_=1791436023313",
+            "start": 1937.2000000001863,
+            "duration": 48.39999999990687,
+            "transferSize": 191868,
+            "encodedBodySize": 191568,
+            "decodedBodySize": 191568
+          }
+        ]
+      }
+    },
+    "before-back": {
+      "label": "back",
+      "requests": [],
+      "requestCount": 33,
+      "xhrCount": 31,
+      "audit": {
+        "calls": [
+          {
+            "doctype": "Page",
+            "start": 706.3000000000466,
+            "kind": "with_doctype",
+            "stack": "Error\n    at frappe.model.with_doctype (<anonymous>:2:715)\n    at Object.show (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:42964:20)\n    at Object.render_page (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:35609:33)\n    at Object.render (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:35592:14)\n    at Object.route (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:35487:12)"
+          },
+          {
+            "doctype": "Company",
+            "start": 1934.3000000000466,
+            "kind": "with_doctype",
+            "stack": "Error\n    at frappe.model.with_doctype (<anonymous>:2:715)\n    at QuickListWidget.set_body (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:51667:20)\n    at QuickListWidget.refresh (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:49513:12)\n    at QuickListWidget.make_widget (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:49584:12)\n    at QuickListWidget.make (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:49563:12)\n    at new Widget (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:49507:12)\n    at new QuickListWidget (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:51518:7)\n    at frappe.widget.make_widget (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:51793:14)\n    at SingleWidgetGroup.add_widget (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:51942:41)\n    at SingleWidgetGroup.make (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:51939:12)"
+          },
+          {
+            "doctype": "Page",
+            "start": 2106.7000000001863,
+            "kind": "with_doctype",
+            "stack": "Error\n    at frappe.model.with_doctype (<anonymous>:2:715)\n    at Object.show (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:42964:20)\n    at Object.render_page (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:35609:33)\n    at Object.render (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:35592:14)\n    at Object.route (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:35487:12)"
+          }
+        ],
+        "lcp": 792,
+        "route": [
+          "Workspaces",
+          "Business Home"
+        ],
+        "charts": [
+          {
+            "title": "Top Selling Products",
+            "svg": true
+          },
+          {
+            "title": "Sales by Counter",
+            "svg": true
+          },
+          {
+            "title": "Sales Trend 7 Days",
+            "svg": true
+          }
+        ],
+        "resources": [
+          {
+            "url": "http://retail-test.localhost:8000/api/method/frappe.desk.form.load.getdoctype?doctype=Company&with_parent=1&cached_timestamp=&_=1791436023313",
+            "start": 1937.2000000001863,
+            "duration": 48.39999999990687,
+            "transferSize": 191868,
+            "encodedBodySize": 191568,
+            "decodedBodySize": 191568
+          }
+        ]
+      }
+    },
+    "after-cold": {
+      "label": "cold",
+      "requests": [],
+      "requestCount": 81,
+      "xhrCount": 39,
+      "audit": {
+        "calls": [
+          {
+            "doctype": "Page",
+            "start": 12049,
+            "kind": "with_doctype",
+            "stack": "Error\n    at frappe.model.with_doctype (<anonymous>:2:715)\n    at Object.show (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:42964:20)\n    at Object.render_page (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:35609:33)\n    at Object.render (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:35592:14)\n    at Object.route (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:35487:12)"
+          }
+        ],
+        "lcp": 12120,
+        "route": [
+          "Workspaces",
+          "Business Home"
+        ],
+        "charts": [
+          {
+            "title": "Top Selling Products",
+            "svg": true
+          },
+          {
+            "title": "Sales by Counter",
+            "svg": true
+          },
+          {
+            "title": "Sales Trend 7 Days",
+            "svg": true
+          }
+        ],
+        "resources": []
+      }
+    },
+    "after-warm": {
+      "label": "warm",
+      "requests": [],
+      "requestCount": 81,
+      "xhrCount": 39,
+      "audit": {
+        "calls": [
+          {
+            "doctype": "Page",
+            "start": 269.5999999998603,
+            "kind": "with_doctype",
+            "stack": "Error\n    at frappe.model.with_doctype (<anonymous>:2:715)\n    at Object.show (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:42964:20)\n    at Object.render_page (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:35609:33)\n    at Object.render (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:35592:14)\n    at Object.route (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:35487:12)"
+          }
+        ],
+        "lcp": 324,
+        "route": [
+          "Workspaces",
+          "Business Home"
+        ],
+        "charts": [
+          {
+            "title": "Top Selling Products",
+            "svg": true
+          },
+          {
+            "title": "Sales by Counter",
+            "svg": true
+          },
+          {
+            "title": "Sales Trend 7 Days",
+            "svg": true
+          }
+        ],
+        "resources": []
+      }
+    },
+    "after-away": {
+      "label": "away",
+      "requests": [
+        {
+          "url": "http://retail-test.localhost:8000/api/method/frappe.desk.form.load.getdoctype?doctype=Company&with_parent=1&cached_timestamp=&_=1791436087046",
+          "doctype": "Company",
+          "start": 1717.367718,
+          "initiator": {
+            "type": "script",
+            "stack": {
+              "callFrames": [
+                {
+                  "functionName": "send",
+                  "scriptId": "7",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/libs.bundle.LLRFRX7M.js",
+                  "lineNumber": 5654,
+                  "columnNumber": 22
+                },
+                {
+                  "functionName": "ajax",
+                  "scriptId": "7",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/libs.bundle.LLRFRX7M.js",
+                  "lineNumber": 5385,
+                  "columnNumber": 26
+                },
+                {
+                  "functionName": "frappe.request.call",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 30721,
+                  "columnNumber": 13
+                },
+                {
+                  "functionName": "frappe.call",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 30561,
+                  "columnNumber": 26
+                },
+                {
+                  "functionName": "with_doctype",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 39004,
+                  "columnNumber": 22
+                },
+                {
+                  "functionName": "frappe.model.with_doctype",
+                  "scriptId": "5",
+                  "url": "",
+                  "lineNumber": 1,
+                  "columnNumber": 744
+                },
+                {
+                  "functionName": "set_body",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 51666,
+                  "columnNumber": 19
+                },
+                {
+                  "functionName": "refresh",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 49512,
+                  "columnNumber": 11
+                },
+                {
+                  "functionName": "make_widget",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 49583,
+                  "columnNumber": 11
+                },
+                {
+                  "functionName": "make",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 49562,
+                  "columnNumber": 11
+                },
+                {
+                  "functionName": "Widget",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 49506,
+                  "columnNumber": 11
+                },
+                {
+                  "functionName": "QuickListWidget",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 51517,
+                  "columnNumber": 6
+                },
+                {
+                  "functionName": "frappe.widget.make_widget",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 51792,
+                  "columnNumber": 13
+                },
+                {
+                  "functionName": "add_widget",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 51941,
+                  "columnNumber": 40
+                },
+                {
+                  "functionName": "make",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 51938,
+                  "columnNumber": 11
+                },
+                {
+                  "functionName": "SingleWidgetGroup",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 51935,
+                  "columnNumber": 11
+                },
+                {
+                  "functionName": "make",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 48285,
+                  "columnNumber": 26
+                },
+                {
+                  "functionName": "render",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 49245,
+                  "columnNumber": 28
+                },
+                {
+                  "functionName": "value",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 9885,
+                  "columnNumber": 133
+                },
+                {
+                  "functionName": "w3",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 9709,
+                  "columnNumber": 359
+                },
+                {
+                  "functionName": "value",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 13012,
+                  "columnNumber": 254
+                },
+                {
+                  "functionName": "value",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 13017,
+                  "columnNumber": 30
+                },
+                {
+                  "functionName": "",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 14676,
+                  "columnNumber": 40
+                },
+                {
+                  "functionName": "p2",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 17873,
+                  "columnNumber": 49
+                },
+                {
+                  "functionName": "",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 17955,
+                  "columnNumber": 27
+                },
+                {
+                  "functionName": "",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 17896,
+                  "columnNumber": 30
+                },
+                {
+                  "functionName": "n2",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 8820,
+                  "columnNumber": 29
+                },
+                {
+                  "functionName": "s2",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 8832,
+                  "columnNumber": 18
+                },
+                {
+                  "functionName": "",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 8837,
+                  "columnNumber": 16
+                },
+                {
+                  "functionName": "",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 8829,
+                  "columnNumber": 21
+                },
+                {
+                  "functionName": "value",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 14691,
+                  "columnNumber": 26
+                },
+                {
+                  "functionName": "function",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 14654,
+                  "columnNumber": 38
+                },
+                {
+                  "functionName": "",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 8460,
+                  "columnNumber": 80
+                },
+                {
+                  "functionName": "p2",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 17873,
+                  "columnNumber": 49
+                },
+                {
+                  "functionName": "",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 17955,
+                  "columnNumber": 27
+                },
+                {
+                  "functionName": "",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 17896,
+                  "columnNumber": 30
+                },
+                {
+                  "functionName": "n2",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 8820,
+                  "columnNumber": 29
+                },
+                {
+                  "functionName": "s2",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 8832,
+                  "columnNumber": 18
+                },
+                {
+                  "functionName": "",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 8837,
+                  "columnNumber": 16
+                },
+                {
+                  "functionName": "",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 8829,
+                  "columnNumber": 21
+                },
+                {
+                  "functionName": "a3",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 8475,
+                  "columnNumber": 36
+                },
+                {
+                  "functionName": "",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 8486,
+                  "columnNumber": 63
+                },
+                {
+                  "functionName": "p2",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 17873,
+                  "columnNumber": 49
+                },
+                {
+                  "functionName": "",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 17955,
+                  "columnNumber": 27
+                },
+                {
+                  "functionName": "",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 17896,
+                  "columnNumber": 30
+                },
+                {
+                  "functionName": "n2",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 8820,
+                  "columnNumber": 29
+                },
+                {
+                  "functionName": "s2",
+                  "scriptId": "8",
+                  "url": "http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js",
+                  "lineNumber": 8832,
+                  "columnNumber": 18
+                }
+              ]
+            }
+          },
+          "status": 200,
+          "mime": "application/json",
+          "responseTime": 1717.507891,
+          "duration": 140.585000000101,
+          "transferred": 192113,
+          "bodyBytes": 191568
+        }
+      ],
+      "requestCount": 6,
+      "xhrCount": 4,
+      "audit": {
+        "calls": [
+          {
+            "doctype": "Page",
+            "start": 269.5999999998603,
+            "kind": "with_doctype",
+            "stack": "Error\n    at frappe.model.with_doctype (<anonymous>:2:715)\n    at Object.show (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:42964:20)\n    at Object.render_page (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:35609:33)\n    at Object.render (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:35592:14)\n    at Object.route (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:35487:12)"
+          },
+          {
+            "doctype": "Page",
+            "start": 18353.09999999986,
+            "kind": "with_doctype",
+            "stack": "Error\n    at frappe.model.with_doctype (<anonymous>:2:715)\n    at Object.show (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:42964:20)\n    at Object.render_page (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:35609:33)\n    at Object.render (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:35592:14)\n    at Object.route (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:35487:12)"
+          },
+          {
+            "doctype": "Company",
+            "start": 18425.800000000047,
+            "kind": "with_doctype",
+            "stack": "Error\n    at frappe.model.with_doctype (<anonymous>:2:715)\n    at QuickListWidget.set_body (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:51667:20)\n    at QuickListWidget.refresh (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:49513:12)\n    at QuickListWidget.make_widget (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:49584:12)\n    at QuickListWidget.make (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:49563:12)\n    at new Widget (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:49507:12)\n    at new QuickListWidget (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:51518:7)\n    at frappe.widget.make_widget (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:51793:14)\n    at SingleWidgetGroup.add_widget (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:51942:41)\n    at SingleWidgetGroup.make (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:51939:12)"
+          }
+        ],
+        "lcp": 18768,
+        "route": [
+          "Workspaces",
+          "Business Profile"
+        ],
+        "charts": [],
+        "resources": [
+          {
+            "url": "http://retail-test.localhost:8000/api/method/frappe.desk.form.load.getdoctype?doctype=Company&with_parent=1&cached_timestamp=&_=1791436087046",
+            "start": 18427.899999999907,
+            "duration": 140.10000000009313,
+            "transferSize": 191868,
+            "encodedBodySize": 191568,
+            "decodedBodySize": 191568
+          }
+        ]
+      }
+    },
+    "after-back": {
+      "label": "back",
+      "requests": [],
+      "requestCount": 17,
+      "xhrCount": 15,
+      "audit": {
+        "calls": [
+          {
+            "doctype": "Page",
+            "start": 269.5999999998603,
+            "kind": "with_doctype",
+            "stack": "Error\n    at frappe.model.with_doctype (<anonymous>:2:715)\n    at Object.show (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:42964:20)\n    at Object.render_page (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:35609:33)\n    at Object.render (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:35592:14)\n    at Object.route (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:35487:12)"
+          },
+          {
+            "doctype": "Page",
+            "start": 18353.09999999986,
+            "kind": "with_doctype",
+            "stack": "Error\n    at frappe.model.with_doctype (<anonymous>:2:715)\n    at Object.show (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:42964:20)\n    at Object.render_page (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:35609:33)\n    at Object.render (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:35592:14)\n    at Object.route (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:35487:12)"
+          },
+          {
+            "doctype": "Company",
+            "start": 18425.800000000047,
+            "kind": "with_doctype",
+            "stack": "Error\n    at frappe.model.with_doctype (<anonymous>:2:715)\n    at QuickListWidget.set_body (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:51667:20)\n    at QuickListWidget.refresh (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:49513:12)\n    at QuickListWidget.make_widget (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:49584:12)\n    at QuickListWidget.make (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:49563:12)\n    at new Widget (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:49507:12)\n    at new QuickListWidget (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:51518:7)\n    at frappe.widget.make_widget (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:51793:14)\n    at SingleWidgetGroup.add_widget (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:51942:41)\n    at SingleWidgetGroup.make (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:51939:12)"
+          },
+          {
+            "doctype": "Page",
+            "start": 36617.09999999986,
+            "kind": "with_doctype",
+            "stack": "Error\n    at frappe.model.with_doctype (<anonymous>:2:715)\n    at Object.show (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:42964:20)\n    at Object.render_page (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:35609:33)\n    at Object.render (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:35592:14)\n    at Object.route (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:35487:12)"
+          }
+        ],
+        "lcp": 18768,
+        "route": [
+          "Workspaces",
+          "Business Home"
+        ],
+        "charts": [
+          {
+            "title": "Top Selling Products",
+            "svg": true
+          },
+          {
+            "title": "Sales by Counter",
+            "svg": true
+          },
+          {
+            "title": "Sales Trend 7 Days",
+            "svg": true
+          }
+        ],
+        "resources": [
+          {
+            "url": "http://retail-test.localhost:8000/api/method/frappe.desk.form.load.getdoctype?doctype=Company&with_parent=1&cached_timestamp=&_=1791436087046",
+            "start": 18427.899999999907,
+            "duration": 140.10000000009313,
+            "transferSize": 191868,
+            "encodedBodySize": 191568,
+            "decodedBodySize": 191568
+          }
+        ]
+      }
+    },
+    "after-repeat-cold": {
+      "label": "cold",
+      "requests": [],
+      "requestCount": 81,
+      "xhrCount": 39,
+      "audit": {
+        "calls": [
+          {
+            "doctype": "Page",
+            "start": 685.1999999999534,
+            "kind": "with_doctype",
+            "stack": "Error\n    at frappe.model.with_doctype (<anonymous>:2:715)\n    at Object.show (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:42964:20)\n    at Object.render_page (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:35609:33)\n    at Object.render (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:35592:14)\n    at Object.route (http://retail-test.localhost:8000/assets/frappe/dist/js/desk.bundle.QSLQPQML.js:35487:12)"
+          }
+        ],
+        "lcp": 764,
+        "route": [
+          "Workspaces",
+          "Business Home"
+        ],
+        "charts": [
+          {
+            "title": "Top Selling Products",
+            "svg": true
+          },
+          {
+            "title": "Sales by Counter",
+            "svg": true
+          },
+          {
+            "title": "Sales Trend 7 Days",
+            "svg": true
+          }
+        ],
+        "resources": []
+      }
+    }
+  },
+  "regressions": {
+    "spaFirst": {
+      "metadata": [],
+      "charts": [
+        {
+          "name": "Top Selling Products",
+          "scoped": true,
+          "source": "Sales Invoice"
+        },
+        {
+          "name": "Sales by Counter",
+          "scoped": true,
+          "source": "Sales Invoice"
+        },
+        {
+          "name": "Sales Trend 7 Days",
+          "scoped": true,
+          "source": "Sales Invoice"
+        }
+      ]
+    },
+    "formatting": [
+      {
+        "name": "Top Selling Products",
+        "equalOptions": true,
+        "equalTooltip": true,
+        "docPreserved": true
+      },
+      {
+        "name": "Sales by Counter",
+        "equalOptions": true,
+        "equalTooltip": true,
+        "docPreserved": true
+      },
+      {
+        "name": "Sales Trend 7 Days",
+        "equalOptions": true,
+        "equalTooltip": true,
+        "docPreserved": true
+      }
+    ],
+    "concurrent": [
+      {
+        "name": "Top Selling Products",
+        "rendered": true
+      },
+      {
+        "name": "Sales by Counter",
+        "rendered": true
+      },
+      {
+        "name": "Sales Trend 7 Days",
+        "rendered": true
+      }
+    ],
+    "concurrentCount": 1,
+    "resolvedReuseCount": 0,
+    "failure": [
+      "rejected",
+      "rejected",
+      "rejected"
+    ],
+    "failedRequestCount": 1,
+    "retryCount": 1,
+    "filters": [
+      {
+        "name": "Top Selling Products",
+        "filters": []
+      },
+      {
+        "name": "Sales by Counter",
+        "filters": []
+      },
+      {
+        "name": "Sales Trend 7 Days",
+        "filters": []
+      }
+    ],
+    "drilldown": [
+      "List",
+      "Sales Invoice",
+      "List"
+    ]
+  }
+}

@@ -1,0 +1,541 @@
+{
+  "site": "retail-test.localhost",
+  "date": "2026-10-07",
+  "methodology": {
+    "transport": "Real loopback HTTP to the unmodified frappe.app.application WSGI entrypoint; no dev web process was listening on port 8000.",
+    "timing": "Unprofiled HTTP time to response headers, two warm samples per route and one cold sample per route; excludes assets and browser rendering.",
+    "counts": "Database.sql calls and RedisWrapper.execute_command calls through the complete request lifecycle, including response close callbacks; these count Python calls, not server-side statement/command batches.",
+    "cold": "New isolated Redis application-cache namespace for each route; no live cache flush and no OS filesystem-cache purge. Python modules already imported for the /app cold sample.",
+    "baseline": "Only this change's Guest renderer and path resolver disabled in the diagnostic process; normal Frappe rendering and all other hooks retained.",
+    "profiles": "Separate cProfile runs; profiled TTFB is excluded from the performance comparison."
+  },
+  "mechanism": {
+    "app": "Retail website_path_resolver delegates normal routing; on Guest GET/HEAD where both request path and resolved route are app/app/*, invokes the existing frappe.www.app.get_context Guest redirect branch before renderer context initialization.",
+    "login": "Guest-only page_renderer retains Frappe login controller/template/rendering/security lifecycle. Mirrors website settings and non-navigation boot fields; apps_data.apps=[] and default_path=\"\" avoid both get_apps calls. Authenticated and app-overridden login templates use the standard renderer.",
+    "core_changes": false,
+    "runtime_monkey_patches": false
+  },
+  "measurements": {
+    "before_timing": [
+      {
+        "sql": 6141,
+        "redis": 1115,
+        "status": "200 OK",
+        "discovery": [],
+        "path": "/login",
+        "ttfb_ms": 11210.68,
+        "location": null,
+        "body_size": 348160
+      },
+      {
+        "sql": 1200,
+        "redis": 170,
+        "status": "200 OK",
+        "discovery": [],
+        "path": "/login",
+        "ttfb_ms": 1527.37,
+        "location": null,
+        "body_size": 348160
+      },
+      {
+        "sql": 1200,
+        "redis": 170,
+        "status": "200 OK",
+        "discovery": [],
+        "path": "/login",
+        "ttfb_ms": 1363.86,
+        "location": null,
+        "body_size": 348160
+      },
+      {
+        "sql": 5906,
+        "redis": 1069,
+        "status": "301 MOVED PERMANENTLY",
+        "discovery": [],
+        "path": "/app",
+        "ttfb_ms": 10254.36,
+        "location": "/login?redirect-to=%2Fapp",
+        "body_size": 0
+      },
+      {
+        "sql": 1196,
+        "redis": 159,
+        "status": "301 MOVED PERMANENTLY",
+        "discovery": [],
+        "path": "/app",
+        "ttfb_ms": 1290.93,
+        "location": "/login?redirect-to=%2Fapp",
+        "body_size": 0
+      },
+      {
+        "sql": 1196,
+        "redis": 159,
+        "status": "301 MOVED PERMANENTLY",
+        "discovery": [],
+        "path": "/app",
+        "ttfb_ms": 1321.79,
+        "location": "/login?redirect-to=%2Fapp",
+        "body_size": 0
+      },
+      {
+        "sql": 1196,
+        "redis": 159,
+        "status": "301 MOVED PERMANENTLY",
+        "discovery": [],
+        "path": "/app/business-home",
+        "ttfb_ms": 1329.81,
+        "location": "/login?redirect-to=%2Fapp%2Fbusiness-home",
+        "body_size": 0
+      }
+    ],
+    "after_timing": [
+      {
+        "sql": 254,
+        "redis": 93,
+        "status": "200 OK",
+        "discovery": null,
+        "cache": "cold",
+        "path": "/login",
+        "ttfb_ms": 569.78,
+        "location": null,
+        "body_size": 348160
+      },
+      {
+        "sql": 8,
+        "redis": 22,
+        "status": "200 OK",
+        "discovery": null,
+        "cache": "warm",
+        "path": "/login",
+        "ttfb_ms": 130.59,
+        "location": null,
+        "body_size": 348160
+      },
+      {
+        "sql": 8,
+        "redis": 22,
+        "status": "200 OK",
+        "discovery": null,
+        "cache": "warm",
+        "path": "/login",
+        "ttfb_ms": 166.21,
+        "location": null,
+        "body_size": 348160
+      },
+      {
+        "sql": 115,
+        "redis": 59,
+        "status": "301 MOVED PERMANENTLY",
+        "discovery": null,
+        "cache": "cold",
+        "path": "/app",
+        "ttfb_ms": 154.65,
+        "location": "/login?redirect-to=%2Fapp",
+        "body_size": 0
+      },
+      {
+        "sql": 3,
+        "redis": 13,
+        "status": "301 MOVED PERMANENTLY",
+        "discovery": null,
+        "cache": "warm",
+        "path": "/app",
+        "ttfb_ms": 7.61,
+        "location": "/login?redirect-to=%2Fapp",
+        "body_size": 0
+      },
+      {
+        "sql": 3,
+        "redis": 13,
+        "status": "301 MOVED PERMANENTLY",
+        "discovery": null,
+        "cache": "warm",
+        "path": "/app",
+        "ttfb_ms": 8.11,
+        "location": "/login?redirect-to=%2Fapp",
+        "body_size": 0
+      },
+      {
+        "sql": 3,
+        "redis": 13,
+        "status": "301 MOVED PERMANENTLY",
+        "discovery": null,
+        "cache": "warm",
+        "path": "/app/business-home",
+        "ttfb_ms": 11.02,
+        "location": "/login?redirect-to=%2Fapp%2Fbusiness-home",
+        "body_size": 0
+      }
+    ],
+    "before_profile": [
+      {
+        "sql": 6141,
+        "redis": 1115,
+        "status": "200 OK",
+        "discovery": [
+          {
+            "file": "/home/adler/frappe-bench/apps/frappe/frappe/desk/desktop.py",
+            "name": "get_workspace_sidebar_items",
+            "calls": 2
+          },
+          {
+            "file": "/home/adler/frappe-bench/apps/frappe/frappe/boot.py",
+            "name": "get_allowed_pages",
+            "calls": 248
+          },
+          {
+            "file": "/home/adler/frappe-bench/apps/frappe/frappe/boot.py",
+            "name": "get_allowed_reports",
+            "calls": 248
+          },
+          {
+            "file": "/home/adler/frappe-bench/apps/frappe/frappe/boot.py",
+            "name": "get_user_pages_or_reports",
+            "calls": 496
+          },
+          {
+            "file": "/home/adler/frappe-bench/apps/frappe/frappe/apps.py",
+            "name": "get_apps",
+            "calls": 2
+          }
+        ],
+        "cache": "cold",
+        "path": "/login",
+        "ttfb_ms": 18567.83,
+        "location": null,
+        "body_size": 348160
+      },
+      {
+        "sql": 1200,
+        "redis": 170,
+        "status": "200 OK",
+        "discovery": [
+          {
+            "file": "/home/adler/frappe-bench/apps/frappe/frappe/desk/desktop.py",
+            "name": "get_workspace_sidebar_items",
+            "calls": 2
+          },
+          {
+            "file": "/home/adler/frappe-bench/apps/frappe/frappe/boot.py",
+            "name": "get_allowed_pages",
+            "calls": 248
+          },
+          {
+            "file": "/home/adler/frappe-bench/apps/frappe/frappe/boot.py",
+            "name": "get_allowed_reports",
+            "calls": 248
+          },
+          {
+            "file": "/home/adler/frappe-bench/apps/frappe/frappe/boot.py",
+            "name": "get_user_pages_or_reports",
+            "calls": 496
+          },
+          {
+            "file": "/home/adler/frappe-bench/apps/frappe/frappe/apps.py",
+            "name": "get_apps",
+            "calls": 2
+          }
+        ],
+        "cache": "warm",
+        "path": "/login",
+        "ttfb_ms": 2264.0,
+        "location": null,
+        "body_size": 348160
+      },
+      {
+        "sql": 1200,
+        "redis": 170,
+        "status": "200 OK",
+        "discovery": [
+          {
+            "file": "/home/adler/frappe-bench/apps/frappe/frappe/desk/desktop.py",
+            "name": "get_workspace_sidebar_items",
+            "calls": 2
+          },
+          {
+            "file": "/home/adler/frappe-bench/apps/frappe/frappe/boot.py",
+            "name": "get_allowed_pages",
+            "calls": 248
+          },
+          {
+            "file": "/home/adler/frappe-bench/apps/frappe/frappe/boot.py",
+            "name": "get_allowed_reports",
+            "calls": 248
+          },
+          {
+            "file": "/home/adler/frappe-bench/apps/frappe/frappe/boot.py",
+            "name": "get_user_pages_or_reports",
+            "calls": 496
+          },
+          {
+            "file": "/home/adler/frappe-bench/apps/frappe/frappe/apps.py",
+            "name": "get_apps",
+            "calls": 2
+          }
+        ],
+        "cache": "warm",
+        "path": "/login",
+        "ttfb_ms": 2232.63,
+        "location": null,
+        "body_size": 348160
+      },
+      {
+        "sql": 5906,
+        "redis": 1069,
+        "status": "301 MOVED PERMANENTLY",
+        "discovery": [
+          {
+            "file": "/home/adler/frappe-bench/apps/frappe/frappe/desk/desktop.py",
+            "name": "get_workspace_sidebar_items",
+            "calls": 2
+          },
+          {
+            "file": "/home/adler/frappe-bench/apps/frappe/frappe/boot.py",
+            "name": "get_allowed_pages",
+            "calls": 248
+          },
+          {
+            "file": "/home/adler/frappe-bench/apps/frappe/frappe/boot.py",
+            "name": "get_allowed_reports",
+            "calls": 248
+          },
+          {
+            "file": "/home/adler/frappe-bench/apps/frappe/frappe/boot.py",
+            "name": "get_user_pages_or_reports",
+            "calls": 496
+          },
+          {
+            "file": "/home/adler/frappe-bench/apps/frappe/frappe/apps.py",
+            "name": "get_apps",
+            "calls": 2
+          }
+        ],
+        "cache": "cold",
+        "path": "/app",
+        "ttfb_ms": 18573.06,
+        "location": "/login?redirect-to=%2Fapp",
+        "body_size": 0
+      },
+      {
+        "sql": 1196,
+        "redis": 159,
+        "status": "301 MOVED PERMANENTLY",
+        "discovery": [
+          {
+            "file": "/home/adler/frappe-bench/apps/frappe/frappe/desk/desktop.py",
+            "name": "get_workspace_sidebar_items",
+            "calls": 2
+          },
+          {
+            "file": "/home/adler/frappe-bench/apps/frappe/frappe/boot.py",
+            "name": "get_allowed_pages",
+            "calls": 248
+          },
+          {
+            "file": "/home/adler/frappe-bench/apps/frappe/frappe/boot.py",
+            "name": "get_allowed_reports",
+            "calls": 248
+          },
+          {
+            "file": "/home/adler/frappe-bench/apps/frappe/frappe/boot.py",
+            "name": "get_user_pages_or_reports",
+            "calls": 496
+          },
+          {
+            "file": "/home/adler/frappe-bench/apps/frappe/frappe/apps.py",
+            "name": "get_apps",
+            "calls": 2
+          }
+        ],
+        "cache": "warm",
+        "path": "/app",
+        "ttfb_ms": 1839.4,
+        "location": "/login?redirect-to=%2Fapp",
+        "body_size": 0
+      },
+      {
+        "sql": 1196,
+        "redis": 159,
+        "status": "301 MOVED PERMANENTLY",
+        "discovery": [
+          {
+            "file": "/home/adler/frappe-bench/apps/frappe/frappe/desk/desktop.py",
+            "name": "get_workspace_sidebar_items",
+            "calls": 2
+          },
+          {
+            "file": "/home/adler/frappe-bench/apps/frappe/frappe/boot.py",
+            "name": "get_allowed_pages",
+            "calls": 248
+          },
+          {
+            "file": "/home/adler/frappe-bench/apps/frappe/frappe/boot.py",
+            "name": "get_allowed_reports",
+            "calls": 248
+          },
+          {
+            "file": "/home/adler/frappe-bench/apps/frappe/frappe/boot.py",
+            "name": "get_user_pages_or_reports",
+            "calls": 496
+          },
+          {
+            "file": "/home/adler/frappe-bench/apps/frappe/frappe/apps.py",
+            "name": "get_apps",
+            "calls": 2
+          }
+        ],
+        "cache": "warm",
+        "path": "/app",
+        "ttfb_ms": 1801.65,
+        "location": "/login?redirect-to=%2Fapp",
+        "body_size": 0
+      },
+      {
+        "sql": 1196,
+        "redis": 159,
+        "status": "301 MOVED PERMANENTLY",
+        "discovery": [
+          {
+            "file": "/home/adler/frappe-bench/apps/frappe/frappe/desk/desktop.py",
+            "name": "get_workspace_sidebar_items",
+            "calls": 2
+          },
+          {
+            "file": "/home/adler/frappe-bench/apps/frappe/frappe/boot.py",
+            "name": "get_allowed_pages",
+            "calls": 248
+          },
+          {
+            "file": "/home/adler/frappe-bench/apps/frappe/frappe/boot.py",
+            "name": "get_allowed_reports",
+            "calls": 248
+          },
+          {
+            "file": "/home/adler/frappe-bench/apps/frappe/frappe/boot.py",
+            "name": "get_user_pages_or_reports",
+            "calls": 496
+          },
+          {
+            "file": "/home/adler/frappe-bench/apps/frappe/frappe/apps.py",
+            "name": "get_apps",
+            "calls": 2
+          }
+        ],
+        "cache": "warm",
+        "path": "/app/business-home",
+        "ttfb_ms": 1795.96,
+        "location": "/login?redirect-to=%2Fapp%2Fbusiness-home",
+        "body_size": 0
+      }
+    ],
+    "after_profile": [
+      {
+        "sql": 254,
+        "redis": 93,
+        "status": "200 OK",
+        "discovery": [],
+        "cache": "cold",
+        "path": "/login",
+        "ttfb_ms": 841.72,
+        "location": null,
+        "body_size": 348160
+      },
+      {
+        "sql": 8,
+        "redis": 22,
+        "status": "200 OK",
+        "discovery": [],
+        "cache": "warm",
+        "path": "/login",
+        "ttfb_ms": 197.31,
+        "location": null,
+        "body_size": 348160
+      },
+      {
+        "sql": 8,
+        "redis": 22,
+        "status": "200 OK",
+        "discovery": [],
+        "cache": "warm",
+        "path": "/login",
+        "ttfb_ms": 220.32,
+        "location": null,
+        "body_size": 348160
+      },
+      {
+        "sql": 115,
+        "redis": 59,
+        "status": "301 MOVED PERMANENTLY",
+        "discovery": [],
+        "cache": "cold",
+        "path": "/app",
+        "ttfb_ms": 235.05,
+        "location": "/login?redirect-to=%2Fapp",
+        "body_size": 0
+      },
+      {
+        "sql": 3,
+        "redis": 13,
+        "status": "301 MOVED PERMANENTLY",
+        "discovery": [],
+        "cache": "warm",
+        "path": "/app",
+        "ttfb_ms": 8.58,
+        "location": "/login?redirect-to=%2Fapp",
+        "body_size": 0
+      },
+      {
+        "sql": 3,
+        "redis": 13,
+        "status": "301 MOVED PERMANENTLY",
+        "discovery": [],
+        "cache": "warm",
+        "path": "/app",
+        "ttfb_ms": 11.98,
+        "location": "/login?redirect-to=%2Fapp",
+        "body_size": 0
+      },
+      {
+        "sql": 3,
+        "redis": 13,
+        "status": "301 MOVED PERMANENTLY",
+        "discovery": [],
+        "cache": "warm",
+        "path": "/app/business-home",
+        "ttfb_ms": 10.43,
+        "location": "/login?redirect-to=%2Fapp%2Fbusiness-home",
+        "body_size": 0
+      }
+    ]
+  },
+  "regressions": {
+    "guest_entry": {
+      "tests": 14,
+      "passed": 14,
+      "request_transport": "Actual HTTP using validation/guest_entry_http_tests.py; context/renderer tests execute directly.",
+      "output": "test_authenticated_desk_routes_use_standard_renderer_and_permissions (retail.tests.test_guest_entry.TestGuestEntry) ... ok\ntest_authenticated_login_redirect_destinations (retail.tests.test_guest_entry.TestGuestEntry) ... ok\ntest_authenticated_resolution_delegates_without_guest_controller (retail.tests.test_guest_entry.TestGuestEntry) ... ok\ntest_email_link_and_forgot_password_endpoints (retail.tests.test_guest_entry.TestGuestEntry) ... ok\ntest_guest_app_redirects_before_website_settings (retail.tests.test_guest_entry.TestGuestEntry) ... ok\ntest_guest_login_preserves_redirect_query_handling (retail.tests.test_guest_entry.TestGuestEntry) ... ok\ntest_guest_login_standard_render_and_no_desk_discovery (retail.tests.test_guest_entry.TestGuestEntry) ... ok\ntest_invalid_authorization_is_rejected_before_guest_routing (retail.tests.test_guest_entry.TestGuestEntry) ... ok\ntest_no_authentication_permission_or_license_bypass (retail.tests.test_guest_entry.TestGuestEntry) ... ok\ntest_password_and_username_login (retail.tests.test_guest_entry.TestGuestEntry) ... ok\ntest_renderer_rejects_authenticated_other_routes_and_page_overrides (retail.tests.test_guest_entry.TestGuestEntry) ... ok\ntest_session_csrf_lifecycle_and_language (retail.tests.test_guest_entry.TestGuestEntry) ... ok\ntest_settings_and_boot_parity_with_standard_frappe (retail.tests.test_guest_entry.TestGuestEntry) ... ok\ntest_social_ldap_and_email_configuration_still_reaches_standard_controller (retail.tests.test_guest_entry.TestGuestEntry) ... ok\n\n----------------------------------------------------------------------\nRan 14 tests in 12.083s\n\nOK"
+    },
+    "existing_licensing_and_website_script": {
+      "tests": 16,
+      "passed": 16,
+      "output": "................\n----------------------------------------------------------------------\nRan 16 tests in 0.137s\n\nOK"
+    },
+    "fixtures": "Temporary System User and sessions removed. Real password hashing/authentication and email-key login used; mail delivery, signed-license input configuration, username-login setting, social provider and LDAP settings supplied as test fixtures. Each request-based test uses its own documentation-range forwarded IP to isolate rate limit identities."
+  },
+  "security": "Guest app/workspace/page/report discovery absent from all after HTTP profiles. Guest Desk APIs denied, bad credentials and invalid Authorization rejected, licensing denial preserved, valid authenticated sessions use normal Desk boot, invalid CSRF rejected. No permission/authentication bypass or global permission cache added.",
+  "build_and_cache": "No asset rebuild or migration; no live-site cache flush. Only isolated benchmark cache namespaces were removed.",
+  "risks": [
+    "The narrow website-settings/boot mirror must be checked on Frappe upgrades; parity regression compares it with standard empty-app context.",
+    "A future app installing website_path_resolver hooks needs composition review because Frappe uses the last resolver result.",
+    "External OAuth sign-in and LDAP bind were not contacted; their configuration and standard controller/template integration were verified.",
+    "TTFB samples describe this local WSGI/DB environment, not reverse-proxy/network/browser performance."
+  ],
+  "changed_files": [
+    "retail/hooks.py",
+    "retail/guest_entry.py",
+    "retail/tests/test_guest_entry.py",
+    "validation/guest_entry_http.py",
+    "validation/guest_entry_http_tests.py",
+    "validation/guest_entry_results.json"
+  ]
+}

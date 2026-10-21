@@ -1,0 +1,227 @@
+diff --git a/erpnext/accounts/report/accounts_payable/accounts_payable.js b/erpnext/accounts/report/accounts_payable/accounts_payable.js
+index 5b8a919..bd3cbdd 100644
+--- a/erpnext/accounts/report/accounts_payable/accounts_payable.js
++++ b/erpnext/accounts/report/accounts_payable/accounts_payable.js
+@@ -11,9 +11,17 @@ frappe.query_reports["Accounts Payable"] = {
+ 			reqd: 1,
+ 			default: frappe.defaults.get_user_default("Company"),
+ 		},
++		{
++			fieldname: "from_date",
++			label: __("From Posting Date"),
++			fieldtype: "Date",
++			reqd: 1,
++			default: frappe.datetime.get_today(),
++		},
+ 		{
+ 			fieldname: "report_date",
+-			label: __("Posting Date"),
++			reqd: 1,
++			label: __("To Posting Date"),
+ 			fieldtype: "Date",
+ 			default: frappe.datetime.get_today(),
+ 		},
+@@ -92,6 +100,7 @@ frappe.query_reports["Accounts Payable"] = {
+ 			label: __("Party Type"),
+ 			fieldtype: "Autocomplete",
+ 			options: get_party_type_options(),
++			default: "Supplier",
+ 			on_change: function () {
+ 				frappe.query_report.set_filter_value("party", "");
+ 				frappe.query_report.toggle_filter_display(
+diff --git a/erpnext/accounts/report/accounts_receivable/accounts_receivable.js b/erpnext/accounts/report/accounts_receivable/accounts_receivable.js
+index 02bb54a..f327f89 100644
+--- a/erpnext/accounts/report/accounts_receivable/accounts_receivable.js
++++ b/erpnext/accounts/report/accounts_receivable/accounts_receivable.js
+@@ -13,9 +13,17 @@ frappe.query_reports["Accounts Receivable"] = {
+ 			reqd: 1,
+ 			default: frappe.defaults.get_user_default("Company"),
+ 		},
++		{
++			fieldname: "from_date",
++			label: __("From Posting Date"),
++			fieldtype: "Date",
++			reqd: 1,
++			default: frappe.datetime.get_today(),
++		},
+ 		{
+ 			fieldname: "report_date",
+-			label: __("Posting Date"),
++			reqd: 1,
++			label: __("To Posting Date"),
+ 			fieldtype: "Date",
+ 			default: frappe.datetime.get_today(),
+ 		},
+@@ -52,6 +60,7 @@ frappe.query_reports["Accounts Receivable"] = {
+ 			label: __("Party Type"),
+ 			fieldtype: "Autocomplete",
+ 			options: get_party_type_options(),
++			default: "Customer",
+ 			on_change: function () {
+ 				frappe.query_report.set_filter_value("party", "");
+ 				frappe.query_report.toggle_filter_display(
+diff --git a/erpnext/accounts/report/accounts_receivable/accounts_receivable.py b/erpnext/accounts/report/accounts_receivable/accounts_receivable.py
+index d28f886..99980fc 100644
+--- a/erpnext/accounts/report/accounts_receivable/accounts_receivable.py
++++ b/erpnext/accounts/report/accounts_receivable/accounts_receivable.py
+@@ -53,6 +53,10 @@ class ReceivablePayableReport:
+ 		self.qb_selection_filter = []
+ 		self.ple = qb.DocType("Payment Ledger Entry")
+ 		self.filters.report_date = getdate(self.filters.report_date or nowdate())
++		if self.filters.from_date:
++			self.filters.from_date = getdate(self.filters.from_date)
++			if self.filters.from_date > self.filters.report_date:
++				frappe.throw(_("From Posting Date cannot be after To Posting Date"))
+ 		self.age_as_on = (
+ 			getdate(nowdate())
+ 			if "calculate_ageing_with" not in self.filters
+@@ -339,6 +343,11 @@ class ReceivablePayableReport:
+ 		# set outstanding for all the accumulated balances
+ 		# as we can use this to filter out invoices without outstanding
+ 		for _key, row in self.voucher_balance.items():
++			# Keep all payment allocations, then filter vouchers by posting date.
++			if self.filters.from_date and not (
++				self.filters.from_date <= getdate(row.posting_date) <= self.filters.report_date
++			):
++				continue
+ 			row.outstanding = flt(row.invoiced - row.paid - row.credit_note, self.currency_precision)
+ 			row.outstanding_in_account_currency = flt(
+ 				row.invoiced_in_account_currency
+diff --git a/erpnext/accounts/report/gross_profit/gross_profit.py b/erpnext/accounts/report/gross_profit/gross_profit.py
+index 21f9991..ecd80cf 100644
+--- a/erpnext/accounts/report/gross_profit/gross_profit.py
++++ b/erpnext/accounts/report/gross_profit/gross_profit.py
+@@ -750,19 +750,18 @@ class GrossProfitGenerator:
+ 		return flt(buying_amount, self.currency_precision)
+ 
+ 	def calculate_buying_amount_from_sle(self, row, my_sle, parenttype, parent, item_row, item_code):
+-		for i, sle in enumerate(my_sle):
+-			# find the stock valution rate from stock ledger entry
+-			if (
+-				sle.voucher_type == parenttype
+-				and parent == sle.voucher_no
+-				and sle.voucher_detail_no == item_row
+-			):
+-				previous_stock_value = len(my_sle) > i + 1 and flt(my_sle[i + 1].stock_value) or 0.0
+-
+-				if previous_stock_value:
+-					return abs(previous_stock_value - flt(sle.stock_value)) * flt(row.qty) / abs(flt(sle.qty))
+-				else:
+-					return flt(row.qty) * self.get_average_buying_rate(row, item_code)
++		# Use the voucher's posted movement, not a difference between neighbouring
++		# balances: backdated entries and split ledger rows make that unreliable.
++		matching_entries = [
++			sle for sle in my_sle
++			if sle.voucher_type == parenttype
++			and sle.voucher_no == parent
++			and sle.voucher_detail_no == item_row
++		]
++		quantity = sum(flt(sle.qty) for sle in matching_entries)
++		if quantity:
++			stock_value_difference = sum(flt(sle.stock_value_difference) for sle in matching_entries)
++			return flt(row.qty) * stock_value_difference / quantity
+ 		return 0.0
+ 
+ 	def get_buying_amount(self, row, item_code):
+@@ -1167,6 +1166,7 @@ class GrossProfitGenerator:
+ 						sle.voucher_no,
+ 						sle.voucher_detail_no,
+ 						sle.stock_value,
++						sle.stock_value_difference,
+ 						sle.warehouse,
+ 						sle.actual_qty.as_("qty"),
+ 					)
+diff --git a/erpnext/stock/doctype/item/item.json b/erpnext/stock/doctype/item/item.json
+index 10c771d..5f88e62 100644
+--- a/erpnext/stock/doctype/item/item.json
++++ b/erpnext/stock/doctype/item/item.json
+@@ -162,6 +162,7 @@
+    "search_index": 1
+   },
+   {
++   "allow_in_quick_entry": 1,
+    "fieldname": "item_group",
+    "fieldtype": "Link",
+    "in_list_view": 1,
+@@ -419,6 +420,7 @@
+    "depends_on": "eval:doc.is_stock_item",
+    "fieldname": "has_batch_no",
+    "fieldtype": "Check",
++   "in_standard_filter": 1,
+    "label": "Has Batch No",
+    "oldfieldname": "has_batch_no",
+    "oldfieldtype": "Select"
+@@ -468,6 +470,7 @@
+    "depends_on": "eval:doc.is_stock_item",
+    "fieldname": "has_serial_no",
+    "fieldtype": "Check",
++   "in_standard_filter": 1,
+    "label": "Has Serial No",
+    "oldfieldname": "has_serial_no",
+    "oldfieldtype": "Select"
+@@ -897,8 +900,8 @@
+  "image_field": "image",
+  "links": [],
+  "make_attachments_public": 1,
+- "modified": "2026-03-17 20:39:05.218344",
+- "modified_by": "Administrator",
++ "modified": "2026-09-28 17:44:07.439729",
++ "modified_by": "pos.api@arabscale.com",
+  "module": "Stock",
+  "name": "Item",
+  "naming_rule": "By fieldname",
+@@ -971,4 +974,4 @@
+  "states": [],
+  "title_field": "item_name",
+  "track_changes": 1
+-}
++}
+\ No newline at end of file
+diff --git a/erpnext/stock/doctype/item/item.py b/erpnext/stock/doctype/item/item.py
+index b011dcf..8708f29 100644
+--- a/erpnext/stock/doctype/item/item.py
++++ b/erpnext/stock/doctype/item/item.py
+@@ -59,8 +59,6 @@ class Item(Document):
+ 	from typing import TYPE_CHECKING
+ 
+ 	if TYPE_CHECKING:
+-		from frappe.types import DF
+-
+ 		from erpnext.stock.doctype.item_barcode.item_barcode import ItemBarcode
+ 		from erpnext.stock.doctype.item_customer_detail.item_customer_detail import ItemCustomerDetail
+ 		from erpnext.stock.doctype.item_default.item_default import ItemDefault
+@@ -69,6 +67,7 @@ class Item(Document):
+ 		from erpnext.stock.doctype.item_tax.item_tax import ItemTax
+ 		from erpnext.stock.doctype.item_variant_attribute.item_variant_attribute import ItemVariantAttribute
+ 		from erpnext.stock.doctype.uom_conversion_detail.uom_conversion_detail import UOMConversionDetail
++		from frappe.types import DF
+ 
+ 		allow_alternative_item: DF.Check
+ 		allow_negative_stock: DF.Check
+@@ -88,9 +87,7 @@ class Item(Document):
+ 		default_bom: DF.Link | None
+ 		default_item_manufacturer: DF.Link | None
+ 		default_manufacturer_part_no: DF.Data | None
+-		default_material_request_type: DF.Literal[
+-			"Purchase", "Material Transfer", "Material Issue", "Manufacture", "Customer Provided"
+-		]
++		default_material_request_type: DF.Literal["Purchase", "Material Transfer", "Material Issue", "Manufacture", "Customer Provided"]
+ 		delivered_by_supplier: DF.Check
+ 		description: DF.TextEditor | None
+ 		disabled: DF.Check
+diff --git a/erpnext/stock/get_item_details.py b/erpnext/stock/get_item_details.py
+index 8c205a1..f24fd81 100644
+--- a/erpnext/stock/get_item_details.py
++++ b/erpnext/stock/get_item_details.py
+@@ -964,6 +964,11 @@ def get_price_list_rate(args, item_doc, out=None):
+ 
+ def insert_item_price(args):
+ 	"""Insert Item Price if Price List and Price List Rate are specified and currency is the same"""
++	# Invoice overrides belong to the sale, never to the shared price master.
++	# This also covers open-price items, returns and consolidated POS invoices.
++	if (args.get("parenttype") or args.get("doctype")) in {"Sales Invoice", "POS Invoice"}:
++		return
++
+ 	if (
+ 		not args.price_list
+ 		or not args.rate

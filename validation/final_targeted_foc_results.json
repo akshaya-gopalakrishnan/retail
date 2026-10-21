@@ -1,0 +1,1129 @@
+{
+  "source": "/home/adler/frappe-bench/apps/retail/retail/__init__.py",
+  "tests": [
+    {
+      "kind": "Van",
+      "stages": [
+        {
+          "voucher_type": "Purchase Invoice",
+          "voucher": "PI-29",
+          "items": [
+            {
+              "name": "hr7ffcejv0",
+              "qty": 2.0,
+              "custom_foc_qty": 1.0,
+              "custom_foc_parent": null,
+              "rate": 10.0,
+              "stock_qty": 2.0,
+              "base_net_amount": 20.0
+            },
+            {
+              "name": "hr73luup7f",
+              "qty": 1.0,
+              "custom_foc_qty": 0.0,
+              "custom_foc_parent": "a59db1ed21e1b1ef729d",
+              "rate": 0.0,
+              "stock_qty": 1.0,
+              "base_net_amount": 0.0
+            }
+          ],
+          "sle": [
+            {
+              "name": "60743bf12f",
+              "voucher_detail_no": "hr7ffcejv0",
+              "actual_qty": 2.0,
+              "stock_value_difference": 20.0,
+              "incoming_rate": 10.0,
+              "stock_queue": "[[2.0, 10.0]]"
+            },
+            {
+              "name": "c73c4e5aa0",
+              "voucher_detail_no": "hr73luup7f",
+              "actual_qty": 1.0,
+              "stock_value_difference": 0.0,
+              "incoming_rate": 0.0,
+              "stock_queue": "[[2.0, 10.0], [1.0, 0.0]]"
+            }
+          ],
+          "gl": [
+            {
+              "name": "198ad31900",
+              "account": "Trade Payable - N",
+              "account_type": "Payable",
+              "debit": 0.0,
+              "credit": 20.0
+            },
+            {
+              "name": "5738bf10c1",
+              "account": "Stock in Hand - N",
+              "account_type": "Stock",
+              "debit": 20.0,
+              "credit": 0.0
+            }
+          ],
+          "received_or_sold_qty": 3.0,
+          "sle_value": 20.0,
+          "stock_gl": 20.0,
+          "cogs_gl": 0
+        },
+        {
+          "voucher_type": "Sales Invoice",
+          "voucher": "VS-13",
+          "items": [
+            {
+              "name": "hrck46i0ui",
+              "qty": 2.0,
+              "custom_foc_qty": 1.0,
+              "custom_foc_parent": null,
+              "rate": 20.0,
+              "stock_qty": 2.0,
+              "base_net_amount": 40.0
+            },
+            {
+              "name": "hrct1trire",
+              "qty": 1.0,
+              "custom_foc_qty": 0.0,
+              "custom_foc_parent": "09be515098b4067b914f",
+              "rate": 0.0,
+              "stock_qty": 1.0,
+              "base_net_amount": 0.0
+            }
+          ],
+          "sle": [
+            {
+              "name": "314ca8e009",
+              "voucher_detail_no": "hrck46i0ui",
+              "actual_qty": -2.0,
+              "stock_value_difference": -20.0,
+              "incoming_rate": 0.0,
+              "stock_queue": "[[1.0, 0.0]]"
+            },
+            {
+              "name": "38f2d78b84",
+              "voucher_detail_no": "hrct1trire",
+              "actual_qty": -1.0,
+              "stock_value_difference": 0.0,
+              "incoming_rate": 0.0,
+              "stock_queue": "[[0, 0.0]]"
+            }
+          ],
+          "gl": [
+            {
+              "name": "2a3719dbe5",
+              "account": "Cost of Goods Sold in Trading - N",
+              "account_type": "Cost of Goods Sold",
+              "debit": 20.0,
+              "credit": 0.0
+            },
+            {
+              "name": "74622bc4c5",
+              "account": "Sales from Other Region - N",
+              "account_type": "Income Account",
+              "debit": 0.0,
+              "credit": 40.0
+            },
+            {
+              "name": "98a9e76d69",
+              "account": "Stock in Hand - N",
+              "account_type": "Stock",
+              "debit": 0.0,
+              "credit": 20.0
+            },
+            {
+              "name": "aaf6370370",
+              "account": "Trade in Opening Fees - N",
+              "account_type": "Receivable",
+              "debit": 40.0,
+              "credit": 0.0
+            }
+          ],
+          "received_or_sold_qty": -3.0,
+          "sle_value": -20.0,
+          "stock_gl": -20.0,
+          "cogs_gl": 20.0,
+          "service_cogs": 20.0,
+          "report_cogs": 20.0
+        },
+        {
+          "voucher_type": "Sales Invoice",
+          "voucher": "VS-14",
+          "items": [
+            {
+              "name": "hrirg1o4t2",
+              "qty": -2.0,
+              "custom_foc_qty": -1.0,
+              "custom_foc_parent": null,
+              "rate": 20.0,
+              "stock_qty": -2.0,
+              "base_net_amount": -40.0
+            },
+            {
+              "name": "hri3hpgfet",
+              "qty": -1.0,
+              "custom_foc_qty": 0.0,
+              "custom_foc_parent": "09be515098b4067b914f",
+              "rate": 0.0,
+              "stock_qty": -1.0,
+              "base_net_amount": 0.0
+            }
+          ],
+          "sle": [
+            {
+              "name": "484f167288",
+              "voucher_detail_no": "hrirg1o4t2",
+              "actual_qty": 2.0,
+              "stock_value_difference": 20.0,
+              "incoming_rate": 10.0,
+              "stock_queue": "[[2.0, 10.0]]"
+            },
+            {
+              "name": "0d1179df78",
+              "voucher_detail_no": "hri3hpgfet",
+              "actual_qty": 1.0,
+              "stock_value_difference": 0.0,
+              "incoming_rate": 0.0,
+              "stock_queue": "[[2.0, 10.0], [1.0, 0.0]]"
+            }
+          ],
+          "gl": [
+            {
+              "name": "20aca7f604",
+              "account": "Trade in Opening Fees - N",
+              "account_type": "Receivable",
+              "debit": 0.0,
+              "credit": 40.0
+            },
+            {
+              "name": "30ed30d7a3",
+              "account": "Cost of Goods Sold in Trading - N",
+              "account_type": "Cost of Goods Sold",
+              "debit": 0.0,
+              "credit": 20.0
+            },
+            {
+              "name": "b9aa04ac6c",
+              "account": "Sales from Other Region - N",
+              "account_type": "Income Account",
+              "debit": 40.0,
+              "credit": 0.0
+            },
+            {
+              "name": "bd58b4051e",
+              "account": "Stock in Hand - N",
+              "account_type": "Stock",
+              "debit": 20.0,
+              "credit": 0.0
+            }
+          ],
+          "received_or_sold_qty": 3.0,
+          "sle_value": 20.0,
+          "stock_gl": 20.0,
+          "cogs_gl": -20.0,
+          "service_cogs": -20.0,
+          "report_cogs": -20.0
+        }
+      ],
+      "stage": "cancel receipt",
+      "mapped_rows": [
+        {
+          "qty": -2.0,
+          "custom_foc_qty": 1.0,
+          "custom_foc_key": "09be515098b4067b914f",
+          "custom_foc_parent": null
+        },
+        {
+          "qty": -1.0,
+          "custom_foc_qty": 0.0,
+          "custom_foc_key": null,
+          "custom_foc_parent": "09be515098b4067b914f"
+        }
+      ],
+      "status": "passed"
+    },
+    {
+      "kind": "Serial",
+      "stages": [
+        {
+          "voucher_type": "Purchase Invoice",
+          "voucher": "PI-29",
+          "items": [
+            {
+              "name": "hrs92hkpd7",
+              "qty": 2.0,
+              "custom_foc_qty": 1.0,
+              "custom_foc_parent": null,
+              "rate": 10.0,
+              "stock_qty": 2.0,
+              "base_net_amount": 20.0
+            },
+            {
+              "name": "hrs03aeges",
+              "qty": 1.0,
+              "custom_foc_qty": 0.0,
+              "custom_foc_parent": "0f12d5d3181b30c2b99b",
+              "rate": 0.0,
+              "stock_qty": 1.0,
+              "base_net_amount": 0.0
+            }
+          ],
+          "sle": [
+            {
+              "name": "39902ad418",
+              "voucher_detail_no": "hrs92hkpd7",
+              "actual_qty": 2.0,
+              "stock_value_difference": 20.0,
+              "incoming_rate": 10.0,
+              "stock_queue": "[]"
+            },
+            {
+              "name": "92ecde1974",
+              "voucher_detail_no": "hrs03aeges",
+              "actual_qty": 1.0,
+              "stock_value_difference": 0.0,
+              "incoming_rate": 0.0,
+              "stock_queue": "[]"
+            }
+          ],
+          "gl": [
+            {
+              "name": "6296d22618",
+              "account": "Trade Payable - N",
+              "account_type": "Payable",
+              "debit": 0.0,
+              "credit": 20.0
+            },
+            {
+              "name": "a08d8e1a61",
+              "account": "Stock in Hand - N",
+              "account_type": "Stock",
+              "debit": 20.0,
+              "credit": 0.0
+            }
+          ],
+          "received_or_sold_qty": 3.0,
+          "sle_value": 20.0,
+          "stock_gl": 20.0,
+          "cogs_gl": 0
+        },
+        {
+          "voucher_type": "Sales Invoice",
+          "voucher": "SI-61",
+          "items": [
+            {
+              "name": "hs014au060",
+              "qty": 2.0,
+              "custom_foc_qty": 1.0,
+              "custom_foc_parent": null,
+              "rate": 20.0,
+              "stock_qty": 2.0,
+              "base_net_amount": 40.0
+            },
+            {
+              "name": "hs0v53s808",
+              "qty": 1.0,
+              "custom_foc_qty": 0.0,
+              "custom_foc_parent": "52f93a0b596140af262b",
+              "rate": 0.0,
+              "stock_qty": 1.0,
+              "base_net_amount": 0.0
+            }
+          ],
+          "sle": [
+            {
+              "name": "651501aaad",
+              "voucher_detail_no": "hs014au060",
+              "actual_qty": -2.0,
+              "stock_value_difference": -20.0,
+              "incoming_rate": 0.0,
+              "stock_queue": "[]"
+            },
+            {
+              "name": "189834dd4c",
+              "voucher_detail_no": "hs0v53s808",
+              "actual_qty": -1.0,
+              "stock_value_difference": 0.0,
+              "incoming_rate": 0.0,
+              "stock_queue": "[]"
+            }
+          ],
+          "gl": [
+            {
+              "name": "164b785352",
+              "account": "Sales from Other Region - N",
+              "account_type": "Income Account",
+              "debit": 0.0,
+              "credit": 40.0
+            },
+            {
+              "name": "5719c0fd50",
+              "account": "Cost of Goods Sold in Trading - N",
+              "account_type": "Cost of Goods Sold",
+              "debit": 20.0,
+              "credit": 0.0
+            },
+            {
+              "name": "9015aabd84",
+              "account": "Stock in Hand - N",
+              "account_type": "Stock",
+              "debit": 0.0,
+              "credit": 20.0
+            },
+            {
+              "name": "a3b526d88e",
+              "account": "Trade in Opening Fees - N",
+              "account_type": "Receivable",
+              "debit": 40.0,
+              "credit": 0.0
+            }
+          ],
+          "received_or_sold_qty": -3.0,
+          "sle_value": -20.0,
+          "stock_gl": -20.0,
+          "cogs_gl": 20.0,
+          "service_cogs": 20.0,
+          "report_cogs": 20.0
+        },
+        {
+          "voucher_type": "Sales Invoice",
+          "voucher": "SI-62",
+          "items": [
+            {
+              "name": "hs6vnsa1q8",
+              "qty": -2.0,
+              "custom_foc_qty": -1.0,
+              "custom_foc_parent": null,
+              "rate": 20.0,
+              "stock_qty": -2.0,
+              "base_net_amount": -40.0
+            },
+            {
+              "name": "hs6tbh8nof",
+              "qty": -1.0,
+              "custom_foc_qty": 0.0,
+              "custom_foc_parent": "52f93a0b596140af262b",
+              "rate": 0.0,
+              "stock_qty": -1.0,
+              "base_net_amount": 0.0
+            }
+          ],
+          "sle": [
+            {
+              "name": "051f0198a3",
+              "voucher_detail_no": "hs6vnsa1q8",
+              "actual_qty": 2.0,
+              "stock_value_difference": 20.0,
+              "incoming_rate": 10.0,
+              "stock_queue": "[]"
+            },
+            {
+              "name": "c7d86f7616",
+              "voucher_detail_no": "hs6tbh8nof",
+              "actual_qty": 1.0,
+              "stock_value_difference": 0.0,
+              "incoming_rate": 0.0,
+              "stock_queue": "[]"
+            }
+          ],
+          "gl": [
+            {
+              "name": "5d05d51e54",
+              "account": "Stock in Hand - N",
+              "account_type": "Stock",
+              "debit": 20.0,
+              "credit": 0.0
+            },
+            {
+              "name": "6d3c27c50b",
+              "account": "Sales from Other Region - N",
+              "account_type": "Income Account",
+              "debit": 40.0,
+              "credit": 0.0
+            },
+            {
+              "name": "8a294eedc3",
+              "account": "Trade in Opening Fees - N",
+              "account_type": "Receivable",
+              "debit": 0.0,
+              "credit": 40.0
+            },
+            {
+              "name": "c67c51ff76",
+              "account": "Cost of Goods Sold in Trading - N",
+              "account_type": "Cost of Goods Sold",
+              "debit": 0.0,
+              "credit": 20.0
+            }
+          ],
+          "received_or_sold_qty": 3.0,
+          "sle_value": 20.0,
+          "stock_gl": 20.0,
+          "cogs_gl": -20.0,
+          "service_cogs": -20.0,
+          "report_cogs": -20.0
+        }
+      ],
+      "stage": "cancel receipt",
+      "mapped_rows": [
+        {
+          "qty": -2.0,
+          "custom_foc_qty": 1.0,
+          "custom_foc_key": "52f93a0b596140af262b",
+          "custom_foc_parent": null
+        },
+        {
+          "qty": -1.0,
+          "custom_foc_qty": 0.0,
+          "custom_foc_key": null,
+          "custom_foc_parent": "52f93a0b596140af262b"
+        }
+      ],
+      "status": "passed"
+    },
+    {
+      "kind": "Batch",
+      "stages": [
+        {
+          "voucher_type": "Purchase Invoice",
+          "voucher": "PI-29",
+          "items": [
+            {
+              "name": "hsi6glib3e",
+              "qty": 2.0,
+              "custom_foc_qty": 1.0,
+              "custom_foc_parent": null,
+              "rate": 10.0,
+              "stock_qty": 2.0,
+              "base_net_amount": 20.0
+            },
+            {
+              "name": "hsi4hqrpbu",
+              "qty": 1.0,
+              "custom_foc_qty": 0.0,
+              "custom_foc_parent": "eb2b1c8d43641fc8cf41",
+              "rate": 0.0,
+              "stock_qty": 1.0,
+              "base_net_amount": 0.0
+            }
+          ],
+          "sle": [
+            {
+              "name": "316fe8a46d",
+              "voucher_detail_no": "hsi6glib3e",
+              "actual_qty": 2.0,
+              "stock_value_difference": 20.0,
+              "incoming_rate": 10.0,
+              "stock_queue": "[]"
+            },
+            {
+              "name": "2137faefdb",
+              "voucher_detail_no": "hsi4hqrpbu",
+              "actual_qty": 1.0,
+              "stock_value_difference": 0.0,
+              "incoming_rate": 0.0,
+              "stock_queue": "[]"
+            }
+          ],
+          "gl": [
+            {
+              "name": "461d9bf0bb",
+              "account": "Trade Payable - N",
+              "account_type": "Payable",
+              "debit": 0.0,
+              "credit": 20.0
+            },
+            {
+              "name": "8b968c4e5e",
+              "account": "Stock in Hand - N",
+              "account_type": "Stock",
+              "debit": 20.0,
+              "credit": 0.0
+            }
+          ],
+          "received_or_sold_qty": 3.0,
+          "sle_value": 20.0,
+          "stock_gl": 20.0,
+          "cogs_gl": 0
+        },
+        {
+          "voucher_type": "Sales Invoice",
+          "voucher": "SI-61",
+          "items": [
+            {
+              "name": "hsnb5ssvk6",
+              "qty": 2.0,
+              "custom_foc_qty": 1.0,
+              "custom_foc_parent": null,
+              "rate": 20.0,
+              "stock_qty": 2.0,
+              "base_net_amount": 40.0
+            },
+            {
+              "name": "hsnsramd5a",
+              "qty": 1.0,
+              "custom_foc_qty": 0.0,
+              "custom_foc_parent": "8100ad9b0417a98f7c37",
+              "rate": 0.0,
+              "stock_qty": 1.0,
+              "base_net_amount": 0.0
+            }
+          ],
+          "sle": [
+            {
+              "name": "8c4fe3b285",
+              "voucher_detail_no": "hsnb5ssvk6",
+              "actual_qty": -2.0,
+              "stock_value_difference": -13.33,
+              "incoming_rate": 0.0,
+              "stock_queue": "[]"
+            },
+            {
+              "name": "da748108f0",
+              "voucher_detail_no": "hsnsramd5a",
+              "actual_qty": -1.0,
+              "stock_value_difference": -6.67,
+              "incoming_rate": 0.0,
+              "stock_queue": "[]"
+            }
+          ],
+          "gl": [
+            {
+              "name": "14b475af24",
+              "account": "Stock in Hand - N",
+              "account_type": "Stock",
+              "debit": 0.0,
+              "credit": 20.0
+            },
+            {
+              "name": "163e3ebe5a",
+              "account": "Trade in Opening Fees - N",
+              "account_type": "Receivable",
+              "debit": 40.0,
+              "credit": 0.0
+            },
+            {
+              "name": "49932cc05d",
+              "account": "Sales from Other Region - N",
+              "account_type": "Income Account",
+              "debit": 0.0,
+              "credit": 40.0
+            },
+            {
+              "name": "5355bd55fc",
+              "account": "Cost of Goods Sold in Trading - N",
+              "account_type": "Cost of Goods Sold",
+              "debit": 20.0,
+              "credit": 0.0
+            }
+          ],
+          "received_or_sold_qty": -3.0,
+          "sle_value": -20.0,
+          "stock_gl": -20.0,
+          "cogs_gl": 20.0,
+          "service_cogs": 20.0,
+          "report_cogs": 20.0
+        },
+        {
+          "voucher_type": "Sales Invoice",
+          "voucher": "SI-62",
+          "items": [
+            {
+              "name": "hst15dp06h",
+              "qty": -2.0,
+              "custom_foc_qty": -1.0,
+              "custom_foc_parent": null,
+              "rate": 20.0,
+              "stock_qty": -2.0,
+              "base_net_amount": -40.0
+            },
+            {
+              "name": "hst92v159b",
+              "qty": -1.0,
+              "custom_foc_qty": 0.0,
+              "custom_foc_parent": "8100ad9b0417a98f7c37",
+              "rate": 0.0,
+              "stock_qty": -1.0,
+              "base_net_amount": 0.0
+            }
+          ],
+          "sle": [
+            {
+              "name": "a66774fa3f",
+              "voucher_detail_no": "hst15dp06h",
+              "actual_qty": 2.0,
+              "stock_value_difference": 13.33,
+              "incoming_rate": 6.665,
+              "stock_queue": "[]"
+            },
+            {
+              "name": "c441326e10",
+              "voucher_detail_no": "hst92v159b",
+              "actual_qty": 1.0,
+              "stock_value_difference": 6.67,
+              "incoming_rate": 6.67,
+              "stock_queue": "[]"
+            }
+          ],
+          "gl": [
+            {
+              "name": "969eee899c",
+              "account": "Cost of Goods Sold in Trading - N",
+              "account_type": "Cost of Goods Sold",
+              "debit": 0.0,
+              "credit": 20.0
+            },
+            {
+              "name": "a12892b00a",
+              "account": "Sales from Other Region - N",
+              "account_type": "Income Account",
+              "debit": 40.0,
+              "credit": 0.0
+            },
+            {
+              "name": "a66ff8bd9a",
+              "account": "Trade in Opening Fees - N",
+              "account_type": "Receivable",
+              "debit": 0.0,
+              "credit": 40.0
+            },
+            {
+              "name": "e2c91e48d4",
+              "account": "Stock in Hand - N",
+              "account_type": "Stock",
+              "debit": 20.0,
+              "credit": 0.0
+            }
+          ],
+          "received_or_sold_qty": 3.0,
+          "sle_value": 20.0,
+          "stock_gl": 20.0,
+          "cogs_gl": -20.0,
+          "service_cogs": -20.0,
+          "report_cogs": -20.0
+        }
+      ],
+      "stage": "cancel receipt",
+      "mapped_rows": [
+        {
+          "qty": -2.0,
+          "custom_foc_qty": 1.0,
+          "custom_foc_key": "8100ad9b0417a98f7c37",
+          "custom_foc_parent": null
+        },
+        {
+          "qty": -1.0,
+          "custom_foc_qty": 0.0,
+          "custom_foc_key": null,
+          "custom_foc_parent": "8100ad9b0417a98f7c37"
+        }
+      ],
+      "status": "passed"
+    }
+  ],
+  "run": "FOC-LIFECYCLE-33312a52",
+  "rolled_back": true,
+  "mappings": [
+    {
+      "mapping": "PO to PI",
+      "scope": "native mapping, insert and repeated save",
+      "status": "passed",
+      "rows": [
+        {
+          "qty": 2.0,
+          "custom_foc_qty": 1.0,
+          "custom_foc_key": "8fee190b62434e67730d",
+          "custom_foc_parent": null
+        },
+        {
+          "qty": 1.0,
+          "custom_foc_qty": 0.0,
+          "custom_foc_key": null,
+          "custom_foc_parent": "8fee190b62434e67730d"
+        }
+      ]
+    },
+    {
+      "mapping": "SO to SI",
+      "scope": "native mapping, insert and repeated save",
+      "status": "passed",
+      "rows": [
+        {
+          "qty": 2.0,
+          "custom_foc_qty": 1.0,
+          "custom_foc_key": "3985a152c7499de3fad8",
+          "custom_foc_parent": null
+        },
+        {
+          "qty": 1.0,
+          "custom_foc_qty": 0.0,
+          "custom_foc_key": null,
+          "custom_foc_parent": "3985a152c7499de3fad8"
+        }
+      ]
+    },
+    {
+      "mapping": "POS to SI",
+      "scope": "native POS merge conversion and repeated FOC preparation",
+      "status": "passed",
+      "rows": [
+        {
+          "qty": 2.0,
+          "custom_foc_qty": 1.0,
+          "custom_foc_key": "b29889a6e4e9588277c4",
+          "custom_foc_parent": null
+        },
+        {
+          "qty": 1.0,
+          "custom_foc_qty": 0,
+          "custom_foc_key": null,
+          "custom_foc_parent": "b29889a6e4e9588277c4"
+        }
+      ]
+    },
+    {
+      "mapping": "PO to PR to PI",
+      "scope": "native mapping, insert and repeated save",
+      "status": "passed",
+      "rows": [
+        {
+          "qty": 2.0,
+          "custom_foc_qty": 1.0,
+          "custom_foc_key": "a243979521743d831206",
+          "custom_foc_parent": null
+        },
+        {
+          "qty": 1.0,
+          "custom_foc_qty": 0.0,
+          "custom_foc_key": null,
+          "custom_foc_parent": "a243979521743d831206"
+        }
+      ]
+    }
+  ],
+  "patch": "retail/domains/foc.py: normalize copied positive custom_foc_qty on linked negative return rows before FOC validation",
+  "before_patch_failures": [
+    {
+      "kind": "Serial",
+      "stages": [
+        {
+          "voucher_type": "Purchase Invoice",
+          "voucher": "PI-29",
+          "items": [
+            {
+              "name": "hb7del3nrm",
+              "qty": 2.0,
+              "custom_foc_qty": 1.0,
+              "custom_foc_parent": null,
+              "rate": 10.0,
+              "stock_qty": 2.0,
+              "base_net_amount": 20.0
+            },
+            {
+              "name": "hb7h1c8ptp",
+              "qty": 1.0,
+              "custom_foc_qty": 0.0,
+              "custom_foc_parent": "b753dfa1f9b920b4b31b",
+              "rate": 0.0,
+              "stock_qty": 1.0,
+              "base_net_amount": 0.0
+            }
+          ],
+          "sle": [
+            {
+              "name": "f35e1e4ef6",
+              "voucher_detail_no": "hb7del3nrm",
+              "actual_qty": 2.0,
+              "stock_value_difference": 20.0,
+              "incoming_rate": 10.0,
+              "stock_queue": "[]"
+            },
+            {
+              "name": "c546e778ff",
+              "voucher_detail_no": "hb7h1c8ptp",
+              "actual_qty": 1.0,
+              "stock_value_difference": 0.0,
+              "incoming_rate": 0.0,
+              "stock_queue": "[]"
+            }
+          ],
+          "gl": [
+            {
+              "name": "40ee8b7005",
+              "account": "Trade Payable - N",
+              "account_type": "Payable",
+              "debit": 0.0,
+              "credit": 20.0
+            },
+            {
+              "name": "72c72d3a9b",
+              "account": "Stock in Hand - N",
+              "account_type": "Stock",
+              "debit": 20.0,
+              "credit": 0.0
+            }
+          ],
+          "received_or_sold_qty": 3.0,
+          "sle_value": 20.0,
+          "stock_gl": 20.0,
+          "cogs_gl": 0
+        },
+        {
+          "voucher_type": "Sales Invoice",
+          "voucher": "SI-61",
+          "items": [
+            {
+              "name": "hbhtjp9rnp",
+              "qty": 2.0,
+              "custom_foc_qty": 1.0,
+              "custom_foc_parent": null,
+              "rate": 20.0,
+              "stock_qty": 2.0,
+              "base_net_amount": 40.0
+            },
+            {
+              "name": "hbhrhl5n6a",
+              "qty": 1.0,
+              "custom_foc_qty": 0.0,
+              "custom_foc_parent": "83a6051f9b1b59c70a80",
+              "rate": 0.0,
+              "stock_qty": 1.0,
+              "base_net_amount": 0.0
+            }
+          ],
+          "sle": [
+            {
+              "name": "40a1a54d8d",
+              "voucher_detail_no": "hbhtjp9rnp",
+              "actual_qty": -2.0,
+              "stock_value_difference": -20.0,
+              "incoming_rate": 0.0,
+              "stock_queue": "[]"
+            },
+            {
+              "name": "8641ba3754",
+              "voucher_detail_no": "hbhrhl5n6a",
+              "actual_qty": -1.0,
+              "stock_value_difference": 0.0,
+              "incoming_rate": 0.0,
+              "stock_queue": "[]"
+            }
+          ],
+          "gl": [
+            {
+              "name": "2f34e5406e",
+              "account": "Sales from Other Region - N",
+              "account_type": "Income Account",
+              "debit": 0.0,
+              "credit": 40.0
+            },
+            {
+              "name": "57e8234ba8",
+              "account": "Trade in Opening Fees - N",
+              "account_type": "Receivable",
+              "debit": 40.0,
+              "credit": 0.0
+            },
+            {
+              "name": "6ffabce590",
+              "account": "Cost of Goods Sold in Trading - N",
+              "account_type": "Cost of Goods Sold",
+              "debit": 20.0,
+              "credit": 0.0
+            },
+            {
+              "name": "88da5fed77",
+              "account": "Stock in Hand - N",
+              "account_type": "Stock",
+              "debit": 0.0,
+              "credit": 20.0
+            }
+          ],
+          "received_or_sold_qty": -3.0,
+          "sle_value": -20.0,
+          "stock_gl": -20.0,
+          "cogs_gl": 20.0,
+          "service_cogs": 20.0,
+          "report_cogs": 20.0
+        }
+      ],
+      "stage": "return mapping",
+      "mapped_rows": [
+        {
+          "qty": -2.0,
+          "custom_foc_qty": 1.0,
+          "custom_foc_key": "83a6051f9b1b59c70a80",
+          "custom_foc_parent": null
+        },
+        {
+          "qty": -1.0,
+          "custom_foc_qty": 0.0,
+          "custom_foc_key": null,
+          "custom_foc_parent": "83a6051f9b1b59c70a80"
+        }
+      ],
+      "status": "failed",
+      "error": "Traceback (most recent call last):\n  File \"/tmp/targeted_foc.py\", line 166, in <module>\n    ret.insert(); pair(ret); ret.save(); pair(ret); ret.submit(); ret.reload(); pair(ret)\n  File \"/home/adler/frappe-bench/apps/frappe/frappe/model/document.py\", line 309, in insert\n    self.run_before_save_methods()\n  File \"/home/adler/frappe-bench/apps/frappe/frappe/model/document.py\", line 1137, in run_before_save_methods\n    self.run_method(\"before_validate\")\n  File \"/home/adler/frappe-bench/apps/frappe/frappe/model/document.py\", line 1014, in run_method\n    out = Document.hook(fn)(self, *args, **kwargs)\n  File \"/home/adler/frappe-bench/apps/frappe/frappe/model/document.py\", line 1374, in composer\n    return composed(self, method, *args, **kwargs)\n  File \"/home/adler/frappe-bench/apps/frappe/frappe/model/document.py\", line 1358, in runner\n    add_to_return_value(self, f(self, method, *args, **kwargs))\n  File \"/home/adler/frappe-bench/apps/retail/retail/domains/foc.py\", line 179, in prepare_foc_items\n    frappe.throw(\"FOC quantity must have the same sign as a non-zero paid quantity.\")\n  File \"/home/adler/frappe-bench/apps/frappe/frappe/__init__.py\", line 615, in throw\n    msgprint(\n  File \"/home/adler/frappe-bench/apps/frappe/frappe/__init__.py\", line 580, in msgprint\n    _raise_exception()\n  File \"/home/adler/frappe-bench/apps/frappe/frappe/__init__.py\", line 531, in _raise_exception\n    raise exc\nfrappe.exceptions.ValidationError: FOC quantity must have the same sign as a non-zero paid quantity.\n"
+    },
+    {
+      "kind": "Batch",
+      "stages": [
+        {
+          "voucher_type": "Purchase Invoice",
+          "voucher": "PI-29",
+          "items": [
+            {
+              "name": "hbpkrl210a",
+              "qty": 2.0,
+              "custom_foc_qty": 1.0,
+              "custom_foc_parent": null,
+              "rate": 10.0,
+              "stock_qty": 2.0,
+              "base_net_amount": 20.0
+            },
+            {
+              "name": "hbp8pluv00",
+              "qty": 1.0,
+              "custom_foc_qty": 0.0,
+              "custom_foc_parent": "087b403ac714f1e2f308",
+              "rate": 0.0,
+              "stock_qty": 1.0,
+              "base_net_amount": 0.0
+            }
+          ],
+          "sle": [
+            {
+              "name": "2f5a2ecc28",
+              "voucher_detail_no": "hbpkrl210a",
+              "actual_qty": 2.0,
+              "stock_value_difference": 20.0,
+              "incoming_rate": 10.0,
+              "stock_queue": "[]"
+            },
+            {
+              "name": "881de4a7f5",
+              "voucher_detail_no": "hbp8pluv00",
+              "actual_qty": 1.0,
+              "stock_value_difference": 0.0,
+              "incoming_rate": 0.0,
+              "stock_queue": "[]"
+            }
+          ],
+          "gl": [
+            {
+              "name": "6006534519",
+              "account": "Trade Payable - N",
+              "account_type": "Payable",
+              "debit": 0.0,
+              "credit": 20.0
+            },
+            {
+              "name": "8783e3408c",
+              "account": "Stock in Hand - N",
+              "account_type": "Stock",
+              "debit": 20.0,
+              "credit": 0.0
+            }
+          ],
+          "received_or_sold_qty": 3.0,
+          "sle_value": 20.0,
+          "stock_gl": 20.0,
+          "cogs_gl": 0
+        },
+        {
+          "voucher_type": "Sales Invoice",
+          "voucher": "SI-61",
+          "items": [
+            {
+              "name": "hbt0rojdfu",
+              "qty": 2.0,
+              "custom_foc_qty": 1.0,
+              "custom_foc_parent": null,
+              "rate": 20.0,
+              "stock_qty": 2.0,
+              "base_net_amount": 40.0
+            },
+            {
+              "name": "hbtbodg6nh",
+              "qty": 1.0,
+              "custom_foc_qty": 0.0,
+              "custom_foc_parent": "4dc90212554a9c72b294",
+              "rate": 0.0,
+              "stock_qty": 1.0,
+              "base_net_amount": 0.0
+            }
+          ],
+          "sle": [
+            {
+              "name": "9a851418e8",
+              "voucher_detail_no": "hbt0rojdfu",
+              "actual_qty": -2.0,
+              "stock_value_difference": -13.33,
+              "incoming_rate": 0.0,
+              "stock_queue": "[]"
+            },
+            {
+              "name": "1e3ebd7749",
+              "voucher_detail_no": "hbtbodg6nh",
+              "actual_qty": -1.0,
+              "stock_value_difference": -6.67,
+              "incoming_rate": 0.0,
+              "stock_queue": "[]"
+            }
+          ],
+          "gl": [
+            {
+              "name": "7521b50818",
+              "account": "Stock in Hand - N",
+              "account_type": "Stock",
+              "debit": 0.0,
+              "credit": 20.0
+            },
+            {
+              "name": "a8f873a49f",
+              "account": "Trade in Opening Fees - N",
+              "account_type": "Receivable",
+              "debit": 40.0,
+              "credit": 0.0
+            },
+            {
+              "name": "bcbdd5559e",
+              "account": "Sales from Other Region - N",
+              "account_type": "Income Account",
+              "debit": 0.0,
+              "credit": 40.0
+            },
+            {
+              "name": "e25f01db85",
+              "account": "Cost of Goods Sold in Trading - N",
+              "account_type": "Cost of Goods Sold",
+              "debit": 20.0,
+              "credit": 0.0
+            }
+          ],
+          "received_or_sold_qty": -3.0,
+          "sle_value": -20.0,
+          "stock_gl": -20.0,
+          "cogs_gl": 20.0,
+          "service_cogs": 20.0,
+          "report_cogs": 20.0
+        }
+      ],
+      "stage": "return mapping",
+      "mapped_rows": [
+        {
+          "qty": -2.0,
+          "custom_foc_qty": 1.0,
+          "custom_foc_key": "4dc90212554a9c72b294",
+          "custom_foc_parent": null
+        },
+        {
+          "qty": -1.0,
+          "custom_foc_qty": 0.0,
+          "custom_foc_key": null,
+          "custom_foc_parent": "4dc90212554a9c72b294"
+        }
+      ],
+      "status": "failed",
+      "error": "Traceback (most recent call last):\n  File \"/tmp/targeted_foc.py\", line 166, in <module>\n    ret.insert(); pair(ret); ret.save(); pair(ret); ret.submit(); ret.reload(); pair(ret)\n  File \"/home/adler/frappe-bench/apps/frappe/frappe/model/document.py\", line 309, in insert\n    self.run_before_save_methods()\n  File \"/home/adler/frappe-bench/apps/frappe/frappe/model/document.py\", line 1137, in run_before_save_methods\n    self.run_method(\"before_validate\")\n  File \"/home/adler/frappe-bench/apps/frappe/frappe/model/document.py\", line 1014, in run_method\n    out = Document.hook(fn)(self, *args, **kwargs)\n  File \"/home/adler/frappe-bench/apps/frappe/frappe/model/document.py\", line 1374, in composer\n    return composed(self, method, *args, **kwargs)\n  File \"/home/adler/frappe-bench/apps/frappe/frappe/model/document.py\", line 1358, in runner\n    add_to_return_value(self, f(self, method, *args, **kwargs))\n  File \"/home/adler/frappe-bench/apps/retail/retail/domains/foc.py\", line 179, in prepare_foc_items\n    frappe.throw(\"FOC quantity must have the same sign as a non-zero paid quantity.\")\n  File \"/home/adler/frappe-bench/apps/frappe/frappe/__init__.py\", line 615, in throw\n    msgprint(\n  File \"/home/adler/frappe-bench/apps/frappe/frappe/__init__.py\", line 580, in msgprint\n    _raise_exception()\n  File \"/home/adler/frappe-bench/apps/frappe/frappe/__init__.py\", line 531, in _raise_exception\n    raise exc\nfrappe.exceptions.ValidationError: FOC quantity must have the same sign as a non-zero paid quantity.\n"
+    }
+  ]
+}
