@@ -1,0 +1,301 @@
+{% set vat_rate = 0 %}
+{% if doc.taxes and doc.taxes|length > 0 %}
+    {% set vat_rate = frappe.utils.flt(doc.taxes[0].rate) %}
+{% endif %}
+
+
+
+<div class="invoice-container">
+
+    
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    {% set fixed_letterhead = letter_head if not no_letterhead else '' %}
+
+{% if fixed_letterhead %}
+    <div class="hardcoded-letterhead">
+        {{ fixed_letterhead }}
+    </div>
+{% endif %}
+    
+    
+
+
+    
+    <div class="title-row">
+        <div class="title-line"></div>
+
+        <h1 class="invoice-title">
+            {% if doc.is_return %}
+                {{ _("Credit Note") }}
+            {% else %}
+                {{ _("Tax Invoice") }}
+            {% endif %}
+        </h1>
+
+        <div class="title-line"></div>
+    </div>
+
+    
+    <table class="information-table">
+        <tr>
+            <td class="customer-section">
+                <div class="section-label">{{ _("Bill To") }}</div>
+
+                <div class="customer-name">
+                    {{ doc.customer_name or doc.customer }}
+                </div>
+
+                <div class="customer-address">
+                    {% if doc.address_display %}
+                        {{ doc.address_display }}
+                    {% elif doc.customer_address %}
+                        {{ doc.customer_address }}
+                    {% endif %}
+                </div>
+
+                {% if doc.tax_id %}
+                    <div style="margin-top: 4px;">
+                        <strong>{{ _("Tax ID") }}:</strong> {{ doc.tax_id }}
+                    </div>
+                {% endif %}
+            </td>
+
+            <td class="invoice-info-section">
+                <table class="invoice-details">
+                    <tr>
+                        <td class="detail-label">{{ _("Invoice") }} #</td>
+                        <td class="detail-value">{{ doc.name }}</td>
+                    </tr>
+
+                    <tr>
+                        <td class="detail-label">{{ _("Invoice Date") }}</td>
+                        <td class="detail-value">
+                            {{ frappe.utils.formatdate(doc.posting_date, "dd MMM yyyy") }}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td class="detail-label">{{ _("Terms") }}</td>
+                        <td class="detail-value">
+                            {{ doc.payment_terms_template or doc.terms or "" }}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td class="detail-label">{{ _("Purchase Order") }}#</td>
+                        <td class="detail-value">
+                            {{ doc.po_no or "" }}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td class="detail-label">{{ _("Sales Person") }}</td>
+                        <td class="detail-value">
+                            {% if doc.sales_team and doc.sales_team|length > 0 %}
+                                {{ doc.sales_team[0].sales_person }}
+                            {% else %}
+                                {{ doc.sales_partner or "" }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    
+    <table class="item-table">
+        <thead>
+            <tr>
+                <th class="col-number">{{ _("Sr No") }}</th>
+                <th class="col-description">{{ _("Item Description") }}</th>
+                <th class="col-qty">{{ _("Qty") }}</th>
+                <th class="col-rate">{{ _("Rate") }}</th>
+                <th class="col-tax-rate">{{ _("Tax") }}%</th>
+                <th class="col-tax">{{ _("Tax") }}</th>
+                <th class="col-amount">{{ _("Amount") }}</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for item in doc.items %}
+
+                {% set taxable_amount = frappe.utils.flt(item.net_amount) %}
+                {% set line_tax = taxable_amount * vat_rate / 100 %}
+                {% set amount_with_tax = taxable_amount + line_tax %}
+
+                <tr>
+                    <td class="col-number">
+                        {{ loop.index }}
+                    </td>
+
+                    <td class="col-description">
+                        <div class="item-name">
+                            {{ _(item.item_name) if item.item_name else item.item_code }}
+                        </div>
+
+                        {% if item.description %}
+                            <div class="item-description">
+                                {{ _(item.description) }}
+                            </div>
+                        {% endif %}
+
+                        {% if item.serial_no %}
+                            <div class="item-description">
+                                {{ _("Serial No") }}# {{ item.serial_no }}
+                            </div>
+                        {% endif %}
+
+                        {% if item.batch_no %}
+                            <div class="item-description">
+                                {{ _("Batch") }}# {{ item.batch_no }}
+                            </div>
+                        {% endif %}
+                    </td>
+
+                    <td class="col-qty">
+                        {{ frappe.utils.fmt_money(item.qty, precision=2) }}
+                        {% if item.uom %}
+                            <br>
+                            <span style="font-size: 8px;">{{ _(item.uom) }}</span>
+                        {% endif %}
+                    </td>
+
+                    <td class="col-rate">
+                        {{ frappe.utils.fmt_money(item.net_rate, precision=2) }}
+                    </td>
+
+                    <td class="col-tax-rate">
+                        {{ frappe.utils.fmt_money(vat_rate, precision=0) }}
+                    </td>
+
+                    <td class="col-tax">
+                        {{ frappe.utils.fmt_money(line_tax, precision=2) }}
+                    </td>
+
+                    <td class="col-amount">
+                        {{ frappe.utils.fmt_money(amount_with_tax, precision=2) }}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    
+    <table class="summary-table">
+        <tr>
+            <td class="amount-words-section">
+                <span class="amount-words-label">{{ _("In Words") }} :</span>
+
+                <span class="amount-words-value">
+                    {{ frappe.utils.money_in_words((doc.rounded_total if doc.get('rounded_total') is not none and not doc.is_rounded_total_disabled() else doc.grand_total)|abs, doc.currency) }}
+                </span>
+            </td>
+
+            <td class="totals-section">
+                <table class="totals-table">
+                    <tr>
+                        <td class="totals-label">
+                            {{ _("Subtotal (Taxable Amount)") }} {{ doc.currency }}
+                        </td>
+
+                        <td class="totals-value">
+                            {{ frappe.utils.fmt_money(
+                                doc.net_total,
+                                precision=2
+                            ) }}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td class="totals-label">{{ _("Discount") }}</td>
+
+                        <td class="totals-value">
+                            {{ frappe.utils.fmt_money(
+                                doc.discount_amount or 0,
+                                precision=2
+                            ) }}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td class="totals-label">
+                            {{ _("VAT") }} ({{ frappe.utils.fmt_money(vat_rate, precision=0) }}%):
+                            {{ doc.currency }}
+                        </td>
+
+                        <td class="totals-value">
+                            {{ frappe.utils.fmt_money(
+                                doc.total_taxes_and_charges or 0,
+                                precision=2
+                            ) }}
+                        </td>
+                    </tr>
+
+                    <tr class="grand-total-row">
+                        <td class="totals-label">
+                            {{ _("Total (Incl. VAT)") }}<br>
+                            {{ doc.currency }}
+                        </td>
+
+                        <td class="totals-value grand-total-amount">
+                            {{ doc.currency }}
+                            {{ frappe.utils.fmt_money(
+                                doc.grand_total,
+                                precision=2
+                            ) }}
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    
+    <div class="terms-section">
+        <div class="terms-title">{{ _("Terms & Conditions") }}</div>
+
+        <div class="terms-content">
+            {% if doc.terms %}
+                {{ doc.terms }}
+            {% else %}
+                <div>{{ _("Payment: Cash / Cheque against delivery.") }}</div>
+                <div>{{ _("Delivery: Ex-stock (subject to prior sale).") }}</div>
+                <div>
+                    {{ _("Warranty: 12 Months from the date of Invoice (against any manufacturing defect)") }}
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="thank-you">
+            {{ _("We take this opportunity to thank you for your enquiry, if you have any query please feel free to contact us.") }}
+        </div>
+
+        <div class="signature">
+            {{ _("For") }} {{ doc.company }},
+        </div>
+    </div>
+
+</div>
+{% if footer and not no_letterhead %}<div class="letter-head-footer">{{ footer }}</div>{% endif %}
+
+

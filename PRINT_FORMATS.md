@@ -4,11 +4,17 @@ Edit each document's `- A4` Print Format in the site UI. HTML holds markup and
 Jinja; Custom CSS holds format styling. These are code editors, not a visual
 layout builder. Letter Head content and Frappe's base print styling remain separate.
 
-Retail ships independent HTML/CSS baselines for Sales Order, Supplier Quotation,
-Purchase Order, Purchase Receipt, Purchase Invoice, and Material Request in
-`retail/retail_app/print_format/`. To distribute a UI-approved design, copy its
-HTML and Custom CSS into the corresponding shipped JSON definition and release
-the app. A UI save by itself is site-local.
+Retail ships the ten approved A4 designs in
+`retail/templates/editable_print_formats/` as separate HTML and CSS files:
+Sales Invoice, Delivery Note, Quotation, Sales Order, Supplier Quotation,
+Purchase Order, Purchase Receipt, Purchase Invoice, Material Request, and
+POS Branch Day Closing. Installation and migration create missing A4 formats
+from these files with Standard set to No and Custom Format enabled, then select
+them as defaults unless the site chose another format.
+
+To distribute a later UI-approved design, copy its HTML and Custom CSS into the
+matching files in that directory and release the app. A UI save by itself is
+site-local. The older Print Format source records remain compatibility fallbacks.
 
 `ensure_editable_print_formats` creates missing site-owned A4 copies, separates
 embedded styles into Custom CSS, and sets the default unless the site chose a

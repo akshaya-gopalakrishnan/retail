@@ -1,0 +1,356 @@
+
+
+
+<div class="delivery-note-container">
+
+    
+
+    
+
+
+    
+
+    {% set fixed_letterhead = letter_head if not no_letterhead else '' %}
+
+    {% if fixed_letterhead %}
+        <div class="hardcoded-letterhead">
+            {{ fixed_letterhead }}
+        </div>
+    {% endif %}
+
+
+    
+
+    <table class="retail-title-table"><tr>
+            <td class="retail-title-rule"><div></div></td>
+            <td class="retail-title-cell"><h1 class="document-title">{{ _("Delivery Note") }}</h1></td>
+            <td class="retail-title-rule"><div></div></td>
+        </tr></table>
+        <div class="retail-document-number">{{ _("Delivery Note") }}# {{ doc.name }}</div>
+
+
+    
+
+    <table class="information-table">
+        <tr>
+            <td class="customer-section">
+
+                <div class="section-label">
+                    {{ _("Deliver To") }}
+                </div>
+
+                <div class="customer-name">
+                    {{ doc.customer_name or doc.customer }}
+                </div>
+
+                <div class="customer-address">
+                    {% if doc.shipping_address %}
+                        {{ doc.shipping_address }}
+                    {% elif doc.address_display %}
+                        {{ doc.address_display }}
+                    {% elif doc.customer_address %}
+                        {{ doc.customer_address }}
+                    {% endif %}
+                </div>
+
+                {% if doc.contact_display %}
+                    <div class="contact-details">
+                        {{ doc.contact_display }}
+                    </div>
+                {% endif %}
+
+                {% if doc.contact_mobile %}
+                    <div class="contact-details">
+                        <strong>{{ _("Mobile") }}:</strong>
+                        {{ doc.contact_mobile }}
+                    </div>
+                {% endif %}
+
+                {% if doc.contact_email %}
+                    <div class="contact-details">
+                        <strong>{{ _("Email") }}:</strong>
+                        {{ doc.contact_email }}
+                    </div>
+                {% endif %}
+            </td>
+
+            <td class="delivery-info-section">
+
+                <table class="delivery-details">
+
+                    <tr>
+                        <td class="detail-label">
+                            {{ _("Delivery Date") }}
+                        </td>
+
+                        <td class="detail-value">
+                            {{ frappe.utils.formatdate(
+                                doc.posting_date,
+                                "dd MMM yyyy"
+                            ) }}
+                        </td>
+                    </tr>
+
+                    
+
+
+                    <tr>
+                        <td class="detail-label">
+                            {{ _("Challan Type") }} :
+                        </td>
+
+                        <td class="detail-value">
+                            {{ doc.custom_challan_type or "Others" }}
+                        </td>
+                    </tr>
+
+
+                    {% if doc.po_no %}
+                        <tr>
+                            <td class="detail-label">
+                                {{ _("Customer Purchase Order") }}#
+                            </td>
+
+                            <td class="detail-value">
+                                {{ doc.po_no }}
+                            </td>
+                        </tr>
+                    {% endif %}
+
+
+                    {% if doc.lr_no %}
+                        <tr>
+                            <td class="detail-label">
+                                {{ _("L.R. No.") }}
+                            </td>
+
+                            <td class="detail-value">
+                                {{ doc.lr_no }}
+                            </td>
+                        </tr>
+                    {% endif %}
+
+
+                    {% if doc.transporter_name %}
+                        <tr>
+                            <td class="detail-label">
+                                {{ _("Transporter") }}
+                            </td>
+
+                            <td class="detail-value">
+                                {{ doc.transporter_name }}
+                            </td>
+                        </tr>
+                    {% endif %}
+
+
+                    
+
+
+                    
+
+                </table>
+            </td>
+        </tr>
+    </table>
+
+
+    
+
+    <table class="item-table">
+        <thead>
+            <tr>
+                <th class="col-number">#</th>
+                <th class="col-image"></th>
+                <th class="col-description">{{ _("Item Description") }}</th>
+                <th class="col-qty">{{ _("Qty") }}</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for item in doc.items %}
+
+                {% set master_item_image = frappe.db.get_value(
+                    "Item",
+                    item.item_code,
+                    "image"
+                ) %}
+
+                {% set display_image = item.image or master_item_image %}
+
+                <tr>
+                    <td class="col-number">
+                        {{ loop.index }}
+                    </td>
+
+
+                    <td class="col-image">
+                        {% if display_image %}
+                            <img
+                                src="{{ display_image }}"
+                                class="item-image"
+                                alt="{{ _(item.item_name) if item.item_name else item.item_code }}"
+                            >
+                        {% else %}
+                            
+                        {% endif %}
+                    </td>
+
+
+                    <td class="col-description">
+
+                        <div class="item-name">
+                            {{ _(item.item_name) if item.item_name else item.item_code }}
+                        </div>
+
+
+                        {% if item.item_code %}
+                            <div class="item-code">
+                                {{ item.item_code }}
+                            </div>
+                        {% endif %}
+
+
+                        {% if item.description %}
+                            <div class="item-description">
+                                {{ _(item.description) }}
+                            </div>
+                        {% endif %}
+
+
+                        {% if item.serial_no %}
+                            <div class="item-reference">
+                                {{ _("Serial No") }}#:
+                                {{ item.serial_no | replace("\n", ", ") }}
+                            </div>
+                        {% endif %}
+
+
+                        {% if item.batch_no %}
+                            <div class="item-reference">
+                                {{ _("Batch") }}#:
+                                {{ item.batch_no }}
+                            </div>
+                        {% endif %}
+
+
+                        
+
+
+                        
+
+                    </td>
+
+
+                    <td class="col-qty">
+                        <div class="quantity-value">
+                            {{ frappe.utils.fmt_money(
+                                item.qty,
+                                precision=2
+                            ) }}
+                        </div>
+
+                        <div class="quantity-uom">
+                            {{ _(item.uom or item.stock_uom) }}
+                        </div>
+                    </td>
+                </tr>
+
+            {% endfor %}
+        </tbody>
+    </table>
+
+
+    
+
+    <div class="item-count">
+        {{ _("Total Quantity") }} {{ doc.items | length }}
+    </div>
+
+
+    
+
+    {% if doc.remarks %}
+        <div class="remarks-section">
+            <div class="remarks-title">
+                {{ _("Remarks") }}
+            </div>
+
+            <div class="remarks-content">
+                {{ doc.remarks }}
+            </div>
+        </div>
+    {% endif %}
+
+
+    
+
+
+    
+
+    <div class="signature-section">
+
+        <table class="signature-table">
+            <tr>
+
+                <td>
+                    <div class="signature-field">
+                        <span class="signature-label">
+                            {{ _("Date") }}:
+                        </span>
+
+                        <span class="signature-line"></span>
+                    </div>
+
+                    <div class="signature-field">
+                        <span class="signature-label">
+                            {{ _("Signature") }}:
+                        </span>
+
+                        <span class="signature-line"></span>
+                    </div>
+                </td>
+
+
+                <td>
+                    <div class="signature-field">
+                        <span class="signature-label">
+                            {{ _("Receiver Name") }}:
+                        </span>
+
+                        <span class="signature-line"></span>
+                    </div>
+
+                    <div class="signature-field">
+                        <span class="signature-label">
+                            {{ _("Phone") }}:
+                        </span>
+
+                        <span class="signature-line"></span>
+                    </div>
+                </td>
+
+
+                <td class="company-stamp-cell">
+
+                    
+
+
+                    
+
+
+                    
+                    <div class="stamp-label">
+                        {{ _("Company Stamp") }}
+                    </div>
+
+                </td>
+            </tr>
+        </table>
+
+    </div>
+
+</div>
+{% if footer and not no_letterhead %}<div class="letter-head-footer">{{ footer }}</div>{% endif %}
+
+

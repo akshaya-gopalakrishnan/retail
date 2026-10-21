@@ -1,0 +1,85 @@
+{% set report = day_closing_print_data(doc) %}
+{% macro money(value) %}{{ frappe.utils.fmt_money(value or 0, precision=2) }}{% endmacro %}
+{% macro pair(label, value, total=false) %}<tr{% if total %} class="closing-total"{% endif %}><td>{{ _(label) }}</td><td class="closing-money">{{ money(value) }}</td></tr>{% endmacro %}
+<div class="retail-closing">
+    {% if letter_head and not no_letterhead %}<div class="hardcoded-letterhead">{{ letter_head }}</div>{% elif report.company %}<div class="closing-company">{{ report.company }}</div>{% endif %}
+    <table class="retail-title-table"><tr>
+        <td class="retail-title-rule"><div></div></td>
+        <td class="retail-title-cell"><h1 class="document-title">{{ _("POS Branch Day Closing") }}</h1></td>
+        <td class="retail-title-rule"><div></div></td>
+    </tr></table>
+    <div class="retail-document-number">{{ doc.name }}</div>
+    <table class="closing-meta"><tr><td><strong>{{ _("Branch") }}:</strong> {{ doc.branch }}</td><td><strong>{{ _("Business Date") }}:</strong> {{ frappe.utils.formatdate(doc.business_date, "dd MMM yyyy") }}</td></tr>
+        <tr><td><strong>{{ _("Status") }}:</strong> {{ _("Cancelled") if doc.docstatus == 2 else (_("Closed") if doc.docstatus == 1 else _("Draft")) }} | {{ _("Revision") }} {{ doc.revision or 0 }}</td><td><strong>{{ _("Currency") }}:</strong> {{ report.currency or "-" }}</td></tr>
+        {% if doc.closed_at %}<tr><td><strong>{{ _("Closed At") }}:</strong> {{ frappe.utils.format_datetime(doc.closed_at) }}</td><td><strong>{{ _("Manager User") }}:</strong> {{ doc.manager_user or "" }}</td></tr>{% endif %}
+    </table>
+    {% for warning in report.warnings %}<div class="closing-warning">{{ _(warning) }}</div>{% endfor %}
+    <table class="closing-columns"><tr><td class="closing-half">
+        <h2 class="closing-section">{{ _("Sales") }}</h2>
+        <table class="closing-table">
+            {% if not report.get('mixed_currency') %}
+            {{ pair("Item Sales Before Tax", report.sales.item_sales) }}
+            {{ pair("Item Returns Before Tax", report.sales.item_refund) }}
+            {{ pair("Taxes and Charges", report.sales.tax) }}
+            {% endif %}
+            {{ pair("Total Sales", doc.total_sales, true) }}
+            <tr><td>{{ _("Total Invoice Count") }}</td><td class="closing-money">{{ doc.total_invoice_count or 0 }}</td></tr>
+            {% if not report.get('mixed_currency') %}
+            {{ pair("Additional Discount", report.sales.discount) }}
+            {{ pair("Rounding Adjustment", report.sales.round_off) }}
+            {% endif %}
+        </table>
+        <h2 class="closing-section">{{ _("Payment Method Totals") }}</h2>
+        <table class="closing-table">
+            {% for mode, amount in report.modes|dictsort %}{{ pair(mode, amount) }}{% else %}<tr><td colspan="2">{{ _("No payment method totals available") }}</td></tr>{% endfor %}
+            {{ pair("Total Collections", report.collection_total, true) }}
+        </table>
+        {% if report.settlements %}
+        <h2 class="closing-section">{{ _("POS Settlement Totals") }}</h2>
+        <table class="closing-table">
+            {% for field, label in [("credit_sales", "Credit Sales"), ("credit_notes_issued", "Credit Note Issued"), ("credit_notes_redeemed", "Credit Note Redeemed"), ("credit_notes_applied", "Credit Note Applied"), ("credit_notes_unresolved", "Credit Note Unresolved")] %}
+            {% if field in report.settlements %}{{ pair(label, report.settlements[field]) }}{% endif %}
+            {% endfor %}
+        </table>
+        {% endif %}
+        <h2 class="closing-section">{{ _("Cash Summary") }}</h2>
+        <table class="closing-table">
+            {{ pair("Opening Amount", doc.cashier_summaries|sum(attribute="opening_amount")) }}
+            {{ pair("Cash In", doc.total_cash_in) }}
+            {{ pair("Cash Out", doc.total_cash_out) }}
+            {{ pair("Expected Cash", doc.total_expected_cash, true) }}
+            {{ pair("Closing Amount", doc.total_closing_cash) }}
+            {{ pair("Variance", doc.total_variance, true) }}
+        </table>
+    </td><td class="closing-gutter"></td><td class="closing-half">
+        {% if not report.get('mixed_currency') %}
+        <h2 class="closing-section">{{ _("Collections by Counter") }}</h2>
+        <table class="closing-table"><thead><tr><th>{{ _("Counter") }}</th><th class="closing-money">{{ _("Amount") }}</th></tr></thead><tbody>
+            {% for key, value in report.counter_collections|dictsort %}{{ pair(report.counter_names.get(key, key), value) }}{% else %}<tr><td colspan="2">{{ _("No linked collections") }}</td></tr>{% endfor %}
+        </tbody></table>
+        <h2 class="closing-section">{{ _("Collections by Cashier") }}</h2>
+        <table class="closing-table"><thead><tr><th>{{ _("Cashier") }}</th><th class="closing-money">{{ _("Amount") }}</th></tr></thead><tbody>
+            {% for key, value in report.cashier_collections|dictsort %}{{ pair(report.cashier_names.get(key, key), value) }}{% else %}<tr><td colspan="2">{{ _("No linked collections") }}</td></tr>{% endfor %}
+        </tbody></table>
+        <h2 class="closing-section">{{ _("Sales by Item Group") }}</h2>
+        <table class="closing-table"><thead><tr><th>{{ _("Item Group") }}</th><th class="closing-money">{{ _("Net Amount") }}</th><th class="closing-money">{{ _("Sales") }} %</th></tr></thead><tbody>
+            {% for row in report.categories %}<tr><td>{{ row.label }}</td><td class="closing-money">{{ money(row.amount) }}</td><td class="closing-money">{{ money(row.percentage) }}%</td></tr>{% endfor %}
+            <tr class="closing-total"><td>{{ _("Total") }}</td><td class="closing-money">{{ money(report.category_total) }}</td><td></td></tr>
+        </tbody></table>
+        <h2 class="closing-section">{{ _("Tax Details") }}</h2>
+        <table class="closing-table"><thead><tr><th>{{ _("Tax") }}</th><th class="closing-money">{{ _("Taxable Amount") }}</th><th class="closing-money">{{ _("Tax Amount") }}</th></tr></thead><tbody>
+            {% for row in report.taxes %}<tr><td>{{ row.label }}{% if row.rate %} {{ money(row.rate) }}%{% endif %}</td><td class="closing-money">{{ money(row.taxable) if row.taxable is not none else "-" }}</td><td class="closing-money">{{ money(row.amount) }}</td></tr>{% else %}<tr><td colspan="3">{{ _("No tax breakdown available") }}</td></tr>{% endfor %}
+        </tbody></table>
+        {% endif %}
+    </td></tr></table>
+    <h2 class="closing-section">{{ _("Cashier Summary") }}</h2>
+    <table class="closing-table closing-cashiers"><thead><tr><th>{{ _("Cashier") }}</th><th>{{ _("Status") }}</th><th class="closing-money">{{ _("Invoice Count") }}</th><th class="closing-money">{{ _("Sales Total") }}</th><th class="closing-money">{{ _("Expected Cash") }}</th><th class="closing-money">{{ _("Closing Amount") }}</th><th class="closing-money">{{ _("Variance") }}</th></tr></thead><tbody>
+        {% for row in doc.cashier_summaries %}<tr><td>{{ row.cashier_name or row.cashier_employee or row.cashier_shift }}</td><td>{{ _(row.status or "") }}</td><td class="closing-money">{{ row.invoice_count or 0 }}</td><td class="closing-money">{{ money(row.sales_total) }}</td><td class="closing-money">{{ money(row.expected_cash) }}</td><td class="closing-money">{{ money(row.closing_amount) }}</td><td class="closing-money">{{ money(row.variance) }}</td></tr>{% endfor %}
+    </tbody></table>
+    {% if doc.notes %}<div class="closing-notes"><strong>{{ _("Notes") }}:</strong> {{ doc.notes }}</div>{% endif %}
+    {% if doc.docstatus == 2 and doc.cancel_reason %}<div class="closing-notes"><strong>{{ _("Cancel / Reopen Reason") }}:</strong> {{ doc.cancel_reason }}</div>{% endif %}
+    <div class="closing-signatures"><span>{{ _("Prepared By") }}</span><span>{{ _("Checked By") }}</span><span>{{ _("Authorized Signatory") }}</span></div>
+    {% set fixed_footer = footer if not no_letterhead else '' %}
+    {% if fixed_footer %}<div class="hardcoded-footer">{{ fixed_footer }}</div>{% endif %}
+</div>
+

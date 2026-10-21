@@ -158,6 +158,16 @@ def editable_layout(source, css=""):
 	return source, combined_css
 
 
+def packaged_layout(doctype):
+	"""Release-approved UI layouts, copied only when a site's A4 is missing."""
+	root = Path(__file__).parent / "templates" / "editable_print_formats"
+	slug = doctype.lower().replace(" ", "_")
+	html_path, css_path = root / f"{slug}.html", root / f"{slug}.css"
+	if html_path.is_file() and css_path.is_file():
+		return html_path.read_text(), css_path.read_text()
+	return None
+
+
 def ensure_editable_print_formats():
 	if not frappe.db.table_exists("Print Format"):
 		return
@@ -181,7 +191,7 @@ def ensure_editable_print_formats():
 			target.print_format_builder = 0
 			target.print_format_builder_beta = 0
 			target.print_format_for = "DocType"
-			target.html, target.css = editable_layout(source.html or "", source.css or "")
+			target.html, target.css = packaged_layout(doctype) or editable_layout(source.html or "", source.css or "")
 			target.insert(ignore_permissions=True)
 		# Existing site-owned HTML and CSS must remain byte-for-byte unchanged.
 		current = frappe.get_meta(doctype).default_print_format
