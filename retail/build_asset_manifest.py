@@ -66,6 +66,16 @@ def repair(assets):
 			raise RuntimeError(f"Missing required bundle: {key}")
 
 
+def validate_desk_bundles(assets):
+	"""Reject incomplete release images before they can be deployed."""
+	assets = Path(assets)
+	data = json.loads((assets / "assets.json").read_text())
+	for key in ("retail_desk.bundle.css", "retail_desk.bundle.js", "hrms.bundle.css", "hrms.bundle.js"):
+		url = data.get(key, "")
+		if not url.startswith("/assets/") or not (assets / url.removeprefix("/assets/")).is_file():
+			raise RuntimeError(f"Missing required Desk bundle: {key}; rebuild app assets")
+
+
 def snapshot(bench):
 	"""Bake the same core/app mappings for every new container and site volume."""
 	bench = Path(bench)
@@ -174,4 +184,5 @@ if __name__ == "__main__":
 			raise RuntimeError("Retail image asset snapshot missing; rebuild with the tracked Containerfile")
 	else:
 		repair(bench / "sites/assets")
+		validate_desk_bundles(bench / "sites/assets")
 		snapshot(bench)

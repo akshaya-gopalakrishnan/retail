@@ -62,6 +62,30 @@ Before handover, verify login, company setup, license activation/seats, a
 representative POS/accounting flow and off-server backup restoration. Do not
 delete production volumes as an asset-refresh or upgrade operation.
 
+## Asset performance
+
+The Containerfile explicitly builds Retail and HRMS bundles with `--production`.
+This keeps release builds minified even when a build environment enables developer
+mode. Core application sources are unchanged.
+
+For a local bench, run from the bench directory:
+
+```bash
+bash apps/retail/deployment/build_production_assets.sh
+```
+
+The script builds installed apps in production mode, checks required Desk bundles,
+and invalidates only the runtime asset-map cache. Hard refresh the browser after
+completion. An active `bench watch` or later development build can replace these
+bundles with development output; use this script again for performance checks.
+Developer mode and live reload remain available for normal development.
+
+Do not compare a local `bench serve` session directly with production hosting:
+production must serve assets through its frontend proxy with compression and
+appropriate public-asset caching. Measure document response time, workspace/API
+response time, and rendered card/chart readiness separately. Changes to caching
+must keep authenticated HTML, APIs, and private files private.
+
 ## Fresh-install release gate
 
 Before promoting a customer image, run:
