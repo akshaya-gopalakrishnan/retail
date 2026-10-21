@@ -20,7 +20,7 @@ RUN cd /home/frappe/frappe-bench \
 	&& ./env/bin/python -c "import json, hrms, retail; from pathlib import Path; p=Path('sites/apps.json'); data=json.loads(p.read_text()); data.update({'hrms': {'resolution': {'commit_hash': None, 'branch': 'version-15'}, 'required': [], 'idx': 3, 'version': hrms.__version__}, 'retail': {'resolution': {'commit_hash': None, 'branch': 'main'}, 'required': [], 'idx': 4, 'version': retail.__version__}}); p.write_text(json.dumps(data, indent=4) + '\n')" \
 	&& ln -sfn /home/frappe/frappe-bench/apps/hrms/hrms/public assets/hrms \
 	&& ln -sfn /home/frappe/frappe-bench/apps/retail/retail/public assets/retail \
-	&& bench build --production --app hrms --app retail \
+	&& bench build --production --apps hrms,retail \
 	&& ./env/bin/python -m retail.build_asset_manifest
 
 ENTRYPOINT ["/usr/local/bin/retail-entrypoint.sh"]
