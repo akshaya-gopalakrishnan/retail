@@ -1,0 +1,89 @@
+[
+  {
+    "doctype": "Sales Invoice",
+    "exact_filter_cases": 7,
+    "measurements": [
+      {
+        "optimized": false,
+        "seconds": 1.9677,
+        "queries": 1693,
+        "rows": 148
+      },
+      {
+        "optimized": true,
+        "seconds": 1.0698,
+        "queries": 874,
+        "rows": 148
+      },
+      {
+        "optimized": false,
+        "seconds": 2.0118,
+        "queries": 1693,
+        "rows": 148
+      },
+      {
+        "optimized": true,
+        "seconds": 1.3904,
+        "queries": 874,
+        "rows": 148
+      },
+      {
+        "optimized": false,
+        "seconds": 2.1393,
+        "queries": 1693,
+        "rows": 148
+      },
+      {
+        "optimized": true,
+        "seconds": 1.2346,
+        "queries": 874,
+        "rows": 148
+      }
+    ]
+  },
+  {
+    "doctype": "POS Invoice",
+    "exact_filter_cases": 7,
+    "measurements": [
+      {
+        "optimized": false,
+        "seconds": 0.9824,
+        "queries": 786,
+        "rows": 67
+      },
+      {
+        "optimized": true,
+        "seconds": 0.5031,
+        "queries": 394,
+        "rows": 67
+      },
+      {
+        "optimized": false,
+        "seconds": 0.8515,
+        "queries": 786,
+        "rows": 67
+      },
+      {
+        "optimized": true,
+        "seconds": 0.6057,
+        "queries": 394,
+        "rows": 67
+      },
+      {
+        "optimized": false,
+        "seconds": 1.0492,
+        "queries": 786,
+        "rows": 67
+      },
+      {
+        "optimized": true,
+        "seconds": 0.549,
+        "queries": 394,
+        "rows": 67
+      }
+    ]
+  },
+  {
+    "restricted_user_parity": true
+  }
+]

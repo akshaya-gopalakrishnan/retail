@@ -1,0 +1,188 @@
+{
+  "site": "retail-test.localhost",
+  "date": "2026-10-08",
+  "environment": {
+    "browser": "Headless Chromium",
+    "viewport": "1440x900",
+    "network_throttling": "none",
+    "cpu_throttling": "none",
+    "cold": "browser cache cleared; server caches retained",
+    "timing": "navigation start for cold/warm; route invocation for SPA",
+    "main_metric": "all 8 card values and all 3 chart SVGs; no LCP claim",
+    "request_window": "through readiness plus 1000 ms"
+  },
+  "before": {
+    "cold": {
+      "cards_ms": 2184.4,
+      "charts_ms": 2276.1,
+      "total_requests": 81,
+      "definition_getdoc_requests": 11,
+      "definition_getdoc_transfer_bytes": 21426,
+      "definition_burst_start_ms": 1569.9,
+      "definition_burst_end_ms": 2144.1,
+      "workspace_transfer_bytes": 9225
+    },
+    "warm": {
+      "cards_ms": 1742.6,
+      "charts_ms": 1864.6,
+      "total_requests": 80,
+      "definition_getdoc_requests": 11,
+      "definition_getdoc_transfer_bytes": 21426,
+      "definition_burst_start_ms": 1138.2,
+      "definition_burst_end_ms": 1688.7,
+      "workspace_transfer_bytes": 9225
+    },
+    "back": {
+      "cards_ms": 190.2,
+      "charts_ms": 223,
+      "total_requests": 16,
+      "definition_getdoc_requests": 0,
+      "definition_getdoc_transfer_bytes": 0,
+      "definition_burst_start_ms": null,
+      "definition_burst_end_ms": null,
+      "workspace_transfer_bytes": 0
+    },
+    "spaFirst": {
+      "cards_ms": 885.2,
+      "charts_ms": 965.2,
+      "total_requests": 32,
+      "definition_getdoc_requests": 11,
+      "definition_getdoc_transfer_bytes": 21426,
+      "definition_burst_start_ms": null,
+      "definition_burst_end_ms": null,
+      "workspace_transfer_bytes": 9225
+    }
+  },
+  "after": {
+    "cold": {
+      "cards_ms": 1900.3,
+      "charts_ms": 2009.6,
+      "total_requests": 69,
+      "definition_getdoc_requests": 0,
+      "definition_getdoc_transfer_bytes": 0,
+      "definition_burst_start_ms": null,
+      "definition_burst_end_ms": null,
+      "workspace_transfer_bytes": 24522
+    },
+    "warm": {
+      "cards_ms": 1525.8,
+      "charts_ms": 1607.7,
+      "total_requests": 69,
+      "definition_getdoc_requests": 0,
+      "definition_getdoc_transfer_bytes": 0,
+      "definition_burst_start_ms": null,
+      "definition_burst_end_ms": null,
+      "workspace_transfer_bytes": 24522
+    },
+    "back": {
+      "cards_ms": 192,
+      "charts_ms": 245.8,
+      "total_requests": 16,
+      "definition_getdoc_requests": 0,
+      "definition_getdoc_transfer_bytes": 0,
+      "definition_burst_start_ms": null,
+      "definition_burst_end_ms": null,
+      "workspace_transfer_bytes": 0
+    },
+    "spaFirst": {
+      "cards_ms": 374.7,
+      "charts_ms": 459.6,
+      "total_requests": 21,
+      "definition_getdoc_requests": 0,
+      "definition_getdoc_transfer_bytes": 0,
+      "definition_burst_start_ms": null,
+      "definition_burst_end_ms": null,
+      "workspace_transfer_bytes": 24522
+    }
+  },
+  "after_other_runs": {
+    "first_cold": {
+      "cards_ms": 13756.8,
+      "charts_ms": 13828.4,
+      "total_requests": 69,
+      "definition_getdoc_requests": 0,
+      "definition_getdoc_transfer_bytes": 0,
+      "definition_burst_start_ms": null,
+      "definition_burst_end_ms": null,
+      "workspace_transfer_bytes": 24522
+    },
+    "first_warm": {
+      "cards_ms": 1419.4,
+      "charts_ms": 1506.6,
+      "total_requests": 69,
+      "definition_getdoc_requests": 0,
+      "definition_getdoc_transfer_bytes": 0,
+      "definition_burst_start_ms": null,
+      "definition_burst_end_ms": null,
+      "workspace_transfer_bytes": 24522
+    },
+    "regression_cold": {
+      "cards_ms": 1934.2,
+      "charts_ms": 2026.9,
+      "total_requests": 69,
+      "definition_getdoc_requests": 0,
+      "definition_getdoc_transfer_bytes": 0,
+      "definition_burst_start_ms": null,
+      "definition_burst_end_ms": null,
+      "workspace_transfer_bytes": 24522
+    },
+    "regression_warm": {
+      "cards_ms": 1472.7,
+      "charts_ms": 1543.7,
+      "total_requests": 69,
+      "definition_getdoc_requests": 0,
+      "definition_getdoc_transfer_bytes": 0,
+      "definition_burst_start_ms": null,
+      "definition_burst_end_ms": null,
+      "workspace_transfer_bytes": 24522
+    }
+  },
+  "regressions": {
+    "values_unchanged": {
+      "cold": true,
+      "warm": true,
+      "back": true,
+      "spaFirst": true
+    },
+    "chart_data_unchanged": {
+      "cold": true,
+      "warm": true,
+      "back": true,
+      "spaFirst": true
+    },
+    "one_omitted_preload_browser": {
+      "cards_ms": 1741.5,
+      "charts_ms": 1771.1,
+      "total_requests": 71,
+      "definition_getdoc_requests": 1,
+      "definition_getdoc_transfer_bytes": 1870,
+      "definition_burst_start_ms": 1446.7,
+      "definition_burst_end_ms": 1696.2,
+      "workspace_transfer_bytes": 23190
+    },
+    "drilldown_route": [
+      "List",
+      "Sales Invoice",
+      "List"
+    ],
+    "restricted_backend_users": [
+      "demo.cashier1@example.com",
+      "vsdriver@gmail.com"
+    ],
+    "getdoc_payload_parity": "docs and docinfo exactly match standard getdoc for Administrator and both restricted users",
+    "one_denied_widget": "injected document read denial: excluded by real workspace builder and rejected by standard getdoc",
+    "configuration_change": "real workspace builder with in-memory removed reference and duplicate reference: 10 unique docs; no saved config changes",
+    "server_failure": "injected loader exception: remaining 10 docs returned, messages and response restored",
+    "automated_tests": "4 Python tests, 3 frontend preload tests, existing chart metadata tests pass"
+  },
+  "limitations": [
+    "Restricted-user browser tests unverified: only existing Administrator sessions available.",
+    "Single-document read denial simulated; no persisted permission changes made.",
+    "Configuration changes tested in memory through real Workspace builder; no persisted configuration changes made.",
+    "First after cold sample had 12.6 seconds before workspace request; retained as anomaly, reason not established.",
+    "SPA HTTP burst timestamps discarded because harness clock origins differ; route-relative readiness measurements are valid.",
+    "Definition bytes move into workspace response: 9225 to 24522 transferred bytes; no claim that definitions transfer zero bytes.",
+    "Cold total request reduction is 12; 11 are definition calls and the extra request varies with browser/assets.",
+    "Small local sample; no production or concurrent-user timing claim."
+  ]
+}

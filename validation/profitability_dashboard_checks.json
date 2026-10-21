@@ -1,0 +1,53 @@
+[
+  {
+    "date": "2026-08-22",
+    "dashboard": {
+      "net_sales": 3152.38,
+      "cost_amount": 190.0,
+      "gross_profit": 2962.38,
+      "profit_percent": 93.97280784676974
+    },
+    "report_total": {
+      "sales_group": "Total",
+      "net_sales": 3152.38,
+      "cost_amount": 190.0,
+      "missing_cost_rows": 0,
+      "gross_profit": 2962.38,
+      "profit_percent": 93.97280784676974
+    }
+  },
+  {
+    "date": "2026-08-14",
+    "dashboard": {
+      "net_sales": 95.25,
+      "cost_amount": 95.25,
+      "gross_profit": 0.0,
+      "profit_percent": 0.0
+    },
+    "report_total": {
+      "sales_group": "Total",
+      "net_sales": 95.25,
+      "cost_amount": 95.25,
+      "missing_cost_rows": 0,
+      "gross_profit": 0.0,
+      "profit_percent": 0.0
+    }
+  },
+  {
+    "date": "2026-06-27",
+    "dashboard": {
+      "net_sales": 10.0,
+      "cost_amount": 9.0,
+      "gross_profit": 1.0,
+      "profit_percent": 10.0
+    },
+    "report_total": {
+      "sales_group": "Total",
+      "net_sales": 10.0,
+      "cost_amount": 9.0,
+      "missing_cost_rows": 0,
+      "gross_profit": 1.0,
+      "profit_percent": 10.0
+    }
+  }
+]

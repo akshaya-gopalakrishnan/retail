@@ -1,0 +1,153 @@
+{% set vat_rate = 0 %}
+{% if doc.taxes and doc.taxes|length > 0 %}
+    {% set vat_rate = frappe.utils.flt(doc.taxes[0].rate) %}
+{% endif %}
+{% set party_label = "Supplier" if doc.doctype in ["Supplier Quotation", "Purchase Order", "Purchase Receipt", "Purchase Invoice"] else "Customer" %}
+{% set party_name = doc.supplier_name or doc.supplier or doc.customer_name or doc.customer or doc.company or "" %}
+{% set party_address = doc.supplier_address or doc.address_display or doc.shipping_address or doc.customer_address or "" %}
+{% set doc_title = {
+    "Sales Order": "SALES ORDER",
+    "Supplier Quotation": "SUPPLIER QUOTATION",
+    "Purchase Order": "PURCHASE ORDER",
+    "Purchase Receipt": "PURCHASE RECEIPT",
+    "Purchase Invoice": "PURCHASE INVOICE",
+    "Material Request": "MATERIAL REQUEST"
+}.get(doc.doctype, doc.doctype|upper) %}
+{% set doc_date = doc.transaction_date or doc.schedule_date or doc.posting_date or doc.bill_date %}
+
+
+<div class="retail-print-container">
+    {% if doc.docstatus == 0 %}
+        <div class="draft-watermark">{{ _("Yet to be Approved") }}</div>
+    {% endif %}
+
+    {% set fixed_letterhead = letter_head if not no_letterhead else '' %}
+    {% if fixed_letterhead %}
+        <div class="hardcoded-letterhead">{{ fixed_letterhead }}</div>
+    {% endif %}
+
+    <table class="retail-title-table"><tr>
+            <td class="retail-title-rule"><div></div></td>
+            <td class="retail-title-cell"><h1 class="document-title">{{ _(doc_title.title()) }}</h1></td>
+            <td class="retail-title-rule"><div></div></td>
+        </tr></table>
+        <div class="retail-document-number"># {{ doc.name }}</div>
+
+    <table class="information-table">
+        <tr>
+            <td class="party-section">
+                <div class="section-label">{{ _("Requested For") if doc.doctype == "Material Request" else _(party_label) }}</div>
+                <div class="party-name">{{ party_name }}</div>
+                <div class="party-address">{{ party_address }}</div>
+                {% if doc.contact_display %}<div class="contact-details">{{ doc.contact_display }}</div>{% endif %}
+                {% if doc.contact_mobile %}<div class="contact-details"><strong>{{ _("Mobile") }}:</strong> {{ doc.contact_mobile }}</div>{% endif %}
+                {% if doc.contact_email %}<div class="contact-details"><strong>{{ _("Email") }}:</strong> {{ doc.contact_email }}</div>{% endif %}
+            </td>
+            <td class="document-info-section">
+                <table class="document-details">
+                    <tr><td class="detail-label">{{ _("Date") }} :</td><td class="detail-value">{{ frappe.utils.formatdate(doc_date, "dd MMM yyyy") if doc_date else "" }}</td></tr>
+                    {% if doc.schedule_date %}<tr><td class="detail-label">{{ _("Required By") }} :</td><td class="detail-value">{{ frappe.utils.formatdate(doc.schedule_date, "dd MMM yyyy") }}</td></tr>{% endif %}
+                    {% if doc.company %}<tr><td class="detail-label">{{ _("Company") }} :</td><td class="detail-value">{{ doc.company }}</td></tr>{% endif %}
+                    {% if doc.set_warehouse or doc.warehouse %}<tr><td class="detail-label">{{ _("Warehouse") }} :</td><td class="detail-value">{{ doc.set_warehouse or doc.warehouse }}</td></tr>{% endif %}
+                    {% if doc.supplier_quotation %}<tr><td class="detail-label">{{ _("Supplier Quotation") }} :</td><td class="detail-value">{{ doc.supplier_quotation }}</td></tr>{% endif %}
+                    {% if doc.po_no %}<tr><td class="detail-label">{{ _("Customer Purchase Order") }}# :</td><td class="detail-value">{{ doc.po_no }}</td></tr>{% endif %}
+                    {% if doc.bill_no %}<tr><td class="detail-label">{{ _("Supplier Invoice") }} :</td><td class="detail-value">{{ doc.bill_no }}</td></tr>{% endif %}
+                    {% if doc.material_request_type %}<tr><td class="detail-label">{{ _("Request Type") }} :</td><td class="detail-value">{{ doc.material_request_type }}</td></tr>{% endif %}
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    <table class="item-table">
+        <thead>
+            <tr>
+                <th class="col-number">{{ _("Sr") }}<br>{{ _("No") }}</th>
+                <th class="col-description">{{ _("Item Description") }}</th>
+                <th class="col-date">{{ _("Required / Schedule") }}</th>
+                <th class="col-qty">{{ _("Qty") }}</th>
+                {% if doc.doctype != "Material Request" %}
+                    <th class="col-rate">{{ _("Rate") }}<br>{{ doc.currency }}</th>
+                    <th class="col-amount">{{ _("Amount") }}</th>
+                {% endif %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in doc.items %}
+                <tr>
+                    <td class="col-number">{{ loop.index }}</td>
+                    <td class="col-description">
+                        <div class="item-name">{{ _(item.item_name) if item.item_name else item.item_code }}</div>
+                        {% if item.item_code %}<div class="item-code">{{ item.item_code }}</div>{% endif %}
+                        {% if item.description %}<div class="item-description">{{ _(item.description) }}</div>{% endif %}
+                        {% if item.serial_no %}<div class="item-reference">{{ _("Serial No") }}#: {{ item.serial_no | replace("\n", ", ") }}</div>{% endif %}
+                        {% if item.batch_no %}<div class="item-reference">{{ _("Batch") }}#: {{ item.batch_no }}</div>{% endif %}
+                    </td>
+                    <td class="col-date">{{ frappe.utils.formatdate(item.schedule_date or item.required_by or doc.schedule_date, "dd MMM yyyy") if (item.schedule_date or item.required_by or doc.schedule_date) else "" }}</td>
+                    <td class="col-qty">
+                        {{ frappe.utils.fmt_money(item.qty, precision=2) }}
+                        {% if item.uom %}<span class="quantity-uom">{{ _(item.uom) }}</span>{% endif %}
+                    </td>
+                    {% if doc.doctype != "Material Request" %}
+                        <td class="col-rate">{{ frappe.utils.fmt_money(item.net_rate or item.rate, precision=2) }}</td>
+                        <td class="col-amount">{{ frappe.utils.fmt_money(item.net_amount or item.amount, precision=2) }}</td>
+                    {% endif %}
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if doc.doctype != "Material Request" %}
+        <table class="summary-table">
+            <tr>
+                <td class="summary-empty-section"></td>
+                <td class="totals-section">
+                    <table class="totals-table">
+                        <tr><td class="totals-label">{{ _("Subtotal") }}</td><td class="totals-value">{{ frappe.utils.fmt_money(doc.net_total or doc.total, precision=2) }}</td></tr>
+                        {% if doc.discount_amount %}<tr><td class="totals-label">{{ _("Discount") }}</td><td class="totals-value">{{ frappe.utils.fmt_money(doc.discount_amount, precision=2) }}</td></tr>{% endif %}
+                        <tr class="vat-row"><td class="totals-label">{{ _("VAT") }} ({{ frappe.utils.fmt_money(vat_rate, precision=0) }}%)</td><td class="totals-value">{{ frappe.utils.fmt_money(doc.total_taxes_and_charges or 0, precision=2) }}</td></tr>
+                        <tr class="grand-total-row"><td class="totals-label grand-total-label">{{ _("Total") }}</td><td class="totals-value grand-total-value">{{ doc.currency }} {{ frappe.utils.fmt_money(doc.grand_total, precision=2) }}</td></tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+
+        <table class="amount-words-table">
+            <tr>
+                <td class="amount-words-empty"></td>
+                <td class="amount-words-label">{{ _("In Words") }}:</td>
+                <td class="amount-words-value">{{ frappe.utils.money_in_words((doc.rounded_total if doc.get('rounded_total') is not none and not doc.is_rounded_total_disabled() else doc.grand_total)|abs, doc.currency) }}</td>
+            </tr>
+        </table>
+    {% endif %}
+
+    {% if doc.terms %}
+        <div class="terms-section">
+            <div class="terms-title">{{ _("Terms & Conditions") }}:</div>
+            <div>{{ doc.terms }}</div>
+        </div>
+    {% endif %}
+
+    {% if doc.remarks %}
+        <div class="notes-section">
+            <div class="notes-title">{{ _("Remarks") }}</div>
+            <div>{{ doc.remarks }}</div>
+        </div>
+    {% endif %}
+
+    <div class="signature-section">
+        <table class="signature-table">
+            <tr>
+                <td><div class="signature-line">{{ _("Prepared By") }}</div></td>
+                <td><div class="signature-line">{{ _("Checked By") }}</div></td>
+                <td><div class="signature-line">{{ _("Authorized Signatory") }}</div></td>
+            </tr>
+        </table>
+    </div>
+
+    {% set fixed_footer = footer if not no_letterhead else '' %}
+    {% if fixed_footer %}
+        <div class="hardcoded-footer">{{ fixed_footer }}</div>
+    {% endif %}
+</div>
+
+

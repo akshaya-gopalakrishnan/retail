@@ -1,0 +1,454 @@
+
+    @page {
+        size: A4;
+        margin: 10mm 12mm 12mm 12mm;
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    body,
+    .print-format {
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 10px;
+        color: #333;
+        line-height: 1.35;
+    }
+
+    .delivery-note-container {
+        width: 100%;
+        min-height: 270mm;
+        position: relative;
+    }
+
+    /* ==================================================
+       LETTERHEAD — OLD IMAGE METHOD
+       Kept commented for future use
+       ================================================== */
+
+    /*.letterhead-table {*/
+    /*    width: 100%;*/
+    /*    border-collapse: collapse;*/
+    /*    margin-bottom: 10px;*/
+    /*}*/
+
+    /*.letterhead-table td {*/
+    /*    border: none !important;*/
+    /*    padding: 0;*/
+    /*    vertical-align: top;*/
+    /*}*/
+
+    /*.logo-cell {*/
+    /*    width: 50%;*/
+    /*    text-align: left;*/
+    /*}*/
+
+    /*.address-cell {*/
+    /*    width: 50%;*/
+    /*    text-align: right;*/
+    /*}*/
+
+    /*.logo-image {*/
+    /*    width: 285px;*/
+    /*    max-height: 85px;*/
+    /*    object-fit: contain;*/
+    /*    object-position: left top;*/
+    /*}*/
+
+    /*.address-image {*/
+    /*    width: 260px;*/
+    /*    max-height: 90px;*/
+    /*    object-fit: contain;*/
+    /*    object-position: right top;*/
+    /*}*/
+
+
+    /* ==================================================
+       DOCUMENT TITLE
+       ================================================== */
+
+    .document-heading-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 8px 0 22px;
+    }
+
+    .document-heading-table td {
+        border: none !important;
+        padding: 0;
+        vertical-align: top;
+    }
+
+    .heading-empty-space {
+        width: 55%;
+    }
+
+    .heading-section {
+        width: 45%;
+        text-align: right;
+        padding-top: 5px !important;
+    }
+
+    .document-title {
+        margin: 0;
+        font-size: 26px;
+        line-height: 1.1;
+        font-weight: 500;
+        color: #222;
+    }
+
+    .document-number {
+        margin-top: 3px;
+        font-size: 9px;
+        font-weight: bold;
+        color: #444;
+    }
+
+
+    /* ==================================================
+       CUSTOMER AND DELIVERY INFORMATION
+       ================================================== */
+
+    .information-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 16px;
+    }
+
+    .information-table td {
+        border: none !important;
+        vertical-align: top;
+        padding: 0;
+    }
+
+    .customer-section {
+        width: 55%;
+        padding-top: 10px !important;
+        padding-right: 25px !important;
+    }
+
+    .delivery-info-section {
+        width: 45%;
+    }
+
+    .section-label {
+        color: #555;
+        font-size: 10px;
+        font-weight: bold;
+        margin-bottom: 2px;
+    }
+
+    .customer-name {
+        font-size: 11px;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 2px;
+    }
+
+    .customer-address {
+        font-size: 9.5px;
+        line-height: 1.4;
+        color: #444;
+    }
+
+    .contact-details {
+        margin-top: 4px;
+        font-size: 9px;
+        color: #444;
+    }
+
+    .delivery-details {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 10px;
+    }
+
+    .delivery-details td {
+        border: none !important;
+        padding: 3px 5px;
+        height: 23px;
+    }
+
+    .delivery-details .detail-label {
+        width: 48%;
+        font-weight: bold;
+        color: #444;
+    }
+
+    .delivery-details .detail-value {
+        width: 52%;
+        text-align: right;
+        color: #222;
+    }
+
+
+    /* ==================================================
+       ITEM TABLE
+       ================================================== */
+
+    .item-table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+        margin-bottom: 8px;
+    }
+
+    .item-table thead {
+        display: table-header-group;
+    }
+
+    .item-table th {
+        background: #333;
+        color: white;
+        border: none;
+        padding: 7px 6px;
+        font-weight: normal;
+        font-size: 10px;
+    }
+
+    .item-table td {
+        padding: 8px 6px;
+        vertical-align: top;
+        border-left: none;
+        border-right: none;
+        border-top: none;
+        border-bottom: 1px solid #e0e0e0;
+        font-size: 9.5px;
+    }
+
+    .item-table tbody tr:last-child td {
+        border-bottom: none;
+        padding-bottom: 12px;
+    }
+
+    .col-number {
+        width: 7%;
+        text-align: center;
+    }
+
+    .col-image {
+        width: 13%;
+        text-align: center;
+    }
+
+    .col-description {
+        width: 65%;
+        text-align: left;
+    }
+
+    .col-qty {
+        width: 15%;
+        text-align: right;
+    }
+
+    .item-image {
+        width: 55px;
+        height: 55px;
+        max-width: 55px;
+        max-height: 55px;
+        object-fit: contain;
+    }
+
+    .item-image-placeholder {
+        width: 50px;
+        height: 50px;
+        margin: auto;
+        border: 1px solid #ddd;
+        color: #aaa;
+        font-size: 7px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .item-name {
+        font-size: 10px;
+        font-weight: 600;
+        color: #222;
+        margin-bottom: 2px;
+    }
+
+    .item-code {
+        color: #555;
+        font-size: 8.5px;
+        margin-bottom: 2px;
+    }
+
+    .item-description {
+        color: #555;
+        line-height: 1.4;
+        word-break: break-word;
+    }
+
+    .item-reference {
+        color: #555;
+        font-size: 8.5px;
+        line-height: 1.4;
+        margin-top: 2px;
+    }
+
+    .quantity-value {
+        font-size: 10px;
+        color: #222;
+    }
+
+    .quantity-uom {
+        font-size: 8px;
+        color: #555;
+        margin-top: 2px;
+    }
+
+
+    /* ==================================================
+       ITEM COUNT
+       ================================================== */
+
+    .item-count {
+        margin-top: 5px;
+        font-size: 10px;
+        font-weight: bold;
+        color: #333;
+    }
+
+
+    /* ==================================================
+       DELIVERY REMARKS
+       ================================================== */
+
+    .remarks-section {
+        margin-top: 18px;
+        font-size: 9px;
+        page-break-inside: avoid;
+    }
+
+    .remarks-title {
+        font-weight: bold;
+        color: #555;
+        margin-bottom: 3px;
+    }
+
+    .remarks-content {
+        color: #444;
+        line-height: 1.45;
+    }
+
+
+    /* ==================================================
+       SIGNATURE SECTION
+       ================================================== */
+
+    .signature-section {
+        width: 100%;
+        margin-top: 65px;
+        page-break-inside: avoid;
+    }
+
+    .signature-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .signature-table td {
+        width: 33.33%;
+        border: none !important;
+        padding: 0 20px 0 0;
+        vertical-align: top;
+        font-size: 10px;
+    }
+
+    .signature-field {
+        margin-bottom: 35px;
+    }
+
+    .signature-label {
+        font-weight: bold;
+        color: #444;
+    }
+
+    .signature-line {
+        display: inline-block;
+        width: 115px;
+        margin-left: 5px;
+        border-bottom: 1px solid #777;
+    }
+
+    .company-stamp-cell {
+        text-align: center;
+    }
+
+    .stamp-image {
+        max-width: 120px;
+        max-height: 120px;
+        object-fit: contain;
+    }
+
+    .stamp-label {
+        margin-top: 75px;
+        color: #555;
+        font-size: 9px;
+    }
+
+
+    /* ==================================================
+       PAGE BREAKING
+       ================================================== */
+
+    .item-table tr {
+        page-break-inside: avoid;
+    }
+
+    .information-table,
+    .remarks-section,
+    .signature-section {
+        page-break-inside: avoid;
+    }
+
+    @media print {
+        body,
+        .print-format {
+            margin: 0;
+            padding: 0;
+        }
+
+        .delivery-note-container {
+            width: 100%;
+        }
+    }
+
+
+
+[dir="rtl"] .print-format { text-align: right; }
+[dir="rtl"] .print-format .heading-section, [dir="rtl"] .print-format .document-info-section { text-align: left; }
+[dir="rtl"] .print-format .col-description { text-align: right; }
+
+/* Retail default header colours: editable per format */
+.print-format table thead th,
+.print-format .item-table th,
+.print-format .po-address-title {
+    background-color: #2d6dc4 !important;
+    color: #fff !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+}
+.print-format table thead th *,
+.print-format .item-table th * {
+    color: #fff !important;
+}
+
+/* Compact letterhead and centred document title */
+.print-format .retail-letterhead { width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: 12px; }
+.print-format .retail-letterhead td { border: none !important; padding: 0 !important; vertical-align: bottom; }
+.print-format .retail-letterhead .retail-logo { width: 50%; text-align: left; }
+.print-format .retail-letterhead .retail-company { width: 50%; text-align: right; }
+.print-format .retail-letterhead .retail-logo img { width: 250px !important; max-width: 100% !important; height: auto !important; max-height: 85px; object-fit: contain; }
+.print-format .retail-letterhead .retail-company img { width: 210px !important; max-width: 100% !important; height: auto !important; max-height: 115px; object-fit: contain; }
+.print-format .retail-title-table { width: 100%; border-collapse: collapse; table-layout: auto; margin: 12px 0 4px; }
+.print-format .retail-title-table td { border: none !important; padding: 0 !important; vertical-align: middle; }
+.print-format .retail-title-rule { width: 50%; }
+.print-format .retail-title-rule div { border-top: 1px solid #333; }
+.print-format .retail-title-table .retail-title-cell { padding: 0 18px !important; width: auto; white-space: nowrap; text-align: center; }
+.print-format .retail-title-table .document-title { font-size: 18px; font-weight: normal; line-height: 1.3; color: #2d6dc4; text-transform: uppercase; margin: 0; }
+.print-format .retail-document-number { text-align: right; font-size: 10px; margin: 4px 0 12px; }
+.print-format .title-row { margin: 12px 0; }
+.print-format .invoice-title { color: #2d6dc4; font-size: 18px; font-weight: normal; text-transform: uppercase; }

@@ -96,7 +96,7 @@ def get_profit_summary(posting_date=None, company=None, from_date=None, to_date=
         to_date=to_date or posting_date or get_today(), branch=branch, counter=counter, van_session=van_session, driver=driver)
     if sales_source not in ("Sales Invoice", "POS Invoice"):
         frappe.throw("Unsupported profitability sales source")
-    rows = profitability_rows(filters, sales_source, van=van)
+    rows = profitability_rows(filters, sales_source, van=van, dashboard=True)
     total = profitability_total(rows, "label")
     total.invoice_count = len({r.invoice_no for r in rows if not r.is_return})
     total.return_amount = total.get("sales_returns", 0)

@@ -1,0 +1,365 @@
+{
+  "site": "retail-test.localhost",
+  "date": "2026-10-09",
+  "changes": [
+    "Production assets for installed apps",
+    "Reuse filtered boot sidebar on first Workspace mount; native refresh fallback",
+    "Preload custom chart source configurations with readable Business Home chart definitions",
+    "Count reorder rows without report enrichment",
+    "Avoid form-description metadata during sidebar visibility checks",
+    "Skip discarded website boot for native authenticated Desk GET/HEAD"
+  ],
+  "assets": {
+    "libs.bundle.js": {
+      "before": 1048029,
+      "after": 556251,
+      "reduction_percent": 46.9
+    },
+    "desk.bundle.js": {
+      "before": 2367074,
+      "after": 1359027,
+      "reduction_percent": 42.6
+    },
+    "controls.bundle.js": {
+      "before": 1642875,
+      "after": 881313,
+      "reduction_percent": 46.4
+    },
+    "form.bundle.js": {
+      "before": 288434,
+      "after": 172482,
+      "reduction_percent": 40.2
+    },
+    "list.bundle.js": {
+      "before": 329502,
+      "after": 201575,
+      "reduction_percent": 38.8
+    },
+    "report.bundle.js": {
+      "before": 377082,
+      "after": 206050,
+      "reduction_percent": 45.4
+    },
+    "erpnext.bundle.js": {
+      "before": 396573,
+      "after": 240415,
+      "reduction_percent": 39.4
+    },
+    "retail_desk.bundle.js": {
+      "before": 305966,
+      "after": 172338,
+      "reduction_percent": 43.7
+    },
+    "file_uploader.bundle.js": {
+      "before": 653274,
+      "after": 211278,
+      "reduction_percent": 67.7
+    },
+    "build_events.bundle.js": {
+      "before": 400990,
+      "after": 107029,
+      "reduction_percent": 73.3
+    }
+  },
+  "cold_start": {
+    "requests": [
+      {
+        "variant": "before",
+        "temperature": "cold",
+        "ms": 10873.26,
+        "status": 200,
+        "bytes": 423941,
+        "csrf_present": true
+      },
+      {
+        "variant": "before",
+        "temperature": "warm",
+        "ms": 118.08,
+        "status": 200,
+        "bytes": 423960,
+        "csrf_present": true
+      },
+      {
+        "variant": "after",
+        "temperature": "cold",
+        "ms": 4197.06,
+        "status": 200,
+        "bytes": 423941,
+        "csrf_present": true
+      },
+      {
+        "variant": "after",
+        "temperature": "warm",
+        "ms": 110.58,
+        "status": 200,
+        "bytes": 423960,
+        "csrf_present": true
+      }
+    ],
+    "boot_equal_except_metadata_version": true,
+    "profiled": false
+  },
+  "stock_count_10000_rows": [
+    {
+      "rows": 10000,
+      "out": false,
+      "before": 8000,
+      "after": 8000,
+      "before_ms": 669.5,
+      "after_ms": 193.05
+    },
+    {
+      "rows": 10000,
+      "out": true,
+      "before": 4000,
+      "after": 4000,
+      "before_ms": 580.76,
+      "after_ms": 175.23
+    }
+  ],
+  "sidebar_parity": [
+    {
+      "case": "Administrator",
+      "identical_payloads": true,
+      "pages": 108,
+      "before_warm": {
+        "ms": 197.44,
+        "sql": 79,
+        "discovery_queries": 5,
+        "max_identical_discovery": 3
+      },
+      "after_warm": {
+        "ms": 80.37,
+        "sql": 6,
+        "discovery_queries": 2,
+        "max_identical_discovery": 1
+      }
+    },
+    {
+      "case": "Celesta Super Administrator",
+      "identical_payloads": true,
+      "pages": 149,
+      "before_warm": {
+        "ms": 2948.79,
+        "sql": 1503,
+        "discovery_queries": 5,
+        "max_identical_discovery": 3
+      },
+      "after_warm": {
+        "ms": 168.8,
+        "sql": 109,
+        "discovery_queries": 2,
+        "max_identical_discovery": 1
+      }
+    },
+    {
+      "case": "Customer Administrator",
+      "identical_payloads": true,
+      "pages": 29,
+      "before_warm": {
+        "ms": 2650.88,
+        "sql": 1123,
+        "discovery_queries": 2,
+        "max_identical_discovery": 1
+      },
+      "after_warm": {
+        "ms": 890.0,
+        "sql": 238,
+        "discovery_queries": 2,
+        "max_identical_discovery": 1
+      }
+    },
+    {
+      "case": "Store Manager preset",
+      "identical_payloads": true,
+      "pages": 33,
+      "before_warm": {
+        "ms": 2713.06,
+        "sql": 1375,
+        "discovery_queries": 2,
+        "max_identical_discovery": 1
+      },
+      "after_warm": {
+        "ms": 773.3,
+        "sql": 302,
+        "discovery_queries": 2,
+        "max_identical_discovery": 1
+      }
+    },
+    {
+      "case": "restricted module preset",
+      "identical_payloads": true,
+      "pages": 19,
+      "before_warm": {
+        "ms": 618.56,
+        "sql": 257,
+        "discovery_queries": 2,
+        "max_identical_discovery": 1
+      },
+      "after_warm": {
+        "ms": 624.46,
+        "sql": 258,
+        "discovery_queries": 2,
+        "max_identical_discovery": 1
+      }
+    },
+    {
+      "case": "Driver/Van live",
+      "identical_payloads": true,
+      "pages": 34,
+      "before_warm": {
+        "ms": 3172.39,
+        "sql": 1299,
+        "discovery_queries": 2,
+        "max_identical_discovery": 1
+      },
+      "after_warm": {
+        "ms": 846.46,
+        "sql": 297,
+        "discovery_queries": 2,
+        "max_identical_discovery": 1
+      }
+    },
+    {
+      "case": "Van Sales User preset",
+      "identical_payloads": true,
+      "pages": 13,
+      "before_warm": {
+        "ms": 382.01,
+        "sql": 230,
+        "discovery_queries": 2,
+        "max_identical_discovery": 1
+      },
+      "after_warm": {
+        "ms": 390.81,
+        "sql": 230,
+        "discovery_queries": 2,
+        "max_identical_discovery": 1
+      }
+    },
+    {
+      "case": "Cashier preset",
+      "identical_payloads": true,
+      "pages": 6,
+      "before_warm": {
+        "ms": 1742.07,
+        "sql": 1247,
+        "discovery_queries": 2,
+        "max_identical_discovery": 1
+      },
+      "after_warm": {
+        "ms": 391.41,
+        "sql": 244,
+        "discovery_queries": 2,
+        "max_identical_discovery": 1
+      }
+    },
+    {
+      "case": "Normal User preset",
+      "identical_payloads": true,
+      "pages": 1,
+      "before_warm": {
+        "ms": 360.17,
+        "sql": 231,
+        "discovery_queries": 2,
+        "max_identical_discovery": 1
+      },
+      "after_warm": {
+        "ms": 353.44,
+        "sql": 231,
+        "discovery_queries": 2,
+        "max_identical_discovery": 1
+      }
+    }
+  ],
+  "browser": [
+    {
+      "route": "business-home",
+      "runtime_errors": [],
+      "round": 0,
+      "card_ready_ms": 2100,
+      "chart_ready_ms": 2078,
+      "lcp_ms": [
+        824
+      ],
+      "initial_sidebar_requests": 0,
+      "chart_config_requests": 0
+    },
+    {
+      "route": "business-home",
+      "runtime_errors": [],
+      "round": 1,
+      "card_ready_ms": 1380,
+      "chart_ready_ms": 1411,
+      "lcp_ms": [
+        460
+      ],
+      "initial_sidebar_requests": 0,
+      "chart_config_requests": 0
+    },
+    {
+      "route": "item",
+      "runtime_errors": [],
+      "ready_ms": 898,
+      "blocked": []
+    },
+    {
+      "route": "customer",
+      "runtime_errors": [],
+      "ready_ms": 568,
+      "blocked": []
+    },
+    {
+      "route": "sales-invoice",
+      "runtime_errors": [],
+      "ready_ms": 1563,
+      "blocked": []
+    },
+    {
+      "route": "purchase-invoice",
+      "runtime_errors": [],
+      "ready_ms": 516,
+      "blocked": []
+    },
+    {
+      "route": "stock-entry",
+      "runtime_errors": [],
+      "ready_ms": 513,
+      "blocked": []
+    },
+    {
+      "route": "Form Item",
+      "runtime_errors": [],
+      "ready_ms": 1205,
+      "blocked": []
+    },
+    {
+      "route": "Form Sales Invoice",
+      "runtime_errors": [],
+      "ready_ms": 1396,
+      "blocked": [
+        "translate_item_name_to_arabic"
+      ]
+    },
+    {
+      "route": "Form Purchase Invoice",
+      "runtime_errors": [],
+      "ready_ms": 1348,
+      "blocked": [
+        "translate_item_name_to_arabic"
+      ]
+    }
+  ],
+  "checks": {
+    "python_tests": 41,
+    "javascript_test_files": 8,
+    "production_build": "passed",
+    "native_login_csrf_licensing": "passed"
+  },
+  "limits": [
+    "Local development measurements vary with cache state and server load; cold-start comparison is one controlled before/after pair.",
+    "Browser form checks excluded the external Arabic translation provider.",
+    "Individual report execution, offline POS synchronization and transaction posting were not benchmarked in this pass.",
+    "A future development asset build can replace minified bundles; use bench build --production for production assets."
+  ]
+}

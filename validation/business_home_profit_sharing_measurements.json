@@ -1,0 +1,85 @@
+{
+  "fixture": "transaction-only copies of ten submitted invoices and their GL/SLE; rolled back",
+  "results": [
+    {
+      "invoices": 10,
+      "before": {
+        "seconds": 0.4971,
+        "sql": 651,
+        "loads": 40
+      },
+      "after": {
+        "seconds": 0.2201,
+        "sql": 162,
+        "loads": 10
+      },
+      "exact_equal": true,
+      "values": {
+        "sales": 850.29,
+        "profit": "\u062f.\u0625 -319.77",
+        "count": 10,
+        "returns": 0.0
+      }
+    },
+    {
+      "invoices": 100,
+      "before": {
+        "seconds": 4.6961,
+        "sql": 6444,
+        "loads": 400
+      },
+      "after": {
+        "seconds": 1.1392,
+        "sql": 1611,
+        "loads": 100
+      },
+      "exact_equal": true,
+      "values": {
+        "sales": 8502.900000000001,
+        "profit": "\u062f.\u0625 -3,197.70",
+        "count": 100,
+        "returns": 0.0
+      }
+    },
+    {
+      "invoices": 500,
+      "before": {
+        "seconds": 25.5891,
+        "sql": 32204,
+        "loads": 2000
+      },
+      "after": {
+        "seconds": 6.7897,
+        "sql": 8051,
+        "loads": 500
+      },
+      "exact_equal": true,
+      "values": {
+        "sales": 42514.50000000007,
+        "profit": "\u062f.\u0625 -15,988.50",
+        "count": 500,
+        "returns": 0.0
+      }
+    },
+    {
+      "invoices": 1000,
+      "before": {
+        "seconds": 51.9795,
+        "sql": 64404,
+        "loads": 4000
+      },
+      "after": {
+        "seconds": 13.7715,
+        "sql": 16101,
+        "loads": 1000
+      },
+      "exact_equal": true,
+      "values": {
+        "sales": 85029.0000000005,
+        "profit": "\u062f.\u0625 -31,977.00",
+        "count": 1000,
+        "returns": 0.0
+      }
+    }
+  ]
+}

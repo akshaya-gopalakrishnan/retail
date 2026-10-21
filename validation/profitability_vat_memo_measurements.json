@@ -1,0 +1,114 @@
+{
+  "site": "retail-test.localhost",
+  "dataset": "Repeated live submitted invoice executions; no writes",
+  "results": [
+    {
+      "executions": 10,
+      "before": {
+        "sql": 161,
+        "vat_lookups": 10,
+        "seconds": 0.155
+      },
+      "after": {
+        "sql": 152,
+        "vat_lookups": 1,
+        "seconds": 0.1459
+      },
+      "exact_equal": true
+    },
+    {
+      "executions": 100,
+      "before": {
+        "sql": 1610,
+        "vat_lookups": 100,
+        "seconds": 1.3589
+      },
+      "after": {
+        "sql": 1511,
+        "vat_lookups": 1,
+        "seconds": 1.4026
+      },
+      "exact_equal": true
+    },
+    {
+      "executions": 500,
+      "before": {
+        "sql": 8050,
+        "vat_lookups": 500,
+        "seconds": 6.1326
+      },
+      "after": {
+        "sql": 7551,
+        "vat_lookups": 1,
+        "seconds": 5.6744
+      },
+      "exact_equal": true
+    },
+    {
+      "executions": 1000,
+      "before": {
+        "sql": 16100,
+        "vat_lookups": 1000,
+        "seconds": 12.2568
+      },
+      "after": {
+        "sql": 15101,
+        "vat_lookups": 1,
+        "seconds": 13.0533
+      },
+      "exact_equal": true
+    }
+  ],
+  "company": "nesto",
+  "seed_invoices": [
+    "PSI-4",
+    "PSI-3",
+    "PSI-2",
+    "PSI-1",
+    "SI-71",
+    "SI-70",
+    "SI-69",
+    "SI-68",
+    "POS-75",
+    "POS-69"
+  ],
+  "live_filters": [
+    {
+      "filters": {},
+      "rows": 133,
+      "exact_equal": true
+    },
+    {
+      "filters": {
+        "company": "nesto"
+      },
+      "rows": 133,
+      "exact_equal": true
+    },
+    {
+      "filters": {
+        "company": "__NO_MATCH__"
+      },
+      "rows": 0,
+      "exact_equal": true
+    },
+    {
+      "filters": {
+        "branch": "__NO_MATCH__"
+      },
+      "rows": 0,
+      "exact_equal": true
+    },
+    {
+      "filters": {
+        "counter": "__NO_MATCH__"
+      },
+      "rows": 0,
+      "exact_equal": true
+    }
+  ],
+  "live_pos": {
+    "rows": 53,
+    "exact_equal": true
+  }
+}

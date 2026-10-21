@@ -1,0 +1,2 @@
+{"administrator_editor":"editable","server":"http://retail-test.localhost:8000","identity":"Administrator","can_manage_access":true}
+{"administrator_saved_selection":"enforced","denied_customer_sidebar":"hidden","denied_quotation_api":403,"denied_quotation_url":403,"own_permission_editor_save_reload":"passed"}

@@ -54,6 +54,7 @@ class TestEditablePrintPortability(unittest.TestCase):
 		with (
 			patch.object(formats, "frappe") as frappe,
 			patch.object(formats, "make_property_setter") as setter,
+			patch.object(formats, "packaged_layout", return_value=None),
 			patch.dict(formats.SOURCES, {"Sales Invoice": "Sales Invoice - Copy"}, clear=True),
 		):
 			frappe.db.exists.side_effect = lambda dt, name: name == "Sales Invoice - Copy"
@@ -70,6 +71,31 @@ class TestEditablePrintPortability(unittest.TestCase):
 			self.assertIn(".invoice { color: blue; }", target.css)
 			target.insert.assert_called_once_with(ignore_permissions=True)
 			setter.assert_called_once()
+
+	def test_all_released_layouts_are_packaged(self):
+		for doctype in formats.SOURCES:
+			with self.subTest(doctype=doctype):
+				layout = formats.packaged_layout(doctype)
+				self.assertIsNotNone(layout)
+				html, css = layout
+				self.assertTrue(html.strip())
+				self.assertTrue(css.strip())
+				self.assertNotIn('/private/files/', html)
+				self.assertNotIn('<style', html.lower())
+	def test_new_copy_uses_released_layout_without_rewriting_it(self):
+		target = SimpleNamespace(insert=Mock())
+		with (
+			patch.object(formats, "frappe") as frappe,
+			patch.object(formats, "make_property_setter"),
+			patch.dict(formats.SOURCES, {"Sales Invoice": "Sales Invoice - Copy"}, clear=True),
+		):
+			frappe.db.exists.side_effect = lambda dt, name: name == "Sales Invoice - Copy"
+			frappe.copy_doc.return_value = target
+			frappe.get_meta.return_value.default_print_format = None
+			formats.ensure_editable_print_formats()
+			self.assertEqual((target.html, target.css), formats.packaged_layout("Sales Invoice"))
+			self.assertEqual(target.standard, "No")
+			self.assertEqual(target.print_format_builder, 0)
 
 	def test_existing_ui_copy_and_chosen_default_are_preserved(self):
 		with (

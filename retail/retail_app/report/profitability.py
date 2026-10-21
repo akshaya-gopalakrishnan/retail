@@ -269,7 +269,30 @@ def invoice_rows(doc, *, vat_accounts_by_company=None):
     return rows
 
 
-def profitability_rows(filters=None, doctype="Sales Invoice", *, van=False):
+def load_dashboard_invoice(doctype, name):
+    """Read calculation inputs only, after permission-aware invoice selection.
+
+    These transient documents must never be saved: unrelated child tables are
+    intentionally absent. Keep normal document loading for all report callers.
+    """
+    if doctype not in ("Sales Invoice", "POS Invoice"):
+        return frappe.get_doc(doctype, name)
+    data = frappe.db.get_value(doctype, name, "*", as_dict=True, order_by=None)
+    if not data:
+        return frappe.get_doc(doctype, name)  # Preserve normal missing-document errors.
+    data["doctype"] = doctype
+    meta = frappe.get_meta(doctype)
+    for fieldname in ("items", "taxes"):
+        field = meta.get_field(fieldname)
+        if not field or not field.options:
+            return frappe.get_doc(doctype, name)
+        data[fieldname] = frappe.db.get_values(field.options,
+            {"parent": str(name), "parenttype": doctype, "parentfield": fieldname},
+            "*", as_dict=True, order_by="idx asc") or []
+    return frappe.get_doc(data)
+
+
+def profitability_rows(filters=None, doctype="Sales Invoice", *, van=False, dashboard=False):
     from frappe.utils import getdate
     filters = frappe._dict(filters or {})
     conditions = {"docstatus": 1}
@@ -307,7 +330,8 @@ def profitability_rows(filters=None, doctype="Sales Invoice", *, van=False):
     rows = []
     vat_accounts_by_company = {}
     for name in frappe.get_list(doctype, filters=conditions, pluck="name", limit_page_length=0, order_by="posting_date desc, name"):
-        for row in invoice_rows(frappe.get_doc(doctype, name), vat_accounts_by_company=vat_accounts_by_company):
+        doc = load_dashboard_invoice(doctype, name) if dashboard else frappe.get_doc(doctype, name)
+        for row in invoice_rows(doc, vat_accounts_by_company=vat_accounts_by_company):
             if all(not filters.get(k) or row.get(k) == filters[k] for k in ("item_code", "item_group", "warehouse", "brand", "branch", "counter", "cashier", "cashier_employee")):
                 rows.append(row)
     return rows
