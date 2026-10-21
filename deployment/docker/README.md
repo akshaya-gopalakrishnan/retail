@@ -68,6 +68,9 @@ The Containerfile explicitly builds Retail and HRMS bundles with `--production`.
 It installs HRMS JavaScript dependencies from its lockfile before building;
 Python package installation alone does not provide dependencies such as
 `html2canvas`. HRMS postinstall also prepares its frontend and roster dependencies.
+The image asset builder supplies `socketio_port=9000` only when missing during
+compilation, as required by HRMS's frontend JSON import. It restores the original
+common configuration after success or failure; existing values are preserved.
 This keeps release builds minified even when a build environment enables developer
 mode. Core application sources are unchanged.
 
