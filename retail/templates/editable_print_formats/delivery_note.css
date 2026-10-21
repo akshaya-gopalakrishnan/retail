@@ -18,7 +18,7 @@
 
     .delivery-note-container {
         width: 100%;
-        min-height: 270mm;
+        min-height: 0;
         position: relative;
     }
 

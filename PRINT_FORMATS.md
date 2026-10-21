@@ -16,6 +16,12 @@ To distribute a later UI-approved design, copy its HTML and Custom CSS into the
 matching files in that directory and release the app. A UI save by itself is
 site-local. The older Print Format source records remain compatibility fallbacks.
 
+A4 containers grow with their content instead of reserving a full page height.
+Do not add `min-height: 270mm` to their CSS: with A4 margins, Chromium can round
+that height beyond the printable area and produce an empty second sheet.
+Long item lists still paginate normally; totals, notes, and signatures may also
+require another page when the remaining printable space is insufficient.
+
 `ensure_editable_print_formats` creates missing site-owned A4 copies, separates
 embedded styles into Custom CSS, and sets the default unless the site chose a
 different format. Existing A4 HTML and CSS are never rewritten on migration.
