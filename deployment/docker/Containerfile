@@ -17,6 +17,7 @@ RUN cd /home/frappe/frappe-bench \
 	&& rm -rf apps/hrms/hrms/public/dist apps/retail/retail/public/dist \
 	&& printf "frappe\nerpnext\nhrms\nretail\n" > sites/apps.txt \
 	&& ./env/bin/pip install --no-cache-dir -e apps/hrms -e apps/retail \
+	&& yarn --cwd apps/hrms install --frozen-lockfile --check-files \
 	&& ./env/bin/python -c "import json, hrms, retail; from pathlib import Path; p=Path('sites/apps.json'); data=json.loads(p.read_text()); data.update({'hrms': {'resolution': {'commit_hash': None, 'branch': 'version-15'}, 'required': [], 'idx': 3, 'version': hrms.__version__}, 'retail': {'resolution': {'commit_hash': None, 'branch': 'main'}, 'required': [], 'idx': 4, 'version': retail.__version__}}); p.write_text(json.dumps(data, indent=4) + '\n')" \
 	&& ln -sfn /home/frappe/frappe-bench/apps/hrms/hrms/public assets/hrms \
 	&& ln -sfn /home/frappe/frappe-bench/apps/retail/retail/public assets/retail \

@@ -65,6 +65,9 @@ delete production volumes as an asset-refresh or upgrade operation.
 ## Asset performance
 
 The Containerfile explicitly builds Retail and HRMS bundles with `--production`.
+It installs HRMS JavaScript dependencies from its lockfile before building;
+Python package installation alone does not provide dependencies such as
+`html2canvas`. HRMS postinstall also prepares its frontend and roster dependencies.
 This keeps release builds minified even when a build environment enables developer
 mode. Core application sources are unchanged.
 
