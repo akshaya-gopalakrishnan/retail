@@ -708,5 +708,13 @@
   "Outstanding / Collection Summary": [
     "query-report",
     "Van Outstanding Collection Summary"
+  ],
+  "Promotions Voucher Card Batch Link": [
+    "List",
+    "Voucher Card Batch"
+  ],
+  "Voucher Card Batch": [
+    "List",
+    "Voucher Card Batch"
   ]
 }

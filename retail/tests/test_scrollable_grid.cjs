@@ -157,7 +157,7 @@ test("registered transaction grids remove the native width budget without a prot
   assert.deepEqual(Object.keys(f.handlers), [
     "Purchase Order", "Purchase Invoice", "Purchase Receipt", "Material Request",
     "Stock Reconciliation", "Stock Entry", "Delivery Note", "Sales Order",
-    "Sales Invoice", "POS Invoice",
+    "Sales Invoice", "POS Invoice", "Promo Price", "Item",
   ]);
   f.handlers["Purchase Invoice"].refresh(f.frm);
   assert.equal(f.grid.visible_columns.length, 16);
@@ -323,3 +323,65 @@ for (const doctype of ["Purchase Order", "Purchase Receipt", "Material Request",
   assert.equal(f.grid.__retail_content_widths.field_0, 95);
   assert.equal(f.grid.__retail_content_widths.field_1, 117);
  });
+
+test("packing columns honor saved order and widths", async () => {
+  const f = fixture();
+  f.frm.doctype = "Item";
+  f.grid.df.fieldname = "custom_retail_packing_detail";
+  f.frm.fields_dict.custom_retail_packing_detail = { grid: f.grid };
+  f.handlers.Item.refresh(f.frm);
+  assert.equal(f.grid.visible_columns.length, 16);
+  f.grid.header_row.selected_columns_for_grid = [
+    { fieldname: "field_4", columns: 6 },
+    { fieldname: "field_0", columns: 2 },
+  ];
+  await f.grid.header_row.update_user_settings_for_grid();
+  assert.deepEqual(names(f.grid), ["field_4", "field_0"]);
+  assert.equal(f.grid.__retail_content_widths.field_4, 480);
+  assert.equal(f.grid.__retail_content_widths.field_0, 160);
+  assert.equal(f.fields[4].columns, 1);
+  await f.grid.header_row.reset_user_settings_for_grid();
+  assert.equal(f.grid.visible_columns.length, 16);
+});
+
+test("direct header drag saves reordered columns and edge drag saves widths", async () => {
+  const f = fixture();
+  const events = {};
+  const handles = [];
+  const cells = Array.from({length: 16}, (_, index) => index).map(index => ({
+    dataset: { fieldname: `field_${index}` },
+    addEventListener(name, callback) { this[name] = callback; },
+    appendChild(handle) { handles.push(handle); },
+    getBoundingClientRect() { return { width: f.grid.__retail_content_widths?.[`field_${index}`] || 160 }; },
+  }));
+  f.context.document = {
+    createElement(type) {
+      return type === "canvas" ? {getContext: () => null} : {
+        addEventListener(name, callback) { this[name] = callback; },
+      };
+    },
+    addEventListener(name, callback) { events[name] = callback; },
+    removeEventListener(name) { delete events[name]; },
+  };
+  f.frappe.utils.is_rtl = () => false;
+  const refresh = f.grid.refresh;
+  f.grid.refresh = function () {
+    const result = refresh.call(this);
+    const children = { each() { return this; }, off() {} };
+    this.header_row.row = {0: {children: cells, querySelectorAll: () => cells}, children: () => children};
+    return result;
+  };
+  f.handlers["Purchase Invoice"].refresh(f.frm);
+  const event = {preventDefault() {}, dataTransfer: {setData() {}}};
+  cells[0].dragstart(event);
+  cells[1].drop(event);
+  await new Promise(resolve => setImmediate(resolve));
+  assert.deepEqual(names(f.grid).slice(0, 2), ["field_1", "field_0"]);
+  handles[16].pointerdown({clientX: 100, preventDefault() {}, stopPropagation() {}});
+  events.pointermove({clientX: 137});
+  events.pointerup();
+  await new Promise(resolve => setImmediate(resolve));
+  const saved = f.frappe.model.user_settings["Purchase Invoice"].RetailScrollableGrid.items;
+  assert.equal(saved.find(column => column.fieldname === "field_0").width_px, 117);
+  assert.equal(events.pointermove, undefined);
+});

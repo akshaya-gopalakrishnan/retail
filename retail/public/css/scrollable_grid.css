@@ -31,8 +31,10 @@
 	max-width: var(--retail-column-width, 40px) !important;
 	min-width: 0;
 }
-.retail-scrollable-grid .grid-row > .data-row > .col:last-child:not([data-fieldname]) {
-	flex-grow: 1 !important;
+/* Share spare viewport space between data columns, keeping row controls compact.
+   The pixel basis still provides a minimum when extra columns require scrolling. */
+.retail-scrollable-grid .grid-row > .data-row > .retail-grid-data-column {
+	flex-grow: var(--retail-column-grow, 1) !important;
 	max-width: none !important;
 }
 .retail-scrollable-grid .grid-row > .data-row > .row-index {
@@ -86,4 +88,25 @@
 .retail-scrollable-grid .form-grid:has(.grid-row-open) .grid-heading-row,
 .retail-scrollable-grid .form-grid:has(.grid-row-open) .grid-row:not(.grid-row-open) {
 	display: none;
+}
+
+/* Direct column controls stay in the heading; native row editing is unchanged. */
+.retail-scrollable-grid .grid-heading-row .retail-grid-data-column {
+	cursor: grab;
+}
+/* Pinned headings must keep position: sticky. A relative heading would apply
+   its sticky inset as an offset and shift it away from the body column. */
+.retail-scrollable-grid .grid-heading-row .retail-grid-data-column:not(.retail-grid-pinned) {
+	position: relative;
+}
+.retail-scrollable-grid .retail-grid-resize-handle {
+	position: absolute;
+	inset-inline-end: 0;
+	top: 0;
+	bottom: 0;
+	width: 8px;
+	cursor: col-resize;
+	touch-action: none;
+	z-index: 4;
+	border-inline-end: 2px solid var(--border-color);
 }

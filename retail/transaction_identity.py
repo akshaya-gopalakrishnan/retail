@@ -231,7 +231,7 @@ def packing_breakdown(identities):
 
 def columns(*, sold=True, grouped=False):
     if grouped:
-        return [dict(fieldname="retail_packing_breakdown", label=_("Sold Packing Breakdown" if sold else "Transaction Packing Breakdown"), fieldtype="Data", width=420)]
+        return []
     # Data columns deliberately avoid summing quantities in mixed UOMs or conversion factors.
     prefix = "Sold" if sold else "Transaction"
     return [dict(fieldname=field, label=_(label), fieldtype=kind, width=width, **extra)
@@ -241,8 +241,6 @@ def columns(*, sold=True, grouped=False):
                 (FIELDS[2], f"{prefix} Item / Packing Name", "Data", 230, {}),
                 (FIELDS[3], f"{prefix} Qty", "Data", 110, {}),
                 (FIELDS[4], "UOM Conversion Factor", "Data", 130, {}),
-                (FIELDS[5], "Transaction Identity Source", "Data", 240, {}),
-                ("retail_packing_breakdown", "Packing Breakdown", "Data", 360, {}),
             ]]
 
 

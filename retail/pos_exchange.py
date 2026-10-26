@@ -17,7 +17,11 @@ def _money_equal(left, right):
 
 def split(payload):
     """Validate monetary facts before any document is posted."""
-    if payload.get("issued_vouchers") or payload.get("voucher_redemption"):
+    from retail.pos_offline_promotions import rows as promotion_rows
+    if promotion_rows(payload):
+        frappe.throw("Promotion tender rows on exchange receipts require separate sale and return payloads.")
+    if (payload.get("issued_vouchers") or payload.get("voucher_redemption")
+            or payload.get("voucher_redemptions") or payload.get("loyalty_redemption")):
         frappe.throw("Gift vouchers in exchange receipts are not supported yet.")
     if payload.get("taxes"):
         frappe.throw("Exchange receipts must send VAT per item instead of taxes[].")

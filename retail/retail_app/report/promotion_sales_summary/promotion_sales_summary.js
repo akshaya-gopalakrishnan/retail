@@ -6,7 +6,6 @@ frappe.query_reports["Promotion Sales Summary"] = {
         {fieldname: "pos_branch", label: __("Branch"), fieldtype: "Link", options: "Branch"},
         {fieldname: "pos_counter", label: __("Counter"), fieldtype: "Link", options: "POS Branch Counter"},
         {fieldname: "pos_cashier", label: __("Cashier"), fieldtype: "Data"},
-        {fieldname: "promotion", label: __("Promotion"), fieldtype: "Data"},
-        {fieldname: "status", label: __("Schedule Check"), fieldtype: "Select", options: "\nSchedule Valid\nReview Required\nReturn Linked\nNot Reported"}
+        {fieldname: "promotion", label: __("Promotion"), fieldtype: "Data"}
     ]
 };

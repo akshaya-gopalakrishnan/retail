@@ -18,7 +18,7 @@ def ledger_entries(customer, program, company, lock=False):
     )
 
 
-def available_buckets(entries, posting_date=None, exclude_invoice=None):
+def available_buckets(entries, posting_date=None, exclude_invoice=None, exclude_invoice_type="Sales Invoice"):
     posting_date = getdate(posting_date or today())
     expiry_cutoff = max(posting_date, getdate(today()))
     movements = defaultdict(int)
@@ -29,7 +29,7 @@ def available_buckets(entries, posting_date=None, exclude_invoice=None):
     for entry in entries:
         if entry.redeem_against or cint(entry.loyalty_points) < 0:
             continue
-        if exclude_invoice and entry.invoice_type == "Sales Invoice" and entry.invoice == exclude_invoice:
+        if exclude_invoice and entry.invoice_type == exclude_invoice_type and entry.invoice == exclude_invoice:
             continue
         if not entry.expiry_date or getdate(entry.expiry_date) < expiry_cutoff:
             continue
@@ -38,7 +38,24 @@ def available_buckets(entries, posting_date=None, exclude_invoice=None):
         balance = cint(entry.loyalty_points) + movements[entry.name]
         if balance > 0:
             result.append((entry, balance))
-    return result
+    # An audited offline POS overdraft must be repaid by later earnings, not
+    # forgotten merely because positive earning buckets are returned separately.
+    debt = 0
+    for entry in entries:
+        if entry.redeem_against or not entry.posting_date or getdate(entry.posting_date) > posting_date:
+            continue
+        points = cint(entry.loyalty_points)
+        if points < 0 and entry.invoice_type == "POS Invoice":
+            debt -= points
+        elif points >= 0:
+            debt += max(0, -(points + movements[entry.name]))
+    adjusted = []
+    for entry, balance in result:
+        offset = min(debt, balance)
+        debt -= offset
+        if balance > offset:
+            adjusted.append((entry, balance-offset))
+    return adjusted
 
 
 def get_program(customer, program, company):
@@ -116,7 +133,7 @@ def prepare_return(doc):
 
 
 def validate_redemption(doc, method=None):
-    if doc.is_consolidated:
+    if doc.get("is_consolidated"):
         return
     old_amount = flt(doc.loyalty_amount)
     if doc.is_return:
@@ -128,7 +145,7 @@ def validate_redemption(doc, method=None):
         program = get_program(doc.customer, doc.loyalty_program, doc.company) if doc.customer else None
         doc.loyalty_program = program.name if program else None
         entries = ledger_entries(doc.customer, program.name, doc.company, lock=doc.docstatus == 1) if program else []
-        balance = sum(n for _, n in available_buckets(entries, doc.posting_date, doc.name))
+        balance = sum(n for _, n in available_buckets(entries, doc.posting_date, doc.name, doc.doctype))
         doc.custom_available_loyalty_points = balance
         if not doc.redeem_loyalty_points:
             doc.loyalty_points = doc.loyalty_amount = 0
@@ -148,7 +165,10 @@ def validate_redemption(doc, method=None):
             doc.loyalty_redemption_account = program.expense_account
             doc.loyalty_redemption_cost_center = program.cost_center
             total = doc.grand_total if doc.is_rounded_total_disabled() else doc.rounded_total
-            maximum = (flt(total) - flt(doc.total_advance) - flt(doc.write_off_amount)) * flt(doc.conversion_rate)
+            if doc.doctype == "POS Invoice" and doc.get("custom_pos_completed_payload"):
+                completed = frappe.parse_json(doc.custom_pos_completed_payload)
+                total = completed.get("rounded_total", completed.get("grand_total"))
+            maximum = (flt(total) - flt(doc.get("total_advance")) - flt(doc.write_off_amount)) * flt(doc.conversion_rate)
             if doc.loyalty_amount > max(0, flt(maximum, doc.precision("loyalty_amount"))):
                 frappe.throw(_("The loyalty redemption amount exceeds the remaining invoice amount."))
     if old_amount != flt(doc.loyalty_amount):
@@ -165,7 +185,7 @@ def insert_movement(doc, bucket, points):
     frappe.get_doc({
         "doctype": "Loyalty Point Entry", "customer": doc.customer,
         "loyalty_program": doc.loyalty_program, "company": doc.company,
-        "invoice_type": "Sales Invoice", "invoice": doc.name,
+        "invoice_type": doc.doctype, "invoice": doc.name,
         "redeem_against": bucket.name, "loyalty_program_tier": bucket.loyalty_program_tier,
         "loyalty_points": points, "purchase_amount": 0,
         "posting_date": doc.posting_date, "expiry_date": bucket.expiry_date,
@@ -174,7 +194,7 @@ def insert_movement(doc, bucket, points):
 
 def redeem(doc):
     entries = ledger_entries(doc.customer, doc.loyalty_program, doc.company, lock=True)
-    buckets = available_buckets(entries, doc.posting_date, doc.name)
+    buckets = available_buckets(entries, doc.posting_date, doc.name, doc.doctype)
     remaining = cint(doc.loyalty_points)
     if remaining > sum(n for _, n in buckets):
         frappe.throw(_("The loyalty balance changed. Refresh the invoice and try again."))

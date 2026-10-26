@@ -435,6 +435,33 @@ html[data-retail-brand-theme] .desk-sidebar .standard-sidebar-item:hover {
     }
 }
 
+/* A translucent glass surface keeps the current row visible without a dark tint. */
+.desk-sidebar .standard-sidebar-item.selected,
+.retail-persistent-sidebar .standard-sidebar-item.selected,
+.sidebar-item-container.retail-primary-active > .desk-sidebar-item,
+.sidebar-item-container.retail-secondary-active > .desk-sidebar-item,
+html[data-retail-brand-theme] .desk-sidebar .standard-sidebar-item.selected,
+html[data-retail-brand-theme] body.retail-has-persistent-sidebar .standard-sidebar .standard-sidebar-item.selected,
+html[data-retail-brand-theme] body.retail-has-persistent-sidebar .desk-sidebar .standard-sidebar-item.selected {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.58), rgba(255, 255, 255, 0.22)) !important;
+    border-radius: 8px;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.62),
+        inset 0 1px 0 rgba(255, 255, 255, 0.78),
+        0 2px 6px rgba(15, 23, 42, 0.06) !important;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+/* Only Business Home has no selection surface; other menu items keep their style. */
+html body .desk-sidebar .sidebar-item-container[item-workspace-name="Business Home"] > .desk-sidebar-item.selected,
+html body .desk-sidebar .sidebar-item-container[item-workspace-name="Business Home"].retail-primary-active > .desk-sidebar-item,
+html body .desk-sidebar .sidebar-item-container[item-workspace-name="Business Home"].retail-secondary-active > .desk-sidebar-item {
+    background: transparent !important;
+    box-shadow: none !important;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
 html[data-retail-brand-theme] .standard-sidebar .standard-sidebar-item.selected .sidebar-item-label,
 html[data-retail-brand-theme] .desk-sidebar .standard-sidebar-item.selected .sidebar-item-label,
 html[data-retail-brand-theme] .page-title .title-text,

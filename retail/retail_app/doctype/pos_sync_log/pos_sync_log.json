@@ -32,7 +32,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Sync Type",
-   "options": "Sales Invoice\nCredit Sales Invoice\nPayment Entry\nCustomer Deposit\nCustomer Invoice Payment\nCash Movement\nReturn\nItem Pull\nCustomer Pull\nMaster Data Pull\nShift Opening\nShift Pause\nShift Resume\nShift Closing\nShift Reopen\nCustomer Upsert\nQueue Error\nVoucher Redemption\nVoucher Reversal\nPOS Sale\nPOS Return\nDay Closing\nDay Reopen\nDay Recalculate\nDay Reclose\nDay Payment Adjustment\nBill MOP Correction\nBill Settlement Correction",
+   "options": "Sales Invoice\nCredit Sales Invoice\nPayment Entry\nCustomer Deposit\nCustomer Invoice Payment\nCash Movement\nReturn\nItem Pull\nCustomer Pull\nMaster Data Pull\nShift Opening\nShift Pause\nShift Resume\nShift Closing\nShift Reopen\nCustomer Upsert\nQueue Error\nVoucher Redemption\nVoucher Reversal\nPOS Sale\nPOS Return\nDay Closing\nDay Reopen\nDay Recalculate\nDay Reclose\nDay Payment Adjustment\nBill MOP Correction\nBill Settlement Correction\nPOS Promotion Redemption",
    "reqd": 1
   },
   {

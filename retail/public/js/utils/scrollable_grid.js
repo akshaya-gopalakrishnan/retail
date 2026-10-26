@@ -17,7 +17,7 @@
 			: legacy[this.doctype];
 		this.user_defined_columns = (Array.isArray(saved) ? saved : []).flatMap((entry) => {
 			const df = this.fields_map[entry.fieldname];
-			return df ? [{ ...df, columns: entry.columns, in_list_view: 1 }] : [];
+			return df ? [{ ...df, columns: entry.columns, width_px: entry.width_px, in_list_view: 1 }] : [];
 		});
 		let fields = this.user_defined_columns.length
 			? this.user_defined_columns
@@ -49,6 +49,12 @@
 			if (df.fieldtype === "Link" && !df.formatter && df.parent) {
 				const formatter = frappe.meta.docfield_map[df.parent]?.[df.fieldname]?.formatter;
 				if (formatter) df.formatter = formatter;
+			}
+			// Item identity and Item Name are separate columns. Keep the native link
+			// destination while displaying its stored code instead of the title.
+			if (df.fieldname === "item_code" && df.fieldtype === "Link" && df.options === "Item") {
+				df.formatter = (value, field, options, doc) =>
+					frappe.form.formatters.Link(value, field, { ...options, label: value }, doc);
 			}
 			this.visible_columns.push([df, df.colsize]);
 		}
@@ -100,6 +106,30 @@
 					.val(entry.columns)
 					.attr("value", entry.columns);
 			}
+			$(this.fields_html_wrapper).find(".column-width").on("change.retailPixels", event => {
+				const entry = this.selected_columns_for_grid.find(column => column.fieldname === event.target.dataset.fieldname);
+				if (entry) delete entry.width_px;
+			});
+			return result;
+		};
+
+		const sortColumns = row.sort_columns;
+		if (sortColumns) row.sort_columns = function (...args) {
+			const pixels = new Map((this.selected_columns_for_grid || []).map(entry => [entry.fieldname, entry.width_px]));
+			const result = sortColumns.apply(this, args);
+			for (const entry of this.selected_columns_for_grid) {
+				if (Number.isFinite(pixels.get(entry.fieldname))) entry.width_px = pixels.get(entry.fieldname);
+			}
+			return result;
+		};
+
+		const setupDialog = row.setup_columns_for_dialog;
+		if (setupDialog) row.setup_columns_for_dialog = function (...args) {
+			const result = setupDialog.apply(this, args);
+			for (const entry of this.selected_columns_for_grid) {
+				const df = grid.visible_columns.find(([df]) => df.fieldname === entry.fieldname)?.[0];
+				if (Number.isFinite(df?.width_px)) entry.width_px = df.width_px;
+			}
 			return result;
 		};
 	}
@@ -118,6 +148,14 @@
 				context ? context.measureText(line).width : line.length * 7));
 		};
 		for (const [df] of grid.visible_columns) {
+			if (Number.isFinite(df.width_px)) {
+				widths[df.fieldname] = df.width_px;
+				continue;
+			}
+			if (grid.user_defined_columns?.some(column => column.fieldname === df.fieldname)) {
+				widths[df.fieldname] = Math.max(1, Math.min(12, Number(df.columns) || df.colsize || 1)) * 80;
+				continue;
+			}
 			let width = measure(__(df.label || df.fieldname)) + 40;
 			for (const row of grid.grid_rows || []) {
 				const value = row.doc?.[df.fieldname];
@@ -137,6 +175,42 @@
 
 	function styleRow(grid, row) {
 		if (!row?.row) return;
+		if (row.doc && !row.__retail_item_name_search && grid.fields_map.item_code?.options === "Item") {
+			row.__retail_item_name_search = true;
+			const makeControl = row.make_control;
+			row.make_control = function (column) {
+				if (column.df.fieldname !== "item_name") return makeControl.call(this, column);
+				if (column.field) return;
+				// A second native Item selector writes item_code, so ERPNext runs
+				// the same item, UOM, price and tax handlers from either column.
+				const df = { ...grid.fields_map.item_code, label: column.df.label, formatter: undefined };
+				const field = frappe.ui.form.make_control({
+					df, parent: column.field_area, only_input: true, with_link_btn: true,
+					doc: this.doc, doctype: this.doc.doctype, docname: this.doc.name,
+					frm: grid.frm, grid, grid_row: this,
+				});
+				field.get_query = (...args) => {
+					const query = grid.get_field("item_code").get_query;
+					return typeof query === "function" ? query(...args) : query;
+				};
+				field.is_title_link = () => true;
+				field.refresh();
+				field.$input?.addClass("input-sm").attr("placeholder", __("Search Item Name"));
+				this.set_arrow_keys(field);
+				column.field = field;
+				this.on_grid_fields_dict.item_name = field;
+				this.on_grid_fields.push(field);
+			};
+		}
+		const itemColumn = grid.visible_columns.find(([df]) =>
+			df.fieldname === "item_code" && df.fieldtype === "Link" && df.options === "Item");
+		if (row.doc && itemColumn) {
+			// Native rows keep their own field copies for subsequent refreshes.
+			const field = row.docfields?.find(df => df.fieldname === "item_code");
+			if (field) field.formatter = itemColumn[0].formatter;
+			row.columns?.item_code?.static_area.html(
+				itemColumn[0].formatter(row.doc.item_code, itemColumn[0], {}, row.doc));
+		}
 		const options = grid.__retail_scroll_options;
 		row.row.children(".col").each(function () {
 			const fieldname = this.dataset.fieldname;
@@ -147,15 +221,108 @@
 				? 56
 				: 40;
 			this.style.setProperty("--retail-column-width", `${width}px`);
-			this.classList.toggle("retail-grid-pinned", fieldname === options.pin_field);
+			this.style.setProperty("--retail-column-grow", column && fieldname !== grid.__retail_resizing ? String(width) : "0");
+			this.classList.toggle("retail-grid-data-column", Boolean(column));
+			this.classList.toggle("retail-grid-pinned", fieldname === options.pin_field && grid.visible_columns[0]?.[0].fieldname === fieldname);
 		});
 		// Use native touch scrolling. Keep touchstart: native touch-click focus
 		// handling still needs the container references initialized by that handler.
 		row.row.children("[data-fieldname]").off("touchmove");
 	}
 
+
+	function currentColumns(grid) {
+		return grid.visible_columns.map(([df]) => ({
+			fieldname: df.fieldname,
+			columns: Math.max(1, Math.min(12, Number(df.columns) || df.colsize || 1)),
+			...(Number.isFinite(df.width_px) ? { width_px: df.width_px } : {}),
+		}));
+	}
+
+	function configureDirectColumns(grid) {
+		const header = grid.header_row;
+		if (!header?.row?.[0] || header.__retail_direct_columns) return;
+		header.__retail_direct_columns = true;
+		let dragged;
+		for (const cell of header.row[0].querySelectorAll(".retail-grid-data-column")) {
+			cell.draggable = true;
+			cell.title = __("Drag to move column; drag the edge to resize.");
+			cell.addEventListener("dragstart", event => {
+				dragged = cell.dataset.fieldname;
+				event.dataTransfer.setData("text/plain", dragged);
+				event.dataTransfer.effectAllowed = "move";
+			});
+			cell.addEventListener("dragover", event => {
+				if (dragged) { event.preventDefault(); event.dataTransfer.dropEffect = "move"; }
+			});
+			cell.addEventListener("drop", event => {
+				if (!dragged) return;
+				event.preventDefault();
+				const columns = currentColumns(grid);
+				const source = columns.findIndex(column => column.fieldname === dragged);
+				const target = columns.findIndex(column => column.fieldname === cell.dataset.fieldname);
+				if (source >= 0 && target >= 0 && source !== target) {
+					columns.splice(target, 0, columns.splice(source, 1)[0]);
+					saveColumns(header, columns);
+				}
+				dragged = null;
+			});
+			cell.addEventListener("dragend", () => { dragged = null; });
+			const handle = document.createElement("span");
+			handle.className = "retail-grid-resize-handle";
+			handle.title = __("Drag to resize column");
+			handle.addEventListener("pointerdown", event => {
+				event.preventDefault();
+				event.stopPropagation();
+				cell.draggable = false;
+				const start = event.clientX;
+				const width = cell.getBoundingClientRect().width;
+				const columns = currentColumns(grid);
+				const column = columns.find(column => column.fieldname === cell.dataset.fieldname);
+				for (const entry of columns) {
+					const heading = Array.from(header.row[0].children).find(element => element.dataset.fieldname === entry.fieldname);
+					entry.width_px = Math.round(heading?.getBoundingClientRect().width || grid.__retail_content_widths[entry.fieldname]);
+					grid.__retail_content_widths[entry.fieldname] = entry.width_px;
+				}
+				grid.__retail_resizing = column.fieldname;
+				const direction = frappe.utils.is_rtl() ? -1 : 1;
+				const move = event => {
+					const pixels = Math.round(Math.max(64, Math.min(960, width + direction * (event.clientX - start))));
+					column.width_px = pixels;
+					grid.__retail_content_widths[column.fieldname] = pixels;
+					grid.wrapper[0].style.setProperty("--retail-grid-width", `${138 + Object.values(grid.__retail_content_widths).reduce((sum, value) => sum + value, 0)}px`);
+					[header, grid.header_search, ...(grid.grid_rows || [])].forEach(row => styleRow(grid, row));
+				};
+				const finish = () => {
+					document.removeEventListener("pointermove", move);
+					document.removeEventListener("pointerup", finish);
+					document.removeEventListener("pointercancel", cancel);
+					cell.draggable = true;
+					for (const entry of columns) {
+						const heading = Array.from(header.row[0].children).find(element => element.dataset.fieldname === entry.fieldname);
+						entry.width_px = Math.round(heading?.getBoundingClientRect().width || entry.width_px);
+					}
+					delete grid.__retail_resizing;
+					saveColumns(header, columns);
+				};
+				const cancel = () => {
+					document.removeEventListener("pointermove", move);
+					document.removeEventListener("pointerup", finish);
+					document.removeEventListener("pointercancel", cancel);
+					cell.draggable = true;
+					delete grid.__retail_resizing;
+					layout(grid);
+				};
+				document.addEventListener("pointermove", move);
+				document.addEventListener("pointerup", finish);
+				document.addEventListener("pointercancel", cancel);
+			});
+			cell.appendChild(handle);
+		}
+	}
+
 	function layout(grid) {
-		if (!grid.wrapper) return;
+		if (!grid.wrapper || grid.__retail_resizing) return;
 		grid.wrapper.addClass("retail-scrollable-grid");
 		const container = grid.wrapper.find(".form-grid-container")[0];
 		if (!container) return;
@@ -173,6 +340,7 @@
 		[grid.header_row, grid.header_search, ...(grid.grid_rows || [])].forEach((row) =>
 			styleRow(grid, row)
 		);
+		configureDirectColumns(grid);
 	}
 
 	// Link suggestions must escape the overflow viewport. Keep the original UL and
@@ -338,6 +506,9 @@
 		register("Sales Invoice", "items");
 		register("POS Invoice", "items");
 		register("Promo Price", "products", { pin_field: "item" });
+		register("Item", "custom_retail_packing_detail", {
+			pin_field: "barcode",
+		});
 	}
 	boot();
 })();

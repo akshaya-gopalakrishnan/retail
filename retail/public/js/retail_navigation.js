@@ -23,6 +23,8 @@
         'buy x get y promotion': { icon: 'fa fa-gift', cls: 'color-purchase' },
         'gift voucher promotion': { icon: 'fa fa-gift', cls: 'color-purchase' },
         'gift voucher ledger': { icon: 'fa fa-book', cls: 'color-purchase' },
+        'voucher cards': { icon: 'fa fa-credit-card', cls: 'color-purchase' },
+        'voucher card batch': { icon: 'fa fa-credit-card', cls: 'color-purchase' },
         'pricing rule': { icon: 'fa fa-percent', cls: 'color-purchase' },
         'promotional scheme': { icon: 'fa fa-tags', cls: 'color-purchase' },
         'home': { icon: 'fa fa-home', cls: 'color-settings' },
@@ -228,6 +230,8 @@
     const DESKTOP_MEDIA = '(min-width: 992px)';
     const DIRECT_MAPPING = frappe.boot?.retail_sidebar_routes || {};
     const DOCTYPE_TO_WORKSPACE = {
+        'Voucher Card Batch': 'Promotions',
+        'Voucher Card Transaction': 'Promotions',
         'Loyalty Program': 'Promotions',
         'Loyalty Point Entry': 'Promotions',
         'Item': 'Items',
@@ -286,6 +290,8 @@
         'Van Session': 'Van Sales'
     };
     const DOCTYPE_TO_CHILD = {
+        'Voucher Card Batch': 'Promotions Voucher Card Batch Link',
+        'Voucher Card Transaction': 'Promotions Voucher Card Batch Link',
         'Loyalty Program': 'Promotions Loyalty Program Link',
         'Loyalty Point Entry': 'Promotions Loyalty Point Entry Link',
         'Item': 'Items List',
@@ -353,6 +359,8 @@
         'Promotions Buy X Get Y Promotion Link': 'Promotions',
         'Promotions Gift Voucher Promotion Link': 'Promotions',
         'Promotions Gift Voucher Ledger Link': 'Promotions',
+        'Promotions Voucher Card Batch Link': 'Promotions',
+        'Voucher Card Batch': 'Promotions',
         'Promo Price': 'Promotions',
         'Buy X Get Y Promotion': 'Promotions',
         'Gift Voucher Promotion': 'Promotions',
@@ -912,6 +920,7 @@
     }
 
     function checklistTargetIsAllowed(kind, target) {
+        if (frappe.boot?.retail_sidebar_unrestricted_targets) return true;
         const selection = frappe.boot?.retail_sidebar_selection;
         if (!Array.isArray(selection)) return true;
         const entries = (frappe.boot.retail_sidebar_registry || []).flatMap(group => [group, ...group.children]);
@@ -2219,7 +2228,8 @@
     }
 
     function hideUnauthorizedSidebarItems() {
-        if (getRoleAllowedSidebarWorkspaces() === null) return;
+        if (getRoleAllowedSidebarWorkspaces() === null &&
+            !Array.isArray(frappe.boot?.retail_sidebar_selection)) return;
 
         document.querySelectorAll('.sidebar-item-container').forEach(container => {
             const label = getItemLabel(container);

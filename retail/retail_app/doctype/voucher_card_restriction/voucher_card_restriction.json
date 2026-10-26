@@ -1,0 +1,38 @@
+{
+ "doctype": "DocType",
+ "name": "Voucher Card Restriction",
+ "module": "Retail-app",
+ "engine": "InnoDB",
+ "editable_grid": 1,
+ "field_order": [
+  "item_code",
+  "brand",
+  "item_group"
+ ],
+ "fields": [
+  {
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "label": "Item Code",
+   "options": "Item",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "brand",
+   "fieldtype": "Link",
+   "label": "Brand",
+   "options": "Brand",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "item_group",
+   "fieldtype": "Link",
+   "label": "Category",
+   "options": "Item Group",
+   "in_list_view": 1
+  }
+ ],
+ "track_changes": 1,
+ "istable": 1,
+ "permissions": []
+}

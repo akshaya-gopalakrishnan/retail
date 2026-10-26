@@ -1,8 +1,9 @@
 """Online-only gift voucher spending, shared by POS APIs and ERP hooks."""
 from decimal import Decimal, InvalidOperation
+from datetime import datetime
 
 import frappe
-from frappe.utils import flt, getdate, get_system_timezone, now_datetime, nowdate
+from frappe.utils import flt, getdate, get_time, get_system_timezone, now_datetime, nowdate
 
 from retail import pos_operations
 from retail.promotions.api_payload import promotion_payload
@@ -37,31 +38,67 @@ def read_voucher(code, company, *, lock=False):
 
 
 def invalid_reason(voucher):
+	if voucher.get("voucher_card_batch"):
+		if voucher.get("card_archived"):
+			return "Archived"
+		if voucher.get("card_blocked"):
+			return "Blocked"
+		if voucher.get("valid_from") and getdate(voucher.valid_from) > getdate(nowdate()):
+			return "Not yet valid"
 	if voucher.status not in ("Unused", "Partially Used"):
 		return voucher.status
 	if voucher.expiry_date and getdate(voucher.expiry_date) < getdate(nowdate()):
 		return "Expired"
 	if flt(voucher.balance_amount) <= 0:
 		return "No balance"
+	if voucher.get("voucher_card_batch") and voucher.get("use_redemption_hours"):
+		now = now_datetime()
+		if voucher.get("valid_from") and now < datetime.combine(getdate(voucher.valid_from), get_time(voucher.active_from_time)):
+			return "Not yet valid"
+		if voucher.get("expiry_date") and now > datetime.combine(getdate(voucher.expiry_date), get_time(voucher.active_to_time)):
+			return "Expired"
 	return None
 
 
 def voucher_result(voucher):
 	reason = invalid_reason(voucher)
-	return {"voucher_code": voucher.name, "voucher_amount": flt(voucher.voucher_amount),
+	result = {"voucher_code": voucher.name, "voucher_amount": flt(voucher.voucher_amount),
 		"balance_amount": flt(voucher.balance_amount), "status": voucher.status,
 		"expiry_date": str(voucher.expiry_date) if voucher.expiry_date else None,
 		"company": voucher.company, "currency": voucher.get("currency") or
 		frappe.get_cached_value("Company", voucher.company, "default_currency"),
 		"valid": not reason, "reason": reason, "server_date": nowdate()}
+	if voucher.get("voucher_card_batch"):
+		from retail.voucher_cards import batch_for
+		batch = batch_for(voucher)
+		result.update(voucher_card_batch=voucher.voucher_card_batch,
+			valid_from=str(voucher.valid_from) if voucher.get("valid_from") else None,
+			use_activation_times=bool(voucher.get("use_redemption_hours")),
+			use_redemption_hours=bool(voucher.get("use_redemption_hours")),
+			active_from_time=str(get_time(voucher.active_from_time)) if voucher.get("use_redemption_hours") else None,
+			active_to_time=str(get_time(voucher.active_to_time)) if voucher.get("use_redemption_hours") else None,
+			server_time=str(now_datetime().time()), server_timezone=get_system_timezone(),
+			online_redemption_required=True, all_products=bool(batch.all_products),
+			eligibility=[{k: row.get(k) for k in ("item_code", "brand", "item_group")} for row in batch.restrictions])
+	return result
 
 
-def debit(code, amount, company, currency=None):
+def debit(code, amount, company, currency=None, *, items=None, bill_total=None, eligible_limit=None, reference=None):
 	voucher = read_voucher(code, company, lock=True)
 	reason = invalid_reason(voucher)
 	if reason:
 		frappe.throw(f"Voucher cannot be redeemed: {reason}.")
-	amount = money(amount)
+	if voucher.get("voucher_card_batch"):
+		from retail.voucher_cards import card_money, eligible_amount
+		amount = card_money(amount)
+		if eligible_limit is None:
+			if bill_total is None:
+				frappe.throw("Voucher cards require bill_total before voucher redemption.")
+			eligible_limit = eligible_amount(voucher, items, bill_total)
+		if amount > eligible_limit:
+			frappe.throw("Voucher amount exceeds the eligible bill amount.")
+	else:
+		amount = money(amount)
 	default_currency = frappe.get_cached_value("Company", company, "default_currency")
 	if (voucher.get("currency") or default_currency) != (currency or default_currency):
 		frappe.throw("Voucher currency does not match the transaction currency.")
@@ -72,6 +109,10 @@ def debit(code, amount, company, currency=None):
 		"balance_amount": balance, "status": "Redeemed" if balance == 0 else "Partially Used",
 		"redeemed_date": nowdate(),
 	})
+	if voucher.get("voucher_card_batch"):
+		from retail.voucher_cards import record
+		voucher.balance_amount = balance
+		record(voucher, "Redeemed", amount, reference)
 	return {"status": "Success", "approved": True, "voucher_code": code,
 		"amount": amount, "balance_after": balance}
 
@@ -83,7 +124,12 @@ def get_gift_voucher(data=None, **kwargs):
 		voucher = read_voucher(payload.get("voucher_code"), counter.company)
 	except frappe.DoesNotExistError:
 		return {"found": False, "valid": False, "reason": "Not registered"}
-	return {"found": True, **voucher_result(voucher)}
+	result = {"found": True, **voucher_result(voucher)}
+	if voucher.get("voucher_card_batch") and payload.get("bill_total") is not None:
+		from retail.voucher_cards import eligible_amount
+		result["maximum_redeemable_amount"] = min(flt(voucher.balance_amount),
+			eligible_amount(voucher, payload.get("items"), payload.get("bill_total"))) if result["valid"] else 0
+	return result
 
 
 @frappe.whitelist(methods=["POST"])
@@ -91,11 +137,17 @@ def redeem_gift_voucher(data=None, **kwargs):
 	payload, counter = context(data, **kwargs)
 	reference = payload.get("redemption_reference")
 	pos_operations.key("sale", payload.get("external_pos_reference"))
-	request = {"voucher_code": payload.get("voucher_code"), "amount": money(payload.get("amount")),
+	card_batch = frappe.db.get_value("Gift Voucher Ledger", payload.get("voucher_code"), "voucher_card_batch")
+	from retail.voucher_cards import card_money
+	request = {"voucher_code": payload.get("voucher_code"), "amount":
+		card_money(payload.get("amount")) if card_batch else money(payload.get("amount")),
 		"company": counter.company, "counter": counter.name,
 		"external_pos_reference": payload.external_pos_reference}
+	if card_batch:
+		request.update(items=payload.get("items"), bill_total=payload.get("bill_total"))
 	def action():
-		return {**debit(request["voucher_code"], request["amount"], counter.company),
+		return {**debit(request["voucher_code"], request["amount"], counter.company,
+			items=request.get("items"), bill_total=request.get("bill_total"), reference=reference),
 			"redemption_reference": reference}
 	return pos_operations.execute("Voucher Redemption", reference, request, action, request["voucher_code"])
 
@@ -122,6 +174,10 @@ def reverse(reference, reversal_reference, *, company, counter=None, invoice=Non
 		if voucher.expiry_date and getdate(voucher.expiry_date) < getdate(nowdate()):
 			status = "Expired"
 		frappe.db.set_value("Gift Voucher Ledger", voucher.name, {"balance_amount": balance, "status": status})
+		if voucher.get("voucher_card_batch"):
+			from retail.voucher_cards import record
+			voucher.balance_amount = balance
+			record(voucher, "Reversed", request["amount"], reference)
 		return {"status": "Success", "redemption_reference": reference,
 			"voucher_code": voucher.name, "amount": request["amount"], "balance_after": balance}
 	return pos_operations.execute("Voucher Reversal", reference, reversal_request, action, request["voucher_code"])
@@ -139,10 +195,20 @@ def invoice_redemption_reference(doc):
 
 
 def bind_pos_redemption(doc):
-	"""Link an already approved debit; never validate today's expiry or debit again."""
-	reference = doc.get("custom_gift_voucher_redemption_reference")
+	"""Link approved debits; never debit them again on invoice retries."""
+	payload = frappe.parse_json(doc.get("custom_pos_completed_payload") or "{}")
+	if "voucher_redemptions" in payload:
+		from retail.pos_mixed_payments import voucher_rows
+		for row in sorted(voucher_rows(payload), key=lambda row: row["redemption_reference"]):
+			_bind_pos_redemption(doc, row.get("voucher_code"), row.get("amount"), row.get("redemption_reference"))
+		return
+	return _bind_pos_redemption(doc, doc.get("custom_gift_voucher_code"),
+		doc.get("custom_gift_voucher_amount"), doc.get("custom_gift_voucher_redemption_reference"))
+
+
+def _bind_pos_redemption(doc, code, amount, reference):
 	if not reference:
-		if doc.get("custom_gift_voucher_code"):
+		if code:
 			frappe.throw("POS voucher redemption requires its online redemption_reference.")
 		return
 	receipt = pos_operations.find("Voucher Redemption", reference)
@@ -151,8 +217,8 @@ def bind_pos_redemption(doc):
 	request = frappe.parse_json(receipt.request_json)
 	if (request.get("company") != doc.company or request.get("counter") != doc.pos_counter
 		or request.get("external_pos_reference") != doc.external_pos_reference
-		or request.get("voucher_code") != doc.custom_gift_voucher_code
-		or flt(request.get("amount")) != flt(doc.custom_gift_voucher_amount)):
+		or request.get("voucher_code") != code
+		or flt(request.get("amount")) != flt(amount)):
 		frappe.throw("Redemption receipt does not match the POS sale.")
 	if pos_operations.find("Voucher Reversal", reference):
 		frappe.throw("This redemption has already been reversed.")

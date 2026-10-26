@@ -80,7 +80,7 @@ class TestSidebarPermissions(unittest.TestCase):
             "POS": ["POS Invoices", "POS Profiles", "POS Counters", "POS Cashier Shifts", "POS Counter Sessions", "POS Opening Entries", "POS Closing Entries", "POS Branch Day Closings", "POS Sync Logs", "POS Reports"],
             "Van Sales": ["Fleet", "Driver", "Van Sessions", "Van Stock View", "Stock Request", "Van Stock Entries", "Van Sales Invoice", "Van Payments", "Van Customers", "Items", "Warehouses", "Van Sales Reports"],
             "Reports": ["Sales Reports", "Purchase Reports", "Stock Reports", "Accounts Reports", "POS Sales Reports", "Manufacturing Module"],
-            "Promotions": ["Promo Price", "Buy X Get Y Promotion", "Gift Voucher Promotion", "Gift Voucher Ledger", "Loyalty Program"],
+            "Promotions": ["Promo Price", "Buy X Get Y Promotion", "Gift Voucher Promotion", "Gift Voucher Ledger", "Voucher Cards", "Loyalty Program"],
             "Settings": ["Business Profile", "Branding", "System Rules", "User List", "Employee List"],
         }
         self.assertEqual([(group["label"], [child["label"] for child in group["children"]]) for group in registry()], list(expected.items()))
@@ -126,6 +126,24 @@ class TestSidebarPermissions(unittest.TestCase):
             self.assertTrue(access.target_allowed("doctype", "Customer"))
             frappe.form_dict.update(doctype="Customer")
             access.guard_request()
+
+    def test_protected_users_follow_voucher_sidebar_selection(self):
+        name = "Promotions Voucher Card Batch Link"
+        pages = [frappe._dict(name="Promotions", title="Promotions"),
+                 frappe._dict(name=name, title=name, parent_page="Promotions")]
+        for user in ("Administrator", "superadmin@example.test"):
+            frappe.session.user = user
+            with patch.object(access, "is_super_admin", return_value=True):
+                self.select("Promotions Promo Price Link")
+                self.assertFalse(any(page.name == name for page in access.filter_sidebar(pages)))
+                self.assertTrue(access.target_allowed("doctype", "Voucher Card Batch"))
+                boot = frappe._dict()
+                access.boot(boot)
+                self.assertNotIn("workspace:promotions_voucher_card_batch_link", boot.retail_sidebar_selection)
+                self.assertTrue(boot.retail_sidebar_unrestricted_targets)
+                self.assertTrue(any(child["workspace"] == name for group in boot.retail_sidebar_editor_registry for child in group["children"]))
+                self.select(name)
+                self.assertTrue(any(page.name == name for page in access.filter_sidebar(pages)))
 
     def test_stock_entry_purpose_and_van_isolation(self):
         self.select("Stock Adjustments")

@@ -14,7 +14,7 @@ from frappe.utils import flt, now_datetime, nowdate
 from retail.pos_operations import canonical
 
 FINANCIAL_TYPES = ("Sales Invoice", "Credit Sales Invoice", "Return")
-NON_CASH = ("Credit Sale", "Credit Note", "Credit Note Redeemed")
+NON_CASH = ("Credit Sale", "Credit Note", "Credit Note Redeemed", "Loyalty", "Promotion Voucher", "Voucher Card")
 RETURN_TYPES = ("Cash Refund", "Card Refund", "Reusable Customer Credit", "Original Debt Reduction")
 
 
@@ -58,6 +58,10 @@ def cash_payments(payload):
 
 def settlements(payload, is_return=False):
     """Normalize separately; never rewrite the terminal snapshot."""
+    from retail.pos_mixed_payments import validate
+    loyalty = validate(payload, is_return)
+    from retail import pos_offline_promotions as promotions
+    promotions.validate(payload)
     rows = []
     notes = list(payload.get("credit_note_redemptions") or [])
     credit_sale = payload.get("credit_sale_amount")
@@ -99,11 +103,11 @@ def settlements(payload, is_return=False):
         paid = sum(amount(p.get("amount")) for p in cash_payments(payload))
         redeemed = sum(r["requested_amount"] for r in rows)
         if total is not None:
-            balance = flt(float(total) - paid - redeemed, 2)
-            if balance < 0 or (credit_sale is not None and flt(credit_sale, 2) != balance):
+            balance = flt(float(total) - paid - redeemed - loyalty - promotions.total(payload), 2)
+            if not promotions.rows(payload) and (balance < 0 or (credit_sale is not None and flt(credit_sale, 2) != balance)):
                 frappe.throw("POS settlement values do not match the completed bill total.")
             if credit_sale is None:
-                credit_sale = balance
+                credit_sale = max(0, balance) if promotions.rows(payload) else balance
         if credit_sale is None and not rows:
             credit_sale = 0  # Legacy totals are resolved after native posting.
         if credit_sale is not None and (amount(credit_sale) or total is None):

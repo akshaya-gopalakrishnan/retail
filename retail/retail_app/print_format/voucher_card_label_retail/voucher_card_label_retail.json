@@ -1,0 +1,18 @@
+{
+ "doctype": "Print Format",
+ "name": "Voucher Card - Label - Retail",
+ "doc_type": "Gift Voucher Ledger",
+ "module": "Retail-app",
+ "standard": "Yes",
+ "custom_format": 1,
+ "print_format_type": "Jinja",
+ "html": "{% set print_data = voucher_card_print_data(doc) %}{% set cards = print_data.cards %}{% set doc = print_data.batch %}\n<style>.print-format {page-width:{{ doc.label_width }}mm; page-height:{{ doc.label_height }}mm;} @page {size: {{ doc.label_width }}mm {{ doc.label_height }}mm; margin:0;} .voucher-card {display:block;width:{{ doc.label_width }}mm;height:{{ doc.label_height }}mm;margin:0;border:0;border-radius:0;page-break-after:always;} .voucher-card:last-child {page-break-after:auto;}</style><div class=\"voucher-sheet\">\n{% for card in cards %}\n<div class=\"voucher-card\">\n  <div class=\"voucher-brand\">{% if doc.logo %}<img src=\"{{ doc.logo | e }}\" alt=\"\">{% endif %}{{ doc.company | e }}</div>\n  <div class=\"voucher-title\">GIFT VOUCHER</div>\n  <div class=\"voucher-value\">{{ doc.currency | e }} {{ frappe.utils.fmt_money(card.voucher_amount, precision=2) }}</div>\n  <div class=\"voucher-barcode\"><img src=\"{{ card.barcode | e }}\" alt=\"Voucher QR code\"></div>\n  <div class=\"voucher-code\">{{ card.name | e }}</div>\n  <div class=\"voucher-dates\">Valid {{ card.valid_from }} \u2014 {{ card.expiry_date }}</div>\n  {% if doc.use_redemption_hours %}<div class=\"voucher-dates\">Active from {{ doc.valid_from }} {{ frappe.utils.format_time(doc.active_from_time, 'HH:mm') }} to {{ doc.expiry_date }} {{ frappe.utils.format_time(doc.active_to_time, 'HH:mm') }} ({{ frappe.utils.get_system_timezone() }})</div>{% endif %}\n  {% if card.status == \"Draft\" %}<div class=\"voucher-pending\">Activation required before use</div>{% endif %}\n  <div class=\"voucher-eligibility\">{% if doc.all_products %}Valid on all products{% else %}Eligible: {% for row in doc.restrictions %}{{ (row.item_code or row.brand or row.item_group) | e }}{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}</div>\n  <div class=\"voucher-terms\">{{ (doc.terms or '') | e }}</div>\n</div>\n{% endfor %}\n</div>\n",
+ "css": ".print-format {\n    padding: 0 !important;\n    margin:0 !important;\n    margin-top:0;\n    margin-bottom:0;\n    margin-left:0;\n    margin-right:0;\n    page-size:A4;\n}\n\n.voucher-sheet {\n    font-family: Arial,sans-serif;\n}\n\n.voucher-card {\n    box-sizing:border-box;\n    display:inline-block;\n    vertical-align:top;\n    width:85.6mm;\n    height:54mm;\n    margin:2mm;\n    padding:3mm;\n    border:1px dashed #8e99aa;\n    border-radius:3mm;\n    background:#f5f8fc;\n    color:#172e50;\n    page-break-inside:avoid;\n    overflow:hidden;\n}\n\n.voucher-brand {\n    font-size:10px;\n    font-weight:bold;\n    height:5mm;\n}\n\n.voucher-brand img {\n    max-height:5mm;\n    max-width:20mm;\n    margin-right:2mm;\n}\n\n.voucher-title {\n    font-size:10px;\n    letter-spacing:2px;\n}\n\n.voucher-value {\n    font-size:19px;\n    font-weight:bold;\n    white-space:nowrap;\n}\n\n.voucher-barcode {\n    float:right;\n}\n\n.voucher-barcode img {\n    width:15mm;\n    height:15mm;\n}\n\n.voucher-code {\n    font-family:monospace;\n    font-size:8px;\n}\n\n.voucher-dates,.voucher-pending {\n    font-size:8px;\n}\n\n.voucher-eligibility,.voucher-terms {\n    font-size:7px;\n    line-height:1.2;\n}\n\n@page {\n    size:A4;\n    margin:8mm;\n}\n",
+ "disabled": 0,
+ "print_format_for": "DocType",
+ "page_number": "Hide",
+ "margin_top": 0,
+ "margin_bottom": 0,
+ "margin_left": 0,
+ "margin_right": 0
+}

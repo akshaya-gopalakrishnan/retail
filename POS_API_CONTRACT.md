@@ -70,7 +70,10 @@ Response example:
       "terminal_id": "T001",
       "printer_name": "Receipt Printer 1"
     },
-    "tax_config": {"tax_template": "<tax template>", "taxes": []},
+    "tax_config": {
+      "tax_template": "<tax template>",
+      "taxes": []
+    },
     "bill_format": {
       "address": "Dubai",
       "phone_number": "",
@@ -95,7 +98,249 @@ Response example:
     "promo_prices": [],
     "buy_x_get_y_promotions": [],
     "gift_voucher_promotions": [],
-    "customers": [],
+    "customers": [
+      {
+        "available_credit": 60.01,
+        "bypass_credit_limit_check": 0,
+        "credit_limit": 0.0,
+        "credit_note_currency": "AED",
+        "credit_notes_applied": 0.0,
+        "credit_notes_as_of": "2026-10-23 09:49:28.656027",
+        "credit_notes_issued": 0.0,
+        "credit_notes_redeemed": 0.0,
+        "credit_notes_unresolved": 0.0,
+        "credit_sales": 0.0,
+        "current_receivable": 9580.03,
+        "customer_group": null,
+        "customer_name": "van 3 customer",
+        "gift_vouchers": [],
+        "is_credit_customer": 0,
+        "loyalty_balances": [
+          {
+            "as_of_date": "2026-10-23",
+            "available_points": 0,
+            "conversion_factor": 1.0,
+            "currency": "AED",
+            "earned_points": 164,
+            "expired_points": 154,
+            "loyalty_program": "test loyalty",
+            "redeemable_amount": 0.0,
+            "used_points": 10
+          }
+        ],
+        "loyalty_conversion_factor": 1.0,
+        "loyalty_point_entries": [
+          {
+            "company": "nesto",
+            "customer": "C-10",
+            "expiry_date": "2026-09-17",
+            "invoice": "SI-42",
+            "invoice_type": "Sales Invoice",
+            "loyalty_points": 157,
+            "loyalty_program": "test loyalty",
+            "loyalty_program_tier": "Standard",
+            "modified": "2026-09-17 11:06:01.107378",
+            "name": "LPE-1",
+            "posting_date": "2026-09-17",
+            "purchase_amount": 3150.0,
+            "redeem_against": null
+          },
+          {
+            "company": "nesto",
+            "customer": "C-10",
+            "expiry_date": "2026-09-17",
+            "invoice": "SI-43",
+            "invoice_type": "Sales Invoice",
+            "loyalty_points": 0,
+            "loyalty_program": "test loyalty",
+            "loyalty_program_tier": "Standard",
+            "modified": "2026-09-17 11:07:58.752980",
+            "name": "LPE-2",
+            "posting_date": "2026-09-17",
+            "purchase_amount": 0.0,
+            "redeem_against": null
+          },
+          {
+            "company": "nesto",
+            "customer": "C-10",
+            "expiry_date": "2026-09-17",
+            "invoice": "SI-43",
+            "invoice_type": "Sales Invoice",
+            "loyalty_points": -10,
+            "loyalty_program": "test loyalty",
+            "loyalty_program_tier": "Standard",
+            "modified": "2026-09-17 11:07:58.770566",
+            "name": "LPE-3",
+            "posting_date": "2026-09-17",
+            "purchase_amount": 0.0,
+            "redeem_against": "LPE-1"
+          },
+          {
+            "company": "nesto",
+            "customer": "C-10",
+            "expiry_date": "2026-10-02",
+            "invoice": "SI-70",
+            "invoice_type": "Sales Invoice",
+            "loyalty_points": 7,
+            "loyalty_program": "test loyalty",
+            "loyalty_program_tier": "Standard",
+            "modified": "2026-10-02 11:51:34.633991",
+            "name": "LPE-22",
+            "posting_date": "2026-10-02",
+            "purchase_amount": 150.04,
+            "redeem_against": null
+          }
+        ],
+        "loyalty_program": "test loyalty",
+        "loyalty_program_name": "test loyalty",
+        "loyalty_program_tier": "Standard",
+        "modified": "2026-10-02 11:51:34.654727",
+        "name": "C-10",
+        "original_debt_reduction": 0.0,
+        "pending_credit_allocations": 0.0,
+        "promotions_as_of": "2026-10-23",
+        "territory": null,
+        "unresolved_settlement_amount": 0.0,
+        "unused_credit_note_amount": 60.01,
+        "unused_credit_notes": [
+          {
+            "account_currency": "AED",
+            "currency": "AED",
+            "external_pos_reference": null,
+            "receivable_account": "Trade in Opening Fees - N",
+            "reference_doctype": "Sales Invoice",
+            "reference_name": "VS-10",
+            "remaining_amount": 60.01,
+            "remaining_amount_in_account_currency": 60.01
+          }
+        ]
+      },
+      {
+        "available_credit": 0,
+        "bypass_credit_limit_check": 0,
+        "credit_limit": 0.0,
+        "credit_note_currency": "AED",
+        "credit_notes_applied": 0.0,
+        "credit_notes_as_of": "2026-10-23 09:49:28.656027",
+        "credit_notes_issued": 0.0,
+        "credit_notes_redeemed": 0.0,
+        "credit_notes_unresolved": 0.0,
+        "credit_sales": 0.0,
+        "current_receivable": 13421.0,
+        "customer_group": null,
+        "customer_name": "Book Customer",
+        "gift_vouchers": [
+          {
+            "active_from_time": null,
+            "active_to_time": null,
+            "balance_amount": 50.0,
+            "card_archived": 0,
+            "card_blocked": 0,
+            "company": "nesto",
+            "currency": null,
+            "customer": "C-7",
+            "expiry_date": "2026-09-21",
+            "issued_against": "SI-34",
+            "issued_against_type": "Sales Invoice",
+            "issued_date": "2026-08-22",
+            "modified": "2026-08-22 12:55:46.726229",
+            "name": "GV-63A410BD",
+            "promotion": "AED 50 on buying worth 100",
+            "reason": "Expired",
+            "redeemed_against": null,
+            "redeemed_against_type": null,
+            "redeemed_date": null,
+            "status": "Unused",
+            "use_redemption_hours": 0,
+            "valid": false,
+            "valid_from": null,
+            "voucher_amount": 50.0,
+            "voucher_card_batch": null,
+            "voucher_code": "GV-63A410BD",
+            "voucher_kind": "Promotion Voucher",
+            "warehouse": "Stores - N"
+          },
+          {
+            "active_from_time": null,
+            "active_to_time": null,
+            "balance_amount": 0.0,
+            "card_archived": 0,
+            "card_blocked": 0,
+            "company": "nesto",
+            "currency": null,
+            "customer": "C-7",
+            "expiry_date": "2026-09-21",
+            "issued_against": "SI-33",
+            "issued_against_type": "Sales Invoice",
+            "issued_date": "2026-08-22",
+            "modified": "2026-08-22 12:55:46.734969",
+            "name": "GV-DC3F2413",
+            "promotion": "AED 50 on buying worth 100",
+            "reason": "Redeemed",
+            "redeemed_against": "SI-34",
+            "redeemed_against_type": "Sales Invoice",
+            "redeemed_date": "2026-08-22",
+            "status": "Redeemed",
+            "use_redemption_hours": 0,
+            "valid": false,
+            "valid_from": null,
+            "voucher_amount": 50.0,
+            "voucher_card_batch": null,
+            "voucher_code": "GV-DC3F2413",
+            "voucher_kind": "Promotion Voucher",
+            "warehouse": "Stores - N"
+          }
+        ],
+        "is_credit_customer": 0,
+        "loyalty_balances": [],
+        "loyalty_conversion_factor": 0,
+        "loyalty_point_entries": [],
+        "loyalty_program": null,
+        "loyalty_program_name": null,
+        "loyalty_program_tier": null,
+        "modified": "2026-07-24 17:10:24.963646",
+        "name": "C-7",
+        "original_debt_reduction": 0.0,
+        "pending_credit_allocations": 0.0,
+        "promotions_as_of": "2026-10-23",
+        "territory": null,
+        "unresolved_settlement_amount": 0.0,
+        "unused_credit_note_amount": 0.0,
+        "unused_credit_notes": []
+      },
+      {
+        "available_credit": 0,
+        "bypass_credit_limit_check": 0,
+        "credit_limit": 0.0,
+        "credit_note_currency": "AED",
+        "credit_notes_applied": 0.0,
+        "credit_notes_as_of": "2026-10-23 09:49:28.656027",
+        "credit_notes_issued": 0.0,
+        "credit_notes_redeemed": 0.0,
+        "credit_notes_unresolved": 0.0,
+        "credit_sales": 0.0,
+        "current_receivable": 22022.0,
+        "customer_group": null,
+        "customer_name": "customer 1",
+        "gift_vouchers": [],
+        "is_credit_customer": 0,
+        "loyalty_balances": [],
+        "loyalty_conversion_factor": 0,
+        "loyalty_point_entries": [],
+        "loyalty_program": null,
+        "loyalty_program_name": null,
+        "loyalty_program_tier": null,
+        "modified": "2026-06-16 16:45:52.810360",
+        "name": "C-1",
+        "original_debt_reduction": 0.0,
+        "pending_credit_allocations": 0.0,
+        "promotions_as_of": "2026-10-23",
+        "territory": null,
+        "unresolved_settlement_amount": 0.0,
+        "unused_credit_note_amount": 0.0,
+        "unused_credit_notes": []
+      }
+    ],
     "operators": [],
     "modes_of_payment": [
       {
@@ -123,12 +368,35 @@ Response example:
         "type": "Customer",
         "enabled": 1,
         "modified": "2026-09-30 09:00:00"
+      },
+      {
+        "name": "Loyalty",
+        "type": "Loyalty",
+        "enabled": 1,
+        "modified": "2026-09-30 09:00:00",
+        "is_settlement": 1
+      },
+      {
+        "name": "Promotion Voucher",
+        "type": "Promotion Voucher",
+        "enabled": 1,
+        "modified": "2026-09-30 09:00:00",
+        "is_settlement": 1
+      },
+      {
+        "name": "Voucher Card",
+        "type": "Voucher Card",
+        "enabled": 1,
+        "modified": "2026-09-30 09:00:00",
+        "is_settlement": 1
       }
     ],
     "counters": []
   }
 }
 ```
+
+The three customer rows above are original local-site snapshots from `retail-test.localhost` (2026-10-23): `C-10` shows loyalty entries and unused credit, `C-7` shows customer-linked vouchers, and `C-1` shows empty promotion lists. Existing customer and credit fields are included unchanged. The surrounding master-envelope values are illustrative. For current loyalty/voucher balances for every customer, omit `modified_after` when refreshing masters; see [Customer master: loyalty and customer vouchers](#customer-master-loyalty-and-customer-vouchers-additive).
 
 Use `operators` for cashiers. Missing or false `privileges` means the action is not allowed. Use `printer_name` for the local printer. Empty bill-format values clear old values.
 
@@ -685,6 +953,328 @@ Response example:
 }
 ```
 
+### Add promotions to the existing payments (offline)
+
+Use the existing `POST /api/method/retail.api.pos_sync.create_pos_invoice` and its
+existing payload. Cash/card rows, `credit_note_redemptions`, `credit_sale_amount`,
+item amounts, VAT and completed-sale references keep their existing meaning.
+No format/version flag, new invoice endpoint or online approval is required.
+
+**Only three payment choices are added inside `payments`:**
+
+| Added `mode_of_payment` | `reference_no` | Extra value |
+|---|---|---|
+| `Loyalty` | Selected customer's downloaded `loyalty_program` ID | `points`: the whole-number count used offline. `amount` is its actual POS money value. |
+| `Promotion Voucher` | Customer `gift_vouchers[].voucher_code` or scanned promotion-voucher code | None. |
+| `Voucher Card` | Scanned/entered card code from the downloaded voucher-card snapshot | None. |
+
+The existing `modes_of_payment` master array additionally lists these three choices.
+Keep existing cash/card MOP names and references unchanged. Keep credit-note
+allocations in `credit_note_redemptions` and the unpaid portion in
+`credit_sale_amount`; do not move them into a new format or duplicate them in payments.
+
+.NET completes the sale offline from downloaded data, retains the original bill and
+uploads it at end of day. It does not call the online voucher approval API for
+these added rows. No `redemption_reference` is sent. Use the same original
+`external_pos_reference` and unchanged payment-row order/content on retries.
+
+In this example the POS recorded a 500 invoice and used vouchers as payment:
+
+```text
+500 = cash 100 + card 50 + loyalty 50 + promotion voucher 50
+    + voucher card 50 + existing credit-note redemption 50 + unpaid credit 150
+```
+
+Send the actual recorded item prices, ordinary discounts, VAT and invoice total;
+ERP does not deduct promotion payment rows a second time. Earlier discounted-voucher
+payloads retain their existing meaning and are shown separately below.
+
+Complete request example (illustrative IDs; these benefits do not belong to one
+actual customer; zero VAT and money value 1 per loyalty point):
+
+```json
+{
+  "external_pos_reference": "KARAMA-C001-T001-SALE-20261023-000500",
+  "branch": "Karama",
+  "counter_code": "C001",
+  "pos_terminal_id": "T001",
+  "cashier_employee": "E-1",
+  "external_shift_reference": "KARAMA-C001-T001-SHIFT-20261023-000001",
+  "external_session_reference": "KARAMA-C001-T001-SESSION-20261023-000001",
+  "business_date": "2026-10-23",
+  "customer": "C-EXAMPLE",
+  "posting_date": "2026-10-23",
+  "posting_time": "10:30:00",
+  "pos_bill_no": "000500",
+  "pos_local_created_at": "2026-10-23 10:30:00",
+  "update_stock": 1,
+  "discount_amount": 0,
+  "net_total": 500,
+  "vat_amount": 0,
+  "grand_total": 500,
+  "items": [
+    {
+      "item_code": "I-1",
+      "qty": 1,
+      "uom": "Nos",
+      "conversion_factor": 1,
+      "rate": 500,
+      "rate_includes_vat": 0,
+      "discount_amount": 0,
+      "amount": 500,
+      "net_amount": 500,
+      "vat_rate": 0,
+      "vat_amount": 0
+    }
+  ],
+  "payments": [
+    {
+      "mode_of_payment": "Cash",
+      "amount": 100,
+      "reference_no": ""
+    },
+    {
+      "mode_of_payment": "Card",
+      "amount": 50,
+      "reference_no": "CARD-000500"
+    },
+    {
+      "mode_of_payment": "Loyalty",
+      "amount": 50,
+      "reference_no": "test loyalty",
+      "points": 50
+    },
+    {
+      "mode_of_payment": "Promotion Voucher",
+      "amount": 50,
+      "reference_no": "GV-EXAMPLE"
+    },
+    {
+      "mode_of_payment": "Voucher Card",
+      "amount": 50,
+      "reference_no": "CARD-EXAMPLE"
+    }
+  ],
+  "issued_vouchers": [],
+  "credit_note_redemptions": [
+    {
+      "credit_note_external_reference": "KARAMA-C001-T001-RETURN-20261022-000123",
+      "amount": 50
+    }
+  ],
+  "credit_sale_amount": 150
+}
+```
+
+ERP posts the new promotion amounts through server-owned promotion accounts, not
+the cashier's cash/bank accounts. It deducts the intended voucher amounts and points
+once, including an audited overdraft when a known same-company source has less
+balance than the completed POS used. Expiry, blocked status, product eligibility,
+customer enrollment, customer link and conversion changes are audit comparisons;
+they do not reject this completed sale or rewrite the original payment split.
+
+For example: voucher payment 50 with current balance 30 is retained as a 50 payment;
+the known voucher source records balance -20 and the audit shows the 20 shortage.
+The customer's explicitly recorded credit remains 150. A source that cannot be
+found, or belongs to another company, is preserved as an intended redemption in the
+durable operation receipt and audit; no fictitious source is created and another
+company's ledger is not changed. Monetary settlement of the sale still proceeds.
+
+If the portions themselves differ from the recorded total, ERP adds an explicitly
+identified internal `Promotion Variance` accounting row and audit entry. It does
+not alter the downloaded/uploaded JSON, turn the difference into cash or silently
+increase the intended customer credit. .NET does not send a variance row.
+
+Audit findings appear in the existing **External POS Rate Audit** with source
+reference, payment-row details, original POS amount/points, ERP comparison and
+reason. Each source movement has an internal immutable **POS Promotion Redemption**
+receipt. Exact retries cannot deduct balances again. Technical/database posting
+failures retain the completed bill for existing internal recovery; a retained
+acceptance is not a claim that accounting has posted.
+
+Response fields are unchanged. With the example fully posted and its existing
+credit-note allocation applied, `grand_total` is 500, POS `outstanding_amount` is
+200 before credit-note allocation, and `accounting_outstanding_amount` is 150.
+Native payment totals include the new promotion tenders; cash/card is still only
+100/50 in the corresponding actual tender rows.
+
+This addition applies to sale payloads. Exchange payloads retain their existing
+supported payment combinations. Returns against these new promotion-tender sales
+are retained for allocation review to avoid refunding redeemed benefits as cash.
+Existing sales without these new tenders retain their return, credit-note allocation
+and credit-sale behavior. Do not combine a promotion payment row with
+another redemption field for the same benefit.
+
+Copyable payload: [`retail/docs/pos-mixed-payment-sale-example.json`](retail/docs/pos-mixed-payment-sale-example.json).
+
+### Earlier mixed-payment implementation: separate fields and online voucher approvals
+
+This separate-field format remains supported unchanged for existing callers.
+Offline promotion payment rows are the additive option documented above. Its copyable example is
+[`retail/docs/pos-mixed-payment-legacy-example.json`](retail/docs/pos-mixed-payment-legacy-example.json).
+
+
+Use the existing `POST /api/method/retail.api.pos_sync.create_pos_invoice`.
+No new invoice endpoint and no separate invoice per tender.
+
+| Send here | Include |
+|---|---|
+| `payments[]` | Actual tender rows: Cash, Card, bank transfer, cheque or another ERP payment mode configured for the counter. Use the exact downloaded mode name. |
+| `loyalty_redemption` | One object: `loyalty_program`, positive whole-number `points`, and money `amount`. Omit when unused. Accounts and conversion validation are server-owned. |
+| `voucher_redemptions[]` | One row per approved promotion voucher or voucher card: `voucher_code`, `amount`, `redemption_reference`. The server identifies the voucher type from its code. Use `[]` when unused. |
+| `credit_note_redemptions[]` | Existing credit-note reference/amount rows. Use `[]` when unused. |
+| `credit_sale_amount` | Remaining unpaid customer amount. Use `0` when fully settled. |
+
+**Amount rule:** vouchers retain the existing discount treatment. First subtract
+voucher benefits from `bill_total_before_vouchers` to obtain `grand_total`.
+Send final item net amounts and VAT that agree with that discounted total; do not
+subtract vouchers a second time or add them to `payments`.
+
+```text
+500 before vouchers - 50 promotion voucher - 50 voucher card = 400 grand_total
+400 = 100 cash + 50 card + 50 loyalty + 50 credit-note redemption + 150 unpaid credit
+```
+
+With a nonempty `voucher_redemptions`, send `bill_total_before_vouchers`.
+`rounded_total`, when supplied, is the final payable total for settlement checking.
+The example assumes zero VAT and a program worth AED 1 per point. For taxed sales,
+.NET sends its actual final per-item net/VAT values and the original completed totals.
+
+Before finishing a voucher sale, approve **each voucher** using the existing
+`retail.api.gift_vouchers.redeem_gift_voucher` API, with the same sale
+`external_pos_reference` and a different `redemption_reference` for each voucher.
+For cards, include `bill_total` and the eligible `items` as in the existing card
+redemption example. Put the returned references in the single invoice below.
+Invoice sync links approvals; it never debits vouchers again. Exact retries use
+unchanged sale/approval references. The approval calls remain online. If checkout
+is abandoned after approval, reverse each approval with the existing
+`reverse_gift_voucher_redemption` API before discarding the bill.
+
+Request JSON (illustrative IDs; replace with actual downloaded/configured values):
+
+```json
+{
+  "external_pos_reference": "KARAMA-C001-T001-SALE-20261023-000500",
+  "branch": "Karama",
+  "counter_code": "C001",
+  "pos_terminal_id": "T001",
+  "cashier_employee": "E-1",
+  "external_shift_reference": "KARAMA-C001-T001-SHIFT-20261023-000001",
+  "external_session_reference": "KARAMA-C001-T001-SESSION-20261023-000001",
+  "business_date": "2026-10-23",
+  "customer": "C-1",
+  "posting_date": "2026-10-23",
+  "posting_time": "10:30:00",
+  "pos_bill_no": "000500",
+  "pos_local_created_at": "2026-10-23 10:30:00",
+  "update_stock": 1,
+  "bill_total_before_vouchers": 500,
+  "discount_amount": 100,
+  "net_total": 400,
+  "vat_amount": 0,
+  "grand_total": 400,
+  "items": [
+    {
+      "item_code": "I-1",
+      "qty": 1,
+      "uom": "Nos",
+      "conversion_factor": 1,
+      "rate": 500,
+      "rate_includes_vat": 0,
+      "discount_amount": 100,
+      "amount": 400,
+      "net_amount": 400,
+      "vat_rate": 0,
+      "vat_amount": 0
+    }
+  ],
+  "payments": [
+    {
+      "mode_of_payment": "Cash",
+      "amount": 100,
+      "reference_no": "CASH-000500"
+    },
+    {
+      "mode_of_payment": "Card",
+      "amount": 50,
+      "reference_no": "CARD-000500"
+    }
+  ],
+  "loyalty_redemption": {
+    "loyalty_program": "Customer Rewards",
+    "points": 50,
+    "amount": 50
+  },
+  "voucher_redemptions": [
+    {
+      "voucher_code": "PGV-0123456789ABCDEF0123456789ABCDEF",
+      "amount": 50,
+      "redemption_reference": "KARAMA-C001-T001-REDEEM-20261023-000500-PROMO"
+    },
+    {
+      "voucher_code": "A7K2M",
+      "amount": 50,
+      "redemption_reference": "KARAMA-C001-T001-REDEEM-20261023-000500-CARD"
+    }
+  ],
+  "credit_note_redemptions": [
+    {
+      "credit_note_external_reference": "KARAMA-C001-T001-RETURN-20261022-000123",
+      "amount": 50
+    }
+  ],
+  "credit_sale_amount": 150,
+  "issued_vouchers": []
+}
+```
+
+Response example after successful posting and credit-note allocation:
+
+```json
+{
+  "message": {
+    "status": "Success",
+    "accepted": true,
+    "accepted_transaction": "<accepted transaction ID>",
+    "settlement_status": "Reconciled",
+    "pos_invoice_name": "POS-1",
+    "invoice_name": "POS-1",
+    "doctype": "POS Invoice",
+    "docstatus": 1,
+    "grand_total": 400,
+    "outstanding_amount": 200,
+    "accounting_outstanding_amount": 150,
+    "issued_vouchers": [],
+    "rate_audit_rows": [],
+    "audit_warnings": []
+  }
+}
+```
+
+`outstanding_amount` is the POS receipt remainder **before** the separate credit-note
+allocation (200). `accounting_outstanding_amount` is the remaining accounting debt
+**after** that allocation (150). Native ERP `paid_amount` includes loyalty: here it
+is 200, while the actual cash/card tender rows total 150. Never count loyalty again
+as cash, or subtract credit notes twice.
+
+`accepted: true` retains the completed bill; it does not alone prove posting.
+Missing/reversed/mismatched approvals or unavailable loyalty balances keep the bill
+for reconciliation without silently substituting cash, write-offs or customer debt.
+Use existing `get_sync_status` and the accepted transaction status to monitor recovery.
+Loyalty debits use locked customer point buckets and post once; merged accounting
+does not consume the points again.
+
+The legacy singular `voucher_redemption` remains supported with its existing
+meaning. Send it **or** `voucher_redemptions`, never both. Existing invoice fields
+and responses remain supported. Do not put loyalty, vouchers, credit-note redemption,
+or unpaid customer credit in cash/card tender rows.
+
+This extension covers sales, including sales with zero cash/card. Exchange receipts
+and redemption objects on return requests are not supported. Returns against a new
+loyalty-redemption sale are retained for review rather than automatically refunding
+money or deleting redeemed points; proportional loyalty return allocation needs
+separate handling. Other existing return payloads keep their current behavior.
+
 ### Customer deposit
 
 `POST /api/method/retail.api.pos_sync.create_customer_deposit`
@@ -1097,6 +1687,36 @@ Response example:
 {"message": {"status": "Success", "action": "Created", "customer": "C-1"}}
 ```
 
+### Customer master: loyalty and customer vouchers (additive)
+
+The existing `get_pos_master_data` → `customers` rows retain all original customer,
+credit-limit, unused-credit-note and settlement fields. Each row additionally has:
+
+| Field | Meaning |
+|---|---|
+| `loyalty_program`, `loyalty_program_name`, `loyalty_program_tier` | Assigned program in the counter company; null when none. |
+| `loyalty_conversion_factor` | Money per point; zero without an assigned program. |
+| `loyalty_balances` | One row per customer/program with `earned_points`, `used_points`, `expired_points`, `available_points`, `conversion_factor`, `redeemable_amount`, `currency`, `as_of_date`. Includes a zero balance for an assigned program without entries. |
+| `loyalty_point_entries` | Full company-scoped customer point history, with program/tier, points, purchase amount, posting/expiry dates, redemption linkage, invoice type/reference and modified timestamp. |
+| `gift_vouchers` | Only vouchers directly linked to this customer and company: code/ID, original value, remaining balance, status, issue/expiry dates, promotion, issue/redemption invoice references, company/warehouse, currency and card controls. `valid`/`reason` reflect current usability. |
+| `promotions_as_of` | Server date for this snapshot. |
+
+Replace these lists for each returned customer; empty lists clear old local data.
+Balances are per program; do not combine points from different programs. A balance
+for an old program does not enroll the customer in that program. Voucher warehouse
+and eligibility restrictions still apply; voucher redemption remains subject to the
+existing validation/API. These snapshots do not reserve points or voucher money.
+General promotions, customer-specific pricing rules and schemes are not added here.
+
+Customer selection still follows the existing `modified_after` filter on Customer.
+Point/voucher changes and expiry do not necessarily modify Customer: request a full
+master refresh (omit `modified_after`) to refresh all customer promotion balances.
+
+Original local customer payload, including the existing fields and these additions:
+[`retail/docs/pos-customers-local-sample.json`](retail/docs/pos-customers-local-sample.json).
+This is a read-only capture from `retail-test.localhost`, company `nesto`; its
+`message.customers` is the customer section of the master response, not a new endpoint.
+
 ### Customer balances and unused credit notes
 
 `GET /api/method/retail.api.pos_sync.get_customer_balances?company=nesto&from_date=2026-01-01&to_date=2026-07-22&include_zero_balance=1`
@@ -1240,13 +1860,125 @@ filter eligibility locally. Incremental replies update records by `name` and
 include changes that disable or expire a rule. Never reprice completed bills.
 
 
-### Download special prices
+### Download special prices and other promotions
 
 `GET /api/method/retail.api.pos_sync.get_pos_promo_prices?branch=Karama&counter_code=C001`
 
 Optional `modified_after`. Keep a separate saved time for each API. Apply the returned dates, scope and disabled flags; do not recalculate saved bills. The full download includes disabled, expired, future and undated promotions. Incremental downloads include modified records, so the POS can replace or disable its cached rules.
 
 Request body: none; use the URL values above.
+
+Response sections:
+
+| Response array | Contents |
+| --- | --- |
+| `promotions` | Existing Promo Price payload, unchanged. |
+| `buy_x_get_y_promotions` | Buy/free quantities, same-product flag, qualifying scope and Buy Item/Free Item rows. |
+| `gift_voucher_promotions` | Qualifying spend, voucher value, multiplication, expiry days and excluded categories. |
+| `loyalty_programs` | Program dates, customer eligibility, conversion factor and earning tiers. Includes future/expired programs; check dates locally. |
+| `loyalty_point_entries` | Full company snapshot of signed ledger entries, with earned/used/expired/available totals for each entry's customer/program. |
+| `loyalty_snapshot` | Snapshot metadata: `mode: "full"`, company and balance date. |
+| `voucher_card_batches` | Card values, quantities, activation dates/times, restrictions, logo and terms. |
+| `gift_voucher_ledger` | Card and promotion voucher codes, amounts, balances, status, eligibility, customers and references. |
+| `voucher_snapshot` | Full voucher snapshot scope, timestamp and timezone. |
+| `pricing_rules` | Selling Pricing Rules with native ERP fields, item/category/brand targets, customer restrictions, price/product rewards and scheme references. |
+| `promotional_schemes` | Selling Promotional Scheme configuration, including target tables and price/product slabs. Informational; apply its eligible Pricing Rules instead. |
+
+Promotion/program arrays use this request's company/warehouse context and
+`modified_after`. Full downloads retain disabled, expired and future records.
+Store each rule array separately by `name`, upsert incremental records, and
+check eligibility on each new bill. An empty incremental rule array does not
+mean delete cached rules. Replace `loyalty_point_entries`, `voucher_card_batches`
+and `gift_voucher_ledger` on every download, including incremental requests;
+empty snapshots clear their cached rows. Save
+`server_time` only after successfully storing **all** arrays. Download once
+without `modified_after` when adding these new arrays. Category-tree changes
+require another full refresh. The standalone APIs retain their existing payloads.
+
+Pricing Rules and Promotional Schemes retain native `disable`, `valid_from`,
+`valid_upto` and other rule fields; added `enabled`/`disabled` are normalized
+flags. `promotion_version` identifies the downloaded rule. `apply_in_pos: 0`
+means **do not apply this record as an additional offer**. Every scheme is
+informational (`apply_in_pos: 0`). Rules generated from a currently linked
+Promo Price or Buy X Get Y offer also have `apply_in_pos: 0`, with
+`source_promotion_type` and `source_promotion`, because that offer is already
+in its dedicated array. Independent selling rules have `apply_in_pos: 1`;
+this is not proof of eligibility: still check disabled status, dates, customer,
+price list, quantities, currency, conditions, priority and stacking rules.
+Do not apply both a scheme's slabs and its generated rules. Historical retired
+rules may have `apply_in_pos: 1` but remain ineligible through `disabled: 1`.
+Category targets in native `item_groups` include `matching_item_groups`;
+`other_item_group` has `other_matching_item_groups` when populated.
+
+This is a rule download, not an implementation of every ERP pricing condition
+inside .NET. If the terminal cannot implement a native condition or cumulative
+rule faithfully, it must not silently treat it as an unconditional discount.
+Loyalty balance/earning/redemption transaction support is separate from this
+program download; no new loyalty spending flow is introduced here.
+
+#### Customer loyalty points in this same download
+
+Customer/program totals repeat on each ledger entry; there is no separate balance array.
+
+- `loyalty_point_entries`: entry ID (`name`), `customer` (ERP customer ID),
+  `loyalty_program`, tier, company, signed `loyalty_points`, `purchase_amount`,
+  posting/expiry dates, `redeem_against`, source invoice type/ID and `modified`.
+  Positive earning rows, negative redemption rows and positive restoration
+  movements are preserved. Entries are scoped to the counter's **company**;
+  points are not restricted to the issuing warehouse.
+- Each entry also includes `earned_points`, `used_points`, `expired_points`,
+  `available_points` and `as_of_date`. These are **customer/program totals**
+  across the snapshot, not totals for that one entry. The same totals repeat
+  on every row sharing `(company, customer, loyalty_program)`. Read them from
+  any one row per group; **do not sum these repeated totals across entries**.
+  Original signed `loyalty_points`, entry identity, tier and invoice fields
+  remain unchanged. Only actual ledger entries are returned: customers with
+  no entries have no row, and no synthetic ledger entries are created.
+- `earned_points`: total original positive earning buckets posted on or before
+  `as_of_date`, including subsequently used/expired buckets. Restoration rows
+  do not count as new earnings. Future-posted earning buckets are excluded.
+- `used_points`: net points consumed against those earning buckets, after
+  subtracting linked point restorations. Movements are matched through
+  `redeem_against`, within the same customer/program, using the same movement
+  treatment as the existing Retail available-balance calculation.
+- `expired_points`: the unused remainder of expired earning buckets after
+  their redemptions/restorations. Spent points are not also counted as expired.
+  Expiry is strictly before `as_of_date`; points expiring today remain available
+  under the existing Retail rule.
+- For normal dated earning buckets, `earned_points - used_points -
+  expired_points = available_points`. A bucket with no expiry date counts as
+  earned, but current Retail rules exclude it from available points; it is not
+  falsely labelled expired. Such legacy data may not reconcile using only
+  these four totals. No existing availability calculation is changed.
+- `available_points` uses the existing Retail bucket calculation, not a raw
+  sum of ledger points. It includes signed movements against their earning
+  bucket, excludes expired and future-posted earning buckets, and retains
+  the current Retail behaviour that a missing expiry date is not spendable.
+  Program validity/enrolment must still be checked; a historical balance
+  does not authorize redemption.
+- `loyalty_snapshot.mode` is `full` even when `modified_after` is supplied.
+  Replace the cached entries for `loyalty_snapshot.company` atomically after
+  a successful download, and refresh customer totals from the resulting rows.
+  An empty entries array clears that company's cached entries/totals; do not
+  clear another company's cache. If a previously cached customer/program no
+  longer has entries in the full snapshot, clear its old totals too.
+  This handles entries deleted by cancellation and balances changing through
+  expiry without any row's modified timestamp changing. Other promotion
+  arrays continue to follow their existing incremental-upsert rules.
+
+These are balance snapshots for display/reconciliation, not a new redemption
+approval or offline-spending API. Refresh before relying on a displayed balance;
+concurrent sales can change points after download. Existing completed-sale
+and loyalty transaction handling is unchanged.
+
+Actual local example on 2026-10-22: customer `C-10` has an earning entry of
+157 and a redemption movement of -10 against it, but that earning bucket
+expired on 2026-09-17. Another earning entry of 7 expired on 2026-10-02.
+Therefore customer `C-10` has `earned_points: 164`, `used_points: 10`,
+`expired_points: 154`, and `available_points: 0`. The expired total is the
+unused remainder (147 + 7), not the full original earnings.
+The local snapshot contains 5 actual ledger entries. Each `C-10` entry carries
+the same four customer/program totals above.
 
 Response example (existing fields retained; new fields are additive):
 
@@ -1292,25 +2024,1260 @@ Response example (existing fields retained; new fields are additive):
             "uom": "Nos",
             "price_list": "Standard Selling",
             "current_price": 9.52,
-            "current_price_including_tax": 10.00,
+            "current_price_including_tax": 10.0,
             "purchase_price": 4.76,
-            "purchase_price_including_tax": 5.00,
+            "purchase_price_including_tax": 5.0,
             "vat_rate": 5,
             "discount_input": "Amount",
-            "discount_amount": 1.00,
-            "discount_percent": 10.00,
+            "discount_amount": 1.0,
+            "discount_percent": 10.0,
             "promo_price": 0,
             "promo_price_including_tax": 0,
             "calculated_promo_price": 8.57,
-            "calculated_promo_price_including_tax": 9.00,
+            "calculated_promo_price_including_tax": 9.0,
             "max_qty": 5
           }
         ]
       }
-    ]
+    ],
+    "buy_x_get_y_promotions": [
+      {
+        "name": "Buy 2 tea + Get 1 Muffin free",
+        "promotion_version": "3ef692236041a0618b77cd14fffeaf11735dfbb0cdf15966efe5aef1b1a73eb4",
+        "description": "Buy 2 tea + Get 1 Muffin free",
+        "enabled": 1,
+        "disabled": 0,
+        "active_from": "2026-08-21",
+        "active_to": "2026-08-22",
+        "active_from_time": "08:50:31",
+        "active_to_time": "15:50:34",
+        "company": "nesto",
+        "warehouse": "Stores - N",
+        "modified": "2026-10-15 09:10:12.067501",
+        "promotion_scope": "ITEM",
+        "buy_qty": 2.0,
+        "free_qty": 1.0,
+        "same_product_only": 0,
+        "priority": "10",
+        "products": [
+          {
+            "add_to": "Buy Item",
+            "item": "I-27",
+            "item_group": "",
+            "brand": null,
+            "matching_item_groups": [],
+            "uom": "Nos"
+          },
+          {
+            "add_to": "Free Item",
+            "item": "I-23",
+            "item_group": "",
+            "brand": null,
+            "matching_item_groups": [],
+            "uom": "Nos"
+          }
+        ]
+      }
+    ],
+    "gift_voucher_promotions": [
+      {
+        "name": "AED 50 on buying worth 100",
+        "promotion_version": "04d3556e19b790e7d247f7d4385dbcd709d4a235e98ee22607ba4d317d37a59e",
+        "description": "AED 50 on buying worth 100",
+        "enabled": 1,
+        "disabled": 0,
+        "active_from": "2026-08-22",
+        "active_to": "2026-08-23",
+        "active_from_time": null,
+        "active_to_time": null,
+        "company": "nesto",
+        "warehouse": "Stores - N",
+        "modified": "2026-08-22 10:52:16.118598",
+        "min_sales_value": 100.0,
+        "voucher_amount": 50.0,
+        "multiply_with_sales_amount": 0,
+        "expiry_days": 30,
+        "excluded_item_groups": [
+          {
+            "item_group": "sugary drinks",
+            "matching_item_groups": [
+              "sugary drinks"
+            ]
+          }
+        ]
+      }
+    ],
+    "loyalty_programs": [
+      {
+        "auto_opt_in": 1,
+        "collection_rules": [
+          {
+            "collection_factor": 20.0,
+            "idx": 1,
+            "min_spent": 0.0,
+            "name": "qcu2gbp85u",
+            "tier_name": "Standard"
+          }
+        ],
+        "company": "nesto",
+        "conversion_factor": 1.0,
+        "cost_center": "Main - N",
+        "customer_group": "All Customer Groups",
+        "customer_territory": "All Territories",
+        "expense_account": "Consultancy Fees - N",
+        "expiry_duration": 0,
+        "from_date": "2026-09-17",
+        "loyalty_program_name": "test loyalty",
+        "loyalty_program_type": "Single Tier Program",
+        "modified": "2026-09-17 10:37:03.823201",
+        "name": "test loyalty",
+        "project": null,
+        "to_date": "2027-09-17"
+      }
+    ],
+    "pricing_rules": [
+      {
+        "name": "PRLE-0002",
+        "promotion_version": "b9e6157ef9e236ff5c7f1033075a35e2bf576fe7b96052445af4c2ac99e8ac77",
+        "enabled": 1,
+        "disabled": 0,
+        "apply_in_pos": 1,
+        "selling": 1,
+        "company": "nesto",
+        "warehouse": null,
+        "valid_from": "2026-07-08",
+        "valid_upto": "2026-07-09",
+        "apply_on": "Item Code",
+        "price_or_product_discount": "Product",
+        "min_qty": 5.0,
+        "free_qty": 1.0,
+        "same_item": 0,
+        "free_item": "I-1",
+        "free_item_uom": "Nos",
+        "free_item_rate": 0.0,
+        "apply_rule_on_other": "Item Code",
+        "other_item_code": "I-1",
+        "other_item_group": null,
+        "other_brand": null,
+        "is_recursive": 0,
+        "is_cumulative": 1,
+        "promotional_scheme": "5maggi+ 1 water free",
+        "items": [
+          {
+            "item_code": "I-9",
+            "uom": "Nos"
+          }
+        ]
+      }
+    ],
+    "promotional_schemes": [
+      {
+        "name": "5maggi+ 1 water free",
+        "promotion_version": "bd05bccee138395598be11ee0c22f6f0810d739e712ea05817999dd48eea92dd",
+        "enabled": 1,
+        "disabled": 0,
+        "apply_in_pos": 0,
+        "selling": 1,
+        "company": "nesto",
+        "valid_from": "2026-07-08",
+        "valid_upto": "2026-07-09",
+        "apply_on": "Item Code",
+        "apply_rule_on_other": "Item Code",
+        "other_item_code": "I-1",
+        "other_item_group": null,
+        "other_brand": null,
+        "items": [
+          {
+            "item_code": "I-9",
+            "uom": "Nos"
+          }
+        ],
+        "product_discount_slabs": [
+          {
+            "min_qty": 5.0,
+            "max_qty": 0.0,
+            "free_item": "I-1",
+            "free_qty": 1.0,
+            "same_item": 0,
+            "free_item_uom": null,
+            "free_item_rate": 0.0,
+            "warehouse": null,
+            "priority": "",
+            "disable": 0
+          }
+        ]
+      }
+    ],
+    "loyalty_point_entries": [
+      {
+        "as_of_date": "2026-10-22",
+        "available_points": 0,
+        "company": "nesto",
+        "customer": "C-10",
+        "earned_points": 164,
+        "expired_points": 154,
+        "expiry_date": "2026-09-17",
+        "invoice": "SI-42",
+        "invoice_type": "Sales Invoice",
+        "loyalty_points": 157,
+        "loyalty_program": "test loyalty",
+        "loyalty_program_tier": "Standard",
+        "modified": "2026-09-17 11:06:01.107378",
+        "name": "LPE-1",
+        "posting_date": "2026-09-17",
+        "purchase_amount": 3150.0,
+        "redeem_against": null,
+        "used_points": 10
+      },
+      {
+        "as_of_date": "2026-10-22",
+        "available_points": 0,
+        "company": "nesto",
+        "customer": "C-10",
+        "earned_points": 164,
+        "expired_points": 154,
+        "expiry_date": "2026-09-17",
+        "invoice": "SI-43",
+        "invoice_type": "Sales Invoice",
+        "loyalty_points": -10,
+        "loyalty_program": "test loyalty",
+        "loyalty_program_tier": "Standard",
+        "modified": "2026-09-17 11:07:58.770566",
+        "name": "LPE-3",
+        "posting_date": "2026-09-17",
+        "purchase_amount": 0.0,
+        "redeem_against": "LPE-1",
+        "used_points": 10
+      },
+      {
+        "as_of_date": "2026-10-22",
+        "available_points": 0,
+        "company": "nesto",
+        "customer": "C-10",
+        "earned_points": 164,
+        "expired_points": 154,
+        "expiry_date": "2026-10-02",
+        "invoice": "SI-70",
+        "invoice_type": "Sales Invoice",
+        "loyalty_points": 7,
+        "loyalty_program": "test loyalty",
+        "loyalty_program_tier": "Standard",
+        "modified": "2026-10-02 11:51:34.633991",
+        "name": "LPE-22",
+        "posting_date": "2026-10-02",
+        "purchase_amount": 150.04,
+        "redeem_against": null,
+        "used_points": 10
+      }
+    ],
+    "loyalty_snapshot": {
+      "as_of_date": "2026-10-22",
+      "company": "nesto",
+      "mode": "full"
+    },
+    "voucher_card_batches": [
+      {
+        "name": "VCB-00008",
+        "title": "100 AED Voucher ",
+        "company": "nesto",
+        "currency": "AED",
+        "voucher_amount": 100.0,
+        "card_count": 10,
+        "valid_from": "2026-10-22",
+        "expiry_date": "2026-10-31",
+        "use_redemption_hours": 0,
+        "active_from_time": null,
+        "active_to_time": null,
+        "activate_all_cards": 1,
+        "generation_status": "Complete",
+        "generated_count": 10,
+        "all_products": 0,
+        "logo": null,
+        "terms": "Partial redemption allowed. No cash change. Keep this code secure.",
+        "modified": "2026-10-22 16:00:46.286054",
+        "restrictions": [
+          {
+            "idx": 1,
+            "item_code": "I-14",
+            "brand": "",
+            "item_group": "",
+            "matching_item_groups": []
+          },
+          {
+            "idx": 2,
+            "item_code": "I-20",
+            "brand": null,
+            "item_group": null,
+            "matching_item_groups": []
+          },
+          {
+            "idx": 3,
+            "item_code": null,
+            "brand": "Celesta Demo",
+            "item_group": null,
+            "matching_item_groups": []
+          },
+          {
+            "idx": 4,
+            "item_code": "",
+            "brand": null,
+            "item_group": "paper",
+            "matching_item_groups": [
+              "paper"
+            ]
+          }
+        ],
+        "online_redemption_required": true,
+        "use_activation_times": false
+      }
+    ],
+    "gift_voucher_ledger": [
+      {
+        "name": "7WWJY",
+        "creation": "2026-10-22 15:09:07.450777",
+        "modified": "2026-10-22 15:18:30.682205",
+        "modified_by": "Administrator",
+        "owner": "Administrator",
+        "docstatus": 0,
+        "idx": 0,
+        "voucher_code": "7WWJY",
+        "status": "Unused",
+        "voucher_amount": 100.0,
+        "balance_amount": 100.0,
+        "issued_date": "2026-10-22",
+        "expiry_date": "2026-10-31",
+        "promotion": null,
+        "issued_against_type": null,
+        "issued_against": null,
+        "customer": null,
+        "customer_name": null,
+        "mobile_no": null,
+        "company": "nesto",
+        "warehouse": null,
+        "redeemed_against_type": null,
+        "redeemed_against": null,
+        "redeemed_date": null,
+        "notes": null,
+        "_user_tags": null,
+        "_comments": null,
+        "_assign": null,
+        "_liked_by": null,
+        "custom_document_code": "GVL-10018",
+        "issuance_key": "card:VCB-00008:2",
+        "currency": "AED",
+        "external_pos_reference": null,
+        "pos_promotion_reference": null,
+        "voucher_card_batch": "VCB-00008",
+        "card_number": 2,
+        "valid_from": "2026-10-22",
+        "card_archived": 0,
+        "card_blocked": 0,
+        "voucher_kind": "Voucher Card",
+        "active_from_time": null,
+        "active_to_time": null,
+        "use_redemption_hours": 0,
+        "reason": null,
+        "valid": true,
+        "current_status": "Active",
+        "online_redemption_required": true,
+        "use_activation_times": false,
+        "all_products": false,
+        "eligibility": [
+          {
+            "idx": 1,
+            "item_code": "I-14",
+            "brand": "",
+            "item_group": "",
+            "matching_item_groups": []
+          },
+          {
+            "idx": 2,
+            "item_code": "I-20",
+            "brand": null,
+            "item_group": null,
+            "matching_item_groups": []
+          },
+          {
+            "idx": 3,
+            "item_code": null,
+            "brand": "Celesta Demo",
+            "item_group": null,
+            "matching_item_groups": []
+          },
+          {
+            "idx": 4,
+            "item_code": "",
+            "brand": null,
+            "item_group": "paper",
+            "matching_item_groups": [
+              "paper"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "BUKJ5",
+        "creation": "2026-10-22 15:09:07.499523",
+        "modified": "2026-10-22 15:18:29.244262",
+        "modified_by": "Administrator",
+        "owner": "Administrator",
+        "docstatus": 0,
+        "idx": 0,
+        "voucher_code": "BUKJ5",
+        "status": "Unused",
+        "voucher_amount": 100.0,
+        "balance_amount": 100.0,
+        "issued_date": "2026-10-22",
+        "expiry_date": "2026-10-31",
+        "promotion": null,
+        "issued_against_type": null,
+        "issued_against": null,
+        "customer": null,
+        "customer_name": null,
+        "mobile_no": null,
+        "company": "nesto",
+        "warehouse": null,
+        "redeemed_against_type": null,
+        "redeemed_against": null,
+        "redeemed_date": null,
+        "notes": null,
+        "_user_tags": null,
+        "_comments": null,
+        "_assign": null,
+        "_liked_by": null,
+        "custom_document_code": "GVL-10022",
+        "issuance_key": "card:VCB-00008:6",
+        "currency": "AED",
+        "external_pos_reference": null,
+        "pos_promotion_reference": null,
+        "voucher_card_batch": "VCB-00008",
+        "card_number": 6,
+        "valid_from": "2026-10-22",
+        "card_archived": 0,
+        "card_blocked": 0,
+        "voucher_kind": "Voucher Card",
+        "active_from_time": null,
+        "active_to_time": null,
+        "use_redemption_hours": 0,
+        "reason": null,
+        "valid": true,
+        "current_status": "Active",
+        "online_redemption_required": true,
+        "use_activation_times": false,
+        "all_products": false,
+        "eligibility": [
+          {
+            "idx": 1,
+            "item_code": "I-14",
+            "brand": "",
+            "item_group": "",
+            "matching_item_groups": []
+          },
+          {
+            "idx": 2,
+            "item_code": "I-20",
+            "brand": null,
+            "item_group": null,
+            "matching_item_groups": []
+          },
+          {
+            "idx": 3,
+            "item_code": null,
+            "brand": "Celesta Demo",
+            "item_group": null,
+            "matching_item_groups": []
+          },
+          {
+            "idx": 4,
+            "item_code": "",
+            "brand": null,
+            "item_group": "paper",
+            "matching_item_groups": [
+              "paper"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "FFK5V",
+        "creation": "2026-10-22 15:09:07.510576",
+        "modified": "2026-10-22 15:18:30.108976",
+        "modified_by": "Administrator",
+        "owner": "Administrator",
+        "docstatus": 0,
+        "idx": 0,
+        "voucher_code": "FFK5V",
+        "status": "Unused",
+        "voucher_amount": 100.0,
+        "balance_amount": 100.0,
+        "issued_date": "2026-10-22",
+        "expiry_date": "2026-10-31",
+        "promotion": null,
+        "issued_against_type": null,
+        "issued_against": null,
+        "customer": null,
+        "customer_name": null,
+        "mobile_no": null,
+        "company": "nesto",
+        "warehouse": null,
+        "redeemed_against_type": null,
+        "redeemed_against": null,
+        "redeemed_date": null,
+        "notes": null,
+        "_user_tags": null,
+        "_comments": null,
+        "_assign": null,
+        "_liked_by": null,
+        "custom_document_code": "GVL-10023",
+        "issuance_key": "card:VCB-00008:7",
+        "currency": "AED",
+        "external_pos_reference": null,
+        "pos_promotion_reference": null,
+        "voucher_card_batch": "VCB-00008",
+        "card_number": 7,
+        "valid_from": "2026-10-22",
+        "card_archived": 0,
+        "card_blocked": 0,
+        "voucher_kind": "Voucher Card",
+        "active_from_time": null,
+        "active_to_time": null,
+        "use_redemption_hours": 0,
+        "reason": null,
+        "valid": true,
+        "current_status": "Active",
+        "online_redemption_required": true,
+        "use_activation_times": false,
+        "all_products": false,
+        "eligibility": [
+          {
+            "idx": 1,
+            "item_code": "I-14",
+            "brand": "",
+            "item_group": "",
+            "matching_item_groups": []
+          },
+          {
+            "idx": 2,
+            "item_code": "I-20",
+            "brand": null,
+            "item_group": null,
+            "matching_item_groups": []
+          },
+          {
+            "idx": 3,
+            "item_code": null,
+            "brand": "Celesta Demo",
+            "item_group": null,
+            "matching_item_groups": []
+          },
+          {
+            "idx": 4,
+            "item_code": "",
+            "brand": null,
+            "item_group": "paper",
+            "matching_item_groups": [
+              "paper"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "GV-63A410BD",
+        "creation": "2026-08-22 12:55:46.726229",
+        "modified": "2026-08-22 12:55:46.726229",
+        "modified_by": "pos.api@arabscale.com",
+        "owner": "pos.api@arabscale.com",
+        "docstatus": 0,
+        "idx": 0,
+        "voucher_code": "GV-63A410BD",
+        "status": "Unused",
+        "voucher_amount": 50.0,
+        "balance_amount": 50.0,
+        "issued_date": "2026-08-22",
+        "expiry_date": "2026-09-21",
+        "promotion": "AED 50 on buying worth 100",
+        "issued_against_type": "Sales Invoice",
+        "issued_against": "SI-34",
+        "customer": "C-7",
+        "customer_name": "Book Customer",
+        "mobile_no": null,
+        "company": "nesto",
+        "warehouse": "Stores - N",
+        "redeemed_against_type": null,
+        "redeemed_against": null,
+        "redeemed_date": null,
+        "notes": null,
+        "_user_tags": null,
+        "_comments": null,
+        "_assign": null,
+        "_liked_by": null,
+        "custom_document_code": "GVL-2",
+        "issuance_key": null,
+        "currency": "AED",
+        "external_pos_reference": null,
+        "pos_promotion_reference": null,
+        "voucher_card_batch": null,
+        "card_number": 0,
+        "valid_from": null,
+        "card_archived": 0,
+        "card_blocked": 0,
+        "voucher_kind": "Promotion Voucher",
+        "active_from_time": null,
+        "active_to_time": null,
+        "use_redemption_hours": 0,
+        "reason": "Expired",
+        "valid": false,
+        "current_status": "Expired",
+        "online_redemption_required": true,
+        "use_activation_times": false
+      },
+      {
+        "name": "GV-DC3F2413",
+        "creation": "2026-08-22 10:54:24.530197",
+        "modified": "2026-08-22 12:55:46.734969",
+        "modified_by": "pos.api@arabscale.com",
+        "owner": "pos.api@arabscale.com",
+        "docstatus": 0,
+        "idx": 0,
+        "voucher_code": "GV-DC3F2413",
+        "status": "Redeemed",
+        "voucher_amount": 50.0,
+        "balance_amount": 0.0,
+        "issued_date": "2026-08-22",
+        "expiry_date": "2026-09-21",
+        "promotion": "AED 50 on buying worth 100",
+        "issued_against_type": "Sales Invoice",
+        "issued_against": "SI-33",
+        "customer": "C-7",
+        "customer_name": "Book Customer",
+        "mobile_no": null,
+        "company": "nesto",
+        "warehouse": "Stores - N",
+        "redeemed_against_type": "Sales Invoice",
+        "redeemed_against": "SI-34",
+        "redeemed_date": "2026-08-22",
+        "notes": null,
+        "_user_tags": null,
+        "_comments": null,
+        "_assign": null,
+        "_liked_by": null,
+        "custom_document_code": "GVL-1",
+        "issuance_key": null,
+        "currency": "AED",
+        "external_pos_reference": null,
+        "pos_promotion_reference": null,
+        "voucher_card_batch": null,
+        "card_number": 0,
+        "valid_from": null,
+        "card_archived": 0,
+        "card_blocked": 0,
+        "voucher_kind": "Promotion Voucher",
+        "active_from_time": null,
+        "active_to_time": null,
+        "use_redemption_hours": 0,
+        "reason": "Redeemed",
+        "valid": false,
+        "current_status": "Redeemed",
+        "online_redemption_required": true,
+        "use_activation_times": false
+      },
+      {
+        "name": "J35XM",
+        "creation": "2026-10-22 15:09:07.488276",
+        "modified": "2026-10-22 15:18:30.401517",
+        "modified_by": "Administrator",
+        "owner": "Administrator",
+        "docstatus": 0,
+        "idx": 0,
+        "voucher_code": "J35XM",
+        "status": "Unused",
+        "voucher_amount": 100.0,
+        "balance_amount": 100.0,
+        "issued_date": "2026-10-22",
+        "expiry_date": "2026-10-31",
+        "promotion": null,
+        "issued_against_type": null,
+        "issued_against": null,
+        "customer": null,
+        "customer_name": null,
+        "mobile_no": null,
+        "company": "nesto",
+        "warehouse": null,
+        "redeemed_against_type": null,
+        "redeemed_against": null,
+        "redeemed_date": null,
+        "notes": null,
+        "_user_tags": null,
+        "_comments": null,
+        "_assign": null,
+        "_liked_by": null,
+        "custom_document_code": "GVL-10021",
+        "issuance_key": "card:VCB-00008:5",
+        "currency": "AED",
+        "external_pos_reference": null,
+        "pos_promotion_reference": null,
+        "voucher_card_batch": "VCB-00008",
+        "card_number": 5,
+        "valid_from": "2026-10-22",
+        "card_archived": 0,
+        "card_blocked": 0,
+        "voucher_kind": "Voucher Card",
+        "active_from_time": null,
+        "active_to_time": null,
+        "use_redemption_hours": 0,
+        "reason": null,
+        "valid": true,
+        "current_status": "Active",
+        "online_redemption_required": true,
+        "use_activation_times": false,
+        "all_products": false,
+        "eligibility": [
+          {
+            "idx": 1,
+            "item_code": "I-14",
+            "brand": "",
+            "item_group": "",
+            "matching_item_groups": []
+          },
+          {
+            "idx": 2,
+            "item_code": "I-20",
+            "brand": null,
+            "item_group": null,
+            "matching_item_groups": []
+          },
+          {
+            "idx": 3,
+            "item_code": null,
+            "brand": "Celesta Demo",
+            "item_group": null,
+            "matching_item_groups": []
+          },
+          {
+            "idx": 4,
+            "item_code": "",
+            "brand": null,
+            "item_group": "paper",
+            "matching_item_groups": [
+              "paper"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "JVB3H",
+        "creation": "2026-10-22 15:09:07.478430",
+        "modified": "2026-10-22 15:18:29.531196",
+        "modified_by": "Administrator",
+        "owner": "Administrator",
+        "docstatus": 0,
+        "idx": 0,
+        "voucher_code": "JVB3H",
+        "status": "Unused",
+        "voucher_amount": 100.0,
+        "balance_amount": 100.0,
+        "issued_date": "2026-10-22",
+        "expiry_date": "2026-10-31",
+        "promotion": null,
+        "issued_against_type": null,
+        "issued_against": null,
+        "customer": null,
+        "customer_name": null,
+        "mobile_no": null,
+        "company": "nesto",
+        "warehouse": null,
+        "redeemed_against_type": null,
+        "redeemed_against": null,
+        "redeemed_date": null,
+        "notes": null,
+        "_user_tags": null,
+        "_comments": null,
+        "_assign": null,
+        "_liked_by": null,
+        "custom_document_code": "GVL-10020",
+        "issuance_key": "card:VCB-00008:4",
+        "currency": "AED",
+        "external_pos_reference": null,
+        "pos_promotion_reference": null,
+        "voucher_card_batch": "VCB-00008",
+        "card_number": 4,
+        "valid_from": "2026-10-22",
+        "card_archived": 0,
+        "card_blocked": 0,
+        "voucher_kind": "Voucher Card",
+        "active_from_time": null,
+        "active_to_time": null,
+        "use_redemption_hours": 0,
+        "reason": null,
+        "valid": true,
+        "current_status": "Active",
+        "online_redemption_required": true,
+        "use_activation_times": false,
+        "all_products": false,
+        "eligibility": [
+          {
+            "idx": 1,
+            "item_code": "I-14",
+            "brand": "",
+            "item_group": "",
+            "matching_item_groups": []
+          },
+          {
+            "idx": 2,
+            "item_code": "I-20",
+            "brand": null,
+            "item_group": null,
+            "matching_item_groups": []
+          },
+          {
+            "idx": 3,
+            "item_code": null,
+            "brand": "Celesta Demo",
+            "item_group": null,
+            "matching_item_groups": []
+          },
+          {
+            "idx": 4,
+            "item_code": "",
+            "brand": null,
+            "item_group": "paper",
+            "matching_item_groups": [
+              "paper"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "QFCRL",
+        "creation": "2026-10-22 15:09:07.313819",
+        "modified": "2026-10-22 15:18:28.352190",
+        "modified_by": "Administrator",
+        "owner": "Administrator",
+        "docstatus": 0,
+        "idx": 0,
+        "voucher_code": "QFCRL",
+        "status": "Unused",
+        "voucher_amount": 100.0,
+        "balance_amount": 100.0,
+        "issued_date": "2026-10-22",
+        "expiry_date": "2026-10-31",
+        "promotion": null,
+        "issued_against_type": null,
+        "issued_against": null,
+        "customer": null,
+        "customer_name": null,
+        "mobile_no": null,
+        "company": "nesto",
+        "warehouse": null,
+        "redeemed_against_type": null,
+        "redeemed_against": null,
+        "redeemed_date": null,
+        "notes": null,
+        "_user_tags": null,
+        "_comments": null,
+        "_assign": null,
+        "_liked_by": null,
+        "custom_document_code": "GVL-10017",
+        "issuance_key": "card:VCB-00008:1",
+        "currency": "AED",
+        "external_pos_reference": null,
+        "pos_promotion_reference": null,
+        "voucher_card_batch": "VCB-00008",
+        "card_number": 1,
+        "valid_from": "2026-10-22",
+        "card_archived": 0,
+        "card_blocked": 0,
+        "voucher_kind": "Voucher Card",
+        "active_from_time": null,
+        "active_to_time": null,
+        "use_redemption_hours": 0,
+        "reason": null,
+        "valid": true,
+        "current_status": "Active",
+        "online_redemption_required": true,
+        "use_activation_times": false,
+        "all_products": false,
+        "eligibility": [
+          {
+            "idx": 1,
+            "item_code": "I-14",
+            "brand": "",
+            "item_group": "",
+            "matching_item_groups": []
+          },
+          {
+            "idx": 2,
+            "item_code": "I-20",
+            "brand": null,
+            "item_group": null,
+            "matching_item_groups": []
+          },
+          {
+            "idx": 3,
+            "item_code": null,
+            "brand": "Celesta Demo",
+            "item_group": null,
+            "matching_item_groups": []
+          },
+          {
+            "idx": 4,
+            "item_code": "",
+            "brand": null,
+            "item_group": "paper",
+            "matching_item_groups": [
+              "paper"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "RUBXB",
+        "creation": "2026-10-22 15:09:07.465324",
+        "modified": "2026-10-22 15:18:30.970848",
+        "modified_by": "Administrator",
+        "owner": "Administrator",
+        "docstatus": 0,
+        "idx": 0,
+        "voucher_code": "RUBXB",
+        "status": "Unused",
+        "voucher_amount": 100.0,
+        "balance_amount": 100.0,
+        "issued_date": "2026-10-22",
+        "expiry_date": "2026-10-31",
+        "promotion": null,
+        "issued_against_type": null,
+        "issued_against": null,
+        "customer": null,
+        "customer_name": null,
+        "mobile_no": null,
+        "company": "nesto",
+        "warehouse": null,
+        "redeemed_against_type": null,
+        "redeemed_against": null,
+        "redeemed_date": null,
+        "notes": null,
+        "_user_tags": null,
+        "_comments": null,
+        "_assign": null,
+        "_liked_by": null,
+        "custom_document_code": "GVL-10019",
+        "issuance_key": "card:VCB-00008:3",
+        "currency": "AED",
+        "external_pos_reference": null,
+        "pos_promotion_reference": null,
+        "voucher_card_batch": "VCB-00008",
+        "card_number": 3,
+        "valid_from": "2026-10-22",
+        "card_archived": 0,
+        "card_blocked": 0,
+        "voucher_kind": "Voucher Card",
+        "active_from_time": null,
+        "active_to_time": null,
+        "use_redemption_hours": 0,
+        "reason": null,
+        "valid": true,
+        "current_status": "Active",
+        "online_redemption_required": true,
+        "use_activation_times": false,
+        "all_products": false,
+        "eligibility": [
+          {
+            "idx": 1,
+            "item_code": "I-14",
+            "brand": "",
+            "item_group": "",
+            "matching_item_groups": []
+          },
+          {
+            "idx": 2,
+            "item_code": "I-20",
+            "brand": null,
+            "item_group": null,
+            "matching_item_groups": []
+          },
+          {
+            "idx": 3,
+            "item_code": null,
+            "brand": "Celesta Demo",
+            "item_group": null,
+            "matching_item_groups": []
+          },
+          {
+            "idx": 4,
+            "item_code": "",
+            "brand": null,
+            "item_group": "paper",
+            "matching_item_groups": [
+              "paper"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "S5FWT",
+        "creation": "2026-10-22 15:09:07.523642",
+        "modified": "2026-10-22 15:18:28.652203",
+        "modified_by": "Administrator",
+        "owner": "Administrator",
+        "docstatus": 0,
+        "idx": 0,
+        "voucher_code": "S5FWT",
+        "status": "Unused",
+        "voucher_amount": 100.0,
+        "balance_amount": 100.0,
+        "issued_date": "2026-10-22",
+        "expiry_date": "2026-10-31",
+        "promotion": null,
+        "issued_against_type": null,
+        "issued_against": null,
+        "customer": null,
+        "customer_name": null,
+        "mobile_no": null,
+        "company": "nesto",
+        "warehouse": null,
+        "redeemed_against_type": null,
+        "redeemed_against": null,
+        "redeemed_date": null,
+        "notes": null,
+        "_user_tags": null,
+        "_comments": null,
+        "_assign": null,
+        "_liked_by": null,
+        "custom_document_code": "GVL-10024",
+        "issuance_key": "card:VCB-00008:8",
+        "currency": "AED",
+        "external_pos_reference": null,
+        "pos_promotion_reference": null,
+        "voucher_card_batch": "VCB-00008",
+        "card_number": 8,
+        "valid_from": "2026-10-22",
+        "card_archived": 0,
+        "card_blocked": 0,
+        "voucher_kind": "Voucher Card",
+        "active_from_time": null,
+        "active_to_time": null,
+        "use_redemption_hours": 0,
+        "reason": null,
+        "valid": true,
+        "current_status": "Active",
+        "online_redemption_required": true,
+        "use_activation_times": false,
+        "all_products": false,
+        "eligibility": [
+          {
+            "idx": 1,
+            "item_code": "I-14",
+            "brand": "",
+            "item_group": "",
+            "matching_item_groups": []
+          },
+          {
+            "idx": 2,
+            "item_code": "I-20",
+            "brand": null,
+            "item_group": null,
+            "matching_item_groups": []
+          },
+          {
+            "idx": 3,
+            "item_code": null,
+            "brand": "Celesta Demo",
+            "item_group": null,
+            "matching_item_groups": []
+          },
+          {
+            "idx": 4,
+            "item_code": "",
+            "brand": null,
+            "item_group": "paper",
+            "matching_item_groups": [
+              "paper"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "SVBG2",
+        "creation": "2026-10-22 15:09:07.534073",
+        "modified": "2026-10-22 15:18:28.930347",
+        "modified_by": "Administrator",
+        "owner": "Administrator",
+        "docstatus": 0,
+        "idx": 0,
+        "voucher_code": "SVBG2",
+        "status": "Unused",
+        "voucher_amount": 100.0,
+        "balance_amount": 100.0,
+        "issued_date": "2026-10-22",
+        "expiry_date": "2026-10-31",
+        "promotion": null,
+        "issued_against_type": null,
+        "issued_against": null,
+        "customer": null,
+        "customer_name": null,
+        "mobile_no": null,
+        "company": "nesto",
+        "warehouse": null,
+        "redeemed_against_type": null,
+        "redeemed_against": null,
+        "redeemed_date": null,
+        "notes": null,
+        "_user_tags": null,
+        "_comments": null,
+        "_assign": null,
+        "_liked_by": null,
+        "custom_document_code": "GVL-10025",
+        "issuance_key": "card:VCB-00008:9",
+        "currency": "AED",
+        "external_pos_reference": null,
+        "pos_promotion_reference": null,
+        "voucher_card_batch": "VCB-00008",
+        "card_number": 9,
+        "valid_from": "2026-10-22",
+        "card_archived": 0,
+        "card_blocked": 0,
+        "voucher_kind": "Voucher Card",
+        "active_from_time": null,
+        "active_to_time": null,
+        "use_redemption_hours": 0,
+        "reason": null,
+        "valid": true,
+        "current_status": "Active",
+        "online_redemption_required": true,
+        "use_activation_times": false,
+        "all_products": false,
+        "eligibility": [
+          {
+            "idx": 1,
+            "item_code": "I-14",
+            "brand": "",
+            "item_group": "",
+            "matching_item_groups": []
+          },
+          {
+            "idx": 2,
+            "item_code": "I-20",
+            "brand": null,
+            "item_group": null,
+            "matching_item_groups": []
+          },
+          {
+            "idx": 3,
+            "item_code": null,
+            "brand": "Celesta Demo",
+            "item_group": null,
+            "matching_item_groups": []
+          },
+          {
+            "idx": 4,
+            "item_code": "",
+            "brand": null,
+            "item_group": "paper",
+            "matching_item_groups": [
+              "paper"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "VH9AV",
+        "creation": "2026-10-22 15:09:07.545962",
+        "modified": "2026-10-22 15:18:29.820211",
+        "modified_by": "Administrator",
+        "owner": "Administrator",
+        "docstatus": 0,
+        "idx": 0,
+        "voucher_code": "VH9AV",
+        "status": "Unused",
+        "voucher_amount": 100.0,
+        "balance_amount": 100.0,
+        "issued_date": "2026-10-22",
+        "expiry_date": "2026-10-31",
+        "promotion": null,
+        "issued_against_type": null,
+        "issued_against": null,
+        "customer": null,
+        "customer_name": null,
+        "mobile_no": null,
+        "company": "nesto",
+        "warehouse": null,
+        "redeemed_against_type": null,
+        "redeemed_against": null,
+        "redeemed_date": null,
+        "notes": null,
+        "_user_tags": null,
+        "_comments": null,
+        "_assign": null,
+        "_liked_by": null,
+        "custom_document_code": "GVL-10026",
+        "issuance_key": "card:VCB-00008:10",
+        "currency": "AED",
+        "external_pos_reference": null,
+        "pos_promotion_reference": null,
+        "voucher_card_batch": "VCB-00008",
+        "card_number": 10,
+        "valid_from": "2026-10-22",
+        "card_archived": 0,
+        "card_blocked": 0,
+        "voucher_kind": "Voucher Card",
+        "active_from_time": null,
+        "active_to_time": null,
+        "use_redemption_hours": 0,
+        "reason": null,
+        "valid": true,
+        "current_status": "Active",
+        "online_redemption_required": true,
+        "use_activation_times": false,
+        "all_products": false,
+        "eligibility": [
+          {
+            "idx": 1,
+            "item_code": "I-14",
+            "brand": "",
+            "item_group": "",
+            "matching_item_groups": []
+          },
+          {
+            "idx": 2,
+            "item_code": "I-20",
+            "brand": null,
+            "item_group": null,
+            "matching_item_groups": []
+          },
+          {
+            "idx": 3,
+            "item_code": null,
+            "brand": "Celesta Demo",
+            "item_group": null,
+            "matching_item_groups": []
+          },
+          {
+            "idx": 4,
+            "item_code": "",
+            "brand": null,
+            "item_group": "paper",
+            "matching_item_groups": [
+              "paper"
+            ]
+          }
+        ]
+      }
+    ],
+    "voucher_snapshot": {
+      "mode": "full",
+      "company": "nesto",
+      "warehouse": "Stores - N",
+      "as_of": "2026-10-22 17:43:31.429461",
+      "server_timezone": "Asia/Dubai",
+      "online_redemption_required": true
+    }
   }
 }
 ```
+
+Full response: [pos-promotions-local-sample.json](retail/docs/pos-promotions-local-sample.json).
+The saved development counter is `Karama / counter01`; `C001` is illustrative.
+Examples contain expired offers: apply downloaded validity and status checks.
 
 Each product contains every Promo Price Item field. The parent includes the saved promotion details and Frappe document metadata; internal `linked_schemes` are excluded.
 
@@ -1393,6 +3360,71 @@ Buy Item rows follow `promotion_scope`. Free Item rows always identify a specifi
 `item`; their `item_group` and `brand` are blank. With `same_product_only: 1`,
 the free product is the qualifying purchased Item, including when qualification
 uses CATEGORY or BRAND. Quantity and free-quantity calculations are unchanged.
+
+#### Buy one/get one with a different item, category or brand
+
+The existing Buy X Get Y model supports a **qualifying** ITEM, CATEGORY or
+BRAND, with a **specific free Item** from any category/brand. Send these rules
+in `buy_x_get_y_promotions` on `get_pos_promo_prices`; no change to the old
+`promotions` array is required. `same_product_only: 0` selects explicit
+`Free Item` rows. With `same_product_only: 1`, the free item must instead be
+the qualifying purchased item.
+
+Actual local example: `Buy 2 tea + Get 1 Muffin free` buys `I-27` (Tea,
+category `Books`, no Brand) and rewards `I-23` (Chocolate Muffin, category
+`Raw Material`, Brand `Emirates`). These are the current saved Item values,
+even though the Tea category name is unusual. Do not infer category/brand
+from the item description. Resolve reward Item metadata using the normal
+Item master download. The actual rule uses buy quantity 2; the following
+buy-one/get-one examples are **illustrative configurations, not saved offers**.
+Their additional date/version/branch fields follow the real response above.
+
+```json
+[
+  {
+    "description": "Buy one Tea, get one Chocolate Muffin",
+    "promotion_scope": "ITEM",
+    "buy_qty": 1,
+    "free_qty": 1,
+    "same_product_only": 0,
+    "products": [
+      {"add_to": "Buy Item", "item": "I-27", "item_group": "", "brand": "", "matching_item_groups": [], "uom": "Nos"},
+      {"add_to": "Free Item", "item": "I-23", "item_group": "", "brand": "", "matching_item_groups": [], "uom": "Nos"}
+    ]
+  },
+  {
+    "description": "Buy one qualifying category item, get one Chocolate Muffin",
+    "promotion_scope": "CATEGORY",
+    "buy_qty": 1,
+    "free_qty": 1,
+    "same_product_only": 0,
+    "products": [
+      {"add_to": "Buy Item", "item": "", "item_group": "Books", "brand": "", "matching_item_groups": ["Books"], "uom": "Nos"},
+      {"add_to": "Free Item", "item": "I-23", "item_group": "", "brand": "", "matching_item_groups": [], "uom": "Nos"}
+    ]
+  },
+  {
+    "description": "Buy one Emirates brand item, get one Tea",
+    "promotion_scope": "BRAND",
+    "buy_qty": 1,
+    "free_qty": 1,
+    "same_product_only": 0,
+    "products": [
+      {"add_to": "Buy Item", "item": "", "item_group": "", "brand": "Emirates", "matching_item_groups": [], "uom": "Nos"},
+      {"add_to": "Free Item", "item": "I-27", "item_group": "", "brand": "", "matching_item_groups": [], "uom": "Nos"}
+    ]
+  }
+]
+```
+
+For CATEGORY, always use the downloaded `matching_item_groups` including
+descendants; the single-name list above is illustrative. Free Item rows do
+not become CATEGORY/BRAND selectors. A reward such as "choose any free item
+from Brand B/Category B" is **not supported by this Buy X Get Y setup**;
+it needs a separately agreed reward-selection model. Native Pricing Rules
+also expose their existing `apply_rule_on_other`, `other_item_code`,
+`other_item_group` and `other_brand` fields unchanged; those have native
+Pricing Rule semantics and must not be interpreted as Buy X Get Y Free Item rows.
 
 ### Download loyalty programs
 
@@ -3040,3 +5072,57 @@ formats; it is not a replacement for this Item-master layout. External .NET
 clients must explicitly adopt the six-digit price layout in their scanner and
 configure the scale identically. This Retail implementation does not modify the
 .NET executable or reinterpret already completed POS payloads.
+
+### Voucher cards: lookup and redemption
+
+Card details are in `voucher_card_batches` and `gift_voucher_ledger` in the
+**Download special prices and other promotions** response above. `voucher_kind`
+distinguishes `Voucher Card` from `Promotion Voucher`.
+
+Use `voucher_amount` for original value and `balance_amount` for remaining value.
+`status` is stored status; `current_status`, `valid` and `reason` reflect current
+activation, expiry, blocking and archive rules. `Unused` with `valid=true` means
+an active full-balance card. Inactive rows remain in the snapshot.
+
+`use_activation_times` (legacy alias `use_redemption_hours`) enables one continuous
+period from `valid_from` + `active_from_time` through `expiry_date` + `active_to_time`,
+in `server_timezone`. These are not daily hours. When disabled, times are null
+and full validity dates apply.
+
+Cards are promotional discounts. Approve spending online through the existing
+`POST /api/method/retail.api.gift_vouchers.redeem_gift_voucher` before completing
+the sale. Downloaded balances do not authorize offline spending.
+
+For batch cards, send `bill_total` before voucher discount; restricted cards also
+require `items`. Item amounts must be after other discounts and before the voucher.
+Use `amount_including_vat`, or `net_amount` / `amount` as fallback. ERP checks saved
+Item/brand/category eligibility, including category descendants; selectors match
+with OR. An explicit zero line stays zero. Approval cannot exceed eligible spend
+or remaining balance.
+
+```json
+{
+  "branch": "YOUR-BRANCH",
+  "counter_code": "YOUR-COUNTER",
+  "voucher_code": "A7K2P",
+  "external_pos_reference": "YOUR-UNIQUE-SALE-REFERENCE",
+  "redemption_reference": "YOUR-UNIQUE-REDEMPTION-REFERENCE",
+  "amount": 10,
+  "bill_total": 80,
+  "items": [
+    {"item_code": "ELIGIBLE-ITEM", "amount_including_vat": 35},
+    {"item_code": "OTHER-ITEM", "amount_including_vat": 45}
+  ]
+}
+```
+
+Retry the identical request and references. Successful retries do not debit twice,
+even after expiry/blocking. Include the approval in the existing `voucher_redemption`
+sale object and apply its amount once as a discount. Invoice sync binds that approval
+without another debit; cancellation restores the recorded debit once. Block/archive
+flags remain in effect after reversal. Legacy promotion voucher requests are unchanged.
+
+Voucher snapshots are company-scoped; ledger warehouse must match the counter or
+be blank. Replace both arrays on every response, including `modified_after` requests.
+An empty array clears its cache. No extra transaction-history rows are created by
+this download.

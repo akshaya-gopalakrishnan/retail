@@ -87,7 +87,9 @@ def install(doctypes=None):
             choices = [prefix + "-.#"]
             if dt == "Sales Invoice":
                 choices += ["VS-.#", "PSI-.#"]
-            for prop, value, kind in (("options", "\n".join(choices), "Text"), ("default", choices[0], "Data")):
+            # Retail assigns the series before naming; keep the field and its
+            # default for validation, but do not ask users to choose a series.
+            for prop, value, kind in (("options", "\n".join(choices), "Text"), ("default", choices[0], "Data"), ("hidden", "1", "Check")):
                 make_property_setter(dt, "naming_series", prop, value, kind, validate_fields_for_doctype=False)
         _set_doctype_property(dt, "autoname", "naming_series:" if meta.has_field("naming_series") else prefix + "-.#", "Data")
         for rule in frappe.get_all("Document Naming Rule", filters={"document_type": dt, "disabled": 0}, pluck="name"):
@@ -95,6 +97,17 @@ def install(doctypes=None):
         # Pre-create keys so concurrent first inserts lock an existing row.
         for code in ([prefix, "PSI", "VS"] if dt == "Sales Invoice" else [prefix]):
             frappe.db.sql("INSERT IGNORE INTO `tabSeries` (`name`, `current`) VALUES (%s, 0)", ("retail-short-code:" + code,))
+    frappe.clear_cache()
+
+
+def hide_naming_series():
+    """Apply the Series visibility change to existing sites during migration."""
+    from frappe.custom.doctype.property_setter.property_setter import make_property_setter
+
+    for dt in PREFIXES:
+        if frappe.db.exists("DocType", dt) and frappe.get_meta(dt).has_field("naming_series"):
+            make_property_setter(dt, "naming_series", "hidden", "1", "Check",
+                                 validate_fields_for_doctype=False)
     frappe.clear_cache()
 
 

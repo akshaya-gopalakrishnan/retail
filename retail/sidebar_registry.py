@@ -55,7 +55,7 @@ def registry():
         if root == "Promotions":
             children = ["Promotions " + name + " Link" for name in (
                 "Promo Price", "Buy X Get Y Promotion", "Gift Voucher Promotion",
-                "Gift Voucher Ledger", "Loyalty Program")]
+                "Gift Voucher Ledger", "Voucher Card Batch", "Loyalty Program")]
         if root == "Reports":
             children = [name for name, _, *parent in REPORT_SIDEBAR_GROUPS if not parent]
         group["children"] = [entry(name, group["id"]) for name in children]
@@ -71,6 +71,8 @@ def registry():
                 child["label"] = "Setup"
             if name == "Manufacturing Module Reports":
                 child["label"] = "Manufacturing Module"
+            if name == "Promotions Voucher Card Batch Link":
+                child["targets"].append(["doctype", "Voucher Card Transaction"])
             report_names = []
             if name in ("Manufacturing Reports", "Manufacturing Module Reports"):
                 report_names = next(reports for label, reports, *_ in REPORT_SIDEBAR_GROUPS if label == "Manufacturing Module Reports")
@@ -91,7 +93,7 @@ def registry():
                 child["label"] = "Loyalty Program"
                 child["targets"].append(["doctype", "Loyalty Point Entry"])
             if root == "Promotions":
-                child["label"] = name.removeprefix("Promotions ").removesuffix(" Link")
+                child["label"] = "Voucher Cards" if name == "Promotions Voucher Card Batch Link" else name.removeprefix("Promotions ").removesuffix(" Link")
             if name == "Stock Request":
                 child["targets"].append(["doctype", "Material Request"])
             if name == "Item Family List":
