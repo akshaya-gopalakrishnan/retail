@@ -1,0 +1,45 @@
+{
+  "site": "retail-test.localhost",
+  "date": "2026-10-22",
+  "scope": "Retail-only promotional voucher cards; no Frappe or ERPNext core changes",
+  "integration_checks_passed": 11,
+  "existing_voucher_unit_checks_passed": 11,
+  "large_batch": {
+    "cards_generated": 10000,
+    "seconds": 71.11,
+    "retry_created_no_duplicates": true,
+    "fixtures_removed": true
+  },
+  "actual_long_queue_generation_passed": true,
+  "concurrent_overspend_blocked": true,
+  "concurrent_identical_retry_debited_once": true,
+  "chromium": {
+    "batch_form": true,
+    "promotions_navigation": true,
+    "qr_images": true,
+    "javascript_errors": [],
+    "card_mm": [
+      85.6,
+      54
+    ]
+  },
+  "native_pdf": {
+    "a4": {
+      "pages_for_two_cards": 1,
+      "page_width_points": 595
+    },
+    "labels": {
+      "pages_for_two_cards": 2,
+      "page_width_points": 243
+    }
+  },
+  "customer_print_edits_preserved": true,
+  "temporary_batches_remaining": 0,
+  "known_legacy_test_conflict": "retail.test_pos_gift_vouchers.run_integration expects completed offline POS invoice cancellation. Existing RetailPOSInvoice.before_cancel forbids this. The safeguard was retained; standard ERP invoice cancellation and reversal passed separately.",
+  "limitations": [
+    "Promotional discount vouchers only; paid prepaid liability issuance is not implemented.",
+    "Separate .NET terminal must implement the additive online request fields in POS_API_CONTRACT.md.",
+    "Amounts must fit exact system currency precision; AED 1000000000000 and one-cent redemption were tested."
+  ],
+  "deployment": "Local development site migrated and Retail assets rebuilt. No GitHub push or production deployment."
+}

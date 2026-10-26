@@ -275,6 +275,9 @@ def validate_invoice(invoice, closing):
         frappe.throw(_("The bill does not belong to this business day."))
     if invoice.company != company_for(closing.branch):
         frappe.throw(_("The bill belongs to another company."))
+    from retail.pos_offline_promotions import rows as promotion_rows
+    if promotion_rows(frappe.parse_json(invoice.get("custom_pos_completed_payload") or "{}")):
+        frappe.throw(_("Offline promotion settlements require accounts review."))
     currency = frappe.get_cached_value("Company", invoice.company, "default_currency")
     if (invoice.docstatus != 1 or invoice.is_return or not invoice.consolidated_invoice
             or flt(invoice.outstanding_amount) or flt(invoice.change_amount) or flt(invoice.write_off_amount)

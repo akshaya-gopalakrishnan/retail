@@ -1,0 +1,241 @@
+{
+ "doctype": "DocType",
+ "name": "Voucher Card Batch",
+ "module": "Retail-app",
+ "engine": "InnoDB",
+ "field_order": [
+  "title",
+  "company",
+  "currency",
+  "voucher_amount",
+  "card_count",
+  "valid_from",
+  "expiry_date",
+  "use_redemption_hours",
+  "active_from_time",
+  "active_to_time",
+  "activate_all_cards",
+  "generation_status",
+  "generated_count",
+  "generation_error",
+  "eligibility",
+  "all_products",
+  "apply_promotion_to",
+  "restrictions",
+  "printing",
+  "logo",
+  "terms",
+  "print_from",
+  "print_to",
+  "label_width",
+  "label_height",
+  "voucher_print_format"
+ ],
+ "fields": [
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Title",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency",
+   "reqd": 1
+  },
+  {
+   "fieldname": "voucher_amount",
+   "fieldtype": "Currency",
+   "label": "Value per Card",
+   "options": "currency",
+   "reqd": 1,
+   "precision": "2",
+   "length": 30
+  },
+  {
+   "fieldname": "card_count",
+   "fieldtype": "Int",
+   "label": "Number of Cards",
+   "reqd": 1
+  },
+  {
+   "fieldname": "valid_from",
+   "fieldtype": "Date",
+   "label": "Active From Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "expiry_date",
+   "fieldtype": "Date",
+   "label": "Active To Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "activate_all_cards",
+   "fieldtype": "Check",
+   "label": "Activate All Cards",
+   "default": "0",
+   "description": "Activate generated cards. Unticking does not deactivate cards."
+  },
+  {
+   "fieldname": "generation_status",
+   "fieldtype": "Select",
+   "label": "Generation Status",
+   "options": "Draft\nQueued\nGenerating\nComplete\nFailed",
+   "default": "Draft",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "generated_count",
+   "fieldtype": "Int",
+   "label": "Generated Count",
+   "read_only": 1
+  },
+  {
+   "fieldname": "generation_error",
+   "fieldtype": "Small Text",
+   "label": "Generation Error",
+   "read_only": 1
+  },
+  {
+   "fieldname": "eligibility",
+   "fieldtype": "Section Break",
+   "label": "Eligibility"
+  },
+  {
+   "fieldname": "all_products",
+   "fieldtype": "Check",
+   "label": "All Products",
+   "default": "1"
+  },
+  {
+   "fieldname": "apply_promotion_to",
+   "fieldtype": "Select",
+   "label": "Apply Promotion To",
+   "options": "\nItem\nBrand\nCategory",
+   "depends_on": "eval:!doc.all_products"
+  },
+  {
+   "fieldname": "restrictions",
+   "fieldtype": "Table",
+   "label": "Eligible Items, Brands and Categories",
+   "options": "Voucher Card Restriction",
+   "depends_on": "eval:!doc.all_products"
+  },
+  {
+   "fieldname": "printing",
+   "fieldtype": "Section Break",
+   "label": "Printing",
+   "hidden": 1
+  },
+  {
+   "fieldname": "logo",
+   "fieldtype": "Attach Image",
+   "label": "Logo",
+   "hidden": 1
+  },
+  {
+   "fieldname": "terms",
+   "fieldtype": "Small Text",
+   "label": "Terms",
+   "default": "Partial redemption allowed. No cash change. Keep this code secure.",
+   "hidden": 1
+  },
+  {
+   "fieldname": "print_from",
+   "fieldtype": "Int",
+   "label": "Print from Card Number",
+   "default": "1",
+   "hidden": 1
+  },
+  {
+   "fieldname": "print_to",
+   "fieldtype": "Int",
+   "label": "Print to Card Number",
+   "default": "100",
+   "description": "Print up to 500 cards per range.",
+   "hidden": 1
+  },
+  {
+   "fieldname": "label_width",
+   "fieldtype": "Float",
+   "label": "Label Width (mm)",
+   "default": "85.6",
+   "hidden": 1
+  },
+  {
+   "fieldname": "label_height",
+   "fieldtype": "Float",
+   "label": "Label Height (mm)",
+   "default": "54",
+   "hidden": 1
+  },
+  {
+   "fieldname": "active_from_time",
+   "fieldtype": "Time",
+   "label": "Active From Time",
+   "description": "Combined with the corresponding Active From/To Date to define one continuous validity period in the site timezone.",
+   "depends_on": "eval:doc.use_redemption_hours",
+   "mandatory_depends_on": "eval:doc.use_redemption_hours"
+  },
+  {
+   "fieldname": "active_to_time",
+   "fieldtype": "Time",
+   "label": "Active To Time",
+   "description": "Combined with the corresponding Active From/To Date to define one continuous validity period in the site timezone.",
+   "depends_on": "eval:doc.use_redemption_hours",
+   "mandatory_depends_on": "eval:doc.use_redemption_hours"
+  },
+  {
+   "fieldname": "use_redemption_hours",
+   "fieldtype": "Check",
+   "label": "Set Activation Times",
+   "default": "0",
+   "read_only": 0
+  },
+  {
+   "fieldname": "voucher_print_format",
+   "fieldtype": "Link",
+   "label": "Card Print Format",
+   "options": "Print Format",
+   "hidden": 1
+  }
+ ],
+ "track_changes": 1,
+ "autoname": "format:VCB-{#####}",
+ "title_field": "title",
+ "search_fields": "title,company",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "print": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "Sales Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "print": 1,
+   "report": 1,
+   "export": 1
+  }
+ ],
+ "icon": "gift"
+}

@@ -44,6 +44,14 @@ class TestColumnPreferences(unittest.TestCase):
 			frappe.cache.hdel("_user_settings", f"Purchase Invoice::{frappe.session.user}")
 			self.assertEqual(json.loads(get_user_settings("Purchase Invoice"))[key][table], self.selection)
 
+	def test_scrollable_pixel_width_survives_save_and_rejects_invalid_values(self):
+		selection = [{"fieldname": "item_code", "columns": 2, "width_px": 237}]
+		self.save(key="RetailScrollableGrid", value={"items": selection})
+		self.assertEqual(self.read_db()["RetailScrollableGrid"]["items"], selection)
+		for pixels in (True, 63, 961, 100.5, "237"):
+			with self.assertRaises(frappe.ValidationError):
+				self.save(key="RetailScrollableGrid", value={"items": [dict(selection[0], width_px=pixels)]})
+
 	def test_users_and_doctypes_remain_separate(self):
 		self.save(value={"Purchase Invoice Item": self.selection})
 		self.save(doctype="Sales Invoice", value={"Sales Invoice Item": self.selection[:1]})

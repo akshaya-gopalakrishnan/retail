@@ -1003,3 +1003,17 @@ for _scale_sales_type in ("Sales Invoice", "POS Invoice", "Sales Order", "Delive
 
 # Existing POS profile selection never grants profile-document administration.
 override_whitelisted_methods["frappe.client.validate_link"] = "retail.pos_privileges.validate_profile_link"
+
+# Live ledger balances and readable loyalty document titles.
+doctype_js["Loyalty Point Entry"] = "public/js/loyalty_entry_display.js"
+doctype_list_js["Loyalty Point Entry"] = "public/js/loyalty_entry_display.js"
+after_sync.append("retail.loyalty_display.install")
+after_migrate.append("retail.loyalty_display.install")
+
+# Retail promotional card batches: additive schema, navigation and print helpers.
+after_migrate.append("retail.voucher_cards.install")
+after_sync.append("retail.voucher_cards.install")
+jinja["methods"].append("retail.voucher_cards.voucher_card_print_data")
+
+# Series selection is internal for documents numbered by Retail.
+after_migrate.append("retail.short_codes.hide_naming_series")

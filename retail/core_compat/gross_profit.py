@@ -256,7 +256,7 @@ def get_data_when_not_grouped_by_invoice(gross_profit_data, filters, group_wise_
 		total_base_amount += src.base_amount or 0.00
 		total_buying_amount += src.buying_amount or 0.00
 
-		row = [src.get(col) for col in group_columns] + [filters.currency, src.get("retail_packing_breakdown")]
+		row = [src.get(col) for col in group_columns] + [filters.currency]
 
 		data.append(row)
 

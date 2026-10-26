@@ -51,7 +51,13 @@ def save(doctype, key, value=None):
 				or not 1 <= width <= 12 or int(width) != width
 			):
 				frappe.throw("Column width must be a whole number from 1 to 12", frappe.ValidationError)
-			normalized[table].append({"fieldname": column["fieldname"], "columns": int(width)})
+			entry = {"fieldname": column["fieldname"], "columns": int(width)}
+			if key == "RetailScrollableGrid" and "width_px" in column:
+				pixels = column["width_px"]
+				if isinstance(pixels, bool) or not isinstance(pixels, int) or not 64 <= pixels <= 960:
+					frappe.throw("Pixel width must be a whole number from 64 to 960", frappe.ValidationError)
+				entry["width_px"] = pixels
+			normalized[table].append(entry)
 
 	user = frappe.session.user
 	current = _get_user_settings(user, doctype)

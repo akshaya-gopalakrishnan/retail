@@ -313,7 +313,15 @@ class ReceivablePayableReport:
 				row.invoiced_in_account_currency += amount_in_account_currency
 		else:
 			if self.is_invoice(ple):
-				if row.voucher_no == ple.voucher_no == ple.against_voucher_no:
+				# A self-linked sales return is customer credit, not money received.
+				# Classify the ledger movement before outstanding/subtotals are built
+				# so it is deducted once, in both company and account currencies.
+				is_sales_return = (
+					self.account_type == "Receivable"
+					and ple.voucher_type == "Sales Invoice"
+					and self.invoice_details.get(ple.voucher_no, {}).get("is_return")
+				)
+				if row.voucher_no == ple.voucher_no == ple.against_voucher_no and not is_sales_return:
 					row.paid -= amount
 					row.paid_in_account_currency -= amount_in_account_currency
 				else:
@@ -477,7 +485,7 @@ class ReceivablePayableReport:
 					"company": self.filters.company,
 					"docstatus": 1,
 				},
-				fields=["name", "due_date", "po_no"],
+				fields=["name", "due_date", "po_no", "is_return"],
 			)
 			for d in si_list:
 				self.invoice_details.setdefault(d.name, d)

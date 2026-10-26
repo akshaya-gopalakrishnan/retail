@@ -2,6 +2,8 @@
 
 Retail adds sold/transaction UOM, recorded barcode, item/packing name, quantity in that UOM, conversion factor and identity source. Existing columns, row grouping, stock quantities, prices, valuation and accounting calculations retain their behavior. Quantity and conversion columns use Data formatting to avoid adding unlike UOMs or conversion factors in automatic report totals.
 
+Packing breakdown and Transaction Identity Source columns are no longer displayed in any report. The coverage below describes the underlying identity enrichment, which remains available internally; all other report columns and calculations are unchanged. Existing prepared reports must be regenerated to pick up this display change.
+
 ## Resolution and historical records
 
 - Match the source child row, not Item Code alone. Stock Ledger resolves its SLE using movement dimensions and running balance, then follows `voucher_detail_no`. Serial/batch bundle splits use the exact bundle and the displayed movement share.

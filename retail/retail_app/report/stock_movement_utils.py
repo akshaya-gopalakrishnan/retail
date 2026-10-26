@@ -269,6 +269,8 @@ def run_query_report(
 
 	from retail.chart_labels import report_labels
 	report_labels(result)
+	from retail.report_display_names import enrich_result
+	enrich_result(result)
 	return result
 
 

@@ -126,6 +126,8 @@ WORKSPACE_MODULES = {
 	"Buy X Get Y Promotion": "Selling",
 	"Gift Voucher Promotion": "Selling",
 	"Gift Voucher Ledger": "Selling",
+	"Voucher Card Batch": "Selling",
+	"Voucher Card Transaction": "Selling",
 	"Items": "Stock",
 	"Items List": "Stock",
 	"Item Family List": "Stock",
@@ -789,7 +791,7 @@ def _filter_workspace_sidebar_items(sidebar, report_pages=None):
 		sidebar["pages"].remove(promotions)
 		settings_index = next((i for i, page in enumerate(sidebar["pages"]) if page.get("name") == "Settings"), len(sidebar["pages"]))
 		sidebar["pages"].insert(settings_index, promotions)
-		for doctype in ("Promo Price", "Buy X Get Y Promotion", "Gift Voucher Promotion", "Gift Voucher Ledger"):
+		for doctype in ("Promo Price", "Buy X Get Y Promotion", "Gift Voucher Promotion", "Gift Voucher Ledger", "Voucher Card Batch"):
 			if frappe.has_permission(doctype, "read"):
 				name = f"Promotions {doctype} Link"
 				sidebar["pages"].append(frappe._dict(name=name, title=name, label=doctype, parent_page="Promotions", public=1, is_hidden=0, module="Retail-app"))

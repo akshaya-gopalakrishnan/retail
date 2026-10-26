@@ -10,6 +10,6 @@ frappe.query_reports["Promotion Sales Detail"] = {
             fieldname: "promotion", label: __("Promotion"), fieldtype: "Autocomplete",
             get_query: () => ({query: "retail.retail_app.report.promotion_sales_detail.promotion_sales_detail.get_promotions"})
         },
-        {fieldname: "status", label: __("Schedule Check"), fieldtype: "Select", options: "\nSchedule Valid\nReview Required\nReturn Linked\nNot Reported"}
+        {fieldname: "status", label: __("Schedule Check"), fieldtype: "Select", options: "\nSchedule Valid\nReview Required\nReturn Linked"}
     ]
 };

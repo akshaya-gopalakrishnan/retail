@@ -1,0 +1,113 @@
+{
+ "doctype": "DocType",
+ "name": "Voucher Card Transaction",
+ "module": "Retail-app",
+ "engine": "InnoDB",
+ "field_order": [
+  "voucher",
+  "batch",
+  "status",
+  "event",
+  "amount",
+  "balance_after",
+  "reference",
+  "actor",
+  "company",
+  "currency"
+ ],
+ "fields": [
+  {
+   "fieldname": "voucher",
+   "fieldtype": "Link",
+   "label": "Voucher",
+   "options": "Gift Voucher Ledger",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "batch",
+   "fieldtype": "Link",
+   "label": "Batch",
+   "options": "Voucher Card Batch",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "event",
+   "fieldtype": "Select",
+   "label": "Last Action",
+   "options": "Issued\nActivated\nBlocked\nArchived\nRedeemed\nReversed",
+   "reqd": 1,
+   "in_list_view": 0
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Last Action Amount",
+   "precision": "2",
+   "length": 30,
+   "options": "currency"
+  },
+  {
+   "fieldname": "balance_after",
+   "fieldtype": "Currency",
+   "label": "Current Balance",
+   "precision": "2",
+   "length": 30,
+   "options": "currency"
+  },
+  {
+   "fieldname": "reference",
+   "fieldtype": "Data",
+   "label": "Reference"
+  },
+  {
+   "fieldname": "actor",
+   "fieldtype": "Link",
+   "label": "Actor",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "read_only": 1
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Draft\nActive\nPartially Used\nFully Used\nExpired\nBlocked\nArchived\nCancelled",
+   "read_only": 1,
+   "in_list_view": 1
+  }
+ ],
+ "track_changes": 0,
+ "autoname": "hash",
+ "permissions": [
+  {
+   "role": "Sales Manager",
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC"
+}

@@ -7,12 +7,18 @@ validation, calculations, permission checks and pagination remain responsible fo
 the document. No framework source or database schema is changed.
 
 The gear menu selects and orders columns. Column widths automatically fit translated headings and formatted values on the
-current page, between 64 and 320 pixels including control padding. Saved width
-units remain stored for compatibility but do not set pixel widths in this layout. The table scrolls horizontally. Item and
+current page, between 64 and 320 pixels including control padding. Widths chosen in the gear menu apply to all enabled tables (80 pixels per unit).
+Data columns share spare screen space; the gear and edit controls stay compact.
+Only tables whose columns exceed the available width scroll. The table scrolls horizontally. Item and
 row identifiers stick on desktop; narrow screens use normal touch scrolling.
 Link suggestions are temporarily rendered outside the overflow container using
 the same native dropdown and event handlers. Opening a row temporarily returns
 the grid to viewport width for the standard expanded editor.
+
+Retail Packing Detail on Item also uses this layout. Its gear menu selects and
+orders columns and applies the chosen widths (80 pixels per width unit, 1–12).
+Default packing columns use the same automatic sizing as other enabled tables.
+Packing preferences are saved per user under Item, independently of other tables.
 
 ## Reuse
 
@@ -92,3 +98,10 @@ Persistence tests:
 After loading the new Desk assets, use the gear menu to choose columns and click
 Update. Reload, clear cache, and reopen the same form as the same user to verify
 that the selected columns and order remain.
+
+Enabled tables also support dragging headings to reorder columns and dragging a
+heading edge to resize. Changes save to the same personal column preferences.
+Edge dragging follows the pointer pixel by pixel (64–960 px) and saves the
+exact width. The gear dialog retains its 1–12 width units; changing a unit value
+replaces that column's pixel width. A pinned identity column stays
+pinned only while it is first, so moving it does not overlap preceding columns.

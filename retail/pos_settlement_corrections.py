@@ -23,6 +23,9 @@ def invoice_pair(name, closing):
     if frappe.db.count("POS Invoice", {"consolidated_invoice": pos.consolidated_invoice, "docstatus": 1}) != 1:
         frappe.throw(_("Combined accounting invoices require accounts review."))
     si = frappe.get_doc("Sales Invoice", pos.consolidated_invoice, for_update=True)
+    from retail.pos_offline_promotions import rows as promotion_rows
+    if promotion_rows(frappe.parse_json(pos.get("custom_pos_completed_payload") or "{}")):
+        frappe.throw(_("Offline promotion settlements require accounts review."))
     currency = frappe.get_cached_value("Company", pos.company, "default_currency")
     for doc in (pos, si):
         if (doc.docstatus != 1 or doc.customer != pos.customer or doc.company != pos.company

@@ -9,6 +9,11 @@ from retail.api import pos_sync
 
 
 class TestPOSPromoPricePayload(unittest.TestCase):
+	def setUp(self):
+		additional = patch.object(pos_sync, "_additional_pos_promotions", return_value={})
+		additional.start()
+		self.addCleanup(additional.stop)
+
 	def document(self, **row_values):
 		row = dict(name="ROW", idx=1, item="ITEM", item_group="", barcode="BARCODE",
 			qty=1, uom="Nos", price_list="Standard Selling", current_price=9.52,

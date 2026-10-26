@@ -774,6 +774,13 @@ def _base_invoice(payload, counter_doc, is_return=False):
 	doc.custom_gift_voucher_code = redemption.get("voucher_code")
 	doc.custom_gift_voucher_amount = flt(redemption.get("amount"))
 	doc.custom_gift_voucher_redemption_reference = redemption.get("redemption_reference")
+	if "voucher_redemptions" in payload:
+		from retail.pos_mixed_payments import voucher_rows
+		doc.custom_gift_voucher_amount = sum(flt(row.get("amount")) for row in voucher_rows(payload))
+	from retail.pos_offline_promotions import rows as promotion_rows, mode as promotion_mode
+	if promotion_rows(payload):
+		doc.custom_gift_voucher_amount = sum(flt(row.get("amount")) for _, row in promotion_rows(payload)
+			if promotion_mode(row) in ("Promotion Voucher", "Voucher Card"))
 	# These values are owned by the server-side counter configuration.  A
 	# terminal must not be able to redirect sales into another ledger/location.
 	doc.company = counter_doc.company
@@ -795,6 +802,16 @@ def _base_invoice(payload, counter_doc, is_return=False):
 		if not doc.return_against:
 			from retail.pos_external_refs import MissingPOSDependency
 			frappe.throw("Original sale must sync before the return.", MissingPOSDependency)
+
+	from retail.pos_mixed_payments import set_loyalty
+	set_loyalty(doc, payload)
+
+	if is_return and doc.return_against:
+		original_payload = frappe.parse_json(frappe.db.get_value(
+			"POS Invoice", doc.return_against, "custom_pos_completed_payload") or "{}")
+		if original_payload.get("loyalty_redemption") or promotion_rows(original_payload):
+			frappe.throw("Return requires review: the original POS bill used promotion redemptions. "
+				"Restore the loyalty allocation and voucher allocation before refunding; automatic promotion returns are not supported yet.")
 
 	doc.external_pos_reference = payload.external_pos_reference
 	doc.pos_bill_no = payload.get("pos_bill_no")
@@ -874,7 +891,10 @@ def _append_invoice_items(doc, payload, counter_doc, is_return=False):
 
 def _append_invoice_payments(doc, payload, counter_doc, is_return=False):
 	from retail.pos_settlements import cash_payments
-	payments = cash_payments(payload)
+	from retail.pos_offline_promotions import native_payments, rows as promotion_rows
+	if is_return and promotion_rows(payload):
+		frappe.throw("Promotion payment rows on returns require allocation review.")
+	payments = cash_payments(payload) + native_payments(payload, counter_doc)
 	if not payments:
 		return
 
@@ -892,7 +912,7 @@ def _append_invoice_payments(doc, payload, counter_doc, is_return=False):
 				"mode_of_payment": row.get("mode_of_payment") or row.get("mode"),
 				"amount": amount,
 				"reference_no": row.get("reference_no"),
-				"account": _payment_account(counter_doc, row),
+				"account": row.get("account") if row.get("mode_of_payment") in ("Loyalty", "Promotion Voucher", "Voucher Card", "Promotion Variance") else _payment_account(counter_doc, row),
 			},
 		)
 	doc.paid_amount = paid_amount
@@ -1030,6 +1050,8 @@ def _customer_master_rows(company, modified_filter=None):
 		)
 
 	add_credit_note_snapshots(customers, company, "name")
+	from retail.customer_promotions import add_customer_promotions
+	add_customer_promotions(customers, company)
 	return customers
 
 
@@ -1227,7 +1249,14 @@ def get_pos_promo_prices(branch=None, counter_code=None, modified_after=None):
 		"counter": counter_doc.name,
 		"counter_code": counter_doc.counter_code,
 		"promotions": promotions,
+		**_additional_pos_promotions(counter_doc, modified_after),
 	}
+
+
+def _additional_pos_promotions(counter_doc, modified_after=None):
+	from retail.promotions.pos_download import additional_promotions
+
+	return additional_promotions(counter_doc, modified_after)
 
 
 @frappe.whitelist()
@@ -1537,6 +1566,11 @@ def _pos_payment_modes(modified_filter):
 	})
 	for name in ("Voucher", "Cancelled", "Customer"):
 		rows.append({"name": name, "type": name, "enabled": 1, "modified": modified})
+	# Only add promotion choices; existing options and credit contracts stay intact.
+	for name in ("Loyalty", "Promotion Voucher", "Voucher Card"):
+		rows = [row for row in rows if row.get("name") != name]
+		rows.append({"name": name, "type": name, "enabled": 1, "modified": modified,
+			"is_settlement": 1})
 	return rows
 
 
@@ -1681,7 +1715,8 @@ def create_pos_invoice(data=None, **kwargs):
 		from retail.pos_exchange import post_exchange
 		return _run("Sales Invoice", payload, lambda: post_exchange(payload))
 	from retail.pos_settlements import cash_payments
-	if not cash_payments(payload):
+	from retail.pos_offline_promotions import rows as promotion_rows
+	if not cash_payments(payload) and not promotion_rows(payload):
 		return create_credit_pos_invoice(payload)
 
 	def handler():
@@ -1781,6 +1816,9 @@ def create_credit_pos_invoice(data=None, **kwargs):
 		doc.base_paid_amount = 0
 		_set_profile_taxes(doc, counter_doc)
 		_append_invoice_items(doc, payload, counter_doc)
+		from retail.pos_offline_promotions import rows as promotion_rows
+		if promotion_rows(payload):
+			_append_invoice_payments(doc, payload, counter_doc)
 		doc.insert(ignore_permissions=True)
 		doc.outstanding_amount = flt(
 			flt(doc.rounded_total or doc.grand_total) - flt(doc.paid_amount) - flt(doc.write_off_amount),

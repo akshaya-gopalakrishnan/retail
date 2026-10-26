@@ -9,6 +9,11 @@ from retail.promotions.api_payload import promotion_payload
 
 
 class TestPOSPromotionSchedulePayload(unittest.TestCase):
+	def setUp(self):
+		additional = patch.object(pos_sync, "_additional_pos_promotions", return_value={})
+		additional.start()
+		self.addCleanup(additional.stop)
+
 	def doc(self, doctype="Promo Price", **fields):
 		values = dict(doctype=doctype, name="PROMOTION", company="COMPANY", warehouse="WAREHOUSE",
 			active_from=date(2026, 10, 14), active_to=None,

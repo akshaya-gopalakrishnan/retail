@@ -39,6 +39,9 @@ def ensure_gift_voucher_invoice_fields():
 			"allow_on_submit": 0,
 		},
 	]
+	fields.append({"fieldname": "custom_voucher_card_redeem_amount", "label": "Voucher Card Redeem Amount",
+		"fieldtype": "Currency", "insert_after": "custom_gift_voucher_code", "no_copy": 1,
+		"description": "For voucher cards: enter a partial amount, or leave zero to use the maximum eligible balance."})
 	fields.append({"fieldname": "custom_gift_voucher_redemption_reference", "label": "Gift Voucher Redemption Reference",
 		"fieldtype": "Data", "read_only": 1, "no_copy": 1, "insert_after": "custom_gift_voucher_amount"})
 	create_custom_fields({doctype: fields for doctype in SALES_DOCTYPES}, ignore_validate=True, update=True)
@@ -53,7 +56,14 @@ def apply_gift_voucher_redemption(doc, method=None):
 	if doc.get("pos_sync_source") == "Offline POS":
 		from retail.api.gift_vouchers import bind_pos_redemption
 		from retail.pos_completed_sale import audit_effect
-		audit_effect(doc, "Voucher redemption reconciliation", lambda: bind_pos_redemption(doc))
+		payload = frappe.parse_json(doc.get("custom_pos_completed_payload") or "{}")
+		from retail.pos_offline_promotions import rows as promotion_rows, apply as apply_promotions
+		if promotion_rows(payload) and not (payload.get("voucher_redemption") or payload.get("voucher_redemptions")):
+			return
+		if "voucher_redemptions" in payload:
+			bind_pos_redemption(doc)
+		else:
+			audit_effect(doc, "Voucher redemption reconciliation", lambda: bind_pos_redemption(doc))
 		return
 	# Retail invoice controllers calculate the discount before core validates
 	# payment amounts, not after the core validate method has already returned.
@@ -73,6 +83,17 @@ def calculate_invoice_totals(doc, calculate):
 	if code:
 		voucher = validate_redeemable_voucher(code, doc)
 		amount = min(flt(voucher.balance_amount), max(0, flt(doc.grand_total)))
+		if voucher.get("voucher_card_batch"):
+			from retail.voucher_cards import eligible_amount, card_money
+			limit = eligible_amount(voucher, doc.get("items"), doc.grand_total)
+			doc.flags.voucher_card_eligible_limit = limit
+			amount = min(amount, limit)
+			requested = doc.get("custom_voucher_card_redeem_amount")
+			if requested:
+				requested = card_money(requested)
+				if requested > amount:
+					frappe.throw("Requested voucher amount exceeds the eligible amount or card balance.")
+				amount = requested
 		doc.discount_amount += amount
 		doc.custom_gift_voucher_amount = doc.custom_gift_voucher_discount_applied = amount
 		calculate()
@@ -88,7 +109,16 @@ def mark_gift_voucher_redeemed(doc, method=None):
 	from retail import pos_operations
 	if doc.get("pos_sync_source") == "Offline POS":
 		from retail.pos_completed_sale import audit_effect
-		audit_effect(doc, "Voucher redemption reconciliation", lambda: bind_pos_redemption(doc))
+		payload = frappe.parse_json(doc.get("custom_pos_completed_payload") or "{}")
+		from retail.pos_offline_promotions import rows as promotion_rows, apply as apply_promotions
+		if promotion_rows(payload):
+			apply_promotions(doc)
+			if not (payload.get("voucher_redemption") or payload.get("voucher_redemptions")):
+				return
+		if "voucher_redemptions" in payload:
+			bind_pos_redemption(doc)
+		else:
+			audit_effect(doc, "Voucher redemption reconciliation", lambda: bind_pos_redemption(doc))
 		return
 	code, amount = doc.get("custom_gift_voucher_code"), flt(doc.get("custom_gift_voucher_amount"))
 	if not code or amount <= 0:
@@ -97,7 +127,9 @@ def mark_gift_voucher_redeemed(doc, method=None):
 	request = {"voucher_code": code, "amount": amount, "company": doc.company,
 		"invoice_type": doc.doctype, "invoice": doc.name}
 	pos_operations.execute("Voucher Redemption", reference, request,
-		lambda: debit(code, amount, doc.company, doc.currency), code)
+		lambda: debit(code, amount, doc.company, doc.currency,
+			items=doc.get("items"), bill_total=flt(doc.grand_total) + amount,
+			eligible_limit=doc.flags.get("voucher_card_eligible_limit"), reference=reference), code)
 	receipt = pos_operations.find("Voucher Redemption", reference)
 	frappe.db.set_value("POS Sync Log", receipt.name,
 		{"linked_invoice": doc.name, "linked_invoice_type": doc.doctype}, update_modified=False)

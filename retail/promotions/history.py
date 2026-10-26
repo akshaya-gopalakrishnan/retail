@@ -252,7 +252,7 @@ def report_rows(filters):
     while True:
         invoices = frappe.get_list('POS Invoice', filters=conditions,
             fields=['name', 'posting_date', 'posting_time', 'company', 'currency', 'pos_branch', 'pos_counter',
-                    'pos_cashier', 'is_return', AUDIT_FIELD, 'custom_pos_completed_payload'], order_by='posting_date, name',
+                    'pos_cashier', 'pos_cashier_employee', 'is_return', AUDIT_FIELD, 'custom_pos_completed_payload'], order_by='posting_date, name',
             limit_start=start, limit_page_length=500)
         for invoice in invoices:
             audit = json.loads(invoice.pop(AUDIT_FIELD) or '{}')
@@ -264,10 +264,17 @@ def report_rows(filters):
                 capture(doc)
                 audit = json.loads(doc.get(AUDIT_FIELD) or '{}')
             applications = audit.get('applications', [])
-            if not applications and not audit.get('reported'):
-                applications = [dict(status='Not Reported', reason=audit.get('reason') or 'POS supplied no promotion attribution')]
+            # Use the saved sale description, including its actual packing, before master names.
+            item_names = {}
+            if any(a.get('promotion') and a.get('item_row') for a in applications):
+                saved = frappe.get_doc('POS Invoice', invoice.name)
+                item_names = {line.idx: line.item_name for line in saved.items}
             for application in applications:
+                # Sales reports contain attributed promotions, not placeholder invoice rows.
+                if not application.get('promotion') or not application.get('promotion_type'):
+                    continue
                 row = dict(application)
+                row['item_name'] = item_names.get(row.get('item_row'))
                 row.update(invoice=invoice.name, **{k: v for k, v in invoice.items() if k != 'name'})
                 if filters.get('promotion') and row.get('promotion') != filters.promotion:
                     continue
@@ -293,19 +300,23 @@ def columns(summary=False):
               ('discount_amount','Net Promotion Discount (Ex VAT)','Currency',180),
               ('sales_amount','Attributed Net Sales (Ex VAT)','Currency',180)]
     if not summary:
-        specs += [('reason','Check Notes','Data',350), ('promotion_version','POS Rule Version','Data',170),
-                  ('checked_version','ERP Rule Version','Data',170)]
+        specs += [('reason','Check Notes','Data',350)]
     return [dict(fieldname=k, label=label, fieldtype=t, width=w,
                  **({'options': {'invoice':'POS Invoice','item_code':'Item','currency':'Currency','company':'Company'}.get(k, 'currency')}
                     if t in ('Link','Currency') else {})) for k,label,t,w in specs]
 
 
 def execute_summary(filters=None):
+    filters = frappe._dict(filters or {})
+    # Old bookmarked check filters must not silently hide part of a sales summary.
+    filters.pop('status', None)
     grouped = {}
-    for row in report_rows(frappe._dict(filters or {})):
-        key = tuple(row.get(k) for k in ('promotion_type','promotion','currency','status','company','uom'))
+    for row in report_rows(filters):
+        if row.get('status') == 'Not Reported' or not row.get('promotion'):
+            continue
+        key = tuple(row.get(k) for k in ('promotion_type','promotion','currency','company','uom'))
         if key not in grouped:
-            grouped[key] = dict(zip(('promotion_type','promotion','currency','status','company','uom'),key),
+            grouped[key] = dict(zip(('promotion_type','promotion','currency','company','uom'),key),
                                 receipts=set(), return_receipts=set(), quantity=0, free_quantity=0,
                                 discount_amount=0, sales_amount=0)
         target = grouped[key]
@@ -316,7 +327,24 @@ def execute_summary(filters=None):
     for target in grouped.values():
         for field in ('receipts','return_receipts'):
             target[field] = len(target[field])
-    return columns(True), list(grouped.values()), 'Sales attributed to multiple promotions may overlap; do not sum across promotions. Schedule checks do not certify item eligibility or discount calculations.'
+    report_columns = [c for c in columns(True) if c['fieldname'] != 'status'
+                      and (c['fieldname'] != 'company' or not filters.get('company'))]
+    labels = {
+        'promotion': 'Promotion Name', 'receipts': 'Sales Bills', 'return_receipts': 'Return Bills',
+        'quantity': 'Net Quantity (Incl. Free)', 'free_quantity': 'Free Quantity',
+        'uom': 'Unit', 'discount_amount': 'Promotion Discount (Excl. VAT)',
+        'sales_amount': 'Net Sales (Excl. VAT)',
+    }
+    order = ['promotion_type', 'promotion', 'company', 'receipts', 'return_receipts',
+             'quantity', 'free_quantity', 'uom', 'discount_amount', 'sales_amount', 'currency']
+    for column in report_columns:
+        column['label'] = labels.get(column['fieldname'], column['label'])
+        if column['fieldname'] in ('quantity', 'free_quantity'):
+            column['width'] = 180
+        elif column['fieldname'] == 'discount_amount':
+            column['width'] = 215
+    report_columns.sort(key=lambda c: order.index(c['fieldname']))
+    return report_columns, list(grouped.values()), None
 
 
 def exchange_applications(payload, rows):

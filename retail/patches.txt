@@ -73,3 +73,4 @@ retail.patches.remove_business_home_counter_chart
 retail.patches.items_fast_moving_chart
 retail.patches.accounts_unpaid_invoice_chart
 retail.patches.trim_workspace_charts
+retail.patches.repair_pos_return_type_labels

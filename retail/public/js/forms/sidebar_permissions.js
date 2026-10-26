@@ -4,8 +4,6 @@ frappe.ui.form.on("User", {
         const field = frm.fields_dict.retail_sidebar_permissions_html;
         if (!field || frm.doc.user_type !== "System User") return;
         const groups = frappe.boot.retail_sidebar_editor_registry || [];
-        const protectedUser = frm.doc.name !== "Administrator" &&
-            (frm.doc.roles || []).some(row => row.role === "Super Admin");
         const canManage = Boolean(frappe.boot.can_manage_access ||
             (frappe.boot.can_delegate_access && frm.doc.name !== frappe.session.user &&
                 (frm.is_new() || frm.doc.retail_access_manager === frappe.session.user ||
@@ -75,8 +73,7 @@ frappe.ui.form.on("User", {
         }
         wrapper.find("input, button").prop("disabled", disabled);
         updateParents();
-        if (protectedUser) $('<p class="text-muted small">').text(__("Celesta Super Administrator retains full access regardless of these selections.")).appendTo(wrapper);
-        else if (!frm.doc.retail_sidebar_permissions) $('<p class="text-muted small">')
+        if (!frm.doc.retail_sidebar_permissions) $('<p class="text-muted small">')
             .text(__("Existing access is preserved until you change and save this selection. Native roles still control permitted operations."))
             .appendTo(wrapper);
     },

@@ -8,6 +8,18 @@ from frappe.desk.query_report import get_script as standard_get_script
 
 class RetailReport(Report):
     def execute_module(self, filters):
+        result = self._execute_retail_module(filters)
+        if not result or len(result) < 2:
+            return result
+        from frappe.desk.query_report import get_column_as_dict, normalize_result
+        from retail.report_display_names import enrich_result
+
+        columns = [get_column_as_dict(c) for c in result[0] or []]
+        output = dict(columns=columns, result=normalize_result(result[1] or [], columns))
+        enrich_result(output)
+        return (output['columns'], output['result'], *result[2:])
+
+    def _execute_retail_module(self, filters):
         if self.name in ("Accounts Receivable", "Accounts Payable"):
             from retail.core_compat.accounts_receivable import ReceivablePayableReport
 

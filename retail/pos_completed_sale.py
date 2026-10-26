@@ -237,6 +237,8 @@ def restore(doc, method=None):
 		tax.total = doc.grand_total
 		tax.base_total = doc.base_grand_total
 	doc.paid_amount = sum(flt(row.amount) for row in doc.payments)
+	if payload.get("loyalty_redemption"):
+		doc.paid_amount += flt(doc.loyalty_amount)
 	doc.base_paid_amount = flt(doc.paid_amount * factor, doc.precision("base_paid_amount"))
 	doc.outstanding_amount = flt((doc.rounded_total if not doc.disable_rounded_total else doc.grand_total)
 		- doc.paid_amount - flt(doc.write_off_amount), doc.precision("outstanding_amount"))
@@ -264,6 +266,25 @@ class RetailPOSInvoice(InvoicePriceProtection, POSInvoice):
 
 	def validate_stock_availablility(self):
 		return audit_validation(self, "Stock availability", super().validate_stock_availablility)
+
+	def validate_payment_amount(self):
+		from retail.pos_offline_promotions import rows, allow_internal_variance
+		if rows(payload_for(self)):
+			return allow_internal_variance(self, super().validate_payment_amount)
+		return super().validate_payment_amount()
+
+	def validate_loyalty_transaction(self):
+		payload = payload_for(self)
+		if payload.get("loyalty_redemption"):
+			from retail.pos_mixed_payments import validate_loyalty
+			return validate_loyalty(self, payload)
+		return super().validate_loyalty_transaction()
+
+	def apply_loyalty_points(self):
+		if payload_for(self).get("loyalty_redemption"):
+			from retail.loyalty import redeem
+			return redeem(self)
+		return super().apply_loyalty_points()
 
 	def validate_full_payment(self):
 		return audit_validation(self, "Payment policy", super().validate_full_payment)

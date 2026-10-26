@@ -175,6 +175,45 @@ class TestPromotionHistory(unittest.TestCase):
         self.assertEqual(result[0]['receipts'],1)
         self.assertEqual(result[0]['discount_amount'],4)
 
+    def test_summary_combines_checks_and_preserves_free_units(self):
+        base = dict(promotion='BUY2GET1', promotion_type='Buy X Get Y Promotion',
+                    currency='AED', company='nesto', uom='Nos', invoice='SALE',
+                    quantity=3, free_quantity=1, discount_amount=5, sales_amount=10)
+        rows = [dict(base, status='Schedule Valid'),
+                dict(base, invoice='SALE2', status='Review Required'),
+                dict(base, invoice='RETURN', is_return=1, status='Return Linked',
+                     quantity=-3, free_quantity=-1, discount_amount=-5, sales_amount=-10),
+                dict(base, invoice='KG', uom='Kg'),
+                dict(base, promotion='OTHER', invoice='SALE'),
+                dict(invoice='LEGACY', status='Not Reported'),
+                dict(invoice='LEGACY-RETURN', status='Not Reported', is_return=1)]
+        with patch('retail.promotions.history.report_rows', return_value=rows):
+            cols, result, message = execute_summary(dict(company='nesto'))
+        self.assertEqual(len(result), 3)
+        self.assertEqual((result[0]['receipts'], result[0]['return_receipts']), (2, 1))
+        self.assertEqual((result[0]['quantity'], result[0]['free_quantity']), (3, 1))
+        self.assertEqual((result[0]['discount_amount'], result[0]['sales_amount']), (5, 10))
+        self.assertNotIn('status', [c['fieldname'] for c in cols])
+        self.assertNotIn('company', [c['fieldname'] for c in cols])
+        self.assertIsNone(message)
+
+    def test_report_omits_bills_without_recorded_promotions(self):
+        from retail.promotions.history import report_rows, AUDIT_FIELD
+        invoices = []
+        for name, audit in (
+            ('LEGACY', {}),
+            ('NO-OFFER', dict(reported=True, applications=[])),
+            ('INVALID', dict(reported=True, applications=[dict(status='Review Required')])),
+            ('OFFER', dict(reported=True, applications=[dict(promotion='PROMO',
+                promotion_type='Promo Price', status='Review Required')]))
+        ):
+            invoices.append(frappe._dict(name=name, **{AUDIT_FIELD: json.dumps(audit)},
+                                        custom_pos_completed_payload='{}'))
+        with patch.object(frappe, 'get_list', return_value=invoices):
+            rows = list(report_rows(frappe._dict(from_date='2026-10-01', to_date='2026-10-23')))
+        self.assertEqual([r['invoice'] for r in rows], ['OFFER'])
+        self.assertEqual(rows[0]['promotion'], 'PROMO')
+
     def test_download_status_version(self):
         for kind in ('Promo Price','Buy X Get Y Promotion','Gift Voucher Promotion'):
             doc=frappe.get_doc(dict(doctype=kind,name='OFFER',modified='2026-10-17 08:00:00',disabled=1,enabled=0,products=[]))

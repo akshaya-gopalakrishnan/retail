@@ -10,6 +10,7 @@
  "field_order": [
   "voucher_section",
   "voucher_code",
+  "voucher_kind",
   "status",
   "column_break_1",
   "voucher_amount",
@@ -17,6 +18,9 @@
   "issue_section",
   "issued_date",
   "expiry_date",
+  "use_redemption_hours",
+  "active_from_time",
+  "active_to_time",
   "promotion",
   "issued_against_type",
   "issued_against",
@@ -34,7 +38,12 @@
   "issuance_key",
   "currency",
   "external_pos_reference",
-  "pos_promotion_reference"
+  "pos_promotion_reference",
+  "voucher_card_batch",
+  "card_number",
+  "valid_from",
+  "card_archived",
+  "card_blocked"
  ],
  "fields": [
   {
@@ -57,7 +66,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Status",
-   "options": "Unused\nPartially Used\nRedeemed\nExpired\nCancelled",
+   "options": "Unused\nPartially Used\nRedeemed\nExpired\nCancelled\nDraft",
    "read_only": 1
   },
   {
@@ -70,7 +79,8 @@
    "in_list_view": 1,
    "label": "Voucher Amount",
    "read_only": 1,
-   "reqd": 1
+   "reqd": 1,
+   "length": 30
   },
   {
    "fieldname": "balance_amount",
@@ -78,7 +88,8 @@
    "in_list_view": 1,
    "label": "Balance Amount",
    "read_only": 1,
-   "reqd": 1
+   "reqd": 1,
+   "length": 30
   },
   {
    "fieldname": "issue_section",
@@ -96,7 +107,7 @@
    "fieldname": "expiry_date",
    "fieldtype": "Date",
    "in_list_view": 1,
-   "label": "Expiry Date",
+   "label": "Active To Date",
    "read_only": 1
   },
   {
@@ -214,6 +225,68 @@
    "fieldname": "pos_promotion_reference",
    "fieldtype": "Data",
    "label": "Pos Promotion Reference",
+   "read_only": 1
+  },
+  {
+   "fieldname": "voucher_card_batch",
+   "fieldtype": "Link",
+   "label": "Voucher Card Batch",
+   "options": "Voucher Card Batch",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "card_number",
+   "fieldtype": "Int",
+   "label": "Card Number",
+   "read_only": 1
+  },
+  {
+   "fieldname": "valid_from",
+   "fieldtype": "Date",
+   "label": "Active From Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "card_archived",
+   "fieldtype": "Check",
+   "label": "Card Archived",
+   "read_only": 1
+  },
+  {
+   "fieldname": "card_blocked",
+   "fieldtype": "Check",
+   "label": "Card Blocked",
+   "read_only": 1
+  },
+  {
+   "fieldname": "voucher_kind",
+   "fieldtype": "Select",
+   "label": "Type",
+   "options": "Voucher Card\nPromotion Voucher",
+   "read_only": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "active_from_time",
+   "fieldtype": "Time",
+   "label": "Active From Time",
+   "read_only": 1,
+   "depends_on": "eval:doc.use_redemption_hours"
+  },
+  {
+   "fieldname": "active_to_time",
+   "fieldtype": "Time",
+   "label": "Active To Time",
+   "read_only": 1,
+   "depends_on": "eval:doc.use_redemption_hours"
+  },
+  {
+   "fieldname": "use_redemption_hours",
+   "fieldtype": "Check",
+   "label": "Set Activation Times",
+   "default": "0",
    "read_only": 1
   }
  ],

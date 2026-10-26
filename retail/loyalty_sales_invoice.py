@@ -36,6 +36,12 @@ class RetailSalesInvoice(InvoicePriceProtection, SalesInvoice):
         from retail.promotions.gift_voucher import calculate_invoice_totals
         return calculate_invoice_totals(self, super().calculate_taxes_and_totals)
 
+    def verify_payment_amount_is_positive(self):
+        if self.flags.get("completed_pos_accounting"):
+            from retail.pos_offline_promotions import allow_internal_variance
+            return allow_internal_variance(self, super().verify_payment_amount_is_positive)
+        return super().verify_payment_amount_is_positive()
+
     def validate(self):
         if self.is_consolidated:
             return super().validate()

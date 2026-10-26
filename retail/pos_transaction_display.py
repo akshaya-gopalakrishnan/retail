@@ -27,6 +27,12 @@ def payload_transaction_type(kind, payload):
     recorded = settlement_label(payload.get("external_pos_reference"))
     if recorded:
         return recorded
+    # Legacy returns can be accepted through the Sales Invoice operation without
+    # a return flag in the immutable payload. The posted receipt is authoritative.
+    reference = payload.get("external_pos_reference")
+    if kind not in ("POS Return", "Return") and reference and frappe.db.get_value("POS Invoice", {
+            "external_pos_reference": reference, "is_return": 1}, "name"):
+        return "Return"
     from retail.pos_settlements import cash_payments
     if kind in ("POS Return", "Return"):
         typ = payload.get("return_settlement_type") or ("Cash Refund" if cash_payments(payload) else "Reusable Customer Credit")

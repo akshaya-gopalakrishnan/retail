@@ -19,9 +19,9 @@ VAN_FLAGS = {"Sales Invoice": "custom_is_van_sale", "Stock Entry": "custom_is_va
              "Material Request": "custom_is_van_stock_request"}
 
 
-def selection(user=None):
+def selection(user=None, *, navigation=False):
     user = user or frappe.session.user
-    if is_super_admin(user):
+    if not navigation and is_super_admin(user):
         return None
     value = frappe.get_cached_doc("User", user).get(FIELD)
     if not value:
@@ -138,7 +138,9 @@ def boot(bootinfo):
         dict(group, children=[child for child in group["children"] if child["id"] in selected])
         for group in registry() if group["id"] in selected
     ]
-    bootinfo.retail_sidebar_selection = None if selected is None else sorted(selected)
+    navigation_selected = selection(navigation=True)
+    bootinfo.retail_sidebar_selection = None if navigation_selected is None else sorted(navigation_selected)
+    bootinfo.retail_sidebar_unrestricted_targets = is_super_admin()
     bootinfo.retail_sidebar_targets = {
         kind: sorted({target for entry in entries() for target_kind, target in entry["targets"]
                       if target_kind == kind and (selected is None or entry["id"] in selected)})
@@ -147,7 +149,7 @@ def boot(bootinfo):
 
 
 def filter_sidebar(pages):
-    selected = selection()
+    selected = selection(navigation=True)
     if selected is None:
         return pages
     by_workspace = {entry["workspace"]: entry for entry in entries()}
