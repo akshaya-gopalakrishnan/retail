@@ -74,3 +74,5 @@ retail.patches.items_fast_moving_chart
 retail.patches.accounts_unpaid_invoice_chart
 retail.patches.trim_workspace_charts
 retail.patches.repair_pos_return_type_labels
+retail.patches.show_purchase_item_names
+retail.patches.show_purchase_stock_identity
