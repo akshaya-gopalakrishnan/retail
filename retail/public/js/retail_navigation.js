@@ -2820,18 +2820,18 @@
         } else {
             host.prepend(buildPersistentSidebar(items));
         }
-        if (isDesktop() && frappe.get_route()?.[1] === 'POS Operator Privilege') {
+        const route = frappe.get_route();
+        if (isDesktop() && route?.[0] !== 'Form' && route?.[1] === 'POS Operator Privilege') {
             sideSection.classList.remove('hide-sidebar');
             sideSection.style.removeProperty('display');
         }
-        const route = frappe.get_route();
         sideSection.classList.toggle('retail-form-navigation', route?.[0] === 'Form');
         if (isDesktop() && route?.[0] === 'Form') {
             // Frappe hides the document sidebar on unsaved forms, but this
             // section also contains Retail's persistent menu and selection.
-            // Keep desktop navigation visible when form metadata is hidden.
+            // Keep navigation available when form metadata is hidden, but
+            // preserve inline display set by the user's native sidebar toggle.
             sideSection.classList.remove('hide-sidebar');
-            sideSection.style.removeProperty('display');
         }
         section.classList.add('retail-form-sidebar-mounted');
         section.classList.toggle('retail-mobile-sidebar-mounted', section.classList.contains('overlay-sidebar'));

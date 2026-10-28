@@ -4632,7 +4632,6 @@
       return wrapper;
     }
     function mountPersistentSidebar(section, items) {
-      var _a2;
       if (!section)
         return;
       const host = getRetailSidebarHost(section);
@@ -4646,15 +4645,14 @@
       } else {
         host.prepend(buildPersistentSidebar(items));
       }
-      if (isDesktop() && ((_a2 = frappe.get_route()) == null ? void 0 : _a2[1]) === "POS Operator Privilege") {
+      const route = frappe.get_route();
+      if (isDesktop() && (route == null ? void 0 : route[0]) !== "Form" && (route == null ? void 0 : route[1]) === "POS Operator Privilege") {
         sideSection.classList.remove("hide-sidebar");
         sideSection.style.removeProperty("display");
       }
-      const route = frappe.get_route();
       sideSection.classList.toggle("retail-form-navigation", (route == null ? void 0 : route[0]) === "Form");
       if (isDesktop() && (route == null ? void 0 : route[0]) === "Form") {
         sideSection.classList.remove("hide-sidebar");
-        sideSection.style.removeProperty("display");
       }
       section.classList.add("retail-form-sidebar-mounted");
       section.classList.toggle("retail-mobile-sidebar-mounted", section.classList.contains("overlay-sidebar"));
@@ -7828,4 +7826,4 @@
     };
   })();
 })();
-//# sourceMappingURL=retail_desk.bundle.NML2FPSC.js.map
+//# sourceMappingURL=retail_desk.bundle.L6M6FBSL.js.map

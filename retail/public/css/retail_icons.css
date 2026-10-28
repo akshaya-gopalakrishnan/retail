@@ -234,7 +234,8 @@
 @media (min-width: 992px) {
     /* Form refreshes can reapply hide-sidebar after navigation is mounted. */
     .layout-side-section.retail-form-navigation.retail-form-sidebar-mounted {
-        display: block !important;
+        /* Keep navigation available, while allowing the native inline toggle. */
+        display: block;
         flex: 0 0 var(--sidebar-width, 220px) !important;
         width: var(--sidebar-width, 220px) !important;
     }
