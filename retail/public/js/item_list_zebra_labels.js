@@ -21,6 +21,23 @@ frappe.listview_settings["Item"].onload = function (listview) {
 	const barcode = listview.page.fields_dict.custom_barcode;
 	if (name_field) code.$wrapper.insertAfter(name_field.$wrapper);
 	barcode.$wrapper.insertAfter(code.$wrapper);
+	const scale = listview.page.fields_dict.custom_scale_item || listview.page.add_field({
+		fieldname: "custom_scale_item",
+		fieldtype: "Check",
+		label: __("Scale"),
+		default: 0,
+		onchange: () => {
+			// Saved filters are restored before this toolbar control is created.
+			// Remove that duplicate so unchecking also clears a restored selection.
+			listview.filter_area.filter_list.get_filter("custom_scale_item")?.remove();
+			listview.filter_area.debounced_refresh_list_view();
+		},
+	}, wrapper);
+	const saved_scale = listview.filter_area.filter_list.get_filter("custom_scale_item");
+	if (saved_scale?.get_value()[2] === "=" && Number(saved_scale.get_value()[3]) === 1) {
+		scale.set_value(1);
+	}
+	scale.$wrapper.show().insertAfter(barcode.$wrapper);
 	listview.page.show_form();
 
 

@@ -86,6 +86,14 @@
         "fieldname": "item_name"
       },
       {
+        "columns": 2,
+        "fieldname": "serial_no"
+      },
+      {
+        "columns": 2,
+        "fieldname": "batch_no"
+      },
+      {
         "columns": 1,
         "fieldname": "uom"
       },
@@ -160,6 +168,10 @@
         "fieldname": "item_code"
       },
       {
+        "columns": 2,
+        "fieldname": "item_name"
+      },
+      {
         "columns": 1,
         "fieldname": "uom"
       },
@@ -202,6 +214,14 @@
       {
         "columns": 2,
         "fieldname": "item_name"
+      },
+      {
+        "columns": 2,
+        "fieldname": "serial_no"
+      },
+      {
+        "columns": 2,
+        "fieldname": "batch_no"
       },
       {
         "columns": 1,

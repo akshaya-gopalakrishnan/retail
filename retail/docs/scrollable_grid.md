@@ -89,6 +89,31 @@ Migration default installation preserves saved selections, including explicit
 null/empty resets. An administrator deliberately invoking an overwrite patch can
 still change defaults. No business document data is changed.
 
+Purchase Order, Purchase Invoice, and Purchase Receipt ship Item Name immediately
+after Item Code. The one-time `show_purchase_item_names` upgrade patch adds or
+moves that column in existing GridView and RetailScrollableGrid item selections
+that contain Item Code. It preserves other columns, their order and widths,
+explicit null/empty resets, and unrelated settings. Later personal changes are
+not forced back on every migration.
+
+Purchase Invoice and Purchase Receipt also ship Serial No and Batch No columns
+after Item Name. `show_purchase_stock_identity` adds missing identity columns to
+existing nonempty item selections once, preserving other columns and widths.
+Fresh installations and new users receive them through the shipped grid defaults.
+Explicit null/empty resets remain personal choices.
+
+Retail enables the native PI fields in the grid when Update Stock is checked
+(excluding fixed assets). Each identity column is shown only when at least one
+selected Item master enables its corresponding Has Serial No or Has Batch No
+flag. Its input is available only on the applicable rows, including mixed-item
+tables. Headers update on item changes, row additions/removals, and Update Stock;
+form refresh rereads the Item flags. Visibility never clears entered values or
+changes personal column preferences. PR uses its native fields. Values are passed through
+ERPNext's existing serial/batch bundle processing; global Stock Settings are not
+changed. Serial No accepts one number per line and Batch No retains the native
+Batch link/creation action. Rows already linked to a bundle keep raw identity
+fields read-only; use the native bundle selector to change those identities.
+
 Persistence tests:
 
 - `node --test apps/retail/retail/tests/test_column_preferences.cjs`

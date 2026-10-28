@@ -1017,3 +1017,18 @@ jinja["methods"].append("retail.voucher_cards.voucher_card_print_data")
 
 # Series selection is internal for documents numbered by Retail.
 after_migrate.append("retail.short_codes.hide_naming_series")
+
+# Native serial/batch fields directly in purchase item grids.
+for _purchase_identity_dt in ("Purchase Invoice", "Purchase Receipt"):
+	doctype_js[_purchase_identity_dt].append("public/js/forms/purchase_stock_identity.js")
+
+# Item/serial/batch lookup on these lists, without overriding core endpoints.
+for _item_filter_dt in ("POS Invoice", "Sales Invoice", "Purchase Order", "Purchase Invoice", "Purchase Receipt"):
+	_scripts = doctype_list_js.get(_item_filter_dt, [])
+	if isinstance(_scripts, str):
+		_scripts = [_scripts]
+	doctype_list_js[_item_filter_dt] = [*_scripts, "public/js/list/document_item_filters.js"]
+	_conditions = permission_query_conditions.get(_item_filter_dt, [])
+	if isinstance(_conditions, str):
+		_conditions = [_conditions]
+	permission_query_conditions[_item_filter_dt] = [*_conditions, "retail.document_item_filters.query_conditions"]
