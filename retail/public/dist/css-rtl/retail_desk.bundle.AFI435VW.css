@@ -422,7 +422,7 @@
 }
 @media (min-width: 992px) {
   .layout-side-section.retail-form-navigation.retail-form-sidebar-mounted {
-    display: block !important;
+    display: block;
     flex: 0 0 var(--sidebar-width, 220px) !important;
     width: var(--sidebar-width, 220px) !important;
   }
@@ -1877,4 +1877,4 @@ html[data-retail-brand-theme] .indicator-pill-right:not(:empty) {
     grid-template-columns: minmax(0, 1fr);
   }
 }
-/*# sourceMappingURL=retail_desk.bundle.PQV4CWAI.css.map */
+/*# sourceMappingURL=retail_desk.bundle.AFI435VW.css.map */

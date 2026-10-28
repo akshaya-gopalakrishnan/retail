@@ -3,8 +3,66 @@ frappe.listview_settings["Item"].add_fields = [
 	...new Set([...(frappe.listview_settings["Item"].add_fields || []), "item_code"]),
 ];
 
+function arrangeRetailItemFilters(listview) {
+	const wrapper = listview.filter_area.standard_filters_wrapper;
+	const row = (className) => {
+		let element = wrapper.children(`.${className}`);
+		if (!element.length) element = $("<div>").addClass(className).appendTo(wrapper);
+		return element.css({ display: "flex", flexWrap: "wrap", width: "100%" });
+	};
+	const boxed = row("retail-item-filter-boxes");
+	const checks = row("retail-item-filter-checks");
+	const order = ["custom_document_code", "name", "item_code", "item_name", "custom_barcode",
+		"item_group", "variant_of", "custom_scale_item", "has_variants", "has_batch_no", "has_serial_no"];
+	const rank = key => order.includes(key) ? order.indexOf(key) : order.length;
+	Object.entries(listview.page.fields_dict)
+		.sort(([a], [b]) => rank(a) - rank(b))
+		.forEach(([, control]) => control.$wrapper.appendTo(control.df.fieldtype === "Check" ? checks : boxed));
+}
+
+const originalRetailItemFilterRefresh = frappe.listview_settings["Item"].refresh;
+frappe.listview_settings["Item"].refresh = function (listview) {
+	originalRetailItemFilterRefresh?.call(this, listview);
+	arrangeRetailItemFilters(listview);
+};
+
 frappe.listview_settings["Item"].onload = function (listview) {
 	const wrapper = listview.filter_area.standard_filters_wrapper;
+	const previous_name = listview.page.fields_dict.item_name;
+	const previous_name_value = previous_name?.get_value() || "";
+	previous_name?.$wrapper.remove();
+	delete listview.page.fields_dict.item_name;
+	const item_name = listview.page.add_field({
+		fieldname: "item_name",
+		fieldtype: "Autocomplete",
+		label: __("Item Name"),
+		condition: "like",
+		ignore_validation: true,
+		onchange: () => listview.filter_area.debounced_refresh_list_view(),
+	}, wrapper);
+	item_name.set_input(previous_name_value);
+	// The server already applies LIKE, including restored wildcard filters.
+	item_name.awesomplete.filter = () => true;
+	// Render master names as text while retaining their exact filter values.
+	item_name.awesomplete.item = suggestion => $("<li>")
+		.data("item.autocomplete", { value: suggestion.value, label: suggestion.label })
+		.attr("aria-selected", "false").append($("<p>").text(suggestion.label)).get(0);
+	let name_request = 0;
+	const suggest_names = frappe.utils.debounce(async () => {
+		const sequence = ++name_request;
+		const term = item_name.$input.val() || "";
+		const rows = await frappe.db.get_list("Item", {
+			fields: ["item_name"],
+			filters: [["item_name", "like", `%${term}%`]],
+			distinct: true,
+			order_by: "item_name asc",
+			limit: 30,
+		});
+		if (sequence !== name_request || term !== item_name.$input.val()) return;
+		item_name.set_data(rows.filter(row => row.item_name).map(row => row.item_name));
+		if (item_name.$input.is(":focus")) item_name.awesomplete.evaluate();
+	}, 200);
+	item_name.$input.on("input focus", suggest_names);
 	for (const [fieldname, label] of [["item_code", "Item Code"], ["custom_barcode", "Barcode"]]) {
 		const control = listview.page.fields_dict[fieldname] || listview.page.add_field({
 			fieldname,
@@ -38,6 +96,7 @@ frappe.listview_settings["Item"].onload = function (listview) {
 		scale.set_value(1);
 	}
 	scale.$wrapper.show().insertAfter(barcode.$wrapper);
+	arrangeRetailItemFilters(listview);
 	listview.page.show_form();
 
 
