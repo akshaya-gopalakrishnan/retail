@@ -420,95 +420,106 @@
 	}
 
 	async function offerRecovery(frm) {
-		const key = getDraftKey(frm);
-		if (!key || frm.__retail_recovery_checked) return;
-		frm.__retail_recovery_checked = true;
+		try {
+			const key = getDraftKey(frm);
+			if (!key || frm.__retail_recovery_checked) return;
+			frm.__retail_recovery_checked = true;
 
-		const indexed_draft = await getDraft(key);
-		const emergency_draft = getEmergencyDraft(key);
-		const draft = indexed_draft || emergency_draft;
-		if (!draft || !draft.doc || draft.saved_docname !== getDocName(frm)) return;
-		if (draft.user && draft.user !== frappe.session.user) {
-			await deleteDraftByKey(key);
-			return;
-		}
-		if (isExpiredDraft(draft)) {
-			await deleteDraftByKey(key);
-			return;
-		}
-		if (isDraftOlderThanCurrentDoc(frm, draft)) {
-			await deleteDraftByKey(key);
-			return;
-		}
-		if (frm.is_dirty?.() && !isLocalDoc(frm)) return;
-		if (isLocalDoc(frm) && !hasRecoverableLocalDraftContent(frm, draft.doc)) {
-			await deleteDraftByKey(key);
-			return;
-		}
-		if (!hasRecoverableDraftDifference(frm, draft.doc)) {
-			await deleteDraftByKey(key);
-			deleteEmergencyDraftByKey(key);
-			return;
-		}
-		if (draft.prompted_at) return;
+			const indexed_draft = await getDraft(key);
+			const emergency_draft = getEmergencyDraft(key);
+			const draft = indexed_draft || emergency_draft;
+			if (!draft || !draft.doc || draft.saved_docname !== getDocName(frm)) return;
+			if (draft.user && draft.user !== frappe.session.user) {
+				await deleteDraftByKey(key);
+				return;
+			}
+			if (isExpiredDraft(draft)) {
+				deleteEmergencyDraftByKey(key);
+				await deleteDraftByKey(key);
+				return;
+			}
+			if (isDraftOlderThanCurrentDoc(frm, draft)) {
+				await deleteDraftByKey(key);
+				return;
+			}
+			if (frm.is_dirty?.() && !isLocalDoc(frm)) return;
+			if (isLocalDoc(frm) && !hasRecoverableLocalDraftContent(frm, draft.doc)) {
+				await deleteDraftByKey(key);
+				return;
+			}
+			if (!hasRecoverableDraftDifference(frm, draft.doc)) {
+				await deleteDraftByKey(key);
+				deleteEmergencyDraftByKey(key);
+				return;
+			}
+			if (draft.prompted_at) return;
 
-		await markDraftPrompted(key, draft, {
-			has_indexed_draft: !!indexed_draft,
-			has_emergency_draft: !!emergency_draft,
-		});
-		frm.__retail_local_draft_prompted = true;
+			await markDraftPrompted(key, draft, {
+				has_indexed_draft: !!indexed_draft,
+				has_emergency_draft: !!emergency_draft,
+			});
+			frm.__retail_local_draft_prompted = true;
 
-		frappe.confirm(
-			__("Recover unsaved local draft from {0}?", [frappe.datetime.str_to_user(draft.updated_at_iso)]),
-			() => restoreDraft(frm, draft),
-			() => discardDraft(frm, key)
-		);
+			frappe.confirm(
+				__("Recover unsaved local draft from {0}?", [frappe.datetime.str_to_user(draft.updated_at_iso)]),
+				() => restoreDraft(frm, draft),
+				() => discardDraft(frm, key)
+			);
+		} catch {
+			// Browser storage may be unavailable. Keep recovery failures silent.
+		}
+
 	}
 
 	async function saveDraft(frm) {
-		if (frm?.__retail_local_draft_discarded) return;
-		if (!frm?.doc || !frm.is_dirty?.()) return;
-		if (!hasChangedFromCleanBaseline(frm)) return;
-		if (!canUseFullDocDraft(frm)) {
-			scheduleDraftSave(frm);
-			return;
-		}
-		const key = getDraftKey(frm);
-		if (!key) return;
-
-		frm.__retail_local_draft_saving = true;
-		let serialized;
 		try {
-			serialized = serializeDoc(frm);
-		} finally {
-			frm.__retail_local_draft_saving = false;
-		}
-		if (!serialized) return;
-		if (isLocalDoc(frm) && !hasRecoverableLocalDraftContent(frm, serialized.doc)) {
-			await deleteDraftByKey(key);
-			return;
+			if (frm?.__retail_local_draft_discarded) return;
+			if (!frm?.doc || !frm.is_dirty?.()) return;
+			if (!hasChangedFromCleanBaseline(frm)) return;
+			if (!canUseFullDocDraft(frm)) {
+				scheduleDraftSave(frm);
+				return;
+			}
+			const key = getDraftKey(frm);
+			if (!key) return;
+
+			frm.__retail_local_draft_saving = true;
+			let serialized;
+			try {
+				serialized = serializeDoc(frm);
+			} finally {
+				frm.__retail_local_draft_saving = false;
+			}
+			if (!serialized) return;
+			if (isLocalDoc(frm) && !hasRecoverableLocalDraftContent(frm, serialized.doc)) {
+				await deleteDraftByKey(key);
+				return;
+			}
+
+			const now = Date.now();
+			const expiry_ms = getExpiryMs(frm.doctype);
+			const prompted_at = frm.__retail_local_draft_prompted ? now : null;
+			await putDraft({
+				key,
+				user: frappe.session.user,
+				doctype: frm.doctype,
+				docname: getDocName(frm),
+				saved_docname: getDocName(frm),
+				updated_at: now,
+				expires_at: now + expiry_ms,
+				expiry_hours: Math.round(expiry_ms / (60 * 60 * 1000)),
+				updated_at_iso: new Date(now).toISOString(),
+				browser_session_id: getBrowserSessionId(),
+				doc: serialized.doc,
+				bytes: serialized.bytes,
+				prompted_at,
+				prompted_at_iso: prompted_at ? new Date(prompted_at).toISOString() : null,
+			});
+			deleteEmergencyDraftByKey(key);
+		} catch {
+			// Browser storage may be unavailable. Keep recovery failures silent.
 		}
 
-		const now = Date.now();
-		const expiry_ms = getExpiryMs(frm.doctype);
-		const prompted_at = frm.__retail_local_draft_prompted ? now : null;
-		await putDraft({
-			key,
-			user: frappe.session.user,
-			doctype: frm.doctype,
-			docname: getDocName(frm),
-			saved_docname: getDocName(frm),
-			updated_at: now,
-			expires_at: now + expiry_ms,
-			expiry_hours: Math.round(expiry_ms / (60 * 60 * 1000)),
-			updated_at_iso: new Date(now).toISOString(),
-			browser_session_id: getBrowserSessionId(),
-			doc: serialized.doc,
-			bytes: serialized.bytes,
-			prompted_at,
-			prompted_at_iso: prompted_at ? new Date(prompted_at).toISOString() : null,
-		});
-		deleteEmergencyDraftByKey(key);
 	}
 
 	function saveEmergencyDraft(frm) {
@@ -649,11 +660,16 @@
 	}
 
 	async function discardDraft(frm, key) {
-		clearTimeout(frm?.__retail_local_draft_timer);
-		frm.__retail_local_draft_discarded = true;
-		await deleteDraftByKey(key);
-		deleteEmergencyDraftByKey(key);
-		frappe.show_alert({ message: __("Local draft discarded"), indicator: "orange" });
+		try {
+			clearTimeout(frm?.__retail_local_draft_timer);
+			frm.__retail_local_draft_discarded = true;
+			await deleteDraftByKey(key);
+			deleteEmergencyDraftByKey(key);
+			frappe.show_alert({ message: __("Local draft discarded"), indicator: "orange" });
+		} catch {
+			// Browser storage may be unavailable. Keep recovery failures silent.
+		}
+
 	}
 
 	function restoreFormDraft(frm, draftDoc) {
@@ -893,12 +909,17 @@
 	}
 
 	async function deleteDraft(frm) {
-		clearTimeout(frm?.__retail_local_draft_timer);
-		const key = getDraftKey(frm);
-		if (key) {
-			await deleteDraftByKey(key);
-			deleteEmergencyDraftByKey(key);
+		try {
+			clearTimeout(frm?.__retail_local_draft_timer);
+			const key = getDraftKey(frm);
+			if (key) {
+				await deleteDraftByKey(key);
+				deleteEmergencyDraftByKey(key);
+			}
+		} catch {
+			// Browser storage may be unavailable. Keep recovery failures silent.
 		}
+
 	}
 
 	function getEmergencyDraftKey(key) {
@@ -946,22 +967,27 @@
 	}
 
 	async function cleanupOldDrafts() {
-		const db = await openDb();
-		return new Promise((resolve, reject) => {
-			const tx = db.transaction(STORE_NAME, "readwrite");
-			const request = tx.objectStore(STORE_NAME).openCursor();
-			request.onsuccess = () => {
-				const cursor = request.result;
-				if (!cursor) return;
-				if (isExpiredDraft(cursor.value)) {
-					cursor.delete();
-				}
-				cursor.continue();
-			};
-			tx.oncomplete = () => resolve();
-			tx.onerror = () => reject(tx.error);
-			tx.onabort = () => reject(tx.error);
-		});
+		try {
+			const db = await openDb();
+			return new Promise((resolve, reject) => {
+				const tx = db.transaction(STORE_NAME, "readwrite");
+				const request = tx.objectStore(STORE_NAME).openCursor();
+				request.onsuccess = () => {
+					const cursor = request.result;
+					if (!cursor) return;
+					if (isExpiredDraft(cursor.value)) {
+						cursor.delete();
+					}
+					cursor.continue();
+				};
+				tx.oncomplete = () => resolve();
+				tx.onerror = () => reject(tx.error);
+				tx.onabort = () => reject(tx.error);
+			});
+		} catch {
+			// Browser storage may be unavailable. Keep recovery failures silent.
+		}
+
 	}
 
 	function exposeDebugTools() {

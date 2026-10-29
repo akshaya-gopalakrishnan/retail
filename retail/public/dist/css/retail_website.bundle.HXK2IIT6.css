@@ -1,4 +1,4 @@
-/* ../../../../../tmp/tmp-3290-7BxSg4GwD6jG/retail/retail/public/retail_website.bundle.css */
+/* ../../../../../tmp/tmp-27-VKNCMPlSPXSf/retail/retail/public/retail_website.bundle.css */
 html[data-retail-brand-theme] {
   --retail-brand-shadow-sm: 0 10px 28px rgba(15, 23, 42, 0.08);
   --retail-brand-shadow-md: 0 18px 40px rgba(15, 23, 42, 0.12);
@@ -319,7 +319,7 @@ html[data-retail-brand-theme] .navbar .app-logo {
 }
 html[data-retail-brand-theme] .btn-primary,
 html[data-retail-brand-theme] .btn.btn-primary {
-  background: linear-gradient(-135deg, var(--retail-brand-primary), var(--retail-brand-accent));
+  background: linear-gradient(135deg, var(--retail-brand-primary), var(--retail-brand-accent));
   border-color: rgba(255, 255, 255, 0.28);
   color: #ffffff;
   box-shadow: 0 10px 20px var(--retail-brand-focus);
@@ -367,11 +367,11 @@ html[data-retail-brand-theme] .desk-sidebar .standard-sidebar-item:hover {
     background: var(--retail-brand-sidebar);
     backdrop-filter: blur(var(--retail-brand-glass-blur));
     -webkit-backdrop-filter: blur(var(--retail-brand-glass-blur));
-    border-left: 1px solid rgba(255, 255, 255, 0.58);
+    border-right: 1px solid rgba(255, 255, 255, 0.58);
   }
   html[data-retail-brand-theme] body.retail-has-persistent-sidebar .layout-side-section {
     padding: 14px 10px;
-    box-shadow: -10px 0 28px rgba(15, 23, 42, 0.08);
+    box-shadow: 10px 0 28px rgba(15, 23, 42, 0.08);
   }
   html[data-retail-brand-theme] body.retail-has-persistent-sidebar .standard-sidebar .standard-sidebar-label,
   html[data-retail-brand-theme] body.retail-has-persistent-sidebar .desk-sidebar .standard-sidebar-label {
@@ -397,7 +397,7 @@ html[data-retail-brand-theme] .desk-sidebar .standard-sidebar-item:hover {
     background: var(--retail-brand-sidebar-active);
   }
   html[data-retail-brand-theme] body.retail-has-persistent-sidebar .standard-sidebar .standard-sidebar-item.selected {
-    box-shadow: inset -3px 0 0 var(--retail-brand-accent);
+    box-shadow: inset 3px 0 0 var(--retail-brand-accent);
   }
 }
 .desk-sidebar .standard-sidebar-item.selected,
@@ -407,7 +407,7 @@ html[data-retail-brand-theme] .desk-sidebar .standard-sidebar-item:hover {
 html[data-retail-brand-theme] .desk-sidebar .standard-sidebar-item.selected,
 html[data-retail-brand-theme] body.retail-has-persistent-sidebar .standard-sidebar .standard-sidebar-item.selected,
 html[data-retail-brand-theme] body.retail-has-persistent-sidebar .desk-sidebar .standard-sidebar-item.selected {
-  background: linear-gradient(-135deg, rgba(255, 255, 255, 0.58), rgba(255, 255, 255, 0.22)) !important;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.58), rgba(255, 255, 255, 0.22)) !important;
   border-radius: 8px;
   box-shadow:
     inset 0 0 0 1px rgba(255, 255, 255, 0.62),
@@ -547,7 +547,7 @@ html[data-retail-brand-theme] .indicator-pill-right:not(:empty) {
   color: #1f2933;
   cursor: pointer;
   padding: 12px;
-  text-align: right;
+  text-align: left;
   transition:
     border-color 120ms ease,
     box-shadow 120ms ease,
@@ -617,7 +617,7 @@ html[data-retail-brand-theme] .indicator-pill-right:not(:empty) {
   border-radius: 999px;
   content: "";
   height: 6px;
-  right: 10px;
+  left: 10px;
   position: absolute;
   top: 12px;
   width: 48px;
@@ -628,7 +628,7 @@ html[data-retail-brand-theme] .indicator-pill-right:not(:empty) {
   content: "";
   height: 18px;
   position: absolute;
-  left: 10px;
+  right: 10px;
   top: 30px;
   width: 42px;
 }
@@ -643,7 +643,7 @@ html[data-retail-brand-theme] .indicator-pill-right:not(:empty) {
   height: 24px;
   justify-content: center;
   position: absolute;
-  left: 8px;
+  right: 8px;
   width: 24px;
 }
 .retail-brand-theme-card.selected .retail-brand-check {
@@ -707,7 +707,7 @@ body {
 }
 .retail-web-brand-icon {
   height: 28px;
-  margin-left: 6px;
+  margin-right: 6px;
   vertical-align: middle;
   width: 28px;
 }
@@ -778,7 +778,7 @@ body[data-path=login] .for-forgot::before,
 body[data-path=login] .for-signup::before,
 body[data-path=login] .for-email-login::before {
   align-self: stretch;
-  background: linear-gradient(-135deg, rgba(11, 31, 58, 0.1), rgba(14, 165, 233, 0.08)), url(/assets/retail/images/business-suite-login-banner.svg?v=3) center/contain no-repeat;
+  background: linear-gradient(135deg, rgba(11, 31, 58, 0.1), rgba(14, 165, 233, 0.08)), url(/assets/retail/images/business-suite-login-banner.svg?v=3) center/contain no-repeat;
   background-color: #f5fbff;
   content: "";
   grid-area: banner;
@@ -789,7 +789,7 @@ body[data-path=login] .page-card-head {
   grid-area: head;
   margin: 0;
   padding: 52px 54px 14px;
-  text-align: right;
+  text-align: left;
 }
 body[data-path=login] .login-content.page-card,
 body[data-path=login] .page-card {
@@ -803,15 +803,15 @@ body[data-path=login] .page-card {
 }
 body[data-path=login] .page-card-body,
 body[data-path=login] .page-card-actions {
-  padding-right: 0;
   padding-left: 0;
+  padding-right: 0;
 }
 .page-card-actions .btn-primary,
 .page-card .btn-primary,
 .login-content .btn-primary,
 .btn-login,
 .btn-forgot {
-  background: linear-gradient(-135deg, #020617 0%, #111827 42%, #0b1f3a 72%, #075985 100%) !important;
+  background: linear-gradient(135deg, #020617 0%, #111827 42%, #0b1f3a 72%, #075985 100%) !important;
   border: 1px solid rgba(56, 189, 248, 0.22) !important;
   box-shadow: 0 12px 24px rgba(15, 23, 42, 0.2);
   color: #ffffff !important;
@@ -826,7 +826,7 @@ body[data-path=login] .page-card-actions {
 .login-content .btn-primary:focus,
 .btn-login:focus,
 .btn-forgot:focus {
-  background: linear-gradient(-135deg, #075985 0%, #0b1f3a 34%, #111827 72%, #020617 100%) !important;
+  background: linear-gradient(135deg, #075985 0%, #0b1f3a 34%, #111827 72%, #020617 100%) !important;
   border-color: rgba(56, 189, 248, 0.42) !important;
   box-shadow: 0 14px 28px rgba(15, 23, 42, 0.24), 0 0 0 3px rgba(56, 189, 248, 0.12);
   color: #ffffff !important;
@@ -1005,4 +1005,4 @@ body[data-path=login] .web-footer {
 .footer-powered {
   color: var(--retail-brand-muted);
 }
-/*# sourceMappingURL=retail_website.bundle.B6TH2ZA2.css.map */
+/*# sourceMappingURL=retail_website.bundle.HXK2IIT6.css.map */

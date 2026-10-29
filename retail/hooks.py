@@ -1019,6 +1019,12 @@ jinja["methods"].append("retail.voucher_cards.voucher_card_print_data")
 after_migrate.append("retail.short_codes.hide_naming_series")
 
 # Native serial/batch fields directly in purchase item grids.
+for _warehouse_dt in ("Sales Order", "Delivery Note", "Purchase Order", "Purchase Receipt", "Purchase Invoice", "Sales Invoice"):
+	_scripts = doctype_js[_warehouse_dt]
+	if isinstance(_scripts, str):
+		_scripts = [_scripts]
+	doctype_js[_warehouse_dt] = [*_scripts, "public/js/forms/default_warehouse.js"]
+
 for _purchase_identity_dt in ("Purchase Invoice", "Purchase Receipt"):
 	doctype_js[_purchase_identity_dt].append("public/js/forms/purchase_stock_identity.js")
 
