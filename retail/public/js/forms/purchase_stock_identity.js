@@ -60,6 +60,16 @@
 			for (const item of items) state.items.set(item.name, item);
 		}
 		if (generation !== state.generation) return;
+		// New-style item_code handlers finish before ERPNext's controller handler.
+		// Select its native inline-entry path before it decides to open the popup.
+		// Existing bundles retain their current allocation workflow.
+		if (Number(frm.doc.docstatus || 0) === 0) {
+			for (const row of frm.doc.items || []) {
+				if (!row.serial_and_batch_bundle && tracking.some(([, flag]) => applicable(frm, row, flag))) {
+					row.use_serial_batch_fields = 1;
+				}
+			}
+		}
 		let visibilityChanged = false;
 		for (const [field, flag] of tracking) {
 			const hidden = !(frm.doc.items || []).some(row => applicable(frm, row, flag));

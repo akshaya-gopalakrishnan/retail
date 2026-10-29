@@ -385,3 +385,80 @@ test("direct header drag saves reordered columns and edge drag saves widths", as
   assert.equal(saved.find(column => column.fieldname === "field_0").width_px, 117);
   assert.equal(events.pointermove, undefined);
 });
+
+test('purchase defaults render when both browser settings are empty', () => {
+  for (const settings of [{}, {RetailScrollableGrid: {items: []}, GridView: {}}]) {
+    const f = fixture(settings);
+    const defaults = JSON.parse(fs.readFileSync(path.join(__dirname, '../user_grid_view_settings.json')));
+    f.context.retail.purchase_grid_defaults = defaults;
+    f.grid.docfields = piItemMeta.fields.map(df => ({...df}));
+    f.grid.fields_map = Object.fromEntries(f.grid.docfields.map(df => [df.fieldname, df]));
+    f.handlers['Purchase Invoice'].refresh(f.frm);
+    assert.deepEqual(names(f.grid).slice(0, 4), ['item_code', 'item_name', 'serial_no', 'batch_no']);
+    assert.deepEqual(f.frappe.model.user_settings['Purchase Invoice'], settings);
+  }
+});
+
+test('purchase fallback preserves an existing saved selection and pixel widths', () => {
+  const selected = [{fieldname: 'field_2', columns: 3, width_px: 217}];
+  for (const settings of [
+    {RetailScrollableGrid: {items: selected}},
+    {RetailScrollableGrid: {items: []}, GridView: {'Purchase Invoice Item': selected}},
+  ]) {
+    const f = fixture(settings);
+    f.context.retail.purchase_grid_defaults = {'Purchase Invoice': {'Purchase Invoice Item': [{fieldname: 'field_0', columns: 1}]}};
+    f.handlers['Purchase Invoice'].refresh(f.frm);
+    assert.deepEqual(names(f.grid), ['field_2']);
+    assert.equal(f.grid.visible_columns[0][0].width_px, 217);
+  }
+});
+
+test('empty purchase settings keep Item Name and reveal batch/serial columns when stock updating is enabled', async () => {
+  const f = fixture();
+  f.context.retail.purchase_grid_defaults = JSON.parse(fs.readFileSync(path.join(__dirname, '../user_grid_view_settings.json')));
+  f.grid.docfields = piItemMeta.fields.map(df => ({...df}));
+  f.grid.fields_map = Object.fromEntries(f.grid.docfields.map(df => [df.fieldname, df]));
+  f.grid.grid_rows = [];
+  f.frm.doc = {items: [], update_stock: 0};
+  f.frappe.db = {get_list: async () => [
+    {name: 'tracked-batch', has_batch_no: 1, has_serial_no: 0},
+    {name: 'tracked-serial', has_batch_no: 0, has_serial_no: 1},
+  ]};
+  f.handlers['Purchase Invoice'].refresh(f.frm);
+  vm.runInContext(fs.readFileSync(path.join(__dirname, '../public/js/forms/purchase_stock_identity.js'), 'utf8'), f.context);
+  await f.handlers['Purchase Invoice'].refresh(f.frm);
+  assert.ok(names(f.grid).includes('item_name'));
+  assert.ok(!names(f.grid).includes('serial_no'));
+  assert.ok(!names(f.grid).includes('batch_no'));
+  f.frm.doc.items = [{item_code: 'tracked-batch'}, {item_code: 'tracked-serial'}];
+  await f.handlers['Purchase Invoice Item'].item_code(f.frm);
+  assert.ok(!names(f.grid).includes('batch_no'));
+  f.frm.doc.update_stock = 1;
+  await f.handlers['Purchase Invoice'].update_stock(f.frm);
+  assert.ok(names(f.grid).includes('item_name'));
+  assert.ok(names(f.grid).includes('serial_no'));
+  assert.ok(names(f.grid).includes('batch_no'));
+});
+
+test('Purchase Receipt uses shipped identity columns when browser layouts are empty', async () => {
+  const f = fixture();
+  const meta = JSON.parse(fs.readFileSync(path.join(__dirname, '../../../erpnext/erpnext/stock/doctype/purchase_receipt_item/purchase_receipt_item.json')));
+  f.frm.doctype = 'Purchase Receipt';
+  f.grid.doctype = 'Purchase Receipt Item';
+  f.grid.df.options = 'Purchase Receipt Item';
+  f.frm.doc = {items: []};
+  f.grid.docfields = meta.fields.map(df => ({...df}));
+  f.grid.fields_map = Object.fromEntries(f.grid.docfields.map(df => [df.fieldname, df]));
+  f.grid.grid_rows = [];
+  f.context.retail.purchase_grid_defaults = JSON.parse(fs.readFileSync(path.join(__dirname, '../user_grid_view_settings.json')));
+  f.frappe.db = {get_list: async () => [{name: 'tracked-batch', has_batch_no: 1, has_serial_no: 0}]};
+  f.handlers['Purchase Receipt'].refresh(f.frm);
+  vm.runInContext(fs.readFileSync(path.join(__dirname, '../public/js/forms/purchase_stock_identity.js'), 'utf8'), f.context);
+  await f.handlers['Purchase Receipt'].refresh(f.frm);
+  assert.ok(names(f.grid).includes('item_name'));
+  assert.ok(!names(f.grid).includes('batch_no'));
+  f.frm.doc.items = [{item_code: 'tracked-batch'}];
+  await f.handlers['Purchase Receipt Item'].item_code(f.frm);
+  assert.ok(names(f.grid).includes('item_name'));
+  assert.ok(names(f.grid).includes('batch_no'));
+});

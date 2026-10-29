@@ -12,9 +12,16 @@
 		if (this.visible_columns?.length) return;
 		const own = frappe.get_user_settings(this.frm.doctype, SETTINGS) || {};
 		const legacy = frappe.get_user_settings(this.frm.doctype, "GridView") || {};
-		const saved = Object.prototype.hasOwnProperty.call(own, this.df.fieldname)
+		let saved = Object.prototype.hasOwnProperty.call(own, this.df.fieldname)
 			? own[this.df.fieldname]
 			: legacy[this.doctype];
+		const defaults = retail.purchase_grid_defaults?.[this.frm.doctype]?.[this.doctype];
+		if (defaults && (!Array.isArray(saved) || !saved.length)) {
+			// Empty preferences can reach the browser even after migration. Use
+			// native saved columns when present, otherwise the shipped defaults.
+			const native = legacy[this.doctype];
+			saved = Array.isArray(native) && native.length ? native : defaults;
+		}
 		this.user_defined_columns = (Array.isArray(saved) ? saved : []).flatMap((entry) => {
 			const df = this.fields_map[entry.fieldname];
 			return df ? [{ ...df, columns: entry.columns, width_px: entry.width_px, in_list_view: 1 }] : [];
