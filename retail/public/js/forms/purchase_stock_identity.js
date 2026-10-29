@@ -60,12 +60,18 @@
 			for (const item of items) state.items.set(item.name, item);
 		}
 		if (generation !== state.generation) return;
+		let visibilityChanged = false;
 		for (const [field, flag] of tracking) {
+			const hidden = !(frm.doc.items || []).some(row => applicable(frm, row, flag));
+			visibilityChanged ||= grid.fields_map[field]?.hidden !== hidden;
 			grid.update_docfield_property(field, "depends_on", "");
-			grid.update_docfield_property(field, "hidden", !(frm.doc.items || []).some(row => applicable(frm, row, flag)));
+			grid.update_docfield_property(field, "hidden", hidden);
 			grid.update_docfield_property(field, "read_only_depends_on", "");
 		}
-		grid.refresh();
+		// refresh() retains visible_columns and existing row columns. Rebuild on
+		// visibility transitions, using the user's saved widths and selection.
+		if (visibilityChanged) grid.reset_grid();
+		else grid.refresh();
 		for (const row of grid.grid_rows || []) styleRow(frm, row);
 	}
 

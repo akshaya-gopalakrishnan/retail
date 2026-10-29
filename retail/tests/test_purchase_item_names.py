@@ -62,3 +62,53 @@ class TestPurchaseItemNames(unittest.TestCase):
 	def test_explicit_resets_and_unrelated_layouts_are_preserved(self):
 		for columns in (None, [], [{"fieldname": "qty", "columns": 1}]):
 			self.assertEqual(upgrade.add_item_name(columns), columns)
+
+
+class TestPurchaseGridRepair(unittest.TestCase):
+	def test_repair_persists_once_and_invalidates_cached_layouts(self):
+		from retail.patches import repair_purchase_grid_defaults as repair
+
+		user = "purchase-repair-" + uuid4().hex
+		frappe.db.savepoint("purchase_repair_test")
+		try:
+			for parent in upgrade.PURCHASE_DOCTYPES:
+				frappe.cache.hset("_user_settings", f"{parent}::{user}", json.dumps({
+					"RetailScrollableGrid": {"items": []}, "other_preference": "keep"}))
+			with patch.object(repair.frappe, "get_all", return_value=[user]):
+				repair.execute()
+				first = [_get_user_settings(user, p) for p in upgrade.PURCHASE_DOCTYPES]
+				repair.execute()
+				self.assertEqual(first, [_get_user_settings(user, p) for p in upgrade.PURCHASE_DOCTYPES])
+			for settings in first:
+				self.assertEqual(settings["other_preference"], "keep")
+				self.assertIn("item_name", [c["fieldname"] for c in settings["RetailScrollableGrid"]["items"]])
+		finally:
+			frappe.db.rollback(save_point="purchase_repair_test")
+			for parent in upgrade.PURCHASE_DOCTYPES:
+				frappe.cache.hdel("_user_settings", f"{parent}::{user}")
+
+	def test_missing_empty_and_saved_layouts(self):
+		from retail.patches.repair_purchase_grid_defaults import repair_settings
+
+		defaults = json.loads(get_fixture_path().read_text())
+		for parent in upgrade.PURCHASE_DOCTYPES:
+			for original in ({}, {"RetailScrollableGrid": {"items": []}}, {"GridView": None}):
+				repaired = repair_settings(parent, original, defaults)
+				fields = [c["fieldname"] for c in repaired["RetailScrollableGrid"]["items"]]
+				self.assertIn("item_name", fields)
+				if parent != "Purchase Order":
+					self.assertIn("serial_no", fields)
+					self.assertIn("batch_no", fields)
+				self.assertEqual(repair_settings(parent, repaired, defaults), repaired)
+			selection = [{"fieldname": "item_code", "width_px": 219, "columns": 3},
+				{"fieldname": "qty", "width_px": 87, "columns": 1}]
+			original = {"GridView": {parent + " Item": selection},
+				"RetailScrollableGrid": {"items": []}, "other_preference": "keep"}
+			before = copy.deepcopy(original)
+			repaired = repair_settings(parent, original, defaults)
+			self.assertEqual(original, before)
+			self.assertEqual(repaired["other_preference"], "keep")
+			columns = repaired["RetailScrollableGrid"]["items"]
+			self.assertEqual(columns[0], selection[0])
+			self.assertEqual(columns[-1], selection[1])
+			self.assertEqual(repair_settings(parent, repaired, defaults), repaired)

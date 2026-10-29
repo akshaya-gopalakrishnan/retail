@@ -15,7 +15,17 @@ function fixture(doctype = 'Purchase Receipt') {
   get_list:async (_dt,args)=>args.filters.name[1].map(code=>masters.get(code)).filter(Boolean),
  }};
  vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../public/js/forms/purchase_stock_identity.js'),'utf8'), {frappe,$:()=>({on:(_name,fn)=>render=fn})});
- const grid={fields_map:{},update_docfield_property:(field,key,value)=>(properties[field]||={})[key]=value, refresh(){}};
+ const grid={fields_map:{},visible_columns:[],resets:0,
+  update_docfield_property(field,key,value){
+   (properties[field]||={})[key]=value;
+   (this.fields_map[field]||={fieldname:field})[key]=value;
+  },
+  refresh(){
+   if(this.visible_columns.length)return;
+   this.visible_columns=['item_name',...['serial_no','batch_no'].filter(field=>!this.fields_map[field]?.hidden)];
+  },
+  reset_grid(){this.resets++;this.visible_columns=[];this.refresh();}
+ };
  const frm={doctype,doc:{items:[],update_stock:1},fields_dict:{items:{grid}}};
  const sharedColumns={serial_no:{fieldname:'serial_no'},batch_no:{fieldname:'batch_no'}};
  const gridRow=doc=>{
@@ -24,7 +34,7 @@ function fixture(doctype = 'Purchase Receipt') {
   render(null,row);return row;
  };
  const rowMetadata=doc=>Object.fromEntries(gridRow(doc).docfields.map(df=>[df.fieldname,df]));
- return {handlers,properties,masters,frappe,frm,rowMetadata,gridRow,sharedColumns};
+ return {handlers,properties,masters,frappe,frm,rowMetadata,gridRow,sharedColumns,grid};
 }
 
 test('empty and ordinary purchases hide both identity columns',async()=>{
@@ -86,3 +96,19 @@ test('saved-column metadata and controls are isolated between mixed rows',async(
  assert.notEqual(serial.columns.serial_no.df,batch.columns.serial_no.df);
  assert.equal(f.sharedColumns.serial_no.hidden,undefined);
 });
+
+ test('empty grid rebuilds columns when tracked items are added and removed',async()=>{
+ const f=fixture();await f.handlers['Purchase Receipt'].refresh(f.frm);
+ assert.deepEqual(f.grid.visible_columns,['item_name']);
+ f.frm.doc.items=[{item_code:'batch'}];
+ await f.handlers['Purchase Receipt Item'].item_code(f.frm);
+ assert.deepEqual(f.grid.visible_columns,['item_name','batch_no']);
+ const resets=f.grid.resets;
+ await f.handlers['Purchase Receipt Item'].item_code(f.frm);
+ assert.equal(f.grid.resets,resets,'unchanged visibility must retain controls');
+ f.frm.doc.items.push({item_code:'serial'});
+ await f.handlers['Purchase Receipt Item'].item_code(f.frm);
+ assert.deepEqual(f.grid.visible_columns,['item_name','serial_no','batch_no']);
+ f.frm.doc.items=[];await f.handlers['Purchase Receipt Item'].items_remove(f.frm);
+ assert.deepEqual(f.grid.visible_columns,['item_name']);
+ });

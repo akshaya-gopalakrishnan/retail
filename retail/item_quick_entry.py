@@ -16,6 +16,16 @@ DEFAULT_FIELDS = {
 
 
 def install():
+    install_batch_valuation_default()
+    _seed_defaults("retail.patches.batch_quick_entry_details", {
+        "manufacturing_date": 1,
+        "expiry_date": 1,
+        "stock_uom": 1,
+        "use_batchwise_valuation": 0,
+    }, doctype="Batch")
+    _seed_defaults("retail.patches.batch_valuation_full_form_only", {
+        "use_batchwise_valuation": 0,
+    }, doctype="Batch")
     _seed_defaults(PATCH, DEFAULT_FIELDS)
     _seed_defaults("retail.patches.item_quick_entry_brand", {"brand": 1})
     _seed_defaults("retail.patches.item_quick_entry_tracking", {
@@ -30,6 +40,23 @@ def install():
             {"tax_id": 1},
             doctype=doctype,
         )
+
+
+def install_batch_valuation_default():
+    patch = "retail.patches.batch_valuation_opt_in"
+    if frappe.db.exists("Patch Log", {"patch": patch}):
+        return
+    for property_name, value, property_type in (
+        ("default", "0", "Text"),
+        ("read_only", 0, "Check"),
+    ):
+        make_property_setter(
+            "Batch", "use_batchwise_valuation", property_name, value, property_type,
+            validate_fields_for_doctype=False,
+        )
+    # Native set_only_once continues to protect existing batches.
+    frappe.get_doc({"doctype": "Patch Log", "patch": patch}).insert(ignore_permissions=True)
+    frappe.clear_cache(doctype="Batch")
 
 
 def _seed_defaults(patch, fields, doctype="Item"):

@@ -83,6 +83,7 @@ def voucher_result(voucher):
 			active_to_time=str(get_time(voucher.active_to_time)) if voucher.get("use_redemption_hours") else None,
 			server_time=str(now_datetime().time()), server_timezone=get_system_timezone(),
 			online_redemption_required=True, all_products=bool(batch.all_products),
+			apply_promotion_to=batch.get("apply_promotion_to"),
 			eligibility=[{k: row.get(k) for k in ("item_code", "brand", "item_group")} for row in batch.restrictions])
 	return result
 

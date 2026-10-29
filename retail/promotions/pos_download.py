@@ -163,7 +163,7 @@ def _voucher_snapshot(counter):
 		fields=["name", "title", "company", "currency", "voucher_amount", "card_count",
 			"valid_from", "expiry_date", "use_redemption_hours", "active_from_time", "active_to_time",
 			"activate_all_cards", "generation_status", "generated_count", "all_products", "logo", "terms",
-			"modified"], order_by="name", limit_page_length=0)
+			"apply_promotion_to", "modified"], order_by="name", limit_page_length=0)
 	by_batch = {row.name: row for row in batches}
 	if by_batch:
 		restrictions = frappe.get_all("Voucher Card Restriction",
@@ -199,6 +199,7 @@ def _voucher_snapshot(counter):
 		batch = by_batch.get(row.get("voucher_card_batch"))
 		if batch:
 			row["all_products"] = bool(batch.all_products)
+			row["apply_promotion_to"] = batch.get("apply_promotion_to")
 			row["eligibility"] = batch.restrictions
 	return {
 		"voucher_card_batches": batches,

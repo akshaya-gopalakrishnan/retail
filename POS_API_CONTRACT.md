@@ -2364,6 +2364,7 @@ Response example (existing fields retained; new fields are additive):
         "generation_status": "Complete",
         "generated_count": 10,
         "all_products": 0,
+        "apply_promotion_to": null,
         "logo": null,
         "terms": "Partial redemption allowed. No cash change. Keep this code secure.",
         "modified": "2026-10-22 16:00:46.286054",
@@ -2476,6 +2477,7 @@ Response example (existing fields retained; new fields are additive):
         "online_redemption_required": true,
         "use_activation_times": false,
         "all_products": false,
+        "apply_promotion_to": null,
         "eligibility": [
           {
             "idx": 1,
@@ -2581,6 +2583,7 @@ Response example (existing fields retained; new fields are additive):
         "online_redemption_required": true,
         "use_activation_times": false,
         "all_products": false,
+        "apply_promotion_to": null,
         "eligibility": [
           {
             "idx": 1,
@@ -2686,6 +2689,7 @@ Response example (existing fields retained; new fields are additive):
         "online_redemption_required": true,
         "use_activation_times": false,
         "all_products": false,
+        "apply_promotion_to": null,
         "eligibility": [
           {
             "idx": 1,
@@ -2895,6 +2899,7 @@ Response example (existing fields retained; new fields are additive):
         "online_redemption_required": true,
         "use_activation_times": false,
         "all_products": false,
+        "apply_promotion_to": null,
         "eligibility": [
           {
             "idx": 1,
@@ -3000,6 +3005,7 @@ Response example (existing fields retained; new fields are additive):
         "online_redemption_required": true,
         "use_activation_times": false,
         "all_products": false,
+        "apply_promotion_to": null,
         "eligibility": [
           {
             "idx": 1,
@@ -3105,6 +3111,7 @@ Response example (existing fields retained; new fields are additive):
         "online_redemption_required": true,
         "use_activation_times": false,
         "all_products": false,
+        "apply_promotion_to": null,
         "eligibility": [
           {
             "idx": 1,
@@ -3210,6 +3217,7 @@ Response example (existing fields retained; new fields are additive):
         "online_redemption_required": true,
         "use_activation_times": false,
         "all_products": false,
+        "apply_promotion_to": null,
         "eligibility": [
           {
             "idx": 1,
@@ -3315,6 +3323,7 @@ Response example (existing fields retained; new fields are additive):
         "online_redemption_required": true,
         "use_activation_times": false,
         "all_products": false,
+        "apply_promotion_to": null,
         "eligibility": [
           {
             "idx": 1,
@@ -3420,6 +3429,7 @@ Response example (existing fields retained; new fields are additive):
         "online_redemption_required": true,
         "use_activation_times": false,
         "all_products": false,
+        "apply_promotion_to": null,
         "eligibility": [
           {
             "idx": 1,
@@ -3525,6 +3535,7 @@ Response example (existing fields retained; new fields are additive):
         "online_redemption_required": true,
         "use_activation_times": false,
         "all_products": false,
+        "apply_promotion_to": null,
         "eligibility": [
           {
             "idx": 1,

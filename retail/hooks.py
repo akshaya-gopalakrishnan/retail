@@ -741,6 +741,7 @@ scheduler_events = {"hourly": ["retail.document_codes.backfill_missing"]}
 # Frappe v15 has no extend_doctype_class. Keep these existing scoped subclasses
 # for receipt immutability/loyalty/posting; replacing them changes business logic.
 override_doctype_class = {  # nosemgrep: frappe-semgrep-rules.rules.override-doctype-class
+	"Batch": "retail.batch.RetailBatch",
 	"Sales Invoice": "retail.loyalty_sales_invoice.RetailSalesInvoice",
 	"POS Invoice": "retail.pos_completed_sale.RetailPOSInvoice",
 	"POS Closing Entry": "retail.pos_realtime.RetailPOSClosingEntry",
