@@ -112,3 +112,27 @@ test('saved-column metadata and controls are isolated between mixed rows',async(
  f.frm.doc.items=[];await f.handlers['Purchase Receipt Item'].items_remove(f.frm);
  assert.deepEqual(f.grid.visible_columns,['item_name']);
  });
+
+test('tracked purchase rows select native inline entry before the controller runs',async()=>{
+ for(const doctype of ['Purchase Invoice','Purchase Receipt']) {
+  const f=fixture(doctype);
+  f.frm.doc.items=[{item_code:'normal'},{item_code:'serial'},{item_code:'batch'},
+   {item_code:'batch',serial_and_batch_bundle:'EXISTING'}];
+  await f.handlers[doctype+' Item'].item_code(f.frm);
+  assert.equal(f.frm.doc.items[0].use_serial_batch_fields,undefined);
+  assert.equal(f.frm.doc.items[1].use_serial_batch_fields,1);
+  assert.equal(f.frm.doc.items[2].use_serial_batch_fields,1);
+  assert.equal(f.frm.doc.items[3].use_serial_batch_fields,undefined);
+  assert.equal(f.frm.doc.items[3].serial_and_batch_bundle,'EXISTING');
+ }
+});
+
+test('non-stock invoices and submitted purchases retain native allocation mode',async()=>{
+ const f=fixture('Purchase Invoice');
+ f.frm.doc.items=[{item_code:'batch'}];f.frm.doc.update_stock=0;
+ await f.handlers['Purchase Invoice Item'].item_code(f.frm);
+ assert.equal(f.frm.doc.items[0].use_serial_batch_fields,undefined);
+ f.frm.doc.update_stock=1;f.frm.doc.docstatus=1;
+ await f.handlers['Purchase Invoice Item'].item_code(f.frm);
+ assert.equal(f.frm.doc.items[0].use_serial_batch_fields,undefined);
+});

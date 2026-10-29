@@ -1,3 +1,4 @@
+import gridDefaults from "../user_grid_view_settings.json";
 import "./js/cdn_loader.js";
 import "./js/workspace_boot_sidebar.js";
 import "./js/business_home_charts.js";
@@ -23,3 +24,8 @@ import "./js/reports/gross_profit_item_filter.js";
 import "./js/reports/pos_report_filters.js";
 import "./js/reports/profitability.js";
 import "./js/reports/outstanding_footer.js";
+
+window.retail = window.retail || {};
+window.retail.purchase_grid_defaults = Object.fromEntries(
+	["Purchase Order", "Purchase Invoice", "Purchase Receipt"].map(doctype => [doctype, gridDefaults[doctype]])
+);

@@ -31,6 +31,457 @@
     return target;
   };
 
+  // ../retail/retail/user_grid_view_settings.json
+  var user_grid_view_settings_default = {
+    Item: {
+      "Retail Packing Detail": [
+        {
+          columns: 2,
+          fieldname: "packing_name"
+        },
+        {
+          columns: 1,
+          fieldname: "barcode"
+        },
+        {
+          columns: 1,
+          fieldname: "packing_uom"
+        },
+        {
+          columns: 1,
+          fieldname: "conversion_factor"
+        },
+        {
+          columns: 1,
+          fieldname: "purchase_net_rate"
+        },
+        {
+          columns: 1,
+          fieldname: "purchase_gross_rate"
+        },
+        {
+          columns: 1,
+          fieldname: "selling_net_rate"
+        },
+        {
+          columns: 1,
+          fieldname: "selling_gross_rate"
+        },
+        {
+          columns: 1,
+          fieldname: "is_fast_plu_item"
+        },
+        {
+          columns: 1,
+          fieldname: "disabled"
+        }
+      ]
+    },
+    "Promotional Scheme": {
+      "Promotional Scheme Product Discount": [
+        {
+          columns: 1,
+          fieldname: "min_qty"
+        },
+        {
+          columns: 1,
+          fieldname: "max_qty"
+        },
+        {
+          columns: 1,
+          fieldname: "min_amount"
+        },
+        {
+          columns: 1,
+          fieldname: "max_amount"
+        },
+        {
+          columns: 2,
+          fieldname: "free_item"
+        },
+        {
+          columns: 1,
+          fieldname: "free_qty"
+        },
+        {
+          columns: 3,
+          fieldname: "rule_description"
+        }
+      ]
+    },
+    "Purchase Invoice": {
+      "Purchase Invoice Item": [
+        {
+          columns: 2,
+          fieldname: "item_code"
+        },
+        {
+          columns: 2,
+          fieldname: "item_name"
+        },
+        {
+          columns: 2,
+          fieldname: "serial_no"
+        },
+        {
+          columns: 2,
+          fieldname: "batch_no"
+        },
+        {
+          columns: 1,
+          fieldname: "uom"
+        },
+        {
+          columns: 1,
+          fieldname: "qty"
+        },
+        {
+          fieldname: "custom_foc_qty"
+        },
+        {
+          fieldname: "custom_total_stock_qty"
+        },
+        {
+          columns: 2,
+          fieldname: "rate"
+        },
+        {
+          columns: 2,
+          fieldname: "custom_rate_including_vat"
+        },
+        {
+          columns: 2,
+          fieldname: "amount"
+        },
+        {
+          columns: 2,
+          fieldname: "custom_vat_amount"
+        },
+        {
+          columns: 2,
+          fieldname: "custom_amount_including_vat"
+        },
+        {
+          columns: 1,
+          fieldname: "vat_rate"
+        },
+        {
+          columns: 1,
+          fieldname: "vat_amount"
+        },
+        {
+          columns: 1,
+          fieldname: "custom_upd_sell_price"
+        },
+        {
+          columns: 1,
+          fieldname: "custom_cur_sell_rate"
+        },
+        {
+          columns: 1,
+          fieldname: "custom_new_sell_rate"
+        },
+        {
+          columns: 1,
+          fieldname: "custom_new_sell_incl"
+        },
+        {
+          columns: 1,
+          fieldname: "rate_with_margin"
+        },
+        {
+          columns: 1,
+          fieldname: "custom_sell_margin_pct"
+        }
+      ]
+    },
+    "Purchase Order": {
+      "Purchase Order Item": [
+        {
+          columns: 2,
+          fieldname: "item_code"
+        },
+        {
+          columns: 2,
+          fieldname: "item_name"
+        },
+        {
+          columns: 1,
+          fieldname: "uom"
+        },
+        {
+          columns: 1,
+          fieldname: "schedule_date"
+        },
+        {
+          columns: 1,
+          fieldname: "qty"
+        },
+        {
+          columns: 1,
+          fieldname: "custom_foc_qty"
+        },
+        {
+          columns: 1,
+          fieldname: "custom_total_stock_qty"
+        },
+        {
+          columns: 1,
+          fieldname: "custom_rate_including_vat"
+        },
+        {
+          columns: 1,
+          fieldname: "rate"
+        },
+        {
+          columns: 1,
+          fieldname: "amount"
+        }
+      ]
+    },
+    "Purchase Receipt": {
+      "Purchase Receipt Item": [
+        {
+          columns: 2,
+          fieldname: "item_code"
+        },
+        {
+          columns: 2,
+          fieldname: "item_name"
+        },
+        {
+          columns: 2,
+          fieldname: "serial_no"
+        },
+        {
+          columns: 2,
+          fieldname: "batch_no"
+        },
+        {
+          columns: 1,
+          fieldname: "uom"
+        },
+        {
+          columns: 1,
+          fieldname: "qty"
+        },
+        {
+          fieldname: "custom_foc_qty"
+        },
+        {
+          fieldname: "custom_total_stock_qty"
+        },
+        {
+          fieldname: "warehouse"
+        },
+        {
+          columns: 2,
+          fieldname: "rate"
+        },
+        {
+          columns: 2,
+          fieldname: "custom_rate_including_vat"
+        },
+        {
+          columns: 2,
+          fieldname: "amount"
+        },
+        {
+          columns: 2,
+          fieldname: "custom_vat_amount"
+        },
+        {
+          columns: 2,
+          fieldname: "custom_amount_including_vat"
+        },
+        {
+          columns: 1,
+          fieldname: "vat_rate"
+        },
+        {
+          columns: 1,
+          fieldname: "vat_amount"
+        },
+        {
+          columns: 1,
+          fieldname: "custom_upd_sell_price"
+        },
+        {
+          columns: 1,
+          fieldname: "custom_cur_sell_rate"
+        },
+        {
+          columns: 1,
+          fieldname: "custom_new_sell_rate"
+        },
+        {
+          columns: 1,
+          fieldname: "custom_new_sell_incl"
+        },
+        {
+          columns: 1,
+          fieldname: "rate_with_margin"
+        },
+        {
+          columns: 1,
+          fieldname: "custom_sell_margin_pct"
+        }
+      ]
+    },
+    Quotation: {
+      "Quotation Item": [
+        {
+          columns: 2,
+          fieldname: "item_code"
+        },
+        {
+          columns: 1,
+          fieldname: "qty"
+        },
+        {
+          columns: 2,
+          fieldname: "rate"
+        },
+        {
+          columns: 2,
+          fieldname: "custom_rate_including_vat"
+        },
+        {
+          columns: 1,
+          fieldname: "amount"
+        },
+        {
+          columns: 2,
+          fieldname: "custom_vat_amount"
+        },
+        {
+          columns: 2,
+          fieldname: "custom_amount_including_vat"
+        }
+      ]
+    },
+    "Sales Invoice": {
+      "Sales Invoice Item": [
+        {
+          columns: 1,
+          fieldname: "item_code"
+        },
+        {
+          columns: 2,
+          fieldname: "item_name"
+        },
+        {
+          columns: 1,
+          fieldname: "qty"
+        },
+        {
+          columns: 1,
+          fieldname: "custom_foc_qty"
+        },
+        {
+          columns: 1,
+          fieldname: "rate"
+        },
+        {
+          columns: 1,
+          fieldname: "custom_rate_including_vat"
+        },
+        {
+          columns: 1,
+          fieldname: "amount"
+        },
+        {
+          columns: 2,
+          fieldname: "custom_vat_amount"
+        },
+        {
+          columns: 2,
+          fieldname: "custom_amount_including_vat"
+        }
+      ]
+    },
+    "Sales Order": {
+      "Sales Order Item": [
+        {
+          columns: 1,
+          fieldname: "item_code"
+        },
+        {
+          columns: 1,
+          fieldname: "item_name"
+        },
+        {
+          columns: 1,
+          fieldname: "delivery_date"
+        },
+        {
+          columns: 1,
+          fieldname: "qty"
+        },
+        {
+          columns: 1,
+          fieldname: "custom_foc_qty"
+        },
+        {
+          columns: 1,
+          fieldname: "custom_total_stock_qty"
+        },
+        {
+          columns: 1,
+          fieldname: "rate"
+        },
+        {
+          columns: 1,
+          fieldname: "custom_rate_including_vat"
+        },
+        {
+          columns: 1,
+          fieldname: "amount"
+        },
+        {
+          columns: 2,
+          fieldname: "custom_vat_amount"
+        },
+        {
+          columns: 1,
+          fieldname: "custom_amount_including_vat"
+        }
+      ]
+    },
+    "Stock Entry": {
+      "Stock Entry Detail": [
+        {
+          columns: 2,
+          fieldname: "s_warehouse"
+        },
+        {
+          columns: 2,
+          fieldname: "t_warehouse"
+        },
+        {
+          columns: 2,
+          fieldname: "item_name"
+        },
+        {
+          columns: 1,
+          fieldname: "item_code"
+        },
+        {
+          columns: 1,
+          fieldname: "qty"
+        },
+        {
+          columns: 1,
+          fieldname: "custom_foc_qty"
+        },
+        {
+          columns: 1,
+          fieldname: "custom_total_stock_qty"
+        }
+      ]
+    }
+  };
+
   // ../retail/retail/public/js/cdn_loader.js
   (function() {
     var _a;
@@ -527,12 +978,17 @@
     const SETTINGS = "RetailScrollableGrid";
     const registrations = /* @__PURE__ */ new Set();
     function setupColumns() {
-      var _a, _b, _c;
+      var _a, _b, _c, _d, _e;
       if ((_a = this.visible_columns) == null ? void 0 : _a.length)
         return;
       const own = frappe.get_user_settings(this.frm.doctype, SETTINGS) || {};
       const legacy = frappe.get_user_settings(this.frm.doctype, "GridView") || {};
-      const saved = Object.prototype.hasOwnProperty.call(own, this.df.fieldname) ? own[this.df.fieldname] : legacy[this.doctype];
+      let saved = Object.prototype.hasOwnProperty.call(own, this.df.fieldname) ? own[this.df.fieldname] : legacy[this.doctype];
+      const defaults = (_c = (_b = retail.purchase_grid_defaults) == null ? void 0 : _b[this.frm.doctype]) == null ? void 0 : _c[this.doctype];
+      if (defaults && (!Array.isArray(saved) || !saved.length)) {
+        const native = legacy[this.doctype];
+        saved = Array.isArray(native) && native.length ? native : defaults;
+      }
       this.user_defined_columns = (Array.isArray(saved) ? saved : []).flatMap((entry) => {
         const df = this.fields_map[entry.fieldname];
         return df ? [__spreadProps(__spreadValues({}, df), { columns: entry.columns, width_px: entry.width_px, in_list_view: 1 })] : [];
@@ -554,7 +1010,7 @@
         this.update_default_colsize(df);
         df.colsize = Math.max(1, Math.min(12, Number(df.columns) || df.colsize || 1));
         if (df.fieldtype === "Link" && !df.formatter && df.parent) {
-          const formatter = (_c = (_b = frappe.meta.docfield_map[df.parent]) == null ? void 0 : _b[df.fieldname]) == null ? void 0 : _c.formatter;
+          const formatter = (_e = (_d = frappe.meta.docfield_map[df.parent]) == null ? void 0 : _d[df.fieldname]) == null ? void 0 : _e.formatter;
           if (formatter)
             df.formatter = formatter;
         }
@@ -7912,5 +8368,11 @@
       });
     };
   })();
+
+  // ../retail/retail/public/retail_desk.bundle.js
+  window.retail = window.retail || {};
+  window.retail.purchase_grid_defaults = Object.fromEntries(
+    ["Purchase Order", "Purchase Invoice", "Purchase Receipt"].map((doctype) => [doctype, user_grid_view_settings_default[doctype]])
+  );
 })();
-//# sourceMappingURL=retail_desk.bundle.6HW7EHFG.js.map
+//# sourceMappingURL=retail_desk.bundle.W7M3JNG3.js.map
