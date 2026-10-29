@@ -4,7 +4,7 @@
 	window.retail_purchase_history_registered = true;
 	const api = "retail.domains.purchase.history.";
 	const esc = (value) => frappe.utils.escape_html(String(value ?? ""));
-	const number = (value) => value == null ? "—" : flt(value, 6).toLocaleString(undefined, { maximumFractionDigits: 6 });
+	const number = (value) => value == null ? "—" : flt(value, 2).toLocaleString(undefined, { maximumFractionDigits: 2 });
 	const money = (value, currency) => value == null ? "—" : `${esc(currency)} ${number(value)}`;
 	const link = (doctype, name) => name
 		? `<a href="/app/${frappe.router.slug(doctype)}/${encodeURIComponent(name)}" target="_blank" rel="noopener">${esc(name)}</a>` : "—";

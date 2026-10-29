@@ -61,7 +61,8 @@ def _read_rows(doctype, company, item_code, cutoff, supplier=None, other_supplie
 	child_fields = [
 		"name", "item_code", "item_name", "qty", "uom", "stock_uom", "conversion_factor",
 		"rate", "net_rate", "net_amount", "base_net_amount", "discount_percentage",
-		"discount_amount", "custom_foc_qty", "purchase_receipt", "pr_detail", "purchase_order",
+		"discount_amount", "custom_foc_qty", "custom_foc_key", "custom_foc_parent",
+		"purchase_receipt", "pr_detail", "purchase_order",
 	]
 	fields = [f"`tab{doctype}`.`{key}`" for key in parent_fields
 		if key in parent_allowed and (frappe.get_meta(doctype).has_field(key) or key == "name")]
@@ -186,6 +187,7 @@ def _comparison(doc, row, history, complete_access):
 
 	baseline = next((entry for entry in history
 		if entry["supplier"] == doc.supplier and not entry["is_return"] and entry["rate"] is not None
+		and entry["rate"] != 0  # Free stock is history, not a purchase-rate baseline.
 		and not same_receipt(entry)), None)
 	current = _current_rate(row, doc.get("conversion_rate"), linked_receipt)
 	result = {"row_name": row.name, "item_code": row.item_code, "current_rate": current,
@@ -227,6 +229,18 @@ def get_history(document, item_code, scope="supplier", start=0, page_length=20, 
 		history = [row for row in history if getdate(row["date"]) >= getdate(from_date)]
 	if to_date:
 		history = [row for row in history if getdate(row["date"]) <= getdate(to_date)]
+	# Generated free rows are already represented by the paid row's "+ free" text.
+	# Match within the same document; retain standalone/unmatched zero-rate rows.
+	def records(chain):
+		return ([chain["receipt"]] if chain["receipt"] else []) + chain["invoices"]
+
+	paid_keys = {(row.doctype, row.name, row.get("custom_foc_key"))
+		for chain in history for row in records(chain)
+		if row.get("custom_foc_key") and flt(row.get("custom_foc_qty"))}
+	history = [chain for chain in history if not all(
+		row.get("custom_foc_parent")
+		and (row.doctype, row.name, row.custom_foc_parent) in paid_keys
+		for row in records(chain))]
 	start, page_length = max(cint(start), 0), min(max(cint(page_length), 1), 50)
 	latest = {}
 	for row in history:

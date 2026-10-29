@@ -81,11 +81,27 @@ class TestPurchaseHistory(unittest.TestCase):
 		self.assertFalse(self.compare()["higher"])
 		self.purchase(rate=0, date="2026-02-01")
 		result = self.compare()
-		self.assertTrue(result["higher"])
-		self.assertIsNone(result["percent"])
+		self.assertFalse(result["higher"])
+		self.assertEqual(result["baseline"]["rate"], 10)
+		self.assertEqual(result["percent"], -10)
+		self.doc.items[0].base_net_amount = 120
+		self.doc.items[0].net_amount = 120
+		self.assertTrue(self.compare()["higher"])
 		other = history.get_history(self.doc.as_dict(), self.item, scope="others")
 		self.assertEqual(other["total"], 1)
 		self.assertEqual(other["rows"][0]["supplier"], self.other_supplier)
+
+	def test_zero_only_history_never_warns_and_remains_visible(self):
+		for doctype in history.HISTORY_DOCTYPES:
+			self.purchase(doctype, rate=0)
+		result = self.compare()
+		self.assertIsNone(result["baseline"])
+		self.assertFalse(result["higher"])
+		self.assertIsNone(result["difference"])
+		self.assertEqual(history.get_history(self.doc.as_dict(), self.item)["total"], 2)
+		with patch.object(history.frappe, "msgprint") as message:
+			history.warn_before_submit(self.doc)
+			message.assert_not_called()
 
 	def test_receipt_10_bill_9_one_chain_and_no_mutation(self):
 		receipt = self.purchase(rate=10)
@@ -100,6 +116,27 @@ class TestPurchaseHistory(unittest.TestCase):
 		self.assertEqual(data["rows"][0]["status"], "Fully billed")
 		self.assertEqual(self.doc.as_json(), before)
 		self.assertEqual(frappe.db.get_value("Purchase Receipt Item", receipt.items[0].name, "rate"), 10)
+
+	def test_history_hides_linked_free_rows_only(self):
+		for doctype in history.HISTORY_DOCTYPES:
+			paid = self.purchase(doctype, rate=10, foc=2)
+			paid.items[0].db_set("custom_foc_key", "history-foc-key", update_modified=False)
+			free = paid.append("items", {"item_code": self.item, "qty": 2, "rate": 0,
+				"net_rate": 0, "net_amount": 0, "base_net_amount": 0,
+				"uom": "Nos", "stock_uom": "Nos", "conversion_factor": 1,
+				"custom_foc_parent": "history-foc-key"})
+			free.db_insert()
+		standalone = self.purchase(rate=0)
+		orphan = self.purchase(rate=0)
+		orphan.items[0].db_set("custom_foc_parent", "history-foc-key", update_modified=False)
+		data = history.get_history(self.doc.as_dict(), self.item, page_length=2)
+		self.assertEqual(data["total"], 4)
+		self.assertEqual(len(data["rows"]), 2)
+		data = history.get_history(self.doc.as_dict(), self.item)
+		self.assertEqual(sum(bool(row["receipt"] and row["receipt"].custom_foc_qty)
+			or any(bill.custom_foc_qty for bill in row["invoices"]) for row in data["rows"]), 2)
+		self.assertTrue({standalone.name, orphan.name}.issubset({row["name"] for row in data["rows"]}))
+		self.assertAlmostEqual(self.compare()["baseline"]["rate"], 100 / 12)
 
 	def test_partial_billing_and_weighted_invoice_cost(self):
 		receipt = self.purchase(qty=100)
