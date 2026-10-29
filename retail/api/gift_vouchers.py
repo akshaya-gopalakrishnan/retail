@@ -6,6 +6,7 @@ import frappe
 from frappe.utils import flt, getdate, get_time, get_system_timezone, now_datetime, nowdate
 
 from retail import pos_operations
+from retail.pos_item_identity import with_item_identity
 from retail.promotions.api_payload import promotion_payload
 
 
@@ -62,7 +63,10 @@ def invalid_reason(voucher):
 
 def voucher_result(voucher):
 	reason = invalid_reason(voucher)
-	result = {"voucher_code": voucher.name, "voucher_amount": flt(voucher.voucher_amount),
+	result = {"voucher_code": voucher.name,
+		"barcode": voucher.get("voucher_code") or voucher.name,
+		"serial_no": voucher.get("card_number") or None,
+		"voucher_amount": flt(voucher.voucher_amount),
 		"balance_amount": flt(voucher.balance_amount), "status": voucher.status,
 		"expiry_date": str(voucher.expiry_date) if voucher.expiry_date else None,
 		"company": voucher.company, "currency": voucher.get("currency") or
@@ -242,5 +246,5 @@ def get_gift_voucher_promotions(data=None, **kwargs):
 		if doc.warehouse and doc.warehouse != counter.warehouse:
 			continue
 		rows.append(promotion_payload(doc))
-	return {"promotions": rows, "server_date": nowdate(),
-		"server_time": now_datetime(), "server_timezone": get_system_timezone()}
+	return with_item_identity({"promotions": rows, "server_date": nowdate(),
+		"server_time": now_datetime(), "server_timezone": get_system_timezone()}, counter.warehouse)

@@ -68,7 +68,8 @@ Response example:
       "name": "Karama-C001",
       "counter_code": "C001",
       "terminal_id": "T001",
-      "printer_name": "Receipt Printer 1"
+      "printer_name": "Receipt Printer 1",
+      "warehouse": "Stores - N"
     },
     "tax_config": {
       "tax_template": "<tax template>",
@@ -90,7 +91,29 @@ Response example:
       "f4": "",
       "f5": ""
     },
-    "items": [],
+    "items": [
+      {
+        "name": "I-1",
+        "item_code": "I-1",
+        "item_name": "Example tracked item",
+        "stock_uom": "Nos",
+        "is_stock_item": 1,
+        "has_serial_no": 1,
+        "serial_numbers": ["SERIAL-001", "SERIAL-002"],
+        "has_batch_no": 1,
+        "batches": [
+          {
+            "batch_no": "BATCH-001",
+            "available_qty": 2,
+            "expiry_date": "2027-01-31",
+            "warehouse": "Stores - N"
+          }
+        ],
+        "current_stock": 2,
+        "disabled": 0,
+        "packings": []
+      }
+    ],
     "item_barcodes": [],
     "packing_details": [],
     "item_prices": [],
@@ -696,8 +719,8 @@ Example item/payment fields, alongside the usual branch, counter, cashier, date 
   "pos_bill_no": "10",
   "original_external_pos_reference": "BRANCH-COUNTER-TERMINAL-SALE-9",
   "items": [
-    {"item_code": "MILK", "uom": "Nos", "conversion_factor": 1, "qty": 2, "rate": 10, "rate_includes_vat": 0, "amount": 20, "net_amount": 20, "vat_rate": 0, "vat_amount": 0},
-    {"item_code": "MILK", "uom": "Nos", "conversion_factor": 1, "qty": -1, "rate": 10, "rate_includes_vat": 0, "amount": -10, "net_amount": -10, "vat_rate": 0, "vat_amount": 0}
+    {"item_code": "MILK", "serial_no": null, "batch_no": null, "uom": "Nos", "conversion_factor": 1, "qty": 2, "rate": 10, "rate_includes_vat": 0, "amount": 20, "net_amount": 20, "vat_rate": 0, "vat_amount": 0},
+    {"item_code": "MILK", "uom": "Nos", "conversion_factor": 1, "qty": -1, "rate": 10, "rate_includes_vat": 0, "amount": -10, "net_amount": -10, "vat_rate": 0, "vat_amount": 0, "serial_no": null, "batch_no": null}
   ],
   "grand_total": 10,
   "vat_amount": 0,
@@ -746,6 +769,8 @@ Request JSON:
   "items": [
     {
       "item_code": "I-1",
+      "serial_no": null,
+      "batch_no": null,
       "qty": 2,
       "rate": 10.5,
       "rate_includes_vat": 1,
@@ -826,6 +851,8 @@ Request JSON:
   "items": [
     {
       "item_code": "I-1",
+      "serial_no": null,
+      "batch_no": null,
       "qty": 2,
       "rate": 100,
       "rate_includes_vat": 1,
@@ -908,6 +935,8 @@ Request JSON:
   "items": [
     {
       "item_code": "I-1",
+      "serial_no": null,
+      "batch_no": null,
       "barcode": "629000000001",
       "uom": "Nos",
       "conversion_factor": 1,
@@ -1015,6 +1044,8 @@ actual customer; zero VAT and money value 1 per loyalty point):
   "items": [
     {
       "item_code": "I-1",
+      "serial_no": null,
+      "batch_no": null,
       "qty": 1,
       "uom": "Nos",
       "conversion_factor": 1,
@@ -1176,6 +1207,8 @@ Request JSON (illustrative IDs; replace with actual downloaded/configured values
   "items": [
     {
       "item_code": "I-1",
+      "serial_no": null,
+      "batch_no": null,
       "qty": 1,
       "uom": "Nos",
       "conversion_factor": 1,
@@ -1453,6 +1486,8 @@ Request JSON:
   "items": [
     {
       "item_code": "I-1",
+      "serial_no": null,
+      "batch_no": null,
       "barcode": "629000000001",
       "uom": "Nos",
       "conversion_factor": 1,
@@ -1531,6 +1566,8 @@ Request JSON:
   "items": [
     {
       "item_code": "I-1",
+      "serial_no": null,
+      "batch_no": null,
       "barcode": "629000000001",
       "uom": "Nos",
       "conversion_factor": 1,
@@ -1585,6 +1622,8 @@ Request JSON:
   "items": [
     {
       "item_code": "I-1",
+      "serial_no": null,
+      "batch_no": null,
       "barcode": "629000000001",
       "uom": "Nos",
       "conversion_factor": 1,
@@ -1656,6 +1695,7 @@ Response example:
 ```json
 {"message": {"status": "Success", "payment_entry": "PE-3", "docstatus": 1}}
 ```
+
 
 ## Customers and stock
 
@@ -1864,6 +1904,28 @@ include changes that disable or expire a rule. Never reprice completed bills.
 
 `GET /api/method/retail.api.pos_sync.get_pos_promo_prices?branch=Karama&counter_code=C001`
 
+Each `promotions[].products[]` row includes `barcode` (the saved promotion/packing
+barcode, falling back to the Item barcode), `has_serial_no` (0 or 1), and
+`serial_numbers` (active serial IDs in the counter's warehouse, or `[]`).
+Category/brand-only rows have no item barcode or serials. These fields are
+snapshots for the returned offers; `modified_after` still filters promotions.
+Use the item master download to refresh serial availability independently of
+promotion changes. Downloaded serials are not reserved.
+
+Existing `gift_voucher_ledger[]` rows also include `barcode` (the scannable
+`voucher_code`, falling back to `name`) and `serial_no` (the saved `card_number`,
+or `null` when unnumbered). Existing voucher fields remain unchanged; the serial
+number is a sequence within its voucher card batch.
+
+Product rows in POS master data, combined/standalone promotion downloads and
+warehouse stock snapshots include `barcode`, `has_serial_no`, `serial_no` and
+`serial_numbers`, including nested packing, price, rule and eligibility rows.
+Saved row barcodes and selected `serial_no` values are preserved. Otherwise
+`barcode` falls back to the Item barcode and `serial_no` is an empty string.
+`serial_numbers` contains active serial IDs in the counter warehouse (`[]` for
+unserialized, disabled or unavailable items). `item_name` is added when absent.
+These are additions to existing rows, not separate payloads or reservations.
+
 Optional `modified_after`. Keep a separate saved time for each API. Apply the returned dates, scope and disabled flags; do not recalculate saved bills. The full download includes disabled, expired, future and undated promotions. Incremental downloads include modified records, so the POS can replace or disable its cached rules.
 
 Request body: none; use the URL values above.
@@ -2063,6 +2125,11 @@ Response example (existing fields retained; new fields are additive):
           {
             "add_to": "Buy Item",
             "item": "I-27",
+            "item_name": "Tea",
+            "barcode": "BC696861983",
+            "has_serial_no": 0,
+            "serial_no": "",
+            "serial_numbers": [],
             "item_group": "",
             "brand": null,
             "matching_item_groups": [],
@@ -2071,6 +2138,11 @@ Response example (existing fields retained; new fields are additive):
           {
             "add_to": "Free Item",
             "item": "I-23",
+            "item_name": "Chocolate Muffin",
+            "barcode": "muf123",
+            "has_serial_no": 0,
+            "serial_no": "",
+            "serial_numbers": [],
             "item_group": "",
             "brand": null,
             "matching_item_groups": [],
@@ -2299,6 +2371,11 @@ Response example (existing fields retained; new fields are additive):
           {
             "idx": 1,
             "item_code": "I-14",
+            "item_name": "1foc",
+            "barcode": "BC137045713",
+            "has_serial_no": 0,
+            "serial_no": "",
+            "serial_numbers": [],
             "brand": "",
             "item_group": "",
             "matching_item_groups": []
@@ -2306,6 +2383,11 @@ Response example (existing fields retained; new fields are additive):
           {
             "idx": 2,
             "item_code": "I-20",
+            "item_name": "Book",
+            "barcode": "book1",
+            "has_serial_no": 0,
+            "serial_no": "",
+            "serial_numbers": [],
             "brand": null,
             "item_group": null,
             "matching_item_groups": []
@@ -2313,6 +2395,11 @@ Response example (existing fields retained; new fields are additive):
           {
             "idx": 3,
             "item_code": null,
+            "item_name": "",
+            "barcode": "",
+            "has_serial_no": 0,
+            "serial_no": "",
+            "serial_numbers": [],
             "brand": "Celesta Demo",
             "item_group": null,
             "matching_item_groups": []
@@ -2320,6 +2407,11 @@ Response example (existing fields retained; new fields are additive):
           {
             "idx": 4,
             "item_code": "",
+            "item_name": "",
+            "barcode": "",
+            "has_serial_no": 0,
+            "serial_no": "",
+            "serial_numbers": [],
             "brand": null,
             "item_group": "paper",
             "matching_item_groups": [
@@ -2341,6 +2433,7 @@ Response example (existing fields retained; new fields are additive):
         "docstatus": 0,
         "idx": 0,
         "voucher_code": "7WWJY",
+        "barcode": "7WWJY",
         "status": "Unused",
         "voucher_amount": 100.0,
         "balance_amount": 100.0,
@@ -2369,6 +2462,7 @@ Response example (existing fields retained; new fields are additive):
         "pos_promotion_reference": null,
         "voucher_card_batch": "VCB-00008",
         "card_number": 2,
+        "serial_no": 2,
         "valid_from": "2026-10-22",
         "card_archived": 0,
         "card_blocked": 0,
@@ -2386,6 +2480,11 @@ Response example (existing fields retained; new fields are additive):
           {
             "idx": 1,
             "item_code": "I-14",
+            "item_name": "1foc",
+            "barcode": "BC137045713",
+            "has_serial_no": 0,
+            "serial_no": "",
+            "serial_numbers": [],
             "brand": "",
             "item_group": "",
             "matching_item_groups": []
@@ -2393,6 +2492,11 @@ Response example (existing fields retained; new fields are additive):
           {
             "idx": 2,
             "item_code": "I-20",
+            "item_name": "Book",
+            "barcode": "book1",
+            "has_serial_no": 0,
+            "serial_no": "",
+            "serial_numbers": [],
             "brand": null,
             "item_group": null,
             "matching_item_groups": []
@@ -2400,6 +2504,11 @@ Response example (existing fields retained; new fields are additive):
           {
             "idx": 3,
             "item_code": null,
+            "item_name": "",
+            "barcode": "",
+            "has_serial_no": 0,
+            "serial_no": "",
+            "serial_numbers": [],
             "brand": "Celesta Demo",
             "item_group": null,
             "matching_item_groups": []
@@ -2407,6 +2516,11 @@ Response example (existing fields retained; new fields are additive):
           {
             "idx": 4,
             "item_code": "",
+            "item_name": "",
+            "barcode": "",
+            "has_serial_no": 0,
+            "serial_no": "",
+            "serial_numbers": [],
             "brand": null,
             "item_group": "paper",
             "matching_item_groups": [
@@ -2424,6 +2538,7 @@ Response example (existing fields retained; new fields are additive):
         "docstatus": 0,
         "idx": 0,
         "voucher_code": "BUKJ5",
+        "barcode": "BUKJ5",
         "status": "Unused",
         "voucher_amount": 100.0,
         "balance_amount": 100.0,
@@ -2452,6 +2567,7 @@ Response example (existing fields retained; new fields are additive):
         "pos_promotion_reference": null,
         "voucher_card_batch": "VCB-00008",
         "card_number": 6,
+        "serial_no": 6,
         "valid_from": "2026-10-22",
         "card_archived": 0,
         "card_blocked": 0,
@@ -2469,6 +2585,11 @@ Response example (existing fields retained; new fields are additive):
           {
             "idx": 1,
             "item_code": "I-14",
+            "item_name": "1foc",
+            "barcode": "BC137045713",
+            "has_serial_no": 0,
+            "serial_no": "",
+            "serial_numbers": [],
             "brand": "",
             "item_group": "",
             "matching_item_groups": []
@@ -2476,6 +2597,11 @@ Response example (existing fields retained; new fields are additive):
           {
             "idx": 2,
             "item_code": "I-20",
+            "item_name": "Book",
+            "barcode": "book1",
+            "has_serial_no": 0,
+            "serial_no": "",
+            "serial_numbers": [],
             "brand": null,
             "item_group": null,
             "matching_item_groups": []
@@ -2483,6 +2609,11 @@ Response example (existing fields retained; new fields are additive):
           {
             "idx": 3,
             "item_code": null,
+            "item_name": "",
+            "barcode": "",
+            "has_serial_no": 0,
+            "serial_no": "",
+            "serial_numbers": [],
             "brand": "Celesta Demo",
             "item_group": null,
             "matching_item_groups": []
@@ -2490,6 +2621,11 @@ Response example (existing fields retained; new fields are additive):
           {
             "idx": 4,
             "item_code": "",
+            "item_name": "",
+            "barcode": "",
+            "has_serial_no": 0,
+            "serial_no": "",
+            "serial_numbers": [],
             "brand": null,
             "item_group": "paper",
             "matching_item_groups": [
@@ -2507,6 +2643,7 @@ Response example (existing fields retained; new fields are additive):
         "docstatus": 0,
         "idx": 0,
         "voucher_code": "FFK5V",
+        "barcode": "FFK5V",
         "status": "Unused",
         "voucher_amount": 100.0,
         "balance_amount": 100.0,
@@ -2535,6 +2672,7 @@ Response example (existing fields retained; new fields are additive):
         "pos_promotion_reference": null,
         "voucher_card_batch": "VCB-00008",
         "card_number": 7,
+        "serial_no": 7,
         "valid_from": "2026-10-22",
         "card_archived": 0,
         "card_blocked": 0,
@@ -2552,6 +2690,11 @@ Response example (existing fields retained; new fields are additive):
           {
             "idx": 1,
             "item_code": "I-14",
+            "item_name": "1foc",
+            "barcode": "BC137045713",
+            "has_serial_no": 0,
+            "serial_no": "",
+            "serial_numbers": [],
             "brand": "",
             "item_group": "",
             "matching_item_groups": []
@@ -2559,6 +2702,11 @@ Response example (existing fields retained; new fields are additive):
           {
             "idx": 2,
             "item_code": "I-20",
+            "item_name": "Book",
+            "barcode": "book1",
+            "has_serial_no": 0,
+            "serial_no": "",
+            "serial_numbers": [],
             "brand": null,
             "item_group": null,
             "matching_item_groups": []
@@ -2566,6 +2714,11 @@ Response example (existing fields retained; new fields are additive):
           {
             "idx": 3,
             "item_code": null,
+            "item_name": "",
+            "barcode": "",
+            "has_serial_no": 0,
+            "serial_no": "",
+            "serial_numbers": [],
             "brand": "Celesta Demo",
             "item_group": null,
             "matching_item_groups": []
@@ -2573,6 +2726,11 @@ Response example (existing fields retained; new fields are additive):
           {
             "idx": 4,
             "item_code": "",
+            "item_name": "",
+            "barcode": "",
+            "has_serial_no": 0,
+            "serial_no": "",
+            "serial_numbers": [],
             "brand": null,
             "item_group": "paper",
             "matching_item_groups": [
@@ -2590,6 +2748,7 @@ Response example (existing fields retained; new fields are additive):
         "docstatus": 0,
         "idx": 0,
         "voucher_code": "GV-63A410BD",
+        "barcode": "GV-63A410BD",
         "status": "Unused",
         "voucher_amount": 50.0,
         "balance_amount": 50.0,
@@ -2618,6 +2777,7 @@ Response example (existing fields retained; new fields are additive):
         "pos_promotion_reference": null,
         "voucher_card_batch": null,
         "card_number": 0,
+        "serial_no": null,
         "valid_from": null,
         "card_archived": 0,
         "card_blocked": 0,
@@ -2640,6 +2800,7 @@ Response example (existing fields retained; new fields are additive):
         "docstatus": 0,
         "idx": 0,
         "voucher_code": "GV-DC3F2413",
+        "barcode": "GV-DC3F2413",
         "status": "Redeemed",
         "voucher_amount": 50.0,
         "balance_amount": 0.0,
@@ -2668,6 +2829,7 @@ Response example (existing fields retained; new fields are additive):
         "pos_promotion_reference": null,
         "voucher_card_batch": null,
         "card_number": 0,
+        "serial_no": null,
         "valid_from": null,
         "card_archived": 0,
         "card_blocked": 0,
@@ -2690,6 +2852,7 @@ Response example (existing fields retained; new fields are additive):
         "docstatus": 0,
         "idx": 0,
         "voucher_code": "J35XM",
+        "barcode": "J35XM",
         "status": "Unused",
         "voucher_amount": 100.0,
         "balance_amount": 100.0,
@@ -2718,6 +2881,7 @@ Response example (existing fields retained; new fields are additive):
         "pos_promotion_reference": null,
         "voucher_card_batch": "VCB-00008",
         "card_number": 5,
+        "serial_no": 5,
         "valid_from": "2026-10-22",
         "card_archived": 0,
         "card_blocked": 0,
@@ -2735,6 +2899,11 @@ Response example (existing fields retained; new fields are additive):
           {
             "idx": 1,
             "item_code": "I-14",
+            "item_name": "1foc",
+            "barcode": "BC137045713",
+            "has_serial_no": 0,
+            "serial_no": "",
+            "serial_numbers": [],
             "brand": "",
             "item_group": "",
             "matching_item_groups": []
@@ -2742,6 +2911,11 @@ Response example (existing fields retained; new fields are additive):
           {
             "idx": 2,
             "item_code": "I-20",
+            "item_name": "Book",
+            "barcode": "book1",
+            "has_serial_no": 0,
+            "serial_no": "",
+            "serial_numbers": [],
             "brand": null,
             "item_group": null,
             "matching_item_groups": []
@@ -2749,6 +2923,11 @@ Response example (existing fields retained; new fields are additive):
           {
             "idx": 3,
             "item_code": null,
+            "item_name": "",
+            "barcode": "",
+            "has_serial_no": 0,
+            "serial_no": "",
+            "serial_numbers": [],
             "brand": "Celesta Demo",
             "item_group": null,
             "matching_item_groups": []
@@ -2756,6 +2935,11 @@ Response example (existing fields retained; new fields are additive):
           {
             "idx": 4,
             "item_code": "",
+            "item_name": "",
+            "barcode": "",
+            "has_serial_no": 0,
+            "serial_no": "",
+            "serial_numbers": [],
             "brand": null,
             "item_group": "paper",
             "matching_item_groups": [
@@ -2773,6 +2957,7 @@ Response example (existing fields retained; new fields are additive):
         "docstatus": 0,
         "idx": 0,
         "voucher_code": "JVB3H",
+        "barcode": "JVB3H",
         "status": "Unused",
         "voucher_amount": 100.0,
         "balance_amount": 100.0,
@@ -2801,6 +2986,7 @@ Response example (existing fields retained; new fields are additive):
         "pos_promotion_reference": null,
         "voucher_card_batch": "VCB-00008",
         "card_number": 4,
+        "serial_no": 4,
         "valid_from": "2026-10-22",
         "card_archived": 0,
         "card_blocked": 0,
@@ -2818,6 +3004,11 @@ Response example (existing fields retained; new fields are additive):
           {
             "idx": 1,
             "item_code": "I-14",
+            "item_name": "1foc",
+            "barcode": "BC137045713",
+            "has_serial_no": 0,
+            "serial_no": "",
+            "serial_numbers": [],
             "brand": "",
             "item_group": "",
             "matching_item_groups": []
@@ -2825,6 +3016,11 @@ Response example (existing fields retained; new fields are additive):
           {
             "idx": 2,
             "item_code": "I-20",
+            "item_name": "Book",
+            "barcode": "book1",
+            "has_serial_no": 0,
+            "serial_no": "",
+            "serial_numbers": [],
             "brand": null,
             "item_group": null,
             "matching_item_groups": []
@@ -2832,6 +3028,11 @@ Response example (existing fields retained; new fields are additive):
           {
             "idx": 3,
             "item_code": null,
+            "item_name": "",
+            "barcode": "",
+            "has_serial_no": 0,
+            "serial_no": "",
+            "serial_numbers": [],
             "brand": "Celesta Demo",
             "item_group": null,
             "matching_item_groups": []
@@ -2839,6 +3040,11 @@ Response example (existing fields retained; new fields are additive):
           {
             "idx": 4,
             "item_code": "",
+            "item_name": "",
+            "barcode": "",
+            "has_serial_no": 0,
+            "serial_no": "",
+            "serial_numbers": [],
             "brand": null,
             "item_group": "paper",
             "matching_item_groups": [
@@ -2856,6 +3062,7 @@ Response example (existing fields retained; new fields are additive):
         "docstatus": 0,
         "idx": 0,
         "voucher_code": "QFCRL",
+        "barcode": "QFCRL",
         "status": "Unused",
         "voucher_amount": 100.0,
         "balance_amount": 100.0,
@@ -2884,6 +3091,7 @@ Response example (existing fields retained; new fields are additive):
         "pos_promotion_reference": null,
         "voucher_card_batch": "VCB-00008",
         "card_number": 1,
+        "serial_no": 1,
         "valid_from": "2026-10-22",
         "card_archived": 0,
         "card_blocked": 0,
@@ -2901,6 +3109,11 @@ Response example (existing fields retained; new fields are additive):
           {
             "idx": 1,
             "item_code": "I-14",
+            "item_name": "1foc",
+            "barcode": "BC137045713",
+            "has_serial_no": 0,
+            "serial_no": "",
+            "serial_numbers": [],
             "brand": "",
             "item_group": "",
             "matching_item_groups": []
@@ -2908,6 +3121,11 @@ Response example (existing fields retained; new fields are additive):
           {
             "idx": 2,
             "item_code": "I-20",
+            "item_name": "Book",
+            "barcode": "book1",
+            "has_serial_no": 0,
+            "serial_no": "",
+            "serial_numbers": [],
             "brand": null,
             "item_group": null,
             "matching_item_groups": []
@@ -2915,6 +3133,11 @@ Response example (existing fields retained; new fields are additive):
           {
             "idx": 3,
             "item_code": null,
+            "item_name": "",
+            "barcode": "",
+            "has_serial_no": 0,
+            "serial_no": "",
+            "serial_numbers": [],
             "brand": "Celesta Demo",
             "item_group": null,
             "matching_item_groups": []
@@ -2922,6 +3145,11 @@ Response example (existing fields retained; new fields are additive):
           {
             "idx": 4,
             "item_code": "",
+            "item_name": "",
+            "barcode": "",
+            "has_serial_no": 0,
+            "serial_no": "",
+            "serial_numbers": [],
             "brand": null,
             "item_group": "paper",
             "matching_item_groups": [
@@ -2939,6 +3167,7 @@ Response example (existing fields retained; new fields are additive):
         "docstatus": 0,
         "idx": 0,
         "voucher_code": "RUBXB",
+        "barcode": "RUBXB",
         "status": "Unused",
         "voucher_amount": 100.0,
         "balance_amount": 100.0,
@@ -2967,6 +3196,7 @@ Response example (existing fields retained; new fields are additive):
         "pos_promotion_reference": null,
         "voucher_card_batch": "VCB-00008",
         "card_number": 3,
+        "serial_no": 3,
         "valid_from": "2026-10-22",
         "card_archived": 0,
         "card_blocked": 0,
@@ -2984,6 +3214,11 @@ Response example (existing fields retained; new fields are additive):
           {
             "idx": 1,
             "item_code": "I-14",
+            "item_name": "1foc",
+            "barcode": "BC137045713",
+            "has_serial_no": 0,
+            "serial_no": "",
+            "serial_numbers": [],
             "brand": "",
             "item_group": "",
             "matching_item_groups": []
@@ -2991,6 +3226,11 @@ Response example (existing fields retained; new fields are additive):
           {
             "idx": 2,
             "item_code": "I-20",
+            "item_name": "Book",
+            "barcode": "book1",
+            "has_serial_no": 0,
+            "serial_no": "",
+            "serial_numbers": [],
             "brand": null,
             "item_group": null,
             "matching_item_groups": []
@@ -2998,6 +3238,11 @@ Response example (existing fields retained; new fields are additive):
           {
             "idx": 3,
             "item_code": null,
+            "item_name": "",
+            "barcode": "",
+            "has_serial_no": 0,
+            "serial_no": "",
+            "serial_numbers": [],
             "brand": "Celesta Demo",
             "item_group": null,
             "matching_item_groups": []
@@ -3005,6 +3250,11 @@ Response example (existing fields retained; new fields are additive):
           {
             "idx": 4,
             "item_code": "",
+            "item_name": "",
+            "barcode": "",
+            "has_serial_no": 0,
+            "serial_no": "",
+            "serial_numbers": [],
             "brand": null,
             "item_group": "paper",
             "matching_item_groups": [
@@ -3022,6 +3272,7 @@ Response example (existing fields retained; new fields are additive):
         "docstatus": 0,
         "idx": 0,
         "voucher_code": "S5FWT",
+        "barcode": "S5FWT",
         "status": "Unused",
         "voucher_amount": 100.0,
         "balance_amount": 100.0,
@@ -3050,6 +3301,7 @@ Response example (existing fields retained; new fields are additive):
         "pos_promotion_reference": null,
         "voucher_card_batch": "VCB-00008",
         "card_number": 8,
+        "serial_no": 8,
         "valid_from": "2026-10-22",
         "card_archived": 0,
         "card_blocked": 0,
@@ -3067,6 +3319,11 @@ Response example (existing fields retained; new fields are additive):
           {
             "idx": 1,
             "item_code": "I-14",
+            "item_name": "1foc",
+            "barcode": "BC137045713",
+            "has_serial_no": 0,
+            "serial_no": "",
+            "serial_numbers": [],
             "brand": "",
             "item_group": "",
             "matching_item_groups": []
@@ -3074,6 +3331,11 @@ Response example (existing fields retained; new fields are additive):
           {
             "idx": 2,
             "item_code": "I-20",
+            "item_name": "Book",
+            "barcode": "book1",
+            "has_serial_no": 0,
+            "serial_no": "",
+            "serial_numbers": [],
             "brand": null,
             "item_group": null,
             "matching_item_groups": []
@@ -3081,6 +3343,11 @@ Response example (existing fields retained; new fields are additive):
           {
             "idx": 3,
             "item_code": null,
+            "item_name": "",
+            "barcode": "",
+            "has_serial_no": 0,
+            "serial_no": "",
+            "serial_numbers": [],
             "brand": "Celesta Demo",
             "item_group": null,
             "matching_item_groups": []
@@ -3088,6 +3355,11 @@ Response example (existing fields retained; new fields are additive):
           {
             "idx": 4,
             "item_code": "",
+            "item_name": "",
+            "barcode": "",
+            "has_serial_no": 0,
+            "serial_no": "",
+            "serial_numbers": [],
             "brand": null,
             "item_group": "paper",
             "matching_item_groups": [
@@ -3105,6 +3377,7 @@ Response example (existing fields retained; new fields are additive):
         "docstatus": 0,
         "idx": 0,
         "voucher_code": "SVBG2",
+        "barcode": "SVBG2",
         "status": "Unused",
         "voucher_amount": 100.0,
         "balance_amount": 100.0,
@@ -3133,6 +3406,7 @@ Response example (existing fields retained; new fields are additive):
         "pos_promotion_reference": null,
         "voucher_card_batch": "VCB-00008",
         "card_number": 9,
+        "serial_no": 9,
         "valid_from": "2026-10-22",
         "card_archived": 0,
         "card_blocked": 0,
@@ -3150,6 +3424,11 @@ Response example (existing fields retained; new fields are additive):
           {
             "idx": 1,
             "item_code": "I-14",
+            "item_name": "1foc",
+            "barcode": "BC137045713",
+            "has_serial_no": 0,
+            "serial_no": "",
+            "serial_numbers": [],
             "brand": "",
             "item_group": "",
             "matching_item_groups": []
@@ -3157,6 +3436,11 @@ Response example (existing fields retained; new fields are additive):
           {
             "idx": 2,
             "item_code": "I-20",
+            "item_name": "Book",
+            "barcode": "book1",
+            "has_serial_no": 0,
+            "serial_no": "",
+            "serial_numbers": [],
             "brand": null,
             "item_group": null,
             "matching_item_groups": []
@@ -3164,6 +3448,11 @@ Response example (existing fields retained; new fields are additive):
           {
             "idx": 3,
             "item_code": null,
+            "item_name": "",
+            "barcode": "",
+            "has_serial_no": 0,
+            "serial_no": "",
+            "serial_numbers": [],
             "brand": "Celesta Demo",
             "item_group": null,
             "matching_item_groups": []
@@ -3171,6 +3460,11 @@ Response example (existing fields retained; new fields are additive):
           {
             "idx": 4,
             "item_code": "",
+            "item_name": "",
+            "barcode": "",
+            "has_serial_no": 0,
+            "serial_no": "",
+            "serial_numbers": [],
             "brand": null,
             "item_group": "paper",
             "matching_item_groups": [
@@ -3188,6 +3482,7 @@ Response example (existing fields retained; new fields are additive):
         "docstatus": 0,
         "idx": 0,
         "voucher_code": "VH9AV",
+        "barcode": "VH9AV",
         "status": "Unused",
         "voucher_amount": 100.0,
         "balance_amount": 100.0,
@@ -3216,6 +3511,7 @@ Response example (existing fields retained; new fields are additive):
         "pos_promotion_reference": null,
         "voucher_card_batch": "VCB-00008",
         "card_number": 10,
+        "serial_no": 10,
         "valid_from": "2026-10-22",
         "card_archived": 0,
         "card_blocked": 0,
@@ -3233,6 +3529,11 @@ Response example (existing fields retained; new fields are additive):
           {
             "idx": 1,
             "item_code": "I-14",
+            "item_name": "1foc",
+            "barcode": "BC137045713",
+            "has_serial_no": 0,
+            "serial_no": "",
+            "serial_numbers": [],
             "brand": "",
             "item_group": "",
             "matching_item_groups": []
@@ -3240,6 +3541,11 @@ Response example (existing fields retained; new fields are additive):
           {
             "idx": 2,
             "item_code": "I-20",
+            "item_name": "Book",
+            "barcode": "book1",
+            "has_serial_no": 0,
+            "serial_no": "",
+            "serial_numbers": [],
             "brand": null,
             "item_group": null,
             "matching_item_groups": []
@@ -3247,6 +3553,11 @@ Response example (existing fields retained; new fields are additive):
           {
             "idx": 3,
             "item_code": null,
+            "item_name": "",
+            "barcode": "",
+            "has_serial_no": 0,
+            "serial_no": "",
+            "serial_numbers": [],
             "brand": "Celesta Demo",
             "item_group": null,
             "matching_item_groups": []
@@ -3254,6 +3565,11 @@ Response example (existing fields retained; new fields are additive):
           {
             "idx": 4,
             "item_code": "",
+            "item_name": "",
+            "barcode": "",
+            "has_serial_no": 0,
+            "serial_no": "",
+            "serial_numbers": [],
             "brand": null,
             "item_group": "paper",
             "matching_item_groups": [
@@ -3344,6 +3660,11 @@ Response example:
             "idx": 1,
             "add_to": "Buy Item",
             "item": "ITEM-001",
+            "item_name": "Example Item",
+            "barcode": "ITEM-001-BARCODE",
+            "has_serial_no": 0,
+            "serial_no": "",
+            "serial_numbers": [],
             "item_group": "",
             "brand": "",
             "matching_item_groups": [],
@@ -3388,8 +3709,8 @@ Their additional date/version/branch fields follow the real response above.
     "free_qty": 1,
     "same_product_only": 0,
     "products": [
-      {"add_to": "Buy Item", "item": "I-27", "item_group": "", "brand": "", "matching_item_groups": [], "uom": "Nos"},
-      {"add_to": "Free Item", "item": "I-23", "item_group": "", "brand": "", "matching_item_groups": [], "uom": "Nos"}
+      {"add_to": "Buy Item", "item": "I-27", "item_name": "Tea", "barcode": "BC696861983", "has_serial_no": 0, "serial_no": "", "serial_numbers": [], "item_group": "", "brand": "", "matching_item_groups": [], "uom": "Nos"},
+      {"add_to": "Free Item", "item": "I-23", "item_name": "Chocolate Muffin", "barcode": "muf123", "has_serial_no": 0, "serial_no": "", "serial_numbers": [], "item_group": "", "brand": "", "matching_item_groups": [], "uom": "Nos"}
     ]
   },
   {
@@ -3399,8 +3720,8 @@ Their additional date/version/branch fields follow the real response above.
     "free_qty": 1,
     "same_product_only": 0,
     "products": [
-      {"add_to": "Buy Item", "item": "", "item_group": "Books", "brand": "", "matching_item_groups": ["Books"], "uom": "Nos"},
-      {"add_to": "Free Item", "item": "I-23", "item_group": "", "brand": "", "matching_item_groups": [], "uom": "Nos"}
+      {"add_to": "Buy Item", "item": "", "item_name": "", "barcode": "", "has_serial_no": 0, "serial_no": "", "serial_numbers": [], "item_group": "Books", "brand": "", "matching_item_groups": ["Books"], "uom": "Nos"},
+      {"add_to": "Free Item", "item": "I-23", "item_name": "Chocolate Muffin", "barcode": "muf123", "has_serial_no": 0, "serial_no": "", "serial_numbers": [], "item_group": "", "brand": "", "matching_item_groups": [], "uom": "Nos"}
     ]
   },
   {
@@ -3410,8 +3731,8 @@ Their additional date/version/branch fields follow the real response above.
     "free_qty": 1,
     "same_product_only": 0,
     "products": [
-      {"add_to": "Buy Item", "item": "", "item_group": "", "brand": "Emirates", "matching_item_groups": [], "uom": "Nos"},
-      {"add_to": "Free Item", "item": "I-27", "item_group": "", "brand": "", "matching_item_groups": [], "uom": "Nos"}
+      {"add_to": "Buy Item", "item": "", "item_name": "", "barcode": "", "has_serial_no": 0, "serial_no": "", "serial_numbers": [], "item_group": "", "brand": "Emirates", "matching_item_groups": [], "uom": "Nos"},
+      {"add_to": "Free Item", "item": "I-27", "item_name": "Tea", "barcode": "BC696861983", "has_serial_no": 0, "serial_no": "", "serial_numbers": [], "item_group": "", "brand": "", "matching_item_groups": [], "uom": "Nos"}
     ]
   }
 ]
@@ -5061,15 +5382,15 @@ Dynamic decoding requires a checked Scale Item, an enabled sales Item, and a
 type. No new POS sale-sync endpoint or completed-sale recalculation is introduced.
 
 Weight/Quantity labels contain master 7 + value 5 + trailing digit 1 (13 total).
-Price contains master 7 + price 6 + trailing digit 1 (14 total). Weight+UPrice
-and Weight+TotPrice contain master 7 + weight 5 + price 6 + trailing digit 1
-(19 total). Price has two implied decimal places, so `305000` is 3,050.00.
+Price contains master 7 + price 5 + trailing digit 1 (13 total). Weight+UPrice
+and Weight+TotPrice contain master 7 + weight 5 + price 5 + trailing digit 1
+(18 total). Price has two implied decimal places, so `03050` is 30.50.
 Weight has three decimals for Kg. The final digit is excluded without checksum
 validation. The Item master's selected type determines interpretation.
 
 The existing `scale_barcode_formats` collection describes legacy configured
 formats; it is not a replacement for this Item-master layout. External .NET
-clients must explicitly adopt the six-digit price layout in their scanner and
+clients must explicitly adopt the five-digit price layout in their scanner and
 configure the scale identically. This Retail implementation does not modify the
 .NET executable or reinterpret already completed POS payloads.
 
@@ -5126,3 +5447,282 @@ Voucher snapshots are company-scoped; ledger warehouse must match the counter or
 be blank. Replace both arrays on every response, including `modified_after` requests.
 An empty array clears its cache. No extra transaction-history rows are created by
 this download.
+
+## Sales Order app — any client language
+
+These additions use the same ERP and API file. Existing POS requests stay the same.
+There are **two new APIs** and an optional new mode on **upsert_customer**.
+No cashier, PIN, shift, counter, or POS Integration User role is required for this mode.
+Use the logged-in ERP user's existing document permissions. Save requires Create/Write;
+submit also requires Submit. ERP's normal validations and configured workflows still apply.
+Users are created in ERP; the app does not register users.
+
+### Login and logout (existing ERP APIs)
+
+`POST /api/method/login`
+
+```json
+{"usr":"salesperson@example.com","pwd":"<ERP password>"}
+```
+
+Successful response example:
+
+```json
+{"message":"Logged In","home_page":"/app","full_name":"Sales Person"}
+```
+
+Keep the returned `sid` cookie and send it on every following request. ERP authentication
+settings, including two-factor authentication where enabled, still apply. Session-authenticated
+POST requests must follow the ERP's CSRF requirements. Immediately after login, call
+`GET /api/method/retail.api.pos_sync.get_sales_order_data` and read `message.csrf_token`.
+Send that value in `X-Frappe-CSRF-Token` on subsequent session-authenticated POST requests. An existing per-user API token is also supported
+using the Authorization header documented above. Do not use shared POS credentials for
+individual salesperson orders.
+
+`POST /api/method/logout` ends the session. It normally returns an empty JSON object.
+
+All following examples use `Content-Type: application/json`. Replies are inside `message`.
+Sample IDs below must be replaced with IDs downloaded from your ERP.
+
+### 1. Download masters, list orders, or read one record
+
+`POST /api/method/retail.api.pos_sync.get_sales_order_data`
+
+Combine as many needed master queries as practical in one call. Default page size is 1,000;
+maximum is 5,000 per query. When `has_more` is true, send `next_start` as `start` for that
+query. Lists are ordered by modified time and name. For an incremental refresh, use a
+modified-time filter with a small overlap and merge records by name. Refresh periodically
+for deleted records; this API does not return deletion markers.
+
+```json
+{
+  "queries": [
+    {"doctype":"Company","fields":["name","default_currency"]},
+    {"doctype":"Customer","include_details":true,"page_length":1000},
+    {"doctype":"Address","include_details":true,"page_length":1000},
+    {"doctype":"Contact","include_details":true,"page_length":1000},
+    {"doctype":"Item","filters":{"is_sales_item":1,"disabled":0},"include_details":true,"page_length":1000},
+    {"doctype":"Item Price","include_details":true,"page_length":5000},
+    {"doctype":"Warehouse","fields":["name","company","is_group","disabled"]},
+    {"doctype":"Price List","fields":["name","currency","selling","enabled"]},
+    {"doctype":"Customer Group","fields":["name","is_group"]},
+    {"doctype":"Territory","fields":["name","is_group"]},
+    {"doctype":"Country","fields":["name"]},
+    {"doctype":"Payment Terms Template","include_details":true}
+  ]
+}
+```
+
+`include_details: true` returns full permitted documents including child rows. For Items
+this includes configured UOM conversions, barcodes and Retail packing details. For Address
+and Contact it includes their Customer links. It does not add the computed POS stock,
+batch, serial or promotion snapshots: existing POS clients can keep using the existing
+master/stock/promotion APIs unchanged. Sales Order users do not need those snapshots to
+save an order; ordering does not itself issue stock.
+
+Without `include_details`, request just the fields the app needs. If fields are omitted,
+only `name` and `modified` are returned. Only request DocTypes the user can read; a denied
+query fails the request rather than silently returning incomplete masters.
+
+Response example (shortened):
+
+```json
+{
+  "message": {
+    "status":"Success",
+    "server_time":"2026-10-29 12:00:00",
+    "csrf_token":"<session CSRF token>",
+    "user":"salesperson@example.com",
+    "permissions":{"read":true,"create":true,"write":true,"submit":true},
+    "results":[
+      {"doctype":"Company","documents":[{"name":"Example Company","default_currency":"AED"}],"has_more":false,"next_start":1},
+      {"doctype":"Customer","documents":[{"name":"C-100","customer_name":"Sample Customer","customer_type":"Company","customer_group":"Commercial","territory":"Dubai","modified":"2026-10-29 11:00:00"}],"has_more":false,"next_start":1}
+    ]
+  }
+}
+```
+
+Results follow the same order as the queries; the example shows only the first two.
+Other supported masters: Currency, UOM, Terms and Conditions, Sales Taxes and Charges
+Template, Item Tax Template, Cost Center, Project, Sales Person, Sales Partner, Tax Category,
+Shipping Rule, Incoterm, Brand and Item Group.
+
+List orders using this same API:
+
+```json
+{"queries":[{"doctype":"Sales Order","fields":["name","customer","customer_name","transaction_date","delivery_date","grand_total","currency","status","docstatus","modified"],"page_length":1000}]}
+```
+
+Use `filters` for customer, dates, status, owner, etc. No extra own-order restriction is added.
+Read an order or master with its full permitted child rows:
+
+```json
+{"queries":[{"doctype":"Sales Order","name":"RTL-SO-2026-00001"}]}
+```
+
+```json
+{"message":{"status":"Success","server_time":"2026-10-29 12:00:00","user":"salesperson@example.com","permissions":{"read":true,"create":true,"write":true,"submit":true},"results":[{"doctype":"Sales Order","documents":[{"name":"RTL-SO-2026-00001","docstatus":0,"customer":"C-100","items":[{"item_code":"ITEM-001","qty":2,"uom":"Nos","rate":100}],"grand_total":210,"modified":"2026-10-29 12:00:00.123456"}],"has_more":false}]}}
+```
+
+Full documents contain more fields than these shortened examples.
+
+### 2. Create/update customer, addresses and contacts together
+
+Reuse `POST /api/method/retail.api.pos_sync.upsert_customer`.
+
+Only the explicit `context: "sales_order"` selects this new shape. Existing POS customer
+requests without this context keep their original behaviour.
+
+```json
+{
+  "context":"sales_order",
+  "external_customer_id":"APP-CUSTOMER-8f9c2a",
+  "customer":{
+    "customer_name":"Sample Customer",
+    "customer_type":"Company",
+    "customer_group":"Commercial",
+    "territory":"Dubai",
+    "tax_id":"100000000000003",
+    "default_currency":"AED",
+    "default_price_list":"Standard Selling"
+  },
+  "addresses":[
+    {"address_type":"Billing","address_line1":"Shop 10","city":"Dubai","country":"United Arab Emirates","emirate":"Dubai","is_primary_address":1},
+    {"address_type":"Shipping","address_line1":"Warehouse 2","city":"Dubai","country":"United Arab Emirates","is_shipping_address":1}
+  ],
+  "contacts":[
+    {"first_name":"Ahmed","is_primary_contact":1,"phone_nos":[{"phone":"971500000001","is_primary_mobile_no":1}],"email_ids":[{"email_id":"ahmed@example.com","is_primary":1}]}
+  ]
+}
+```
+
+```json
+{"message":{"status":"Success","action":"Created","customer":"C-100","addresses":["Sample Customer-Billing","Sample Customer-Shipping"],"contacts":["Ahmed-C-100"]}}
+```
+
+For updates, send `customer.name`, and the existing `name` inside each Address/Contact row
+being updated. Omitted fields stay unchanged; supplied child arrays replace those arrays.
+New address/contact rows without a name create records. The API links them to the Customer.
+Addresses require type, line 1, city and country. Send phone/email through Contact child rows.
+The whole request succeeds or fails together through ERP's normal request transaction.
+
+```json
+{"context":"sales_order","customer":{"name":"C-100","tax_id":"100000000000003"},"addresses":[{"name":"Sample Customer-Billing","address_line1":"Shop 11"}],"contacts":[{"name":"Ahmed-C-100","phone_nos":[{"phone":"971500000002","is_primary_mobile_no":1}]}]}
+```
+
+```json
+{"message":{"status":"Success","action":"Updated","customer":"C-100","addresses":["Sample Customer-Billing"],"contacts":["Ahmed-C-100"]}}
+```
+
+Keep a stable external_customer_id for new customers. After a timeout, retrieve the customer
+by external_pos_customer_id and read its linked addresses/contacts before resending new nested
+rows; unnamed nested rows are not retry receipts. This avoids duplicate addresses/contacts.
+
+### 3. Calculate, save or submit a Sales Order
+
+`POST /api/method/retail.api.pos_sync.save_sales_order`
+
+The same API handles all three actions:
+
+- `calculate`: validate and calculate; no order is saved.
+- `save`: save a draft.
+- `submit`: save and submit immediately, or submit an existing draft.
+
+New order example — change only `action` to calculate/save/submit:
+
+```json
+{
+  "action":"submit",
+  "client_order_id":"ORDER-550e8400-e29b-41d4-a716-446655440000",
+  "order":{
+    "company":"Example Company",
+    "customer":"C-100",
+    "transaction_date":"2026-10-29",
+    "delivery_date":"2026-10-30",
+    "currency":"AED",
+    "selling_price_list":"Standard Selling",
+    "set_warehouse":"Stores - EC",
+    "customer_address":"Sample Customer-Billing",
+    "shipping_address_name":"Sample Customer-Shipping",
+    "contact_person":"Ahmed-C-100",
+    "po_no":"CUSTOMER-PO-100",
+    "items":[
+      {"item_code":"ITEM-001","qty":2,"uom":"Nos","rate":100,"custom_foc_qty":0}
+    ]
+  }
+}
+```
+
+```json
+{
+  "message":{
+    "status":"Success",
+    "action":"submit",
+    "duplicate":false,
+    "name":"RTL-SO-2026-00001",
+    "docstatus":1,
+    "order":{
+      "name":"RTL-SO-2026-00001",
+      "docstatus":1,
+      "customer":"C-100",
+      "currency":"AED",
+      "items":[{"item_code":"ITEM-001","qty":2,"uom":"Nos","conversion_factor":1,"rate":100,"amount":200,"custom_rate_including_vat":105,"custom_vat_amount":10}],
+      "net_total":200,
+      "total_taxes_and_charges":10,
+      "grand_total":210,
+      "modified":"2026-10-29 12:00:00.123456"
+    }
+  }
+}
+```
+
+Amounts above assume an item with 5% VAT. Actual tax follows ERP configuration. Responses
+return the full permitted order, including calculated child rows and totals.
+`save` returns docstatus 0; `submit` returns docstatus 1. `calculate` returns name null,
+docstatus 0 and a preview document; its temporary document name is not an ERP order ID.
+
+Send a globally unique client_order_id (maximum 140 characters) for every new order.
+On timeout, retry the same action/body/ID. An existing reference returns the existing order
+with duplicate true; changed order data in that retry is ignored. A submit retry can submit
+the previously saved draft. Parallel first sends may return a unique-reference conflict;
+retry the same ID after the first request finishes. Never generate a new ID to retry.
+
+Update an existing draft using its name and exact latest modified value:
+
+```json
+{"action":"save","name":"RTL-SO-2026-00001","modified":"2026-10-29 12:00:00.123456","order":{"po_no":"UPDATED-PO","items":[{"item_code":"ITEM-001","qty":3,"uom":"Nos","rate":100}]}}
+```
+
+Response uses the same shape with action save, docstatus 0 and updated totals/modified.
+When items is supplied it replaces the draft's complete item list. Omit it to keep the items.
+If ERP changed the draft, download it again before updating.
+
+Submit an existing draft without changing its fields:
+
+```json
+{"action":"submit","name":"RTL-SO-2026-00001","modified":"2026-10-29 12:01:00.123456"}
+```
+
+Response uses the same shape with action submit and docstatus 1. Submitted documents cannot
+be edited through this API. Use the existing ERP cancellation/amendment workflow if needed.
+
+Pricing and field rules:
+
+- `rate` excludes VAT. For POS-style inclusive input, send only `custom_rate_including_vat`
+  instead of rate. Do not send conflicting exclusive/inclusive rates. ERP calculates VAT.
+- Use ERP item/UOM/warehouse IDs. ERP fetches item defaults, conversion factors and pricing.
+- `qty` is paid quantity; `custom_foc_qty` is additional free quantity.
+- Optional normal fields include payment_terms_template, tc_name, terms, po_date, cost_center,
+  project, sales_team, per-row warehouse/delivery_date, discount_percentage/discount_amount,
+  additional_discount_percentage, apply_discount_on, and the configured UAE detail fields.
+- ERP chooses the order number and records the actual logged-in creator. System fields,
+  flags and read-only calculated fields from client JSON are ignored. Existing ERP hooks
+  calculate VAT/FOC and perform their normal submit actions.
+- The app does not create invoices, delivery notes or collect payments through this API.
+- Standard ERP errors use a non-success HTTP status and fields such as exc_type and
+  _server_messages. Show the ERP validation message. A permission error means the ERP role
+  needs the relevant permission; no extra app-specific server role is required.
+
+Deployment: run the normal Retail site migration before using these APIs. It adds only the
+unique App Order ID field needed for safe order retries. Development field setup and
+rollback-only integration verification were performed on retail-test.localhost.

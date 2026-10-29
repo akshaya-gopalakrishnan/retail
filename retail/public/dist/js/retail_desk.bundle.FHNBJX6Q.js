@@ -7292,13 +7292,34 @@
           df.precision = 9;
       }
     }
+    async function finishItemLookups() {
+      do {
+        await frappe.after_ajax();
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      } while (frappe.request.ajax_count);
+    }
     retail.scale_sales.apply = async function(frm, row, label) {
       if (frm.doc.docstatus !== 0)
         frappe.throw(__("Scale labels can only be applied to draft sales."));
+      await finishItemLookups();
       preparePrecision(frm);
       let qty = label.scale_qty;
-      let rate = label.scale_rate == null ? flt(row.rate) : label.scale_rate;
-      const amount = label.scale_amount;
+      let vatFactor = 1;
+      if (label.scale_rate != null || label.scale_amount != null) {
+        const { message: vatRate } = await frappe.call({
+          method: "retail.domains.transactions.vat.get_transaction_item_vat_rate",
+          args: {
+            item_code: row.item_code,
+            child_doctype: row.doctype,
+            parent_doctype: frm.doc.doctype,
+            transaction_type: frm.doc.transaction_type,
+            item_tax_template: row.item_tax_template
+          }
+        });
+        vatFactor += flt(vatRate) / 100;
+      }
+      let rate = label.scale_rate == null ? flt(row.rate) : label.scale_rate / vatFactor;
+      const amount = label.scale_amount == null ? null : label.scale_amount / vatFactor;
       if (qty == null) {
         qty = rate ? amount / rate : 1;
         if (!rate)
@@ -7323,15 +7344,18 @@
         });
       }
       await frappe.model.set_value(row.doctype, row.name, "qty", frm.doc.is_return ? -qty : qty);
+      await finishItemLookups();
       await frappe.model.set_value(row.doctype, row.name, {
         price_list_rate: rate,
         discount_percentage: 0,
         discount_amount: 0,
         margin_type: "",
         margin_rate_or_amount: 0,
+        rate_with_margin: 0,
         rate,
-        barcode: label.barcode
+        amount: (frm.doc.is_return ? -qty : qty) * rate
       });
+      row.barcode = label.barcode;
       await frm.cscript.calculate_taxes_and_totals();
       frm.refresh_field("items");
     };
@@ -7383,7 +7407,7 @@
         if (frm.doc.docstatus !== 0)
           return;
         for (const row of frm.doc.items || []) {
-          if (!/^99\d{11}$|^99\d{12}$|^99\d{17}$/.test(row.barcode || ""))
+          if (!/^99\d{11}$|^99\d{16}$/.test(row.barcode || ""))
             continue;
           const { message } = await frappe.call({
             method: "retail.domains.item.packing_scan.scan_barcode",
@@ -7770,7 +7794,8 @@
   (() => {
     const labels = {
       "Accounts Payable": "Total Payable: {0}",
-      "Accounts Receivable": "Total Receivable: {0}"
+      "Accounts Receivable": "Total Receivable: {0}",
+      "POS Invoice Profit": "Total Gross Profit: {0}"
     };
     const selector = ".retail-outstanding-footer";
     const clear = () => $(selector).remove();
@@ -7797,13 +7822,12 @@
         if (((_a = this.raw_data) == null ? void 0 : _a.add_total_row) && rows.length)
           rows = rows.slice(0, -1);
         rows = rows.filter((row) => !row.is_total_row && !(row.bold && !row.voucher_no));
-        const total = rows.reduce(
-          (sum, row) => {
-            var _a2;
-            return sum + flt((_a2 = row.outstanding_amount) != null ? _a2 : row.outstanding);
-          },
-          0
-        );
+        const total = rows.reduce((sum, row) => {
+          var _a2;
+          return sum + flt(
+            report_name === "POS Invoice Profit" ? row.gross_profit : (_a2 = row.outstanding_amount) != null ? _a2 : row.outstanding
+          );
+        }, 0);
         const currency = ((_b = rows.find((row) => row.currency)) == null ? void 0 : _b.currency) || erpnext.get_currency(this.get_filter_value("company"));
         clear();
         $("<div>", { class: "retail-outstanding-footer", "aria-hidden": "true" }).css("height", "68px").appendTo(this.page.main);
@@ -7826,4 +7850,4 @@
     };
   })();
 })();
-//# sourceMappingURL=retail_desk.bundle.L6M6FBSL.js.map
+//# sourceMappingURL=retail_desk.bundle.FHNBJX6Q.js.map

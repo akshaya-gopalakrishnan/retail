@@ -221,7 +221,8 @@ def invoice_rows(doc, *, vat_accounts_by_company=None):
     for item in doc.items:
         row = frappe._dict({k: doc.get(k) for k in
             ("company", "posting_date", "posting_time", "customer", "customer_name", "is_return", "status", "pos_profile")})
-        row.update({k: item.get(k) for k in ("item_code", "item_name", "item_group", "brand", "warehouse", "uom", "stock_uom")})
+        row.update({k: item.get(k) for k in ("item_code", "item_name", "item_group", "brand", "warehouse", "uom", "stock_uom",
+                                             "barcode", "serial_no", "batch_no", "serial_and_batch_bundle")})
         row.update(invoice_no=doc.name, sales_invoice=doc.get("consolidated_invoice") if doc.doctype == "POS Invoice" else doc.name,
             pos_invoice=doc.name if doc.doctype == "POS Invoice" else None,
             invoice_item=item.name, invoice_item_count=len(doc.items), invoice_vat=values.vat,

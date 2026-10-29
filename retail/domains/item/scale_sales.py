@@ -1,7 +1,7 @@
 """Item-master scale labels: 7-digit identity, fixed payload, trailing check digit.
 
 The trailing digit is excluded, not validated: the scale's checksum algorithm
-has not been specified. Monetary payloads always contain six cents digits.
+has not been specified. Monetary payloads always contain five cents digits.
 """
 
 import frappe
@@ -9,8 +9,8 @@ from frappe import _
 from frappe.utils import flt
 
 
-PAYLOAD_LENGTHS = {"WEIGHT": 5, "QUANTITY": 5, "PRICE": 6,
-	"WEIGHT+UPRICE": 11, "WEIGHT+TOTPRICE": 11}
+PAYLOAD_LENGTHS = {"WEIGHT": 5, "QUANTITY": 5, "PRICE": 5,
+	"WEIGHT+UPRICE": 10, "WEIGHT+TOTPRICE": 10}
 
 
 def decode_label(barcode, barcode_type, uom):
@@ -86,7 +86,7 @@ def prepare_precision(doc, method=None):
 	for row in doc.get("items", []):
 		row.flags.pop("retail_scale_price", None)
 		barcode = row.get("barcode") or row.get("custom_barcode_scan") or ""
-		if len(barcode) not in (13, 14, 19) or not barcode.startswith("99"):
+		if len(barcode) not in (13, 18) or not barcode.startswith("99"):
 			continue
 		label = scan_barcode(barcode)
 		if not label.get("scale_barcode_type") or label["item_code"] != row.item_code:

@@ -334,7 +334,49 @@ def pos_cost_joins():
 def pos_item_wise_sales(filters):
     from retail.retail_app.report.profitability import profitability_rows, report_result
     rows = profitability_rows(filters, "POS Invoice")
-    return report_result(rows, item_sales_columns(), ['item_code', 'item_name', 'item_group', 'warehouse'])
+    enrich_pos_item_identity(rows)
+    for field in ("serial_no", "batch_no", "serial_and_batch_bundle"):
+        value = str(filters.get(field) or "").strip().lower()
+        if value:
+            rows[:] = [row for row in rows if value in str(row.get(field) or "").lower()]
+    return report_result(rows, item_sales_columns(), ['item_code', 'item_name', 'item_group', 'warehouse',
+                                                      'barcode', 'serial_no', 'batch_no', 'serial_and_batch_bundle'])
+
+
+def enrich_pos_item_identity(rows):
+	"""Keep POS-recorded identity and fill missing values from ERP stock data."""
+	if not rows:
+		return
+	from collections import defaultdict
+	refs = {(r.get("voucher_no"), r.get("invoice_item")) for r in rows
+			if r.get("voucher_no") and r.get("invoice_item")}
+	ledger = frappe.get_all("Stock Ledger Entry", filters={
+		"voucher_type": "POS Invoice", "voucher_no": ["in", sorted({v for v, _ in refs})],
+		"voucher_detail_no": ["in", sorted({d for _, d in refs})], "is_cancelled": 0},
+		fields=["voucher_no", "voucher_detail_no", "serial_no", "batch_no", "serial_and_batch_bundle"])
+	by_ref = defaultdict(list)
+	for entry in ledger:
+		by_ref[(entry.voucher_no, entry.voucher_detail_no)].append(entry)
+	bundles = {e.serial_and_batch_bundle for e in ledger if e.serial_and_batch_bundle}
+	entries = frappe.get_all("Serial and Batch Entry", filters={"parent": ["in", sorted(bundles)]},
+		fields=["parent", "serial_no", "batch_no"], order_by="parent, idx") if bundles else []
+	by_bundle = defaultdict(lambda: {"serial_no": [], "batch_no": []})
+	for entry in entries:
+		for field in ("serial_no", "batch_no"):
+			if entry.get(field) and entry.get(field) not in by_bundle[entry.parent][field]:
+				by_bundle[entry.parent][field].append(entry.get(field))
+	for row in rows:
+		for entry in by_ref.get((row.get("voucher_no"), row.get("invoice_item")), []):
+			for field in ("serial_no", "batch_no", "serial_and_batch_bundle"):
+				if not row.get(field) and entry.get(field):
+					row[field] = entry.get(field)
+		identity = by_bundle.get(row.get("serial_and_batch_bundle"), {})
+		for field in ("serial_no", "batch_no"):
+			if not row.get(field) and identity.get(field):
+				row[field] = "\n".join(identity[field])
+		if not row.get("barcode") and row.get("item_code"):
+			row.barcode = (frappe.db.get_value("Item", row.item_code, "custom_barcode") or
+				frappe.db.get_value("Item Barcode", {"parent": row.item_code}, "barcode") or "")
 
 def pos_category_sales(filters):
     from retail.retail_app.report.profitability import profitability_rows, report_result
@@ -926,6 +968,10 @@ def item_sales_columns():
 	return [
 		{"label": _("Item"), "fieldname": "item_code", "fieldtype": "Link", "options": "Item", "width": 140},
 		{"label": _("Item Name"), "fieldname": "item_name", "fieldtype": "Data", "width": 180},
+		{"label": _("Barcode"), "fieldname": "barcode", "fieldtype": "Data", "width": 130},
+		{"label": _("Serial No"), "fieldname": "serial_no", "fieldtype": "Small Text", "width": 150},
+		{"label": _("Batch"), "fieldname": "batch_no", "fieldtype": "Small Text", "width": 130},
+		{"label": _("Serial and Batch Bundle"), "fieldname": "serial_and_batch_bundle", "fieldtype": "Link", "options": "Serial and Batch Bundle", "width": 150},
 		{"label": _("Item Group"), "fieldname": "item_group", "fieldtype": "Link", "options": "Item Group", "width": 130},
 		{"label": _("Warehouse"), "fieldname": "warehouse", "fieldtype": "Link", "options": "Warehouse", "width": 140},
 		{"label": _("Sold Qty"), "fieldname": "sold_qty", "fieldtype": "Float", "width": 100},

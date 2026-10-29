@@ -10,12 +10,34 @@
 		}
 	}
 
+	async function finishItemLookups() {
+		// Core qty/uom handlers launch pricing work without returning its promise.
+		// Let their serial tasks and chained requests finish before label pricing.
+		do {
+			await frappe.after_ajax();
+			await new Promise(resolve => setTimeout(resolve, 0));
+		} while (frappe.request.ajax_count);
+	}
+
 	retail.scale_sales.apply = async function (frm, row, label) {
 		if (frm.doc.docstatus !== 0) frappe.throw(__("Scale labels can only be applied to draft sales."));
+		await finishItemLookups();
 		preparePrecision(frm);
 		let qty = label.scale_qty;
-		let rate = label.scale_rate == null ? flt(row.rate) : label.scale_rate;
-		const amount = label.scale_amount;
+		// Only encoded monetary values are VAT-inclusive; ordinary weight/quantity
+		// labels continue to use the existing transaction rate unchanged.
+		let vatFactor = 1;
+		if (label.scale_rate != null || label.scale_amount != null) {
+			const {message: vatRate} = await frappe.call({
+				method: "retail.domains.transactions.vat.get_transaction_item_vat_rate",
+				args: {item_code: row.item_code, child_doctype: row.doctype,
+					parent_doctype: frm.doc.doctype, transaction_type: frm.doc.transaction_type,
+					item_tax_template: row.item_tax_template},
+			});
+			vatFactor += flt(vatRate) / 100;
+		}
+		let rate = label.scale_rate == null ? flt(row.rate) : label.scale_rate / vatFactor;
+		const amount = label.scale_amount == null ? null : label.scale_amount / vatFactor;
 		if (qty == null) {
 			qty = rate ? amount / rate : 1;
 			if (!rate) rate = amount;
@@ -32,13 +54,17 @@
 			});
 		}
 		await frappe.model.set_value(row.doctype, row.name, "qty", frm.doc.is_return ? -qty : qty);
-		// Apply the encoded price after quantity pricing completes. Use the normal
-		// transaction rate basis and normal tax calculation; do not guess VAT mode.
+		await finishItemLookups();
+		// Apply the VAT-exclusive rate after quantity pricing completes. Existing
+		// VAT handlers calculate tax and the inclusive display fields normally.
 		await frappe.model.set_value(row.doctype, row.name, {
 			price_list_rate: rate, discount_percentage: 0, discount_amount: 0,
-			margin_type: "", margin_rate_or_amount: 0, rate,
-			barcode: label.barcode,
+			margin_type: "", margin_rate_or_amount: 0, rate_with_margin: 0, rate,
+			amount: (frm.doc.is_return ? -qty : qty) * rate,
 		});
+		// Identity was already resolved by the scale lookup. Triggering barcode
+		// again invokes the standard lookup, which asynchronously resets qty to 1.
+		row.barcode = label.barcode;
 		await frm.cscript.calculate_taxes_and_totals();
 		frm.refresh_field("items");
 	};
@@ -81,7 +107,7 @@
 		install();
 		if (frm.doc.docstatus !== 0) return;
 		for (const row of frm.doc.items || []) {
-			if (!/^99\d{11}$|^99\d{12}$|^99\d{17}$/.test(row.barcode || "")) continue;
+			if (!/^99\d{11}$|^99\d{16}$/.test(row.barcode || "")) continue;
 			const {message} = await frappe.call({method: "retail.domains.item.packing_scan.scan_barcode",
 				args: {search_value: row.barcode}});
 			if (message?.scale_barcode_type && message.item_code === row.item_code) {

@@ -2,6 +2,7 @@
 	const labels = {
 		"Accounts Payable": "Total Payable: {0}",
 		"Accounts Receivable": "Total Receivable: {0}",
+		"POS Invoice Profit": "Total Gross Profit: {0}",
 	};
 	const selector = ".retail-outstanding-footer";
 	const clear = () => $(selector).remove();
@@ -28,10 +29,10 @@
 			// Frappe appends a grand total; grouped reports also emit bold subtotals.
 			if (this.raw_data?.add_total_row && rows.length) rows = rows.slice(0, -1);
 			rows = rows.filter((row) => !row.is_total_row && !(row.bold && !row.voucher_no));
-			const total = rows.reduce(
-				(sum, row) => sum + flt(row.outstanding_amount ?? row.outstanding),
-				0
-			);
+			const total = rows.reduce((sum, row) => sum + flt(
+				report_name === "POS Invoice Profit" ? row.gross_profit :
+				(row.outstanding_amount ?? row.outstanding)
+			), 0);
 			const currency = rows.find((row) => row.currency)?.currency ||
 				erpnext.get_currency(this.get_filter_value("company"));
 

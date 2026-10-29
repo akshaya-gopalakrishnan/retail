@@ -185,6 +185,8 @@ def _voucher_snapshot(counter):
 	currency = frappe.get_cached_value("Company", counter.company, "default_currency")
 	for row in entries:
 		# Keep every saved business field, including issue/redeem links and customer details.
+		row["barcode"] = row.get("voucher_code") or row.name
+		row["serial_no"] = row.get("card_number") or None
 		row["voucher_kind"] = "Voucher Card" if row.get("voucher_card_batch") else "Promotion Voucher"
 		row["currency"] = row.get("currency") or currency
 		row["voucher_amount"] = flt(row.voucher_amount)

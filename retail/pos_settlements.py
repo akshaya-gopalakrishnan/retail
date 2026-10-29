@@ -138,10 +138,13 @@ def validate_payload(kind, payload, counter):
     items = payload.get("items")
     if not isinstance(items, list) or not items:
         frappe.throw("At least one item is required.")
+    from retail.pos_serials import serial_fields
+    seen_serials = set()
     for row in items:
         if not isinstance(row, dict) or not math.isfinite(float(row.get("qty", 0))) or not float(row.get("qty", 0)):
             frappe.throw("Item quantities must be finite and non-zero.")
-        api._resolve_item(frappe._dict(row))
+        item_code = api._resolve_item(frappe._dict(row))
+        serial_fields(row, frappe.get_cached_doc("Item", item_code), seen_serials)
         for field in ("rate", "amount", "net_amount", "vat_amount"):
             if row.get(field) is not None:
                 amount(abs(float(row[field])))

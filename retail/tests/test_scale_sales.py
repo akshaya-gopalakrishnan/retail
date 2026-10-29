@@ -13,30 +13,43 @@ class TestScaleSales(unittest.TestCase):
 		cases = [
 			("Weight", "00500", 20, (0.5, 20, 10)),
 			("Quantity", "00003", 20, (3, 20, 60)),
-			("Price", "305000", 20, (152.5, 20, 3050)),
-			("Weight+UPrice", "00500003050", 20, (0.5, 30.5, 15.25)),
-			("Weight+TotPrice", "00500305000", 20, (0.5, 6100, 3050)),
+			("Price", "99999", 20, (49.9995, 20, 999.99)),
+			("Weight+UPrice", "0050003050", 20, (0.5, 30.5, 15.25)),
+			("Weight+TotPrice", "0050099999", 20, (0.5, 1999.98, 999.99)),
 		]
 		for kind, payload, rate, expected in cases:
 			with self.subTest(kind=kind):
 				values = scale_sales.sale_values(self.label(kind, payload), rate)
 				self.assertEqual(tuple(values.values()), expected)
 
+	def test_actual_scale_labels_with_five_price_digits(self):
+		for barcode, qty, amount in [("992051300750010006", 0.75, 7.5),
+			("992051300075010006", 0.075, 0.75)]:
+			with self.subTest(barcode=barcode):
+				label = scale_sales.decode_label(barcode, "Weight+UPrice", "Kg")
+				self.assertEqual(label["master_barcode"], "9920513")
+				self.assertEqual(scale_sales.sale_values(label, 99),
+					{"qty": qty, "rate": 10, "amount": amount})
+				label = scale_sales.decode_label(barcode, "Weight+TotPrice", "Kg")
+				values = scale_sales.sale_values(label, 99)
+				self.assertEqual(values["amount"], 10)
+				self.assertAlmostEqual(values["qty"] * values["rate"], 10)
+
 	def test_weight_precision_grams_and_price_only_fallback(self):
 		self.assertEqual(self.label("Weight", "00001")["scale_qty"], 0.001)
 		self.assertEqual(self.label("Weight", "00500", "Gram")["scale_qty"], 500)
 		self.assertEqual(self.label("Weight", "01000")["scale_qty"], 1)
-		self.assertEqual(scale_sales.sale_values(self.label("Price", "003050"), 0),
+		self.assertEqual(scale_sales.sale_values(self.label("Price", "03050"), 0),
 			{"qty": 1, "rate": 30.5, "amount": 30.5})
-		values = scale_sales.sale_values(self.label("Price", "003050"), 7)
+		values = scale_sales.sale_values(self.label("Price", "03050"), 7)
 		self.assertAlmostEqual(values["qty"] * values["rate"], 30.5)
-		values = scale_sales.sale_values(self.label("Weight+TotPrice", "00333003050"), 7)
+		values = scale_sales.sale_values(self.label("Weight+TotPrice", "0033303050"), 7)
 		self.assertAlmostEqual(values["qty"] * values["rate"], 30.5)
 
 	def test_invalid_labels_and_missing_rate(self):
 		with patch.object(frappe, "throw", side_effect=ValueError), patch.object(scale_sales, "_", side_effect=lambda s: s):
-			for kind, payload in [("Price", "03050"), ("Weight", "00000"),
-				("Weight+UPrice", "0050003050"), ("Quantity", "0000X"), ("", "00500")]:
+			for kind, payload in [("Price", "003050"), ("Weight", "00000"),
+				("Weight+UPrice", "00500003050"), ("Quantity", "0000X"), ("", "00500")]:
 				with self.subTest(kind=kind, payload=payload), self.assertRaises(ValueError):
 					self.label(kind, payload)
 			with self.assertRaises(ValueError):

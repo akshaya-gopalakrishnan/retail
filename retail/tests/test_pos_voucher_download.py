@@ -40,6 +40,9 @@ class TestPOSVoucherDownload(unittest.TestCase):
         self.assertEqual((row.current_status, row.valid), ("Partially Used", True))
         self.assertEqual(row.issued_against, "INV-1")
         self.assertEqual(row.customer, "CUSTOMER")
+        self.assertEqual(row.barcode, "ABCDE")
+        self.assertEqual(row.serial_no, 1)
+        self.assertEqual(row.card_number, 1)
         self.assertEqual(row.eligibility[0]["matching_item_groups"], ["Drinks", "Juice"])
         self.assertTrue(row.use_activation_times)
         self.assertEqual(row.active_to_time, "11:00:00")
@@ -63,15 +66,31 @@ class TestPOSVoucherDownload(unittest.TestCase):
 
     def test_legacy_voucher_and_empty_replacement(self):
         row = self.voucher()
-        row.update(voucher_card_batch=None, use_redemption_hours=0, status="Unused", balance_amount=100)
+        row.update(voucher_card_batch=None, card_number=0, use_redemption_hours=0, status="Unused", balance_amount=100)
         result, _ = self.snapshot([row])
         row = result["gift_voucher_ledger"][0]
         self.assertEqual(row.voucher_kind, "Promotion Voucher")
+        self.assertEqual(row.barcode, "ABCDE")
+        self.assertIsNone(row.serial_no)
         self.assertIsNone(row.active_from_time)
         self.assertEqual(row.currency, "AED")
         empty, _ = self.snapshot([])
         self.assertEqual(empty["gift_voucher_ledger"], [])
         self.assertEqual(empty["voucher_card_batches"], [])
+
+    def test_individual_card_and_legacy_lookup_include_identity(self):
+        from retail.api import gift_vouchers
+        batch = frappe._dict(all_products=1, restrictions=[])
+        card = self.voucher()
+        with patch.object(gift_vouchers, "invalid_reason", return_value=None), \
+                patch("retail.voucher_cards.batch_for", return_value=batch), \
+                patch.object(frappe, "get_cached_value", return_value="AED"):
+            result = gift_vouchers.voucher_result(card)
+            self.assertEqual((result["barcode"], result["serial_no"]), ("ABCDE", 1))
+            card.update(voucher_card_batch=None, card_number=0)
+            result = gift_vouchers.voucher_result(card)
+            self.assertEqual(result["barcode"], "ABCDE")
+            self.assertIsNone(result["serial_no"])
 
 
 def run_tests():
