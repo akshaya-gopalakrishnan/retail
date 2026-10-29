@@ -5,6 +5,7 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import cint, flt, getdate, get_system_timezone, now_datetime, nowdate
+from retail.pos_item_identity import with_item_identity
 
 from erpnext.accounts.report.customer_ledger_summary.customer_ledger_summary import (
 	PartyLedgerSummaryReport,
@@ -844,6 +845,8 @@ def _append_invoice_items(doc, payload, counter_doc, is_return=False):
 
 	default_warehouse = counter_doc.warehouse
 	default_cost_center = counter_doc.cost_center
+	from retail.pos_serials import serial_fields
+	seen_serials = set()
 
 	for row in items:
 		row = frappe._dict(row)
@@ -884,6 +887,7 @@ def _append_invoice_items(doc, payload, counter_doc, is_return=False):
 				"conversion_factor": row.get("conversion_factor"),
 				"warehouse": default_warehouse,
 				"cost_center": default_cost_center,
+				**serial_fields(row, item, seen_serials),
 			},
 		)
 
@@ -1241,7 +1245,7 @@ def get_pos_promo_prices(branch=None, counter_code=None, modified_after=None):
 				flt(flt(row["current_price_including_tax"]) * (1 - percent / 100), 2)
 				if percent else flt(row["promo_price_including_tax"])
 			)
-	return {
+	return with_item_identity({
 		"status": "Success",
 		"server_time": now_datetime(),
 		"server_timezone": get_system_timezone(),
@@ -1250,7 +1254,7 @@ def get_pos_promo_prices(branch=None, counter_code=None, modified_after=None):
 		"counter_code": counter_doc.counter_code,
 		"promotions": promotions,
 		**_additional_pos_promotions(counter_doc, modified_after),
-	}
+	}, counter_doc.warehouse)
 
 
 def _additional_pos_promotions(counter_doc, modified_after=None):
@@ -1267,7 +1271,7 @@ def get_pos_buy_x_get_y_promotions(branch=None, counter_code=None, modified_afte
 		_promotion_doc_payload(doc, "products", child_fields)
 		for doc in _get_promotion_docs("Buy X Get Y Promotion", counter_doc, modified_after)
 	]
-	return {
+	return with_item_identity({
 		"status": "Success",
 		"server_time": now_datetime(),
 		"server_timezone": get_system_timezone(),
@@ -1275,7 +1279,7 @@ def get_pos_buy_x_get_y_promotions(branch=None, counter_code=None, modified_afte
 		"counter": counter_doc.name,
 		"counter_code": counter_doc.counter_code,
 		"promotions": promotions,
-	}
+	}, counter_doc.warehouse)
 
 
 @frappe.whitelist()
@@ -1395,6 +1399,10 @@ def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
 	item_or_filters = None
 	if modified_after:
 		item_or_filters = [["modified", ">", modified_after]]
+		# Serial availability changes independently of Item.modified. Always
+		# resend serialized items, including an empty list after the last sale.
+		item_or_filters.append(["has_serial_no", "=", 1])
+		item_or_filters.append(["has_batch_no", "=", 1])
 		if packing_parent_items:
 			item_or_filters.append(["name", "in", packing_parent_items])
 	item_price_fields = ["name", "item_code", "price_list", "uom", "currency", "price_list_rate", "modified"]
@@ -1411,6 +1419,8 @@ def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
 		"custom_barcode as barcode",
 		"stock_uom",
 		"is_stock_item",
+		"has_serial_no",
+		"has_batch_no",
 		"custom_scale_item as is_scalable_item",
 		"custom_scale_barcode_type as scale_barcode_type",
 		"custom_is_open_price as is_open_price",
@@ -1444,6 +1454,9 @@ def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
 		limit_page_length=0,
 	)
 	item_codes = [item.item_code for item in items if item.item_code]
+	from retail.pos_serials import apply_master_batches, apply_master_serials
+	apply_master_serials(items, counter_doc.warehouse)
+	apply_master_batches(items, counter_doc.warehouse)
 	item_group_by_item = {item.item_code: item.item_group for item in items}
 	_apply_item_tax_fields(items)
 	stock_by_item = _get_current_stock_by_item(counter_doc.warehouse, set(item_codes) | set(packing_parent_items))
@@ -1485,7 +1498,7 @@ def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
 	_apply_current_stock_to_items(items, counter_doc.warehouse)
 	_apply_current_stock_to_packings(packing_details, counter_doc.warehouse)
 
-	return {
+	return with_item_identity({
 		"status": "Success",
 		"server_time": now_datetime(),
 		"server_timezone": get_system_timezone(),
@@ -1545,7 +1558,7 @@ def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
 			],
 			limit_page_length=0,
 		),
-	}
+	}, counter_doc.warehouse)
 
 
 def _pos_payment_modes(modified_filter):
@@ -2718,6 +2731,9 @@ def close_pos_shift(data=None, **kwargs):
 
 @frappe.whitelist()
 def upsert_customer(data=None, **kwargs):
+	# Opt-in ERP-user mode; preserve the established POS path below.
+	if _as_dict(data, **kwargs).get("context") == "sales_order":
+		return _save_sales_customer(_as_dict(data, **kwargs))
 	_assert_pos_user()
 	payload = _as_dict(data, **kwargs)
 
@@ -2862,7 +2878,7 @@ def get_warehouse_stock_snapshot(data=None, **kwargs):
 	filters = {"warehouse": counter_doc.warehouse}
 	if item_codes:
 		filters["item_code"] = ["in", item_codes]
-	return {
+	return with_item_identity({
 		"status": "Success",
 		"warehouse": counter_doc.warehouse,
 		"generated_at": now_datetime(),
@@ -2881,7 +2897,7 @@ def get_warehouse_stock_snapshot(data=None, **kwargs):
 			],
 			limit_page_length=0,
 		),
-	}
+	}, counter_doc.warehouse)
 
 
 @frappe.whitelist()
@@ -3018,3 +3034,171 @@ def _validate_existing_completed_sale(name, payload):
 	original = frappe.parse_json(existing.get("custom_pos_completed_payload") or "null")
 	if original is None or canonical(original) != canonical(dict(payload)):
 		frappe.throw("Reference conflict: existing invoice has a different or legacy payload; reconcile it before retrying.")
+
+
+# Sales Order app: ordinary ERP sessions and document permissions, independent of POS shifts.
+_SALES_APP_MASTERS = (
+	"Company", "Customer", "Address", "Contact", "Item", "Item Price", "Warehouse",
+	"Price List", "Currency", "UOM", "Customer Group", "Territory", "Country",
+	"Payment Terms Template", "Terms and Conditions", "Sales Taxes and Charges Template",
+	"Item Tax Template", "Cost Center", "Project", "Sales Person", "Sales Partner",
+	"Tax Category", "Shipping Rule", "Incoterm", "Brand", "Item Group",
+)
+
+
+def _sales_app_user():
+	if frappe.session.user == "Guest":
+		frappe.throw(_("Authentication is required."), frappe.AuthenticationError)
+
+
+def _sales_app_values(doctype, values):
+	"""Accept document fields, never client-supplied flags or system identity."""
+	if not isinstance(values, dict):
+		frappe.throw(_("Document must be a JSON object."))
+	result = {}
+	for field in frappe.get_meta(doctype).fields:
+		if field.fieldname not in values or field.read_only or field.fieldtype in (
+			"Section Break", "Column Break", "Tab Break", "HTML", "Button", "Fold", "Heading"
+		):
+			continue
+		value = values[field.fieldname]
+		if field.fieldtype in ("Table", "Table MultiSelect"):
+			if not isinstance(value, list):
+				frappe.throw(_("{0} must be a JSON array.").format(field.fieldname))
+			value = [_sales_app_values(field.options, row) for row in value]
+		result[field.fieldname] = value
+	return result
+
+
+@frappe.whitelist(methods=["GET", "POST"])
+def get_sales_order_data(data=None, **kwargs):
+	"""Fetch several master lists, order lists, or full documents in one request."""
+	_sales_app_user()
+	payload = _as_dict(data, **kwargs)
+	queries = payload.get("queries") or [{"doctype": "Sales Order"}]
+	if isinstance(queries, str):
+		queries = json.loads(queries)
+	results = []
+	for query in queries:
+		doctype = query.get("doctype")
+		if doctype not in (*_SALES_APP_MASTERS, "Sales Order"):
+			frappe.throw(_("Unsupported Sales Order master: {0}").format(doctype))
+		frappe.has_permission(doctype, "read", throw=True)
+		if query.get("name"):
+			doc = frappe.get_doc(doctype, query["name"])
+			doc.check_permission("read")
+			doc.apply_fieldlevel_read_permissions()
+			results.append({"doctype": doctype, "documents": [doc.as_dict()], "has_more": False})
+			continue
+		start = max(cint(query.get("start")), 0)
+		page_length = min(max(cint(query.get("page_length") or 1000), 1), 5000)
+		fields = query.get("fields") or ["name", "modified"]
+		if query.get("include_details") and "name" not in fields:
+			fields = ["name", *fields]
+		rows = frappe.get_list(
+			doctype, fields=fields,
+			filters=query.get("filters") or {}, order_by="modified asc, name asc",
+			start=start, page_length=page_length + 1,
+		)
+		has_more = len(rows) > page_length
+		rows = rows[:page_length]
+		if query.get("include_details"):
+			documents = []
+			for row in rows:
+				doc = frappe.get_doc(doctype, row.name)
+				doc.check_permission("read")
+				doc.apply_fieldlevel_read_permissions()
+				documents.append(doc.as_dict())
+			rows = documents
+		results.append({"doctype": doctype, "documents": rows, "has_more": has_more,
+			"next_start": start + len(rows)})
+	from frappe.sessions import get_csrf_token
+	return {"status": "Success", "server_time": now_datetime(), "user": frappe.session.user,
+		"csrf_token": get_csrf_token() if getattr(frappe.local, "request", None) else None,
+		"permissions": {key: bool(frappe.has_permission("Sales Order", key))
+			for key in ("read", "create", "write", "submit")}, "results": results}
+
+
+def _save_sales_customer(payload):
+	_sales_app_user()
+	values = payload.get("customer") or {}
+	name = values.get("name")
+	external_id = payload.get("external_customer_id")
+	if not name and external_id:
+		# Lookup is followed by the ordinary document permission check.
+		name = frappe.db.get_value("Customer", {"external_pos_customer_id": external_id}, "name")
+	doc = frappe.get_doc("Customer", name) if name else frappe.new_doc("Customer")
+	doc.check_permission("write" if name else "create")
+	doc.update(_sales_app_values("Customer", values))
+	if external_id:
+		doc.external_pos_customer_id = external_id
+	doc.save()
+	result = {"status": "Success", "action": "Updated" if name else "Created", "customer": doc.name,
+		"addresses": [], "contacts": []}
+	for key, doctype in (("addresses", "Address"), ("contacts", "Contact")):
+		for values in payload.get(key) or []:
+			linked = frappe.get_doc(doctype, values["name"]) if values.get("name") else frappe.new_doc(doctype)
+			linked.check_permission("write" if values.get("name") else "create")
+			linked.update(_sales_app_values(doctype, values))
+			if not any(row.link_doctype == "Customer" and row.link_name == doc.name for row in linked.links):
+				linked.append("links", {"link_doctype": "Customer", "link_name": doc.name})
+			linked.save()
+			result[key].append(linked.name)
+	return result
+
+
+@frappe.whitelist(methods=["POST"])
+def save_sales_order(data=None, **kwargs):
+	"""Calculate, save a draft, or save and submit using existing ERP permissions."""
+	_sales_app_user()
+	payload = _as_dict(data, **kwargs)
+	action = payload.get("action") or "save"
+	if action not in ("calculate", "save", "submit"):
+		frappe.throw(_("action must be calculate, save or submit."))
+	values = payload.get("order") or {}
+	name = payload.get("name")
+	reference = payload.get("client_order_id")
+	duplicate = False
+	if not name and reference and action != "calculate":
+		name = frappe.db.get_value("Sales Order", {"custom_app_order_id": reference}, "name")
+		duplicate = bool(name)
+	if duplicate:
+		doc = frappe.get_doc("Sales Order", name)
+		doc.check_permission("read")
+	else:
+		doc = frappe.get_doc("Sales Order", name) if name else frappe.new_doc("Sales Order")
+		doc.check_permission("write" if name else "create")
+		if doc.docstatus != 0:
+			frappe.throw(_("Only draft Sales Orders can be changed."))
+		if name:
+			if not payload.get("modified"):
+				frappe.throw(_("Send modified from the last downloaded order when updating a draft."))
+			if str(doc.modified) != str(payload["modified"]):
+				frappe.throw(_("This order changed in ERP. Download it again before saving."), frappe.TimestampMismatchError)
+		doc.update(_sales_app_values("Sales Order", values))
+		# Desk fetches these on item selection; API callers need the same defaults.
+		doc.set_missing_values()
+		if reference:
+			doc.custom_app_order_id = reference
+		if not name and action != "calculate" and not reference:
+			frappe.throw(_("client_order_id is required for a new Sales Order."))
+		if action == "calculate":
+			# Match the normal save validation pipeline without writing an order.
+			frappe.db.savepoint("sales_order_preview")
+			try:
+				if not doc.name:
+					doc.name = "new-sales-order-preview"
+					doc.set_parent_in_children()
+				doc.run_method("before_validate")
+				doc.run_method("validate")
+				doc._validate()
+			finally:
+				frappe.db.rollback(save_point="sales_order_preview")
+		else:
+			doc.save()
+	if action == "submit" and doc.docstatus == 0:
+		doc.submit()
+	doc.apply_fieldlevel_read_permissions()
+	return {"status": "Success", "action": action, "duplicate": duplicate,
+		"name": doc.name if action != "calculate" else None, "docstatus": doc.docstatus,
+		"order": doc.as_dict()}

@@ -24,6 +24,11 @@ def post_invoice(doc, method=None):
     if doc.is_return and doc.return_against:
         original = frappe.get_doc("POS Invoice", doc.return_against, for_update=True)
         post_invoice(original)
+    # Core creates serial bundles during POS on_submit, after earlier hooks may
+    # have cached the receipt. The merge must read those newly saved bundles.
+    if any(row.get("serial_and_batch_bundle") for table in ("items", "packed_items")
+           for row in doc.get(table) or []):
+        frappe.clear_document_cache("POS Invoice", doc.name)
     merge = frappe.new_doc("POS Invoice Merge Log")
     merge.company = doc.company
     merge.customer = doc.customer

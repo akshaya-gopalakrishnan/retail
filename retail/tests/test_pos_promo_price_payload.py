@@ -48,6 +48,22 @@ class TestPOSPromoPricePayload(unittest.TestCase):
 		self.assertEqual((row["calculated_promo_price"],row["calculated_promo_price_including_tax"]),(8.57,9))
 		self.assertEqual((row["promo_price"],row["promo_price_including_tax"]),(0,0))
 		self.assertEqual(doc.products[0].promo_price,0)
+	def test_item_tracking_preserves_packing_barcode_and_scopes_serials(self):
+		rows = [dict(item="ITEM", barcode="PACK"), dict(item="ITEM", barcode=""),
+			dict(item="", barcode=""), dict(item="PLAIN", barcode="")]
+		items = [frappe._dict(item_code="ITEM", barcode="BASE", has_serial_no=1, disabled=0),
+			frappe._dict(item_code="PLAIN", barcode="PLAIN-BC", has_serial_no=0, disabled=0)]
+		with patch.object(frappe, "get_all", side_effect=[items,
+			[frappe._dict(item_code="ITEM", name="SERIAL-1")]]) as query:
+			pos_sync.with_item_identity([{"products": rows}], "WAREHOUSE")
+		self.assertEqual([row["barcode"] for row in rows], ["PACK", "BASE", "", "PLAIN-BC"])
+		self.assertEqual([row["serial_numbers"] for row in rows], [["SERIAL-1"], ["SERIAL-1"], [], []])
+		self.assertEqual([row["has_serial_no"] for row in rows], [1, 1, 0, 0])
+		self.assertEqual(query.call_args.kwargs["filters"],
+			{"item_code": ["in", ["ITEM"]], "warehouse": "WAREHOUSE", "status": "Active"})
+		with patch.object(frappe, "get_all", side_effect=[items, []]):
+			pos_sync.with_item_identity([{"products": rows}], "WAREHOUSE")
+		self.assertEqual(rows[0]["serial_numbers"], [])
 
 	def test_legacy_percentage_offer_gets_amount_without_mutation(self):
 		doc = self.document(discount_amount=None, discount_input=None)

@@ -43,3 +43,15 @@ class TestBuyGetScope(unittest.TestCase):
 		doc.append("products", {"add_to": "Free Item", "item": "GIFT"})
 		doc.products.insert(0, doc.products.pop())
 		self.assertEqual(promotion_payload(doc)["promotion_scope"], "CATEGORY")
+	def test_buy_and_free_items_include_barcodes_in_endpoint_response(self):
+		doc = self.doc("ITEM", item="BUY")
+		doc.append("products", {"add_to": "Free Item", "item": "FREE"})
+		counter = frappe._dict(branch="BRANCH", name="COUNTER", counter_code="C001", warehouse="SHOP")
+		items = [frappe._dict(item_code=code, item_name=code, barcode=code + "-BC",
+			has_serial_no=0, disabled=0) for code in ("BUY", "FREE")]
+		with patch.object(pos_sync, "_pos_promotion_payload", return_value=({}, counter, None)), \
+			patch.object(pos_sync, "_get_promotion_docs", return_value=[doc]), \
+			patch.object(frappe, "get_all", return_value=items):
+			rows = pos_sync.get_pos_buy_x_get_y_promotions()["promotions"][0]["products"]
+		self.assertEqual([row["barcode"] for row in rows], ["BUY-BC", "FREE-BC"])
+		self.assertTrue(all("serial_no" in row and "serial_numbers" in row for row in rows))

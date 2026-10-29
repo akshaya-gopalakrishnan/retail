@@ -248,6 +248,12 @@ def restore(doc, method=None):
 
 
 class RetailPOSInvoice(InvoicePriceProtection, POSInvoice):
+	def validate_serialised_or_batched_item(self):
+		if payload_for(self):
+			from retail.pos_serials import allocate_missing_tracking
+			allocate_missing_tracking(self)
+		return super().validate_serialised_or_batched_item()
+
 	def before_cancel(self):
 		if payload_for(self):
 			frappe.throw("Completed POS bills cannot be cancelled; use an independently referenced return.")

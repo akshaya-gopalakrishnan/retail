@@ -101,6 +101,9 @@ def enrich_report(report_name, result, filters=None):
         return result
     additions = []
     if report_name == "Stock Ledger":
+        from retail.stock_ledger_serials import add_serial_numbers
+        output_columns = list(output_columns)
+        add_serial_numbers(output_columns, rows, filters)
         enrich_stock_ledger(rows)
         additions = columns(sold=False)
     elif report_name in MOVEMENT_REPORTS:
