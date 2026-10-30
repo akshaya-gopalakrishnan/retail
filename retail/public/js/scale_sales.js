@@ -107,7 +107,7 @@
 		install();
 		if (frm.doc.docstatus !== 0) return;
 		for (const row of frm.doc.items || []) {
-			if (!/^99\d{11}$|^99\d{16}$/.test(row.barcode || "")) continue;
+			if (!/^\d{13}$|^\d{18}$/.test(row.barcode || "")) continue;
 			const {message} = await frappe.call({method: "retail.domains.item.packing_scan.scan_barcode",
 				args: {search_value: row.barcode}});
 			if (message?.scale_barcode_type && message.item_code === row.item_code) {

@@ -105,22 +105,25 @@
 		custom_b2b(frm) { refreshMargin(frm); },
 		is_scale_item(frm) { return setScaleItemDefaults(frm); },
 		async custom_scale_item(frm) {
-			await frm.set_value("custom_barcode", cint(frm.doc.custom_scale_item)
-				? generateScaleItemBarcode() : generateItemBarcode());
+			if (cint(frm.doc.custom_scale_item)) await previewScaleItemBarcode(frm);
+			else {
+				frm.doc.__retail_scale_barcode_preview = null;
+				await frm.set_value("custom_barcode", generateItemBarcode());
+			}
 			return setScaleItemDefaults(frm);
 		},
 		custom_scale_barcode_type(frm) { return syncInternalScaleType(frm); },
-		validate(frm) {
-			ensureItemBarcode(frm);
+		async validate(frm) {
+			await ensureItemBarcode(frm);
 			removeEmptyBarcodeRows(frm);
 		},
 		before_save(frm) { removeEmptyBarcodeRows(frm); },
 	});
 
-	function ensureItemBarcode(frm) {
+	async function ensureItemBarcode(frm) {
 		if (frm.doc.custom_barcode) return;
-		frm.set_value("custom_barcode", cint(frm.doc.custom_scale_item)
-			? generateScaleItemBarcode() : generateItemBarcode());
+		if (cint(frm.doc.custom_scale_item)) await previewScaleItemBarcode(frm);
+		else await frm.set_value("custom_barcode", generateItemBarcode());
 		const newBarcode = frm.doc.custom_barcode;
 		if (newBarcode) {
 			frappe.show_alert({
@@ -130,7 +133,7 @@
 		}
 	}
 
-	function setScaleItemDefaults(frm) {
+	async function setScaleItemDefaults(frm) {
 		if (!cint(frm.doc.custom_scale_item)) {
 			const updates = {};
 			if (cint(frm.doc.is_scale_item)) updates.is_scale_item = 0;
@@ -141,7 +144,7 @@
 			return;
 		}
 		const updates = {};
-		if (!frm.doc.custom_barcode) updates.custom_barcode = generateScaleItemBarcode();
+		if (!frm.doc.custom_barcode) await previewScaleItemBarcode(frm);
 		if (!frm.doc.custom_scale_barcode_type) updates.custom_scale_barcode_type = "Weight";
 		updates.is_scale_item = 1;
 		updates.scale_enabled = 1;
@@ -165,8 +168,15 @@
 		return normalized || "WEIGHT";
 	}
 
-	function generateScaleItemBarcode() {
-		return `99${String(Math.floor(Math.random() * 100000)).padStart(5, "0")}`;
+	async function previewScaleItemBarcode(frm) {
+		const request = (frm._scale_barcode_request || 0) + 1;
+		frm._scale_barcode_request = request;
+		const { message } = await frappe.call({
+			method: "retail.api.scale_item_api.preview_scale_barcode",
+		});
+		if (request !== frm._scale_barcode_request || !cint(frm.doc.custom_scale_item)) return;
+		frm.doc.__retail_scale_barcode_preview = message;
+		await frm.set_value("custom_barcode", message);
 	}
 
 	function generateItemBarcode() {

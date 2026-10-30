@@ -377,7 +377,7 @@ Response example:
       {
         "name": "Voucher",
         "type": "Voucher",
-        "enabled": 1,
+        "enabled": 0,
         "modified": "2026-09-30 09:00:00"
       },
       {
@@ -402,7 +402,7 @@ Response example:
       {
         "name": "Promotion Voucher",
         "type": "Promotion Voucher",
-        "enabled": 1,
+        "enabled": 0,
         "modified": "2026-09-30 09:00:00",
         "is_settlement": 1
       },
@@ -423,8 +423,11 @@ The three customer rows above are original local-site snapshots from `retail-tes
 
 Use `operators` for cashiers. Missing or false `privileges` means the action is not allowed. Use `printer_name` for the local printer. Empty bill-format values clear old values.
 
-`modes_of_payment` includes the POS options `Credit Note`, `Voucher`, and
-`Cancelled`, and `Customer` in every full or changes-only reply, alongside ERP payment modes.
+`modes_of_payment` includes the POS options `Credit Note`, `Voucher`, `Cancelled`,
+`Customer`, `Loyalty`, `Promotion Voucher`, and `Voucher Card` in every full or changes-only reply, alongside ERP payment modes.
+`Voucher` and `Promotion Voucher` are currently sent with `enabled: 0`; .NET must
+apply this status to its cached options and payment selector. Their existing redemption
+support is retained for future use.
 Each option's `type` matches its name exactly; .NET can identify it using `type`.
 Their `modified` is the reply-time timestamp. For `Credit Note`, `is_settlement: 1` identifies a
 settlement option; when selected, send the credit reference and amount in
@@ -997,7 +1000,8 @@ No format/version flag, new invoice endpoint or online approval is required.
 | `Promotion Voucher` | Customer `gift_vouchers[].voucher_code` or scanned promotion-voucher code | None. |
 | `Voucher Card` | Scanned/entered card code from the downloaded voucher-card snapshot | None. |
 
-The existing `modes_of_payment` master array additionally lists these three choices.
+The existing `modes_of_payment` master array lists all three choices.
+`Promotion Voucher` is currently sent with `enabled: 0`; its support below is retained for future use.
 Keep existing cash/card MOP names and references unchanged. Keep credit-note
 allocations in `credit_note_redemptions` and the unpaid portion in
 `credit_sale_amount`; do not move them into a new format or duplicate them in payments.
@@ -5385,10 +5389,11 @@ Unposted/queued transactions are monitored through existing POS sync logs.
 ### Item-master scale sales layout
 
 Retail sales forms and the existing `retail.api.scale_item_api.parse_barcode`
-endpoint support the prefix-99 master layout described in
+endpoint support the 7-digit numeric master layout described in
 `retail/docs/scale_barcode_sales.md`. Exact saved barcodes take precedence.
 Dynamic decoding requires a checked Scale Item, an enabled sales Item, and a
-7-digit master barcode starting with `99`. Existing download fields `barcode`,
+7-digit numeric master barcode with any prefix. Automatic generation still uses
+`99` followed by the lowest available five-digit number. Existing download fields `barcode`,
 `is_scalable_item` and `scale_barcode_type` identify the master and its selected
 type. No new POS sale-sync endpoint or completed-sale recalculation is introduced.
 

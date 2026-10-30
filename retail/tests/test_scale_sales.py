@@ -62,8 +62,22 @@ class TestScaleSales(unittest.TestCase):
 				"custom_scale_item": 1, "disabled": 0, "is_sales_item": 1})
 		with patch.object(frappe.db, "get_value") as lookup:
 			self.assertIsNone(scale_sales.resolve_label("9900002"))
-			self.assertIsNone(scale_sales.resolve_label("8800002005007"))
+			self.assertIsNone(scale_sales.resolve_label("ABCDEFG005007"))
 			lookup.assert_not_called()
+
+	def test_any_numeric_master_prefix_uses_checked_item_and_selected_type(self):
+		item = frappe._dict(name="SCALE", stock_uom="Kg", scale_uom=None,
+			custom_scale_barcode_type="Weight+UPrice")
+		for master in ("1234567", "0000001", "8800002"):
+			with self.subTest(master=master), \
+				patch.object(frappe.db, "get_value", return_value=item) as lookup, \
+				patch.object(frappe, "get_doc"):
+				label = scale_sales.resolve_label(master + "00500030507")
+				self.assertEqual(label["master_barcode"], master)
+				self.assertEqual(label["scale_qty"], 0.5)
+				self.assertEqual(label["scale_rate"], 30.5)
+				self.assertEqual(lookup.call_args.args[1], {"custom_barcode": master,
+					"custom_scale_item": 1, "disabled": 0, "is_sales_item": 1})
 
 	def test_exact_matches_win_over_scale_decoding(self):
 		with patch.object(packing_scan, "resolve_packing", return_value=None), \

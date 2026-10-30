@@ -1584,6 +1584,10 @@ def _pos_payment_modes(modified_filter):
 		rows = [row for row in rows if row.get("name") != name]
 		rows.append({"name": name, "type": name, "enabled": 1, "modified": modified,
 			"is_settlement": 1})
+	# Keep unused choices in downloads so .NET can disable previously cached options.
+	for row in rows:
+		if row.get("name") in ("Voucher", "Promotion Voucher"):
+			row["enabled"] = 0
 	return rows
 
 

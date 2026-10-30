@@ -76,10 +76,17 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Promotion History",
-   "link_count": 3,
+   "link_count": 4,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
+  },
+  {
+   "type": "Link",
+   "label": "Promotion Performance",
+   "link_type": "Report",
+   "link_to": "Promotion Performance",
+   "is_query_report": 1
   },
   {
    "hidden": 0,

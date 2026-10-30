@@ -77,6 +77,58 @@
         }
       ]
     },
+    "POS Invoice": {
+      "POS Invoice Item": [
+        {
+          columns: 4,
+          fieldname: "item_code"
+        },
+        {
+          columns: 2,
+          fieldname: "item_name"
+        },
+        {
+          columns: 2,
+          fieldname: "qty"
+        },
+        {
+          columns: 1,
+          fieldname: "custom_foc_qty"
+        },
+        {
+          columns: 1,
+          fieldname: "custom_total_stock_qty"
+        },
+        {
+          columns: 2,
+          fieldname: "rate"
+        },
+        {
+          columns: 2,
+          fieldname: "custom_rate_including_vat"
+        },
+        {
+          columns: 2,
+          fieldname: "custom_amount_including_vat"
+        },
+        {
+          columns: 2,
+          fieldname: "amount"
+        },
+        {
+          columns: 2,
+          fieldname: "custom_vat_amount"
+        },
+        {
+          columns: 0,
+          fieldname: "warehouse"
+        },
+        {
+          columns: 0,
+          fieldname: "serial_no"
+        }
+      ]
+    },
     "Promotional Scheme": {
       "Promotional Scheme Product Discount": [
         {
@@ -7926,7 +7978,7 @@
         if (frm.doc.docstatus !== 0)
           return;
         for (const row of frm.doc.items || []) {
-          if (!/^99\d{11}$|^99\d{16}$/.test(row.barcode || ""))
+          if (!/^\d{13}$|^\d{18}$/.test(row.barcode || ""))
             continue;
           const { message } = await frappe.call({
             method: "retail.domains.item.packing_scan.scan_barcode",
@@ -8375,4 +8427,4 @@
     ["Purchase Order", "Purchase Invoice", "Purchase Receipt"].map((doctype) => [doctype, user_grid_view_settings_default[doctype]])
   );
 })();
-//# sourceMappingURL=retail_desk.bundle.W7M3JNG3.js.map
+//# sourceMappingURL=retail_desk.bundle.5JSTP7WK.js.map

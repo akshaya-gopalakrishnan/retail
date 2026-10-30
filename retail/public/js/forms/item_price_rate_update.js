@@ -2,6 +2,11 @@
 	if (!window.frappe?.ui?.form) return;
 
 	frappe.ui.form.on("Item Price", {
+		setup(frm) {
+			// Show the stored Item ID in this control, rather than its link title.
+			const control = frm.fields_dict.item_code;
+			if (control) control.is_title_link = () => false;
+		},
 		refresh(frm) {
 			if (!["Standard Buying", "Standard Selling"].includes(frm.doc.price_list) || frm.doc.docstatus !== 0) return;
 			frm.add_custom_button(__("Update Item Master Rate"), () => updateItemMasterRate(frm), __("Retail"));

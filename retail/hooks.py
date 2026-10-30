@@ -84,6 +84,7 @@ boot_session = "retail.workspace_permissions.extend_bootinfo"
 # include js in doctype views
 # doctype_js = {"doctype" : "public/js/doctype.js"}
 doctype_list_js = {
+	"Item Price": "public/js/list/item_price.js",
 	"POS Invoice": "public/js/pos_creation_controls.js",
 	"POS Opening Entry": "public/js/pos_creation_controls.js",
 	"POS Closing Entry": "public/js/pos_creation_controls.js",

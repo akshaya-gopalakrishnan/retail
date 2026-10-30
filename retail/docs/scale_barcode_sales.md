@@ -1,7 +1,8 @@
 # Selling scale-labelled items
 
 In Item, check **Scale Item**, select **Scale Barcode Type**, and use a unique
-7-digit master barcode starting with `99`. Scanning the master barcode sells
+7-digit numeric master barcode with any prefix. Automatic generation still uses
+`99` followed by the lowest available five-digit number. Scanning the master barcode sells
 normally. An exact saved barcode always takes priority over label decoding.
 Only enabled sales items with Scale Item checked are decoded.
 

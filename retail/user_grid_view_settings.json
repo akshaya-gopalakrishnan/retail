@@ -43,6 +43,58 @@
       }
     ]
   },
+  "POS Invoice": {
+    "POS Invoice Item": [
+      {
+        "columns": 4,
+        "fieldname": "item_code"
+      },
+      {
+        "columns": 2,
+        "fieldname": "item_name"
+      },
+      {
+        "columns": 2,
+        "fieldname": "qty"
+      },
+      {
+        "columns": 1,
+        "fieldname": "custom_foc_qty"
+      },
+      {
+        "columns": 1,
+        "fieldname": "custom_total_stock_qty"
+      },
+      {
+        "columns": 2,
+        "fieldname": "rate"
+      },
+      {
+        "columns": 2,
+        "fieldname": "custom_rate_including_vat"
+      },
+      {
+        "columns": 2,
+        "fieldname": "custom_amount_including_vat"
+      },
+      {
+        "columns": 2,
+        "fieldname": "amount"
+      },
+      {
+        "columns": 2,
+        "fieldname": "custom_vat_amount"
+      },
+      {
+        "columns": 0,
+        "fieldname": "warehouse"
+      },
+      {
+        "columns": 0,
+        "fieldname": "serial_no"
+      }
+    ]
+  },
   "Promotional Scheme": {
     "Promotional Scheme Product Discount": [
       {
