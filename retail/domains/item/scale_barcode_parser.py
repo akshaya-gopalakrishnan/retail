@@ -32,7 +32,7 @@ def parse_scale_barcode(barcode, price_list=None, currency=None):
 		values = sale_values(scan, rate)
 		return ScaleBarcodeResult(item_code=scan["item_code"], plu=scan["master_barcode"],
 			qty=values["qty"], weight=values["qty"] if "WEIGHT" in scan["scale_barcode_type"] else 0,
-			rate=values["rate"], amount=values["amount"], uom=scan["uom"], prefix="99",
+			rate=values["rate"], amount=values["amount"], uom=scan["uom"], prefix=scan["master_barcode"][:2],
 			barcode_type=scan["scale_barcode_type"], value=scan["scale_amount"] if scan["scale_qty"] is None else scan["scale_qty"])
 	if scan:
 		return None

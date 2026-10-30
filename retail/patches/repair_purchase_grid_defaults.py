@@ -31,12 +31,12 @@ def repair_settings(parent, settings, defaults):
 	return result
 
 
-def execute():
+def apply_layouts(parents):
 	defaults = json.loads(get_fixture_path().read_text())
 	for user in frappe.get_all("User", pluck="name"):
 		if user == "Guest":
 			continue
-		for parent in PURCHASE_DOCTYPES:
+		for parent in parents:
 			current = _get_user_settings(user, parent)
 			cache_key = f"{parent}::{user}"
 			cached = frappe.cache.hget("_user_settings", cache_key)
@@ -51,3 +51,7 @@ def execute():
 
 				frappe.db.after_commit.add(invalidate)
 				frappe.db.after_rollback.add(invalidate)
+
+
+def execute():
+	apply_layouts(PURCHASE_DOCTYPES)

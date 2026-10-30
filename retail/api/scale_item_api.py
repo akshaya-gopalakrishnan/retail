@@ -5,6 +5,14 @@ from retail.domains.item.scale_export_service import export_scale_items
 
 
 @frappe.whitelist()
+def preview_scale_barcode():
+	frappe.has_permission("Item", "create", throw=True)
+	from retail.domains.item.scale_item_validation import get_next_scale_barcode
+
+	return get_next_scale_barcode()
+
+
+@frappe.whitelist()
 def parse_barcode(barcode, price_list=None, currency=None):
 	result = parse_scale_barcode(barcode, price_list=price_list, currency=currency)
 	return result.__dict__ if result else None

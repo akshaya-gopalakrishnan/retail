@@ -36,6 +36,8 @@ class BuyXGetYPromotion(Document):
 		free_rows = self.get_free_rows()
 		if not buy_rows:
 			frappe.throw(_("Add at least one Buy Item."))
+		if len(buy_rows) > 1:
+			frappe.throw(_("Only one Buy Item row is allowed. Add the other products as Free Items."))
 		if not self.same_product_only and not free_rows:
 			frappe.throw(_("Add at least one Free Item."))
 

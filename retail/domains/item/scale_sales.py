@@ -20,8 +20,8 @@ def decode_label(barcode, barcode_type, uom):
 	if barcode_type not in PAYLOAD_LENGTHS:
 		frappe.throw(_("Select a Scale Barcode Type in the Item master."))
 	length = 8 + PAYLOAD_LENGTHS[barcode_type]
-	if len(barcode) != length or not barcode.isascii() or not barcode.isdigit() or not barcode.startswith("99"):
-		frappe.throw(_("This item's scale barcode must contain {0} digits and start with 99.").format(length))
+	if len(barcode) != length or not barcode.isascii() or not barcode.isdigit():
+		frappe.throw(_("This item's scale barcode must contain {0} digits.").format(length))
 	payload = barcode[7:-1]
 	result = {"scale_barcode_type": barcode_type, "master_barcode": barcode[:7],
 		"barcode": barcode, "uom": uom, "scale_qty": None,
@@ -45,7 +45,7 @@ def decode_label(barcode, barcode_type, uom):
 
 def resolve_label(barcode):
 	barcode = str(barcode or "").strip()
-	if len(barcode) <= 7 or not barcode.startswith("99"):
+	if len(barcode) <= 7 or not barcode[:7].isascii() or not barcode[:7].isdigit():
 		return None
 	item = frappe.db.get_value("Item", {"custom_barcode": barcode[:7],
 		"custom_scale_item": 1, "disabled": 0, "is_sales_item": 1},
@@ -86,7 +86,7 @@ def prepare_precision(doc, method=None):
 	for row in doc.get("items", []):
 		row.flags.pop("retail_scale_price", None)
 		barcode = row.get("barcode") or row.get("custom_barcode_scan") or ""
-		if len(barcode) not in (13, 18) or not barcode.startswith("99"):
+		if len(barcode) not in (13, 18) or not barcode.isascii() or not barcode.isdigit():
 			continue
 		label = scan_barcode(barcode)
 		if not label.get("scale_barcode_type") or label["item_code"] != row.item_code:

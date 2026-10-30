@@ -25,6 +25,9 @@ def is_scale_item(doc) -> bool:
 def ensure_item_barcode(doc, method=None):
 	"""Ensure Item custom barcode is always populated and unique."""
 	barcode = (doc.get("custom_barcode") or "").strip()
+	if is_scale_item(doc) and doc.get("__retail_scale_barcode_preview") == barcode:
+		barcode = ""
+		doc.__retail_scale_barcode_preview = None
 	previous = doc.get_doc_before_save()
 	if previous and is_scale_item(previous) != is_scale_item(doc):
 		if barcode == (previous.get("custom_barcode") or "").strip():
@@ -41,6 +44,9 @@ def ensure_item_barcode(doc, method=None):
 
 
 def get_unique_item_barcode(exclude_name=None, scale_item=False):
+	if scale_item:
+		return get_next_scale_barcode()
+
 	for _ in range(BARCODE_GENERATION_MAX_ATTEMPTS):
 		barcode = generate_random_barcode(scale_item=scale_item)
 
@@ -50,6 +56,25 @@ def get_unique_item_barcode(exclude_name=None, scale_item=False):
 			return barcode
 
 	raise frappe.ValidationError("Unable to generate unique barcode. Please retry.")
+
+
+def get_next_scale_barcode():
+	"""Allocate the lowest unused scale number, holding the lock until commit/rollback."""
+	# A stable database row serializes allocations across workers. Locking reads
+	# below see committed barcodes even if this transaction already has a snapshot.
+	frappe.db.sql("select name from `tabDocType` where name = 'Item' for update")
+	used = set()
+	for table, field in (("tabItem", "custom_barcode"), ("tabItem Barcode", "barcode")):
+		rows = frappe.db.sql(
+			f"select `{field}` from `{table}` "
+			f"where `{field}` like '99%' and char_length(`{field}`) = 7 for update"
+		)
+		used.update(row[0] for row in rows)
+	for number in range(1, 100000):
+		barcode = f"99{number:05d}"
+		if barcode not in used:
+			return barcode
+	raise frappe.ValidationError("All scale barcode numbers from 9900001 to 9999999 are in use.")
 
 
 def generate_random_barcode(scale_item=False):

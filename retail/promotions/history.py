@@ -38,7 +38,7 @@ def install():
     # Update just these links; preserve workspace content and user customizations.
     if frappe.db.exists("Workspace", "Promotions"):
         workspace = frappe.get_doc("Workspace", "Promotions")
-        names = ("Promotion Sales Summary", "Promotion Sales Detail")
+        names = ("Promotion Performance", "Promotion Sales Summary", "Promotion Sales Detail")
         existing = {r.link_to for r in workspace.links}
         position = next((i + 1 for i, r in enumerate(workspace.links)
                          if r.type == "Card Break" and r.label == "Promotion History"), None)
@@ -52,7 +52,7 @@ def install():
             for i, row in enumerate(workspace.links, 1):
                 row.idx = i
                 if row.type == "Card Break" and row.label == "Promotion History":
-                    row.link_count = 3
+                    row.link_count = 4
             workspace.save(ignore_permissions=True)
 
 

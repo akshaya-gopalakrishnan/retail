@@ -78,3 +78,4 @@ retail.patches.show_purchase_item_names
 retail.patches.show_purchase_stock_identity
 retail.patches.setup_sales_order_app_reference
 retail.patches.repair_purchase_grid_defaults
+retail.patches.show_pos_invoice_item_names
