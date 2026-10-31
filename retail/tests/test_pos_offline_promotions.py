@@ -19,7 +19,7 @@ def run_integration():
     cash = frappe.db.get_value('Mode of Payment', {'type': 'Cash'}, 'name')
     card = frappe.db.get_value('Mode of Payment', {'type': 'Bank'}, 'name')
     program = frappe.get_doc(dict(doctype='Loyalty Program', loyalty_program_name='Mixed '+token,
-        loyalty_program_type='Single Tier Program', from_date=add_days(nowdate(), -365),
+        loyalty_program_type='Single Tier Program', from_date=nowdate(), auto_opt_in=1,
         conversion_factor=1, expiry_duration=365, company=company.name,
         expense_account=company.default_expense_account, cost_center=company.cost_center,
         collection_rules=[dict(tier_name='Base', min_spent=0, collection_factor=1)])).insert()
@@ -41,7 +41,11 @@ def run_integration():
         assert json.loads(tx.payload_json) == dict(data)
         return response, tx, frappe.get_doc('POS Invoice', tx.pos_invoice), frappe.get_doc('Sales Invoice', tx.sales_invoice)
     with patch.object(frappe, 'enqueue'), patch.object(frappe.db, 'commit'), patch.object(frappe, 'publish_realtime'), patch.object(vouchers, 'redeem_gift_voucher', side_effect=AssertionError('Offline invoice must not call online approval')):
+        frappe.db.set_value('Customer', customer.name, 'loyalty_program', None)
         seed_data = payload('seed',1000); _, _, seed, seed_si = posted(seed_data)
+        assert seed.loyalty_program == program.name
+        assert frappe.db.get_value('Loyalty Point Entry', {'invoice_type': 'POS Invoice',
+            'invoice': seed.name}, 'loyalty_points') == 1000
         ret = payload('return',50,payments=[],original_external_pos_reference=seed_data.external_pos_reference,
             return_settlement_type='Reusable Customer Credit')
         res = api.create_pos_return_invoice(ret); credit = frappe.get_doc('POS Accepted Transaction',res['accepted_transaction'])
@@ -77,6 +81,8 @@ def run_integration():
             return sum(r.loyalty_points for r in frappe.get_all('Loyalty Point Entry',filters={
                 'invoice_type':'POS Invoice','invoice':doc.name,'redeem_against':['is','set']},fields=['loyalty_points']))
         assert debited()==-50, debited()
+        offline.apply(doc)
+        assert debited()==-50, 'Reapplying the redemption receipt must not deduct twice'
         assert not frappe.db.exists('Loyalty Point Entry',{'invoice_type':'Sales Invoice','invoice':invoice.name})
         for code in (promo.name,card_code):
             assert frappe.db.get_value('Gift Voucher Ledger',code,'balance_amount')==50
@@ -85,9 +91,25 @@ def run_integration():
         assert debited()==-50
         results.append('Seven portions reconcile: GL receivable 150, loyalty debit once, both vouchers debited offline, exact retry unchanged')
         _,_,ldoc,lsi=posted(payload('points-only',50,payments=[
-            dict(mode_of_payment='Loyalty',amount=50,reference_no=program.name,points=50)],credit_sale_amount=0))
+            dict(mode_of_payment='Loyalty',amount=50,points=50)],credit_sale_amount=0))
         assert lsi.outstanding_amount==0 and ldoc.outstanding_amount==0
+        assert sum(r.loyalty_points for r in frappe.get_all('Loyalty Point Entry',
+            filters={'invoice_type':'POS Invoice','invoice':ldoc.name},fields=['loyalty_points'])) == -50
+        assert frappe.db.count('POS Sync Log', {'linked_invoice': ldoc.name,
+            'sync_type': 'POS Loyalty Redemption'}) == 1
+        assert any(r.debit == 50 and r.account == program.expense_account for r in frappe.get_all(
+            'GL Entry', filters={'voucher_no': lsi.name, 'is_cancelled': 0}, fields=['account', 'debit']))
+        assert not frappe.db.exists('Loyalty Point Entry', {'invoice_type':'Sales Invoice','invoice':lsi.name})
         results.append('Loyalty-only payment row posts without cash/card or online calls')
+        for suffix, tender in [('mop-alias', dict(mop='loyalty', amount=10)),
+                ('points-without-mode', dict(points=10, amount=10))]:
+            _, _, alias_doc, alias_si = posted(payload(suffix, 10,
+                payments=[tender], credit_sale_amount=0))
+            assert alias_si.outstanding_amount == 0
+            assert alias_doc.payments[0].mode_of_payment == 'Loyalty'
+            assert sum(r.loyalty_points for r in frappe.get_all('Loyalty Point Entry',
+                filters={'invoice_type':'POS Invoice','invoice':alias_doc.name},fields=['loyalty_points'])) == -10
+        results.append('MOP alias and points-only tender resolve the program and deduct points without changing the payload')
         from retail import loyalty
         before = sum(n for _,n in loyalty.available_buckets(loyalty.ledger_entries(customer.name,program.name,company.name),nowdate()))
         first = max(1,before//2)
@@ -140,6 +162,26 @@ def run_integration():
 
 
 class TestOfflinePromotionPayments(unittest.TestCase):
+    def test_payment_aliases_are_never_cash_tenders(self):
+        for row in [dict(mode_of_payment='loyalty', amount=10),
+                dict(mop='Loyalty', amount=10), dict(points=10, amount=10)]:
+            payload = dict(payments=[row], grand_total=10)
+            self.assertEqual(offline.rows(payload), [(0, row)])
+            self.assertEqual(cash_payments(payload), [])
+        self.assertEqual(offline.rows(dict(payments=[dict(points=0, amount=10)])), [])
+
+    def test_redemption_empty_reference_uses_fallback_without_changing_payment(self):
+        doc = frappe._dict(customer='C-6', company='Company', posting_date='2026-10-30')
+        row = dict(reference_no='', amount=115, points=115)
+        # Stop after resolution: an explicit bad reference must not invoke fallback.
+        for reference in ['', 'bad-reference']:
+            row['reference_no'] = reference
+            with patch.object(offline, '_assigned_active_program', return_value='Rewards') as resolve, \
+                    patch.object(frappe.db, 'exists', return_value=False), patch.object(offline, 'audit'):
+                offline._loyalty(doc, 0, row)
+                self.assertEqual(resolve.call_count, 0 if reference else 1)
+                self.assertEqual(row['reference_no'], reference)
+
     def test_additive_fields_and_existing_credit_fields(self):
         payload = dict(grand_total=500, payments=[dict(mode_of_payment='Cash',amount=100),
             dict(mode_of_payment='Card',amount=50),

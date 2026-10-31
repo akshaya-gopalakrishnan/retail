@@ -7851,6 +7851,314 @@
     };
   })();
 
+  // ../retail/retail/public/js/forms/retail_quick_entry.js
+  (() => {
+    frappe.ui.form.RetailQuickEntryForm = class extends frappe.ui.form.QuickEntryForm {
+      render_dialog() {
+        super.render_dialog();
+        this.empty_values = this.entry_values();
+        this.calling_link = frappe._from_link;
+        for (const field of Object.values(this.dialog.fields_dict)) {
+          if (field.df.fieldtype === "Link")
+            field.new_doc = () => this.create_linked_value(field);
+        }
+        this.dialog.get_primary_btn = () => this.dialog.standard_actions.find(".btn-modal-primary");
+        $("<button>", {
+          type: "button",
+          class: "btn btn-primary btn-sm retail-save-new",
+          text: __("Save+New")
+        }).on("click", () => this.save_and_new()).insertBefore(this.dialog.get_primary_btn());
+        this.dialog.$wrapper[0].addEventListener(
+          "keydown",
+          (event) => this.handle_key(event),
+          true
+        );
+      }
+      create_linked_value(field) {
+        const calling_link = frappe._from_link;
+        frappe._from_link = null;
+        frappe.route_options = { name_field: field.get_label_value() };
+        return frappe.ui.form.make_quick_entry(
+          field.get_options(),
+          async (saved) => {
+            var _a;
+            await field.set_value(saved.name);
+            if ((_a = frappe.quick_entry) == null ? void 0 : _a.saving_and_new)
+              return;
+            frappe.quick_entry = this;
+            frappe._from_link = calling_link;
+          },
+          (dialog) => {
+            dialog.$wrapper.one("hidden.bs.modal", () => {
+              var _a;
+              frappe.quick_entry = this;
+              frappe._from_link = calling_link;
+              (_a = field.$input) == null ? void 0 : _a.focus();
+            });
+            dialog.onhide = () => {
+              frappe.quick_entry = this;
+              setTimeout(() => {
+                frappe._from_link = calling_link;
+              }, 0);
+            };
+          },
+          null,
+          true
+        );
+      }
+      keyboard_fields() {
+        return Object.values(this.dialog.fields_dict).filter((field) => {
+          var _a;
+          const input = (_a = field.$input) == null ? void 0 : _a[0];
+          return input && $(input).is(":visible") && !input.disabled && !input.readOnly && !field.df.read_only;
+        });
+      }
+      focus_first_field() {
+        var _a, _b;
+        (_b = (_a = this.keyboard_fields()[0]) == null ? void 0 : _a.$input) == null ? void 0 : _b.focus();
+      }
+      entry_values() {
+        const values = __spreadValues({}, this.dialog.get_values(true));
+        delete values.custom_barcode;
+        return JSON.stringify(values);
+      }
+      async commit_field(field) {
+        if (field == null ? void 0 : field.get_input_value)
+          await field.set_value(field.get_input_value());
+      }
+      async move_field(field, key, backwards = false) {
+        var _a, _b, _c, _d;
+        await this.commit_field(field);
+        if (window.cur_dialog && window.cur_dialog !== this.dialog)
+          return;
+        const fields = this.keyboard_fields();
+        const index = fields.indexOf(field);
+        if (index < 0)
+          return;
+        let target;
+        if (key !== "Enter") {
+          const horizontal = ["ArrowLeft", "ArrowRight"].includes(key);
+          const sign = ["ArrowLeft", "ArrowUp"].includes(key) ? -1 : 1;
+          const center = (f) => {
+            const r = f.$input[0].getBoundingClientRect();
+            return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+          };
+          const from = center(field);
+          const axis = horizontal ? "x" : "y", cross = horizontal ? "y" : "x";
+          target = (_a = fields.filter((f) => f !== field).map((f) => {
+            const to = center(f), distance = (to[axis] - from[axis]) * sign;
+            return {
+              field: f,
+              distance,
+              score: distance + Math.abs(to[cross] - from[cross]) * 4
+            };
+          }).filter((f) => f.distance > 8).sort((a, b) => a.score - b.score)[0]) == null ? void 0 : _a.field;
+          if (!target && horizontal)
+            target = fields[index + sign];
+        } else
+          target = fields[index + (backwards ? -1 : 1)];
+        (_b = field.awesomplete) == null ? void 0 : _b.close();
+        if (target) {
+          target.$input[0].focus();
+          (_d = (_c = target.$input[0]).select) == null ? void 0 : _d.call(_c);
+        } else if (key === "Enter" && !backwards)
+          this.dialog.get_primary_btn().focus();
+      }
+      handle_key(event) {
+        var _a, _b, _c;
+        if (event.isComposing)
+          return;
+        const field = this.keyboard_fields().find((f) => f.$input[0] === event.target);
+        if ((event.ctrlKey || event.metaKey) && ["s", "enter"].includes(event.key.toLowerCase())) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          if (this.dialog.working || this.keyboard_busy)
+            return;
+          this.keyboard_busy = true;
+          this.commit_field(field).then(
+            () => event.key === "Enter" ? this.save_and_close() : this.save_and_new()
+          ).finally(() => {
+            this.keyboard_busy = false;
+          });
+          return;
+        }
+        if (this.dialog.working)
+          return;
+        if (event.key === "Tab" && !event.shiftKey && !event.ctrlKey && !event.metaKey && !event.altKey && ((_a = field == null ? void 0 : field.df) == null ? void 0 : _a.fieldtype) === "Link" && !field.df.only_select && frappe.model.can_create(field.get_options())) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          (_b = field.awesomplete) == null ? void 0 : _b.close();
+          if (!this.creating_link) {
+            this.creating_link = true;
+            Promise.resolve(field.new_doc()).finally(() => {
+              this.creating_link = false;
+            });
+          }
+          return;
+        }
+        if (!field || event.ctrlKey || event.metaKey || event.altKey || !["Enter", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key))
+          return;
+        if (event.shiftKey && field.$input[0].tagName === "TEXTAREA")
+          return;
+        if (((_c = field.awesomplete) == null ? void 0 : _c.opened) && ["ArrowUp", "ArrowDown", "Enter"].includes(event.key)) {
+          if (event.key === "Enter")
+            setTimeout(() => this.move_field(field, "Enter", event.shiftKey), 0);
+          return;
+        }
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        this.move_field(field, event.key, event.shiftKey);
+      }
+      async save_and_close() {
+        const name_field = {
+          Item: "item_name",
+          "Item Group": "item_group_name",
+          Brand: "brand"
+        }[this.doctype];
+        if (!this.dialog.working && name_field && !this.dialog.get_value(name_field) && this.entry_values() === this.empty_values) {
+          this.dialog.hide();
+          frappe.model.clear_doc(this.doctype, this.dialog.doc.name);
+          return;
+        }
+        return this.save_and_new(true);
+      }
+      async save_and_new(close_after_save = false) {
+        var _a, _b, _c;
+        const dialog = this.dialog;
+        if (dialog.working || !dialog.get_values())
+          return;
+        let ready_for_next = false;
+        dialog.working = true;
+        this.saving_and_new = !close_after_save;
+        dialog.set_message(__("Saving..."));
+        try {
+          this.update_doc();
+          const { message: saved } = await frappe.call({
+            method: "frappe.client.save",
+            args: { doc: dialog.doc },
+            freeze: true
+          });
+          if (!(saved == null ? void 0 : saved.name))
+            return;
+          frappe.model.clear_doc(this.doctype, dialog.doc.name);
+          frappe.model.sync(saved);
+          if (this.calling_link) {
+            frappe._from_link = this.calling_link;
+            frappe.ui.form.update_calling_link(saved);
+          } else if (this.after_insert)
+            await this.after_insert(saved);
+          if (((_a = window.cur_list) == null ? void 0 : _a.doctype) === this.doctype)
+            await cur_list.refresh();
+          if (close_after_save) {
+            this.doc = dialog.doc = saved;
+            dialog.hide();
+            frappe.show_alert({
+              message: __("{0} saved", [saved.name]),
+              indicator: "green"
+            });
+            return;
+          }
+          this.resetting = true;
+          this.doc = frappe.model.get_new_doc(this.doctype, null, null, true);
+          dialog.doc = this.doc;
+          this.barcode_generation = (this.barcode_generation || 0) + 1;
+          for (const field of Object.values(dialog.fields_dict)) {
+            if (frappe.model.no_value_type.includes(field.df.fieldtype))
+              continue;
+            field.docname = this.doc.name;
+            await dialog.set_value(
+              field.df.fieldname,
+              (_b = this.doc[field.df.fieldname]) != null ? _b : null
+            );
+          }
+          this.resetting = false;
+          dialog.refresh_dependency();
+          await ((_c = this.generate_barcode) == null ? void 0 : _c.call(this));
+          this.empty_values = this.entry_values();
+          ready_for_next = true;
+          frappe.show_alert({ message: __("{0} saved", [saved.name]), indicator: "green" });
+        } finally {
+          this.resetting = false;
+          this.saving_and_new = false;
+          dialog.working = false;
+          dialog.clear_message();
+          if (ready_for_next)
+            this.focus_first_field();
+        }
+      }
+    };
+    for (const name of ["ItemGroup", "Brand"]) {
+      frappe.ui.form[name + "QuickEntryForm"] = class extends frappe.ui.form.RetailQuickEntryForm {
+      };
+    }
+  })();
+
+  // ../retail/retail/public/js/forms/item_quick_entry.js
+  (() => {
+    frappe.ui.form.ItemQuickEntryForm = class extends frappe.ui.form.RetailQuickEntryForm {
+      set_meta_and_mandatory_fields() {
+        super.set_meta_and_mandatory_fields();
+        const fields = this.mandatory.map((df) => __spreadValues({}, df));
+        const midpoint = Math.ceil(fields.length / 2);
+        this.mandatory = [
+          { fieldtype: "Section Break", fieldname: "retail_item_details" },
+          ...fields.slice(0, midpoint),
+          { fieldtype: "Column Break", fieldname: "retail_item_column" },
+          ...fields.slice(midpoint)
+        ];
+      }
+      render_dialog() {
+        super.render_dialog();
+        this.dialog.$wrapper.find(".modal-dialog").css({
+          width: "960px",
+          "max-width": "calc(100vw - 32px)"
+        });
+        const scale = this.dialog.fields_dict.custom_scale_item;
+        if (scale) {
+          const onchange = scale.df.onchange;
+          scale.df.onchange = (...args) => {
+            if (this.resetting)
+              return;
+            onchange == null ? void 0 : onchange.apply(scale, args);
+            return this.generate_barcode(true);
+          };
+        }
+        this.generate_barcode();
+      }
+      async generate_barcode(force = false) {
+        const dialog = this.dialog;
+        if (!dialog.fields_dict.custom_barcode)
+          return;
+        const generation = this.barcode_generation = (this.barcode_generation || 0) + 1;
+        const previous = dialog.get_value("custom_barcode");
+        if (!force && previous)
+          return;
+        const scale = Number(dialog.get_value("custom_scale_item")) === 1;
+        if (dialog.fields_dict.custom_scale_barcode_type) {
+          await dialog.set_value(
+            "custom_scale_barcode_type",
+            scale ? dialog.get_value("custom_scale_barcode_type") || "Weight" : ""
+          );
+        }
+        if (!scale) {
+          dialog.doc.__retail_scale_barcode_preview = null;
+          await dialog.set_value(
+            "custom_barcode",
+            String(1e12 + Math.floor(Math.random() * 9e12))
+          );
+          return;
+        }
+        const { message } = await frappe.call({
+          method: "retail.api.scale_item_api.preview_scale_barcode"
+        });
+        if (generation !== this.barcode_generation || !Number(dialog.get_value("custom_scale_item")) || dialog.get_value("custom_barcode") !== previous)
+          return;
+        dialog.doc.__retail_scale_barcode_preview = message;
+        await dialog.set_value("custom_barcode", message);
+      }
+    };
+  })();
+
   // ../retail/retail/public/js/scale_sales.js
   (() => {
     frappe.provide("retail.scale_sales");
@@ -8427,4 +8735,4 @@
     ["Purchase Order", "Purchase Invoice", "Purchase Receipt"].map((doctype) => [doctype, user_grid_view_settings_default[doctype]])
   );
 })();
-//# sourceMappingURL=retail_desk.bundle.5JSTP7WK.js.map
+//# sourceMappingURL=retail_desk.bundle.QUSR3Q76.js.map

@@ -19,9 +19,14 @@ RETURN_TYPES = ("Cash Refund", "Card Refund", "Reusable Customer Credit", "Origi
 
 
 class SettlementDocument(Document):
+    def onload(self):
+        from retail.pos_admin_recovery import load_correction
+        load_correction(self)
+
     def validate(self):
         if not self.flags.pos_settlement_write:
-            frappe.throw("POS settlement records are maintained by the settlement service.")
+            from retail.pos_admin_recovery import validate_save
+            validate_save(self)
         previous = self.get_doc_before_save()
         if previous and self.doctype == "POS Accepted Transaction":
             for field in ("payload_json", "external_pos_reference", "company", "customer", "sync_type"):
@@ -49,7 +54,8 @@ def amount(value):
 
 
 def payment_mode(row):
-    return row.get("mode_of_payment") or row.get("mode")
+    from retail.pos_offline_promotions import mode
+    return mode(row)
 
 
 def cash_payments(payload):
@@ -296,7 +302,8 @@ def resolve_transaction(transaction):
         statuses.append(allocation.status)
     status = next((s for s in ("Reconciliation Exception", "Pending Dependency", "Pending Reconciliation") if s in statuses), "Reconciled")
     from retail.pos_external_refs import resolve_completed
-    payload = frappe._dict(json.loads(transaction.payload_json))
+    from retail.pos_admin_recovery import effective_payload
+    payload = effective_payload(transaction)
     resolved = resolve_completed(payload)
     missing_lifecycle = False
     for doctype, external, internal, target in (
@@ -318,6 +325,11 @@ def resolve_transaction(transaction):
     transaction.status = status
     frappe.db.set_value(transaction.doctype, transaction.name, {"status": status,
         "resolved_at": now_datetime() if status == "Reconciled" else None})
+    if status == "Reconciled":
+        frappe.db.set_value(transaction.doctype, transaction.name, "exception_reason", None)
+        for exception in frappe.get_all("POS Settlement Exception", filters={"transaction": transaction.name}, pluck="name"):
+            frappe.db.set_value("POS Settlement Exception", exception,
+                {"status": status, "resolved_at": now_datetime()})
     from retail.pos_transaction_display import refresh_accepted_invoice_links
     refresh_accepted_invoice_links(transaction)
     from retail.pos_transaction_display import payload_transaction_type
@@ -453,7 +465,8 @@ def recover(limit=100):
                         resolve_transaction(transaction)
                         refresh_day(transaction)
                         continue
-                    payload = frappe._dict(json.loads(transaction.payload_json))
+                    from retail.pos_admin_recovery import effective_payload
+                    payload = effective_payload(transaction)
                     endpoint = api.create_pos_return_invoice if transaction.sync_type == "Return" else api.create_pos_invoice
                     post(transaction, lambda: endpoint(payload))
                 except Exception as exc:

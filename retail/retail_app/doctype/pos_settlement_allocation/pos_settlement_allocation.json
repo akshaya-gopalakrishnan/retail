@@ -25,7 +25,9 @@
   "source_erp_document",
   "destination_pos_bill",
   "destination_erp_document",
-  "reconciliation_reference"
+  "reconciliation_reference",
+  "correction_reason",
+  "correction_payload_json"
  ],
  "fields": [
   {
@@ -166,6 +168,17 @@
    "label": "Reconciliation Reference",
    "fieldtype": "Long Text",
    "read_only": 1
+  },
+  {
+   "fieldname": "correction_reason",
+   "label": "Correction Reason",
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "correction_payload_json",
+   "label": "Correction Payload JSON",
+   "fieldtype": "Code",
+   "options": "JSON"
   }
  ],
  "permissions": [
@@ -184,6 +197,13 @@
   {
    "role": "POS Integration User",
    "read": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "Super Admin",
+   "read": 1,
+   "write": 1,
    "report": 1,
    "export": 1
   }

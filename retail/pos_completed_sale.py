@@ -245,9 +245,36 @@ def restore(doc, method=None):
 	if doc.outstanding_amount < 0 and not doc.is_return:
 		doc.outstanding_amount = 0
 	doc.set_total_in_words()
+	from retail.pos_tax_breakup import update as update_tax_breakup
+	update_tax_breakup(doc)
 
 
 class RetailPOSInvoice(InvoicePriceProtection, POSInvoice):
+	def on_submit(self):
+		from retail.pos_offline_promotions import redeem_payment_loyalty
+		redeem_payment_loyalty(self)
+		return super().on_submit()
+
+	def validate(self):
+		from retail.loyalty_enrollment import prepare_invoice
+		prepare_invoice(self)
+		return super().validate()
+
+	def make_loyalty_point_entry(self):
+		# Payment-row loyalty is already a tender. Exclude its value from earning
+		# without setting native redemption fields (which would settle it twice).
+		from retail.pos_offline_promotions import rows, mode
+		from retail.loyalty_sales_invoice import RetailSalesInvoice
+		from retail.loyalty import lock_customer
+		lock_customer(self)
+		amount = self.loyalty_amount
+		try:
+			self.loyalty_amount = flt(amount) + (flt(self.conversion_rate) or 1) * sum(flt(row.get('amount'))
+				for _, row in rows(payload_for(self)) if mode(row) == 'Loyalty')
+			return RetailSalesInvoice.make_loyalty_point_entry(self)
+		finally:
+			self.loyalty_amount = amount
+
 	def validate_serialised_or_batched_item(self):
 		if payload_for(self):
 			from retail.pos_serials import allocate_missing_tracking

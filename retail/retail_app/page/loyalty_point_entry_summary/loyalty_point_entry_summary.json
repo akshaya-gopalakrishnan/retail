@@ -1,0 +1,15 @@
+{
+ "doctype": "Page",
+ "name": "loyalty-point-entry-summary",
+ "page_name": "loyalty-point-entry-summary",
+ "title": "Loyalty Point Entry",
+ "module": "Retail-app",
+ "standard": "Yes",
+ "system_page": 0,
+ "roles": [
+  {"role": "Accounts Manager"},
+  {"role": "Accounts User"},
+  {"role": "Auditor"},
+  {"role": "System Manager"}
+ ]
+}

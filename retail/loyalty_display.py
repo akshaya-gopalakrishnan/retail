@@ -41,7 +41,19 @@ def get_balances(names):
 
 
 def install():
+    from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
     from frappe.custom.doctype.property_setter.property_setter import make_property_setter
+    create_custom_fields({'Loyalty Point Entry': [dict(
+        fieldname='custom_customer_name', label='Customer Name', fieldtype='Data',
+        insert_after='customer', fetch_from='customer.customer_name', read_only=1,
+        in_list_view=1,
+    )]}, update=True)
+    entry = frappe.qb.DocType('Loyalty Point Entry')
+    customer = frappe.qb.DocType('Customer')
+    (frappe.qb.update(entry).join(customer).on(entry.customer == customer.name)
+        .set(entry.custom_customer_name, customer.customer_name)
+        .where(entry.custom_customer_name.isnull() | (entry.custom_customer_name == ''))
+    ).run()
     for prop, value, kind in [('autoname', 'field:custom_document_code', 'Data'),
                               ('title_field', 'custom_document_code', 'Data'),
                               ('show_title_field_in_link', 1, 'Check'),

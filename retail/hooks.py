@@ -743,6 +743,7 @@ scheduler_events = {"hourly": ["retail.document_codes.backfill_missing"]}
 # for receipt immutability/loyalty/posting; replacing them changes business logic.
 override_doctype_class = {  # nosemgrep: frappe-semgrep-rules.rules.override-doctype-class
 	"Batch": "retail.batch.RetailBatch",
+	"Serial and Batch Bundle": "retail.serial_batch_bundle.RetailSerialAndBatchBundle",
 	"Sales Invoice": "retail.loyalty_sales_invoice.RetailSalesInvoice",
 	"POS Invoice": "retail.pos_completed_sale.RetailPOSInvoice",
 	"POS Closing Entry": "retail.pos_realtime.RetailPOSClosingEntry",
@@ -1008,8 +1009,20 @@ override_whitelisted_methods["frappe.client.validate_link"] = "retail.pos_privil
 
 # Live ledger balances and readable loyalty document titles.
 doctype_js["Loyalty Point Entry"] = "public/js/loyalty_entry_display.js"
+doctype_js["POS Invoice"].append("public/js/forms/pos_invoice_layout.js")
+doc_events["POS Invoice"].setdefault("onload", []).append("retail.pos_invoice_layout.onload")
+after_sync.append("retail.pos_invoice_layout.execute")
+after_migrate.append("retail.pos_invoice_layout.execute")
+
+for _payment_breakdown_dt in ("Sales Invoice", "POS Invoice"):
+	doctype_js[_payment_breakdown_dt].append("public/js/forms/pos_payment_breakdown.js")
+	doc_events[_payment_breakdown_dt].setdefault("onload", []).append("retail.pos_payment_breakdown.onload")
+after_install.append("retail.pos_payment_breakdown.execute")
 doctype_list_js["Loyalty Point Entry"] = "public/js/loyalty_entry_display.js"
 after_sync.append("retail.loyalty_display.install")
+after_install.append("retail.customer_loyalty_names.install")
+after_migrate.append("retail.customer_loyalty_names.install")
+doc_events.setdefault("Loyalty Point Entry", {})["after_insert"] = "retail.customer_loyalty_names.on_entry"
 after_migrate.append("retail.loyalty_display.install")
 
 # Retail promotional card batches: additive schema, navigation and print helpers.
@@ -1031,6 +1044,13 @@ for _purchase_identity_dt in ("Purchase Invoice", "Purchase Receipt"):
 	doctype_js[_purchase_identity_dt].append("public/js/forms/purchase_stock_identity.js")
 
 # Item/serial/batch lookup on these lists, without overriding core endpoints.
+after_install.append("retail.pos_invoice_dates.execute")
+after_migrate.append("retail.pos_invoice_dates.configure")
+_pos_date_events = doc_events["POS Invoice"].get("before_validate", [])
+if isinstance(_pos_date_events, str):
+	_pos_date_events = [_pos_date_events]
+doc_events["POS Invoice"]["before_validate"] = [*_pos_date_events, "retail.pos_invoice_dates.set_business_date"]
+
 for _item_filter_dt in ("POS Invoice", "Sales Invoice", "Purchase Order", "Purchase Invoice", "Purchase Receipt"):
 	_scripts = doctype_list_js.get(_item_filter_dt, [])
 	if isinstance(_scripts, str):
@@ -1040,3 +1060,10 @@ for _item_filter_dt in ("POS Invoice", "Sales Invoice", "Purchase Order", "Purch
 	if isinstance(_conditions, str):
 		_conditions = [_conditions]
 	permission_query_conditions[_item_filter_dt] = [*_conditions, "retail.document_item_filters.query_conditions"]
+
+# Native Administrator and existing Super Admin can save audited POS corrections.
+for _recovery_dt in ("POS Sync Log", "POS Accepted Transaction", "POS Settlement Allocation", "POS Settlement Exception"):
+	_scripts = doctype_js.get(_recovery_dt, [])
+	if isinstance(_scripts, str):
+		_scripts = [_scripts]
+	doctype_js[_recovery_dt] = [*_scripts, "public/js/forms/pos_admin_recovery.js"]

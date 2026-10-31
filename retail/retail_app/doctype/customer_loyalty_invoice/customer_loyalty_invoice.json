@@ -1,0 +1,90 @@
+{
+ "doctype": "DocType",
+ "name": "Customer Loyalty Invoice",
+ "module": "Retail-app",
+ "istable": 1,
+ "editable_grid": 0,
+ "engine": "InnoDB",
+ "field_order": [
+  "posting_date",
+  "invoice_type",
+  "invoice",
+  "earned_points",
+  "used_points",
+  "expired_points",
+  "available_points",
+  "loyalty_programs"
+ ],
+ "fields": [
+  {
+   "fieldname": "posting_date",
+   "label": "Posting Date",
+   "fieldtype": "Date",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "invoice_type",
+   "label": "Invoice Type",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 1,
+   "options": "DocType"
+  },
+  {
+   "fieldname": "invoice",
+   "label": "Invoice",
+   "fieldtype": "Dynamic Link",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 2,
+   "options": "invoice_type"
+  },
+  {
+   "fieldname": "earned_points",
+   "label": "Earned Points",
+   "fieldtype": "Int",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "used_points",
+   "label": "Used Points",
+   "fieldtype": "Int",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 1,
+   "description": "Points redeemed on this invoice. Negative values show points restored by a return."
+  },
+  {
+   "fieldname": "expired_points",
+   "label": "Expired Points",
+   "fieldtype": "Int",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "available_points",
+   "label": "Available Points",
+   "fieldtype": "Int",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "loyalty_programs",
+   "label": "Loyalty Programs",
+   "fieldtype": "Small Text",
+   "read_only": 1,
+   "in_list_view": 0,
+   "columns": 0
+  }
+ ],
+ "permissions": [],
+ "actions": [],
+ "links": []
+}

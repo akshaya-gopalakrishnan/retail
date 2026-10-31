@@ -16,6 +16,7 @@ DEFAULT_FIELDS = {
 
 
 def install():
+    install_item_group_quick_entry()
     install_batch_valuation_default()
     _seed_defaults("retail.patches.batch_quick_entry_details", {
         "manufacturing_date": 1,
@@ -28,6 +29,10 @@ def install():
     }, doctype="Batch")
     _seed_defaults(PATCH, DEFAULT_FIELDS)
     _seed_defaults("retail.patches.item_quick_entry_brand", {"brand": 1})
+    _seed_defaults("retail.patches.item_quick_entry_scale", {
+        "custom_scale_item": 1,
+        "custom_scale_barcode_type": 1,
+    })
     _seed_defaults("retail.patches.item_quick_entry_tracking", {
         "has_batch_no": 1,
         "has_expiry_date": 1,
@@ -40,6 +45,21 @@ def install():
             {"tax_id": 1},
             doctype=doctype,
         )
+
+
+def install_item_group_quick_entry():
+    patch = "retail.patches.item_group_quick_entry"
+    if frappe.db.exists("Patch Log", {"patch": patch}):
+        return
+    make_property_setter(
+        "Item Group", None, "quick_entry", 1, "Check",
+        for_doctype=True, validate_fields_for_doctype=False,
+    )
+    _seed_defaults(patch, {
+        "item_group_name": 1,
+        "parent_item_group": 1,
+        "is_group": 1,
+    }, doctype="Item Group")
 
 
 def install_batch_valuation_default():

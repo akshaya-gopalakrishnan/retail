@@ -14,7 +14,12 @@ OPERATION = 'POS Promotion Redemption'
 
 
 def mode(row):
-    return row.get('mode_of_payment') or row.get('mode')
+    value = row.get('mode_of_payment') or row.get('mode') or row.get('mop')
+    if isinstance(value, str) and value.strip().lower() == 'loyalty':
+        return 'Loyalty'
+    if not value and flt(row.get('points')) > 0:
+        return 'Loyalty'
+    return value
 
 
 def rows(payload):
@@ -64,9 +69,13 @@ def account(company, payment_mode, reference=None):
 def native_payments(payload, counter):
     result = []
     for _, row in rows(payload):
+        reference = row.get('reference_no')
+        if mode(row) == 'Loyalty':
+            reference = reference or _assigned_active_program(payload.get('customer') or counter.get('default_customer'), counter.company,
+                payload.get('posting_date') or frappe.utils.today())
         result.append(dict(mode_of_payment=mode(row), amount=flt(row.get('amount')),
             reference_no=row.get('reference_no'),
-            account=account(counter.company, mode(row), row.get('reference_no'))))
+            account=account(counter.company, mode(row), reference)))
     difference = total_difference(payload)
     if difference:
         result.append(dict(mode_of_payment='Promotion Variance', amount=difference,
@@ -111,6 +120,24 @@ def audit(doc, index, row, reason, expected=None):
         erp_calculation_json=json.dumps(comparison, default=str), **audit_cashier_fields(doc)))
 
 
+def redeem_payment_loyalty(doc):
+    """Redeem this receipt's loyalty tenders once, before earning new points."""
+    if doc.is_return or doc.flags.get("payment_loyalty_redeemed"):
+        return
+    payload = frappe.parse_json(doc.get('custom_pos_completed_payload') or '{}')
+    payments = [(index, row) for index, row in rows(payload) if mode(row) == 'Loyalty']
+    if not payments:
+        return
+    from retail import loyalty
+    loyalty.lock_customer(doc)
+    if not frappe.db.exists('Loyalty Point Entry', {
+        'invoice_type': doc.doctype, 'invoice': doc.name, 'loyalty_points': ['<', 0]
+    }):
+        for index, row in payments:
+            _loyalty(doc, index, row)
+    doc.flags.payment_loyalty_redeemed = True
+
+
 def apply(doc):
     payload = frappe.parse_json(doc.get('custom_pos_completed_payload') or '{}')
     if not rows(payload) or doc.is_return:
@@ -122,16 +149,17 @@ def apply(doc):
             reference_no=doc.external_pos_reference), 'Payment portions differ from the recorded bill total; '
             'explicit promotion variance posted without changing customer credit', {'amount': 0})
     for index, row in rows(payload):
+        if mode(row) == 'Loyalty':
+            redeem_payment_loyalty(doc)
+            continue
         reference = 'PROMO-' + hashlib.sha256(f'{doc.external_pos_reference}:{index}'.encode()).hexdigest()
         request = dict(company=doc.company, customer=doc.customer, invoice=doc.name,
             payment_row=index + 1, payment=row)
         def effect(index=index, row=row):
-            if mode(row) == 'Loyalty':
-                _loyalty(doc, index, row)
-            else:
-                _voucher(doc, index, row)
+            _voucher(doc, index, row)
             return dict(status='Success', invoice_name=doc.name, doctype=doc.doctype, amount=flt(row.get('amount')))
-        pos_operations.execute(OPERATION, reference, request, effect)
+        pos_operations.execute(OPERATION, reference, request, effect,
+            log_type=OPERATION)
 
 
 def _voucher(doc, index, row):
@@ -178,8 +206,15 @@ def _voucher(doc, index, row):
         record(voucher, 'Redeemed', value, doc.external_pos_reference)
 
 
+def _assigned_active_program(customer, company, posting_date):
+    from retail.loyalty_enrollment import resolve
+    return resolve(customer, company, posting_date)
+
+
 def _loyalty(doc, index, row):
     reference = row.get('reference_no')
+    if not reference:
+        reference = _assigned_active_program(doc.customer, doc.company, doc.posting_date)
     if not reference or not frappe.db.exists('Loyalty Program', reference):
         audit(doc, index, row, 'Loyalty program source was not found', {'source_missing': True})
         return

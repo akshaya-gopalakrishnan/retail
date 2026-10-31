@@ -261,7 +261,9 @@ def _validate_legacy_operation(sync_type, payload):
 	previous = frappe.db.get_value("POS Sync Log",
 		{"external_reference": payload.get("external_pos_reference"), "status": ["in", ["Success", "Duplicate"]],
 		 "operation_key": ["is", "not set"]},
-		["sync_type", "request_json"], as_dict=True, order_by="creation asc")
+		["sync_type", "request_json", "original_request_json"], as_dict=True, order_by="creation asc")
+	if previous and previous.original_request_json:
+		previous.request_json = previous.original_request_json
 	if previous and previous.request_json:
 		compatible = {sync_type}
 		if sync_type in ("Sales Invoice", "Credit Sales Invoice"):

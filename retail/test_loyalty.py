@@ -50,6 +50,18 @@ class TestRetailLoyalty(FrappeTestCase):
     def balance(self):
         return loyalty.get_available_points(self.customer.name, self.company.name, self.program.name)["available_points"]
 
+    def test_existing_customer_automatically_earns_without_redemption(self):
+        self.program.db_set({'auto_opt_in': 1, 'from_date': today()})
+        self.addCleanup(lambda: frappe.db.set_value('Loyalty Program', self.program.name, 'auto_opt_in', 0))
+        frappe.db.set_value('Customer', self.customer.name, 'loyalty_program', None)
+        doc = self.invoice()
+        self.assertEqual(doc.loyalty_program, self.program.name)
+        self.assertFalse(doc.redeem_loyalty_points)
+        self.assertEqual(doc.loyalty_amount, 0)
+        self.assertEqual(frappe.db.get_value('Loyalty Point Entry',
+            {'invoice_type': 'Sales Invoice', 'invoice': doc.name}, 'loyalty_points'),
+            int(doc.base_grand_total / 10))
+
     def test_submission_redemption_cancellation_and_totals(self):
         earned = self.invoice()
         initial = int(earned.base_grand_total / 10)

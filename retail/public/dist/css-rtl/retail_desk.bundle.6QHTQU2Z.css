@@ -1,4 +1,4 @@
-/* ../../../../../tmp/tmp-20-euayziqRJHFu/retail/retail/public/retail_desk.bundle.css */
+/* ../../../../../tmp/tmp-38-U4Lf0NgYK5Mc/retail/retail/public/retail_desk.bundle.css */
 .retail-scrollable-grid .form-grid-container {
   overflow-x: auto !important;
   overflow-y: hidden !important;
@@ -1877,4 +1877,13 @@ html[data-retail-brand-theme] .indicator-pill-right:not(:empty) {
     grid-template-columns: minmax(0, 1fr);
   }
 }
-/*# sourceMappingURL=retail_desk.bundle.FOCE3BM7.css.map */
+.retail-compact-pos-invoice .form-section .form-group {
+  margin-bottom: 10px;
+}
+.retail-compact-pos-invoice .section-head {
+  margin-bottom: 8px;
+}
+.retail-compact-pos-invoice .control-label {
+  margin-bottom: 3px;
+}
+/*# sourceMappingURL=retail_desk.bundle.6QHTQU2Z.css.map */

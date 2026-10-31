@@ -24,7 +24,9 @@
   "operation_key",
   "voucher_code",
   "linked_invoice_type",
-  "linked_invoice"
+  "linked_invoice",
+  "correction_reason",
+  "original_request_json"
  ],
  "fields": [
   {
@@ -32,7 +34,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Sync Type",
-   "options": "Sales Invoice\nCredit Sales Invoice\nPayment Entry\nCustomer Deposit\nCustomer Invoice Payment\nCash Movement\nReturn\nItem Pull\nCustomer Pull\nMaster Data Pull\nShift Opening\nShift Pause\nShift Resume\nShift Closing\nShift Reopen\nCustomer Upsert\nQueue Error\nVoucher Redemption\nVoucher Reversal\nPOS Sale\nPOS Return\nDay Closing\nDay Reopen\nDay Recalculate\nDay Reclose\nDay Payment Adjustment\nBill MOP Correction\nBill Settlement Correction\nPOS Promotion Redemption",
+   "options": "Sales Invoice\nCredit Sales Invoice\nPayment Entry\nCustomer Deposit\nCustomer Invoice Payment\nCash Movement\nReturn\nItem Pull\nCustomer Pull\nMaster Data Pull\nShift Opening\nShift Pause\nShift Resume\nShift Closing\nShift Reopen\nCustomer Upsert\nQueue Error\nVoucher Redemption\nVoucher Reversal\nPOS Sale\nPOS Return\nDay Closing\nDay Reopen\nDay Recalculate\nDay Reclose\nDay Payment Adjustment\nBill MOP Correction\nBill Settlement Correction\nPOS Promotion Redemption\nPOS Loyalty Redemption",
    "reqd": 1
   },
   {
@@ -133,6 +135,19 @@
    "label": "Linked Invoice",
    "read_only": 1,
    "options": "linked_invoice_type"
+  },
+  {
+   "fieldname": "correction_reason",
+   "label": "Correction Reason",
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "original_request_json",
+   "label": "Original Request JSON",
+   "fieldtype": "Code",
+   "options": "JSON",
+   "read_only": 1,
+   "hidden": 1
   }
  ],
  "links": [],
@@ -165,6 +180,13 @@
    "role": "POS Integration User",
    "share": 0,
    "write": 0
+  },
+  {
+   "role": "Super Admin",
+   "read": 1,
+   "write": 1,
+   "report": 1,
+   "export": 1
   }
  ],
  "search_fields": "external_reference,erpnext_docname,status,branch,counter",

@@ -17,12 +17,15 @@ def key(kind, reference):
 
 
 def find(kind, reference):
-	return frappe.db.get_value("POS Sync Log", {"operation_key": key(kind, reference)},
-		["name", "request_json", "response_json", "status", "voucher_code", "linked_invoice", "linked_invoice_type"],
+	result = frappe.db.get_value("POS Sync Log", {"operation_key": key(kind, reference)},
+		["name", "request_json", "original_request_json", "response_json", "status", "voucher_code", "linked_invoice", "linked_invoice_type"],
 		as_dict=True, for_update=True)
+	if result and result.original_request_json:
+		result.request_json = result.original_request_json
+	return result
 
 
-def execute(kind, reference, request, action, voucher_code=None):
+def execute(kind, reference, request, action, voucher_code=None, log_type=None):
 	"""Claim before the effect; concurrent inserts wait on the UNIQUE index.
 
 	A savepoint permits a current read after the losing insert, including under
@@ -34,7 +37,7 @@ def execute(kind, reference, request, action, voucher_code=None):
 	encoded = canonical(request)
 	frappe.db.savepoint("pos_operation_claim")
 	doc = frappe.get_doc({
-		"doctype": "POS Sync Log", "sync_type": kind, "operation_key": operation_key,
+		"doctype": "POS Sync Log", "sync_type": log_type or kind, "operation_key": operation_key,
 		"external_reference": reference, "status": "Pending", "request_json": encoded,
 		"voucher_code": voucher_code, "attempt_count": 1,
 		"created_at": now_datetime(), "last_attempt_at": now_datetime(),
@@ -56,7 +59,7 @@ def execute(kind, reference, request, action, voucher_code=None):
 	from retail.pos_transaction_display import invoice_links
 	links = invoice_links(result)
 	from retail.pos_transaction_display import payload_transaction_type
-	display_type = payload_transaction_type(kind, request.get("payload") or {})
+	display_type = payload_transaction_type(log_type or kind, request.get("payload") or {})
 	result.setdefault("duplicate", False)
 	frappe.db.set_value("POS Sync Log", doc.name, {
 		"status": "Success", "response_json": canonical(result),

@@ -112,16 +112,41 @@ def _loyalty_snapshot(counter):
 	grouped = defaultdict(list)
 	for entry in entries:
 		grouped[(entry.customer, entry.loyalty_program)].append(entry)
+	active_entries = []
 	for movements in grouped.values():
+		movements = active_loyalty_entries(movements, as_of)
 		totals = _loyalty_point_totals(movements, as_of)
 		totals["available_points"] = sum(balance for _, balance in available_buckets(movements, as_of))
 		for entry in movements:
 			entry.update(totals)
 			entry["as_of_date"] = as_of
+		active_entries.extend(movements)
 	return {
-		"loyalty_point_entries": entries,
+		"loyalty_point_entries": active_entries,
 		"loyalty_snapshot": {"mode": "full", "company": counter.company, "as_of_date": as_of},
 	}
+
+
+def active_loyalty_entries(entries, as_of):
+	"""Keep redeemable earning buckets and their movements, preserving signed values."""
+	posted = [entry for entry in entries if entry.posting_date
+		and getdate(entry.posting_date) <= getdate(as_of)]
+	cutoff = getdate(as_of)
+	movements = defaultdict(int)
+	for entry in posted:
+		if entry.redeem_against:
+			movements[entry.redeem_against] += cint(entry.loyalty_points)
+	active = {entry.name for entry in posted if not entry.redeem_against
+		and cint(entry.loyalty_points) > 0
+		and entry.expiry_date and getdate(entry.expiry_date) >= cutoff
+		and cint(entry.loyalty_points) + movements[entry.name] > 0}
+	# Preserve overdrawn buckets and POS debt so later earnings cannot hide debt.
+	debt = {entry.name for entry in posted if not entry.redeem_against
+		and ((cint(entry.loyalty_points) >= 0
+			and cint(entry.loyalty_points) + movements[entry.name] < 0)
+			or (cint(entry.loyalty_points) < 0 and entry.get("invoice_type") == "POS Invoice"))}
+	return [entry for entry in posted if entry.name in active | debt
+		or entry.redeem_against in active | debt]
 
 
 

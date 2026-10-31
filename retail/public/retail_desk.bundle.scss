@@ -5,3 +5,9 @@
 @import "./css/workspace_glass";
 @import "./css/pages/van_stock_view";
 @import "./css/sidebar_permissions";
+// Compact POS receipt fields without changing item-grid dimensions or preferences.
+.retail-compact-pos-invoice {
+  .form-section .form-group { margin-bottom: 10px; }
+  .section-head { margin-bottom: 8px; }
+  .control-label { margin-bottom: 3px; }
+}

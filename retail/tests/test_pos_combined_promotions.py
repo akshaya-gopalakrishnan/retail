@@ -120,12 +120,12 @@ class TestPOSCombinedPromotions(unittest.TestCase):
 			self.entry("FUTURE", 300, posting_date="2026-10-23"),
 			self.entry("NO-EXPIRY", 400, expiry_date=None)]
 		result = self.loyalty_snapshot(entries)
-		self.assertEqual(len(result["loyalty_point_entries"]), 6)
+		self.assertEqual(len(result["loyalty_point_entries"]), 3)
 		balance = result["loyalty_point_entries"][0]
 		self.assertEqual(balance["available_points"], 75)
-		self.assertEqual(balance["earned_points"], 700)
+		self.assertEqual(balance["earned_points"], 100)
 		self.assertEqual(balance["used_points"], 25)
-		self.assertEqual(balance["expired_points"], 200)
+		self.assertEqual(balance["expired_points"], 0)
 		self.assertEqual(result["loyalty_snapshot"],
 			{"mode": "full", "company": "nesto", "as_of_date": "2026-10-22"})
 
@@ -157,11 +157,7 @@ class TestPOSCombinedPromotions(unittest.TestCase):
 		entries = [self.entry("EXPIRED", 100, expiry_date="2026-10-21"),
 			self.entry("SPEND", -30, redeem_against="EXPIRED"),
 			self.entry("RESTORE", 10, redeem_against="EXPIRED")]
-		balance = self.loyalty_snapshot(entries)["loyalty_point_entries"][0]
-		self.assertEqual(balance["earned_points"], 100)
-		self.assertEqual(balance["used_points"], 20)
-		self.assertEqual(balance["expired_points"], 80)
-		self.assertEqual(balance["available_points"], 0)
+		self.assertEqual(self.loyalty_snapshot(entries)["loyalty_point_entries"], [])
 
 	def test_expiry_today_stays_available_and_future_earning_is_not_earned_yet(self):
 		entries = [self.entry("TODAY", 50, expiry_date="2026-10-22"),
