@@ -17,6 +17,8 @@ import "./js/van_document_wrapper.js";
 import "./js/local_draft_recovery.js";
 import "./js/forms/transaction_items.js";
 import "./js/forms/batch_quick_entry.js";
+import "./js/forms/retail_quick_entry.js";
+import "./js/forms/item_quick_entry.js";
 import "./js/scale_sales.js";
 import "./js/zebra_label_loader.js";
 import "./js/brand_theme_switcher.js";

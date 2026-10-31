@@ -800,9 +800,7 @@ def _filter_workspace_sidebar_items(sidebar, report_pages=None):
 		loyalty_links = (
 			("Loyalty Program", "Loyalty Program", "List"),
 			("Loyalty Program List", "Loyalty Program", "List"),
-			("Loyalty Program Report", "Loyalty Program", "Report"),
 			("Loyalty Point Entry", "Loyalty Point Entry", "List"),
-			("Loyalty Point Entry Report", "Loyalty Point Entry", "Report"),
 		)
 		if frappe.has_permission("Loyalty Program", "read"):
 			for label, doctype, view in loyalty_links:
@@ -815,7 +813,7 @@ def _filter_workspace_sidebar_items(sidebar, report_pages=None):
 					name=name, title=name, label=label,
 					parent_page="Promotions" if label == "Loyalty Program" else "Promotions Loyalty Program Link",
 					public=1, is_hidden=0, module="Accounts",
-					route=["List", doctype, view],
+					route=["List", "Customer Loyalty Balance" if doctype == "Loyalty Point Entry" else doctype, view],
 				))
 
 	from retail.sidebar_permissions import filter_sidebar

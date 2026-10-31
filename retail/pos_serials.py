@@ -1,6 +1,6 @@
 """Additive serial and batch fields for the existing offline POS contract."""
 import frappe
-from frappe.utils import cint, flt
+from frappe.utils import cint, flt, today
 
 
 def apply_master_serials(items, warehouse):
@@ -92,6 +92,7 @@ def allocate_missing_tracking(doc):
     from erpnext.stock.doctype.batch.batch import get_available_batches
     from erpnext.stock.doctype.serial_no.serial_no import get_serial_nos_for_outward
     from erpnext.stock.serial_batch_bundle import SerialBatchCreation
+    from erpnext.stock.stock_ledger import is_negative_stock_allowed
 
     if doc.is_return:
         # Native return allocation uses the original document's still-returnable
@@ -101,6 +102,7 @@ def allocate_missing_tracking(doc):
 
     used_batches = defaultdict(float)
     used_serials = set()
+    based_on = frappe.db.get_single_value("Stock Settings", "pick_serial_and_batch_based_on") or "FIFO"
     for row in doc.items:
         if row.get("use_serial_batch_fields"):
             used_serials.update((row.get("serial_no") or "").splitlines())
@@ -122,7 +124,7 @@ def allocate_missing_tracking(doc):
             continue
         qty = abs(flt(row.stock_qty))
         kwargs = frappe._dict(item_code=row.item_code, warehouse=row.warehouse,
-            qty=qty, based_on="FIFO", posting_date=doc.posting_date, posting_time=doc.posting_time,
+            qty=qty, based_on=based_on, posting_date=doc.posting_date, posting_time=doc.posting_time,
             ignore_serial_nos=list(used_serials))
         args = dict(item_code=row.item_code, warehouse=row.warehouse, qty=qty,
             voucher_type=doc.doctype, voucher_no=None if doc.is_new() else doc.name, voucher_detail_no=row.name,
@@ -136,11 +138,16 @@ def allocate_missing_tracking(doc):
                 frappe.throw(f"Insufficient available serial stock for Item {row.item_code}.")
             used_serials.update(args["serial_nos"])
         else:
-            # Fetch all FIFO batches, then deduct this receipt's earlier rows.
+            # Fetch batches in the configured order, deducting earlier rows.
+            allow_negative = cint(frappe.db.get_single_value(
+                "Stock Settings", "allow_negative_stock_for_batch"
+            )) and is_negative_stock_allowed(item_code=row.item_code)
             kwargs.qty = 0
+            kwargs.consider_negative_batches = bool(allow_negative)
+            available_batches = get_available_batches(kwargs)
             remaining = qty
             selected = {}
-            for batch, available in get_available_batches(kwargs).items():
+            for batch, available in available_batches.items():
                 key = (row.item_code, row.warehouse, batch)
                 take = min(remaining, max(0, flt(available) - used_batches[key]))
                 if take:
@@ -150,7 +157,29 @@ def allocate_missing_tracking(doc):
                 if remaining <= 0:
                     break
             if remaining > 0:
-                frappe.throw(f"Insufficient available batch stock for Item {row.item_code}.")
+                if not allow_negative:
+                    frappe.throw(f"Insufficient available batch stock for Item {row.item_code}.")
+                if not available_batches:
+                    # A backdated sale may precede the batch's first receipt.
+                    # Negative stock needs a valid identity, not prior stock.
+                    batch_order = "creation desc, name desc" if based_on == "LIFO" else "creation asc, name asc"
+                    batches = frappe.get_all("Batch",
+                        filters={"item": row.item_code, "disabled": 0},
+                        or_filters=[["expiry_date", ">=", today()],
+                                    ["expiry_date", "is", "not set"]],
+                        fields=["name", "expiry_date"], order_by=batch_order, limit_page_length=0)
+                    if based_on == "Expiry":
+                        batches.sort(key=lambda batch: str(batch.expiry_date or "9999-12-31"))
+                    if not batches:
+                        frappe.throw(
+                            f"No enabled, unexpired batch exists for Item {row.item_code}. "
+                            "Create a valid batch to allow negative batch stock."
+                        )
+                    available_batches = {batches[0].name: 0}
+                # Assign the shortage using the configured selection order.
+                batch = next(iter(available_batches))
+                selected[batch] = selected.get(batch, 0) + remaining
+                used_batches[(row.item_code, row.warehouse, batch)] += remaining
             args["batches"] = selected
         row.serial_and_batch_bundle = SerialBatchCreation(args).make_serial_and_batch_bundle().name
         # Item-detail defaults may fill legacy fields before this validation.

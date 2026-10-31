@@ -92,6 +92,7 @@ def registry():
             if name == "Promotions Loyalty Program Link":
                 child["label"] = "Loyalty Program"
                 child["targets"].append(["doctype", "Loyalty Point Entry"])
+                child["targets"].append(["page", "loyalty-point-entry-summary"])
             if root == "Promotions":
                 child["label"] = "Voucher Cards" if name == "Promotions Voucher Card Batch Link" else name.removeprefix("Promotions ").removesuffix(" Link")
             if name == "Stock Request":

@@ -79,3 +79,9 @@ retail.patches.show_purchase_stock_identity
 retail.patches.setup_sales_order_app_reference
 retail.patches.repair_purchase_grid_defaults
 retail.patches.show_pos_invoice_item_names
+retail.patches.setup_pos_payment_breakdown
+retail.patches.show_credit_notes_in_payment_grid
+retail.patches.compact_pos_invoice_layout
+retail.patches.repair_pos_tax_breakup
+retail.patches.show_pos_invoice_dates
+retail.patches.move_pos_business_date

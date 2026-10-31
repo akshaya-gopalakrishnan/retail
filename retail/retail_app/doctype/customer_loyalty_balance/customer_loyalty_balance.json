@@ -1,0 +1,141 @@
+{
+ "doctype": "DocType",
+ "name": "Customer Loyalty Balance",
+ "module": "Retail-app",
+ "is_virtual": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "customer",
+  "customer_name",
+  "company",
+  "loyalty_programs",
+  "earned_points",
+  "used_points",
+  "expired_points",
+  "available_points",
+  "as_of_date",
+  "invoice_section",
+  "invoice_count",
+  "invoices"
+ ],
+ "fields": [
+  {
+   "fieldname": "customer",
+   "label": "Customer",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "options": "Customer"
+  },
+  {
+   "fieldname": "customer_name",
+   "label": "Customer Name",
+   "fieldtype": "Data",
+   "read_only": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "company",
+   "label": "Company",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "in_list_view": 0,
+   "in_standard_filter": 1,
+   "options": "Company"
+  },
+  {
+   "fieldname": "loyalty_programs",
+   "label": "Loyalty Programs",
+   "fieldtype": "Small Text",
+   "read_only": 1,
+   "in_list_view": 0,
+   "in_standard_filter": 0
+  },
+  {
+   "fieldname": "earned_points",
+   "label": "Earned Points",
+   "fieldtype": "Int",
+   "read_only": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 0
+  },
+  {
+   "fieldname": "used_points",
+   "label": "Used Points",
+   "fieldtype": "Int",
+   "read_only": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 0
+  },
+  {
+   "fieldname": "expired_points",
+   "label": "Expired Points",
+   "fieldtype": "Int",
+   "read_only": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 0
+  },
+  {
+   "fieldname": "available_points",
+   "label": "Available Points",
+   "fieldtype": "Int",
+   "read_only": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 0
+  },
+  {
+   "fieldname": "as_of_date",
+   "label": "As of Date",
+   "fieldtype": "Date",
+   "read_only": 1,
+   "in_list_view": 0,
+   "in_standard_filter": 0
+  },
+  {
+   "fieldname": "invoice_section",
+   "label": "Invoices",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "invoice_count",
+   "label": "Invoice Count",
+   "fieldtype": "Int",
+   "read_only": 1
+  },
+  {
+   "fieldname": "invoices",
+   "label": "Invoice Points",
+   "fieldtype": "Table",
+   "options": "Customer Loyalty Invoice",
+   "read_only": 1,
+   "cannot_add_rows": 1,
+   "cannot_delete_rows": 1
+  }
+ ],
+ "search_fields": "customer,customer_name,company",
+ "sort_field": "name",
+ "sort_order": "ASC",
+ "default_view": "List",
+ "permissions": [
+  {
+   "role": "Accounts Manager",
+   "read": 1
+  },
+  {
+   "role": "Accounts User",
+   "read": 1
+  },
+  {
+   "role": "Auditor",
+   "read": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1
+  }
+ ],
+ "actions": [],
+ "links": []
+}

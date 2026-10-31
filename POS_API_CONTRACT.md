@@ -752,6 +752,15 @@ For a fully paid cash/card bill, send `credit_sale_amount: 0` and
 Each redemption row preserves the credit note's permanent POS reference and the
 requested amount; multiple rows are supported.
 
+ERP POS Invoice and linked Sales Invoice forms show Credit Note Redeemed,
+Credit Note Issued, Credit Sale and Original Debt Reduction as read-only rows
+inside the existing Sales Invoice Payment grid, alongside cash/card tenders.
+Their amount is the requested settlement amount; hover a settlement row for its
+reference and status. These display rows never enter native `payments` or alter
+paid amounts. Existing reconciliation remains authoritative. No additional
+terminal fields or separate invoice section are needed. Reload the invoice to
+refresh settlement status.
+
 Request JSON:
 
 ```json
@@ -1101,6 +1110,20 @@ actual customer; zero VAT and money value 1 per loyalty point):
 }
 ```
 
+ERP checks loyalty eligibility for every new Sales Invoice and POS Invoice, using
+the invoice date, company, customer group (including descendants), and territory.
+The newest applicable program (start date, then creation date) is selected.
+Automatic enrollment requires `auto_opt_in`; an already enrolled customer can
+also use their eligible manually assigned program. No earned-point fields are
+required from .NET. The existing customer snapshot uses the same selection.
+
+A Loyalty tender requests redemption only. Its `reference_no` may be omitted;
+ERP resolves the eligible program and uses its expense account. If `points` is
+omitted, ERP derives the count from the amount and conversion factor. Existing
+`mode_of_payment` / `mode` work; `mop: "Loyalty"` and a payment row with positive
+`points` and no mode are also recognized. Loyalty-paid amounts do not earn new
+points; any remaining eligible sale amount can earn points independently.
+
 ERP posts the new promotion amounts through server-owned promotion accounts, not
 the cashier's cash/bank accounts. It deducts the intended voucher amounts and points
 once, including an audited overdraft when a known same-company source has less
@@ -1122,8 +1145,9 @@ increase the intended customer credit. .NET does not send a variance row.
 
 Audit findings appear in the existing **External POS Rate Audit** with source
 reference, payment-row details, original POS amount/points, ERP comparison and
-reason. Each source movement has an internal immutable **POS Promotion Redemption**
-receipt. Exact retries cannot deduct balances again. Technical/database posting
+reason. Loyalty movements have an internal immutable **POS Loyalty Redemption**
+receipt; voucher movements retain **POS Promotion Redemption** receipts. The sale
+receipt and redemption receipt are separate audit records for the same invoice. Exact retries cannot deduct balances again. Technical/database posting
 failures retain the completed bill for existing internal recovery; a retained
 acceptance is not a claim that accounting has posted.
 
@@ -1741,7 +1765,7 @@ credit-limit, unused-credit-note and settlement fields. Each row additionally ha
 | `loyalty_program`, `loyalty_program_name`, `loyalty_program_tier` | Assigned program in the counter company; null when none. |
 | `loyalty_conversion_factor` | Money per point; zero without an assigned program. |
 | `loyalty_balances` | One row per customer/program with `earned_points`, `used_points`, `expired_points`, `available_points`, `conversion_factor`, `redeemable_amount`, `currency`, `as_of_date`. Includes a zero balance for an assigned program without entries. |
-| `loyalty_point_entries` | Full company-scoped customer point history, with program/tier, points, purchase amount, posting/expiry dates, redemption linkage, invoice type/reference and modified timestamp. |
+| `loyalty_point_entries` | Active company-scoped earning buckets and their linked signed movements as of `promotions_as_of`; expired, future, and fully spent buckets are omitted. Original ledger values are preserved. |
 | `gift_vouchers` | Only vouchers directly linked to this customer and company: code/ID, original value, remaining balance, status, issue/expiry dates, promotion, issue/redemption invoice references, company/warehouse, currency and card controls. `valid`/`reason` reflect current usability. |
 | `promotions_as_of` | Server date for this snapshot. |
 
@@ -1942,7 +1966,7 @@ Response sections:
 | `buy_x_get_y_promotions` | Buy/free quantities, same-product flag, qualifying scope and Buy Item/Free Item rows. |
 | `gift_voucher_promotions` | Qualifying spend, voucher value, multiplication, expiry days and excluded categories. |
 | `loyalty_programs` | Program dates, customer eligibility, conversion factor and earning tiers. Includes future/expired programs; check dates locally. |
-| `loyalty_point_entries` | Full company snapshot of signed ledger entries, with earned/used/expired/available totals for each entry's customer/program. |
+| `loyalty_point_entries` | Full replacement snapshot of active earning buckets and linked signed movements, with customer/program totals as of the snapshot date. |
 | `loyalty_snapshot` | Snapshot metadata: `mode: "full"`, company and balance date. |
 | `voucher_card_batches` | Card values, quantities, activation dates/times, restrictions, logo and terms. |
 | `gift_voucher_ledger` | Card and promotion voucher codes, amounts, balances, status, eligibility, customers and references. |
@@ -2000,22 +2024,12 @@ Customer/program totals repeat on each ledger entry; there is no separate balanc
   Original signed `loyalty_points`, entry identity, tier and invoice fields
   remain unchanged. Only actual ledger entries are returned: customers with
   no entries have no row, and no synthetic ledger entries are created.
-- `earned_points`: total original positive earning buckets posted on or before
-  `as_of_date`, including subsequently used/expired buckets. Restoration rows
-  do not count as new earnings. Future-posted earning buckets are excluded.
-- `used_points`: net points consumed against those earning buckets, after
-  subtracting linked point restorations. Movements are matched through
-  `redeem_against`, within the same customer/program, using the same movement
-  treatment as the existing Retail available-balance calculation.
-- `expired_points`: the unused remainder of expired earning buckets after
-  their redemptions/restorations. Spent points are not also counted as expired.
-  Expiry is strictly before `as_of_date`; points expiring today remain available
-  under the existing Retail rule.
-- For normal dated earning buckets, `earned_points - used_points -
-  expired_points = available_points`. A bucket with no expiry date counts as
-  earned, but current Retail rules exclude it from available points; it is not
-  falsely labelled expired. Such legacy data may not reconcile using only
-  these four totals. No existing availability calculation is changed.
+- `earned_points` and `used_points` summarize only the included active buckets and
+  linked movements. `expired_points` is zero: expired buckets are omitted.
+  Future-posted and fully spent buckets are omitted; expiry today remains active.
+  Entries with no expiry date are not spendable and are omitted.
+  Overdrawn buckets and standalone POS debt are retained only to preserve offsets
+  against later earnings. Original signed ledger values are never rewritten.
 - `available_points` uses the existing Retail bucket calculation, not a raw
   sum of ledger points. It includes signed movements against their earning
   bucket, excludes expired and future-posted earning buckets, and retains
@@ -5197,6 +5211,21 @@ minutes. The .NET client uses the existing sale/return APIs and the existing
 `get_sync_status` API only. No new API call is required for settlement resolution,
 and no completed POS payload is edited by recovery.
 
+Administrator and users assigned the existing `Super Admin` role can correct an
+unposted bill in Desk. In POS Sync Log, edit `Request JSON`; in POS Accepted
+Transaction, POS Settlement Allocation or POS Settlement Exception, edit
+`Correction Payload JSON`. Supply `Correction Reason`, then use the native Save
+button. `Post / Retry` saves pending edits first and invokes the existing posting
+and settlement service. Other roles cannot save these corrections or invoke the
+admin action. The action supports sale and return logs.
+
+The original accepted payload and original operation request remain retained;
+terminal retries still compare against the original request. Saved corrections
+are used by manual and scheduled recovery, with allocation amounts rebuilt before
+posting. Posted bills cannot have their payload changed here; their unfinished
+settlements can be retried. Successful reconciliation marks historical exception
+rows `Reconciled` with `resolved_at`, retaining their original diagnostic details.
+
 ### Customer views, reports and closing
 
 Customer master/balance responses add `current_receivable`, `available_credit`,
@@ -5742,3 +5771,7 @@ Pricing and field rules:
 Deployment: run the normal Retail site migration before using these APIs. It adds only the
 unique App Order ID field needed for safe order retries. Development field setup and
 rollback-only integration verification were performed on retail-test.localhost.
+
+Loyalty active snapshot: both customer and promotion downloads replace cached point entries on every sync, including incremental requests. Do not merge with old expired cached entries. Historical JSON examples above may contain expired rows; those rows are no longer returned.
+
+For `payments[]` with `mode_of_payment: "Loyalty"`, an empty or omitted `reference_no` resolves the customer's assigned Loyalty Program only when its company matches the invoice and its dates include the invoice posting date. An explicit reference is preserved and never replaced by this fallback. Numeric `points` is the quantity redeemed; `amount` is its monetary value. This applies to newly processed operations; previously completed promotion-redemption operations are not replayed automatically.

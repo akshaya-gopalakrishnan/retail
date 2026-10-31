@@ -137,12 +137,12 @@ class TestWorkspaceReportSidebar(unittest.TestCase):
 		self.patch(workspace_permissions, "_workspace_has_route_permission", return_value=True)
 		pages = workspace_permissions.get_workspace_sidebar_items()["pages"]
 		loyalty = [page for page in pages if page.get("label", "").startswith("Loyalty")]
-		self.assertEqual(len(loyalty), 5)
+		self.assertEqual(len(loyalty), 3)
 		self.assertEqual(loyalty[0].parent_page, "Promotions")
 		for page in loyalty[1:]:
 			self.assertEqual(page.parent_page, loyalty[0].name)
-		self.assertEqual(loyalty[2].route, ["List", "Loyalty Program", "Report"])
-		self.assertEqual(loyalty[4].route, ["List", "Loyalty Point Entry", "Report"])
+		self.assertEqual(loyalty[1].route, ["List", "Loyalty Program", "List"])
+		self.assertEqual(loyalty[2].route, ["List", "Customer Loyalty Balance", "List"])
 		self.has_permission.side_effect = lambda doctype, permission: permission != "report"
 		pages = workspace_permissions.get_workspace_sidebar_items()["pages"]
 		self.assertEqual([page.label for page in pages if page.get("label", "").startswith("Loyalty")],

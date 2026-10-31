@@ -45,6 +45,8 @@ class RetailSalesInvoice(InvoicePriceProtection, SalesInvoice):
     def validate(self):
         if self.is_consolidated:
             return super().validate()
+        from retail.loyalty_enrollment import prepare_invoice
+        prepare_invoice(self)
         if self.docstatus == 1 and self.customer:
             loyalty.lock_customer(self)
         if self.is_return:
@@ -112,8 +114,10 @@ class RetailSalesInvoice(InvoicePriceProtection, SalesInvoice):
         eligible = max(0, (flt(self.base_grand_total) - flt(self.loyalty_amount)) * (1 - proportion))
         points = cint(eligible / (flt(details.collection_factor) or 1))
         entries = loyalty.ledger_entries(self.customer, self.loyalty_program, self.company, lock=True)
-        existing = next((e for e in entries if e.invoice_type == "Sales Invoice" and
+        existing = next((e for e in entries if e.invoice_type == self.doctype and
                          e.invoice == self.name and not e.redeem_against), None)
+        if not points and not existing:
+            return
         if existing:
             used = sum(cint(e.loyalty_points) for e in entries if e.redeem_against == existing.name)
             if points + used < 0:
