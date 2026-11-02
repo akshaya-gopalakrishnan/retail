@@ -45,24 +45,18 @@
 					scale ? dialog.get_value("custom_scale_barcode_type") || "Weight" : ""
 				);
 			}
-			if (!scale) {
-				dialog.doc.__retail_scale_barcode_preview = null;
-				await dialog.set_value(
-					"custom_barcode",
-					String(1000000000000 + Math.floor(Math.random() * 9000000000000))
-				);
-				return;
-			}
 			const { message } = await frappe.call({
 				method: "retail.api.scale_item_api.preview_scale_barcode",
+				args: { scale_item: scale ? 1 : 0 },
 			});
 			if (
 				generation !== this.barcode_generation ||
-				!Number(dialog.get_value("custom_scale_item")) ||
+				(Number(dialog.get_value("custom_scale_item")) === 1) !== scale ||
 				dialog.get_value("custom_barcode") !== previous
 			)
 				return;
-			dialog.doc.__retail_scale_barcode_preview = message;
+			dialog.doc.__retail_scale_barcode_preview = scale ? message : null;
+			dialog.doc.__retail_normal_barcode_preview = scale ? null : message;
 			await dialog.set_value("custom_barcode", message);
 		}
 	};

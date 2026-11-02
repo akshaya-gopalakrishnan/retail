@@ -5,11 +5,12 @@ from retail.domains.item.scale_export_service import export_scale_items
 
 
 @frappe.whitelist()
-def preview_scale_barcode():
+def preview_scale_barcode(scale_item=1):
 	frappe.has_permission("Item", "create", throw=True)
-	from retail.domains.item.scale_item_validation import get_next_scale_barcode
+	from frappe.utils import cint
+	from retail.domains.item.scale_item_validation import get_unique_item_barcode
 
-	return get_next_scale_barcode()
+	return get_unique_item_barcode(scale_item=bool(cint(scale_item)))
 
 
 @frappe.whitelist()

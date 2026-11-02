@@ -51,6 +51,8 @@
 
 	frappe.ui.form.on("Item", {
 		refresh(frm) {
+			setupSaveAndNew(frm);
+			setupLinkedMasterKeyboard(frm);
 			loadStockMarginCost(frm);
 			setDefaultVatIncludes(frm);
 			frm.set_df_property("custom_barcode", "reqd", true);
@@ -108,7 +110,7 @@
 			if (cint(frm.doc.custom_scale_item)) await previewScaleItemBarcode(frm);
 			else {
 				frm.doc.__retail_scale_barcode_preview = null;
-				await frm.set_value("custom_barcode", generateItemBarcode());
+				await frm.set_value("custom_barcode", await previewNormalItemBarcode(frm));
 			}
 			return setScaleItemDefaults(frm);
 		},
@@ -120,10 +122,90 @@
 		before_save(frm) { removeEmptyBarcodeRows(frm); },
 	});
 
+	function setupLinkedMasterKeyboard(frm) {
+		if (frm._retail_linked_master_keyboard) return;
+		frm.wrapper.addEventListener("keydown", (event) => {
+			if (event.isComposing || event.key !== "Tab" || event.shiftKey
+				|| event.ctrlKey || event.metaKey || event.altKey) return;
+			const field = ["item_group", "brand"].map((name) => frm.fields_dict[name])
+				.find((control) => control?.$input?.[0] === event.target);
+			if (!field || field.df.read_only || field.df.only_select || event.target.disabled
+				|| event.target.readOnly || !frappe.model.can_create(field.get_options())) return;
+			event.preventDefault();
+			event.stopImmediatePropagation();
+			field.awesomplete?.close();
+			if (frm._retail_creating_linked_master) return;
+			frm._retail_creating_linked_master = true;
+			const previousEntry = frappe.quick_entry;
+			const callingLink = frappe._from_link;
+			const restore = () => {
+				frappe.quick_entry = previousEntry;
+				frappe._from_link = callingLink;
+				frm._retail_creating_linked_master = false;
+			};
+			frappe._from_link = null;
+			frappe.route_options = { name_field: field.get_label_value() };
+			frappe.ui.form.make_quick_entry(
+				field.get_options(),
+				(saved) => field.set_value(saved.name),
+				(dialog) => {
+					dialog.$wrapper.one("hidden.bs.modal", () => {
+						restore();
+						field.$input.focus();
+					});
+					// Native Quick Entry invokes its save callback just after hiding.
+					dialog.onhide = () => setTimeout(() => {
+						frappe._from_link = callingLink;
+					}, 0);
+				},
+				null,
+				true
+			).catch((error) => {
+				restore();
+				console.error(error);
+			});
+		}, true);
+		frm._retail_linked_master_keyboard = true;
+	}
+
+	function setupSaveAndNew(frm) {
+		if (!frm._retail_save_and_new_button) {
+			frm._retail_save_and_new_button = $("<button type='button' class='btn btn-primary btn-sm'></button>")
+				.text(__("Save + New"))
+				.insertBefore(frm.page.btn_primary)
+				.on("click", async () => {
+					if (frm._retail_save_and_new_busy) return;
+					frm._retail_save_and_new_busy = true;
+					const button = frm._retail_save_and_new_button;
+					button.prop("disabled", true);
+					const openNewItem = () => {
+						const doc = frappe.model.get_new_doc("Item");
+						return frappe.set_route("Form", "Item", doc.name);
+					};
+					try {
+						if (frm.is_dirty() || frm.is_new()) {
+							await frm.save("Save", (response) => {
+								if (!response.exc) openNewItem();
+							}, button, () => {});
+						} else {
+							await openNewItem();
+						}
+					} finally {
+						frm._retail_save_and_new_busy = false;
+						button.prop("disabled", false);
+					}
+				});
+		}
+		frm._retail_save_and_new_button.toggle(
+			Boolean(frappe.model.can_create("Item") && (frm.is_new() || frm.perm[0]?.write)
+				&& frm.toolbar.can_save() && !frm.save_disabled)
+		);
+	}
+
 	async function ensureItemBarcode(frm) {
 		if (frm.doc.custom_barcode) return;
 		if (cint(frm.doc.custom_scale_item)) await previewScaleItemBarcode(frm);
-		else await frm.set_value("custom_barcode", generateItemBarcode());
+		else await frm.set_value("custom_barcode", await previewNormalItemBarcode(frm));
 		const newBarcode = frm.doc.custom_barcode;
 		if (newBarcode) {
 			frappe.show_alert({
@@ -179,8 +261,18 @@
 		await frm.set_value("custom_barcode", message);
 	}
 
-	function generateItemBarcode() {
-		return String(1000000000000 + Math.floor(Math.random() * 9000000000000));
+	async function previewNormalItemBarcode(frm) {
+		const request = (frm._normal_barcode_request || 0) + 1;
+		frm._normal_barcode_request = request;
+		const previous = frm.doc.custom_barcode;
+		const { message } = await frappe.call({
+			method: "retail.api.scale_item_api.preview_scale_barcode",
+			args: { scale_item: 0 },
+		});
+		if (request !== frm._normal_barcode_request || cint(frm.doc.custom_scale_item)
+			|| frm.doc.custom_barcode !== previous) return frm.doc.custom_barcode;
+		frm.doc.__retail_normal_barcode_preview = message;
+		return message;
 	}
 
 	function addZebraLabelButton(frm) {

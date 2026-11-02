@@ -38,9 +38,40 @@ class TestScaleBarcodeGeneration(unittest.TestCase):
 			with self.assertRaises(frappe.ValidationError):
 				scale.get_unique_item_barcode(scale_item=True)
 
-	def test_normal_items_keep_random_barcode_generation(self):
-		with patch.object(scale, "generate_random_barcode", return_value="1234567890123"), \
-			patch.object(frappe.db, "exists", return_value=False), \
-			patch.object(scale, "get_next_scale_barcode") as allocate:
-			self.assertEqual(scale.get_unique_item_barcode(), "1234567890123")
+	def test_normal_starts_at_one_and_has_valid_check_digit(self):
+		with patch.object(frappe.db, "sql", return_value=[]):
+			self.assertEqual(scale.get_unique_item_barcode(), "2000000000015")
+			self.assertEqual(scale.get_unique_item_barcode(), "2000000000015")
+
+	def test_normal_fills_gap_including_child_barcodes(self):
+		with patch.object(frappe.db, "sql", side_effect=[
+			[], [(scale.normal_barcode(1),), (scale.normal_barcode(4),)],
+			[(scale.normal_barcode(2),)],
+		]) as query:
+			self.assertEqual(scale.get_unique_item_barcode(), "2000000000039")
+			self.assertTrue(all("for update" in call.args[0] for call in query.call_args_list))
+
+	def test_normal_ignores_unrelated_and_invalid_check_digits(self):
+		with patch.object(frappe.db, "sql", side_effect=[
+			[], [("2000000000010",), ("200abcdefghij",)], [],
+		]):
+			self.assertEqual(scale.get_unique_item_barcode(), "2000000000015")
+
+	def test_normal_preview_is_reallocated_at_save(self):
+		doc = frappe._dict(custom_scale_item=0, custom_barcode="2000000000015",
+			__retail_normal_barcode_preview="2000000000015", name="NEW")
+		doc.get_doc_before_save = lambda: None
+		with patch.object(scale, "get_unique_item_barcode", return_value="2000000000022") as allocate:
+			scale.ensure_item_barcode(doc)
+			self.assertEqual(doc.custom_barcode, "2000000000022")
+			self.assertIsNone(doc.__retail_normal_barcode_preview)
+			allocate.assert_called_once_with("NEW", scale_item=False)
+
+	def test_manual_barcode_is_preserved(self):
+		doc = frappe._dict(custom_scale_item=0, custom_barcode="1234567890128", name="NEW")
+		doc.get_doc_before_save = lambda: None
+		with patch.object(frappe.db, "exists", return_value=False), \
+			patch.object(scale, "get_unique_item_barcode") as allocate:
+			scale.ensure_item_barcode(doc)
+			self.assertEqual(doc.custom_barcode, "1234567890128")
 			allocate.assert_not_called()
