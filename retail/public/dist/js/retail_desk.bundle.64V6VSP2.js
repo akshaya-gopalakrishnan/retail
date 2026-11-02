@@ -7243,6 +7243,12 @@
             queueVatTaxRowsSync(frm);
             renderTransactionTotals(frm);
           },
+          uom(frm, cdt, cdn) {
+            syncVatRates(frm, cdt, cdn, "rate");
+          },
+          conversion_factor(frm, cdt, cdn) {
+            syncVatRates(frm, cdt, cdn, "rate");
+          },
           custom_rate_including_vat(frm, cdt, cdn) {
             syncVatRates(frm, cdt, cdn, "inclusive");
             queueVatTaxRowsSync(frm);
@@ -7384,8 +7390,13 @@
         if (!isEditableDraft(frm))
           return;
         const row = (_a = locals[cdt]) == null ? void 0 : _a[cdn];
-        if (!row || row.__retail_vat_syncing || !row.item_code)
+        if (!row || !row.item_code)
           return;
+        if (row.__retail_vat_syncing) {
+          if (source === "rate" || source === "qty")
+            row.__retail_vat_refresh_pending = true;
+          return;
+        }
         if (!frappe.meta.get_docfield(cdt, "custom_rate_including_vat", cdn))
           return;
         row.__retail_vat_syncing = true;
@@ -7442,8 +7453,13 @@
           queueVatTaxRowsSync(frm);
           renderTransactionTotals(frm);
         } finally {
-          if (row)
+          if (row) {
             row.__retail_vat_syncing = false;
+            if (row.__retail_vat_refresh_pending) {
+              delete row.__retail_vat_refresh_pending;
+              await syncVatRates(frm, cdt, cdn, "rate");
+            }
+          }
         }
       }
       function queueVatTaxRowsSync(frm) {
@@ -7975,9 +7991,7 @@
           if (this.dialog.working || this.keyboard_busy)
             return;
           this.keyboard_busy = true;
-          this.commit_field(field).then(
-            () => event.key === "Enter" ? this.save_and_close() : this.save_and_new()
-          ).finally(() => {
+          this.commit_field(field).then(() => this.save_and_close()).finally(() => {
             this.keyboard_busy = false;
           });
           return;
@@ -8140,20 +8154,14 @@
             scale ? dialog.get_value("custom_scale_barcode_type") || "Weight" : ""
           );
         }
-        if (!scale) {
-          dialog.doc.__retail_scale_barcode_preview = null;
-          await dialog.set_value(
-            "custom_barcode",
-            String(1e12 + Math.floor(Math.random() * 9e12))
-          );
-          return;
-        }
         const { message } = await frappe.call({
-          method: "retail.api.scale_item_api.preview_scale_barcode"
+          method: "retail.api.scale_item_api.preview_scale_barcode",
+          args: { scale_item: scale ? 1 : 0 }
         });
-        if (generation !== this.barcode_generation || !Number(dialog.get_value("custom_scale_item")) || dialog.get_value("custom_barcode") !== previous)
+        if (generation !== this.barcode_generation || Number(dialog.get_value("custom_scale_item")) === 1 !== scale || dialog.get_value("custom_barcode") !== previous)
           return;
-        dialog.doc.__retail_scale_barcode_preview = message;
+        dialog.doc.__retail_scale_barcode_preview = scale ? message : null;
+        dialog.doc.__retail_normal_barcode_preview = scale ? null : message;
         await dialog.set_value("custom_barcode", message);
       }
     };
@@ -8735,4 +8743,4 @@
     ["Purchase Order", "Purchase Invoice", "Purchase Receipt"].map((doctype) => [doctype, user_grid_view_settings_default[doctype]])
   );
 })();
-//# sourceMappingURL=retail_desk.bundle.QUSR3Q76.js.map
+//# sourceMappingURL=retail_desk.bundle.64V6VSP2.js.map

@@ -130,9 +130,7 @@
 				if (this.dialog.working || this.keyboard_busy) return;
 				this.keyboard_busy = true;
 				this.commit_field(field)
-					.then(() =>
-						event.key === "Enter" ? this.save_and_close() : this.save_and_new()
-					)
+					.then(() => this.save_and_close())
 					.finally(() => {
 						this.keyboard_busy = false;
 					});

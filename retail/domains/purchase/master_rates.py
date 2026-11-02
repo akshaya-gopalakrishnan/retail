@@ -70,4 +70,45 @@ def _apply(doc, row, item, direction, net_rate, uom, factor):
 		conversion_factor=factor, vat_basis="Excluding VAT",
 		remarks="PR/PI Item Master checkbox: company currency, stock UOM; VAT from Item tax template.",
 	)
+	if direction == "Purchase":
+		_update_purchased_packing(item, uom, net_rate * factor)
+		_sync_purchase_lookup_prices(doc, row, item, uom, net_rate, factor)
 	frappe.clear_document_cache("Item", item.name)
+
+
+def _sync_purchase_lookup_prices(doc, row, item, uom, net_rate, factor):
+	"""Keep the price-list values used by new purchase rows aligned with the master."""
+	from retail.domains.item.item_price_sync import sync_item_price
+
+	currency = frappe.db.get_value("Price List", "Standard Buying", "currency")
+	price_currency_factor = _currency_factor(doc, currency)
+	source = {"doctype": doc.doctype, "name": doc.name, "company": doc.company, "row": row.name}
+	sync_item_price(item, "Standard Buying", net_rate / price_currency_factor,
+		uom=item.stock_uom, source=source)
+	if uom and uom != item.stock_uom:
+		sync_item_price(item, "Standard Buying", net_rate * factor / price_currency_factor,
+			uom=uom, source=source)
+
+
+def _update_purchased_packing(item, uom, packing_net_rate):
+	"""Update only the purchased packing, preserving its VAT entry mode."""
+	from retail.domains.item.vat_pricing import _get_packing_vat_status
+
+	for packing in item.get("custom_retail_packing_detail") or []:
+		if packing.get("uom") != uom:
+			continue
+		vat_rate = rate_audit._get_item_direction_vat_rate(item, "Purchase")
+		state = rate_audit._make_rate_state(packing_net_rate, vat_rate)
+		mode = packing.get("purchase_vat_mode") or "Excluding VAT"
+		frappe.db.set_value("Retail Packing Detail", packing.name, {
+			"purchase_rate": state["gross"] if mode == "Including VAT" else state["net"],
+			"purchase_vat_mode": mode,
+			"purchase_vat_rate": vat_rate,
+			"purchase_net_rate": state["net"],
+			"purchase_vat_amount": state["vat"],
+			"purchase_gross_rate": state["gross"],
+			"purchase_vat_status": _get_packing_vat_status(
+				mode, vat_rate, packing.get("purchase_vat_confirmed")
+			),
+			"packing_margin": flt(flt(packing.get("selling_net_rate")) - state["net"], 2),
+		}, update_modified=False)

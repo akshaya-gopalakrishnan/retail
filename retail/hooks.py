@@ -160,6 +160,7 @@ doctype_js = {
 	"Van Session": "public/js/forms/van_session.js",
 }
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
+doctype_tree_js = {"Account": "public/js/account_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
 
 # Svg Icons
@@ -1017,10 +1018,10 @@ after_migrate.append("retail.pos_invoice_layout.execute")
 for _payment_breakdown_dt in ("Sales Invoice", "POS Invoice"):
 	doctype_js[_payment_breakdown_dt].append("public/js/forms/pos_payment_breakdown.js")
 	doc_events[_payment_breakdown_dt].setdefault("onload", []).append("retail.pos_payment_breakdown.onload")
-after_install.append("retail.pos_payment_breakdown.execute")
+after_sync.append("retail.pos_payment_breakdown.execute")
 doctype_list_js["Loyalty Point Entry"] = "public/js/loyalty_entry_display.js"
 after_sync.append("retail.loyalty_display.install")
-after_install.append("retail.customer_loyalty_names.install")
+after_sync.append("retail.customer_loyalty_names.install")
 after_migrate.append("retail.customer_loyalty_names.install")
 doc_events.setdefault("Loyalty Point Entry", {})["after_insert"] = "retail.customer_loyalty_names.on_entry"
 after_migrate.append("retail.loyalty_display.install")
@@ -1044,7 +1045,21 @@ for _purchase_identity_dt in ("Purchase Invoice", "Purchase Receipt"):
 	doctype_js[_purchase_identity_dt].append("public/js/forms/purchase_stock_identity.js")
 
 # Item/serial/batch lookup on these lists, without overriding core endpoints.
-after_install.append("retail.pos_invoice_dates.execute")
+after_sync.append("retail.pos_invoice_dates.execute")
+
+# Defaults apply only to newly created companies, after ERPNext builds the COA.
+# Installation/migration adds the marker field without backfilling existing sites.
+after_sync.append("retail.accounting_defaults.install")
+after_migrate.append("retail.accounting_defaults.install")
+doc_events.setdefault("Company", {}).setdefault("before_insert", []).append(
+	"retail.accounting_defaults.remember_company_choices"
+)
+doc_events.setdefault("Company", {}).setdefault("on_update", []).append(
+	"retail.accounting_defaults.initialize_company"
+)
+doc_events.setdefault("POS Profile", {}).setdefault("before_validate", []).append(
+	"retail.accounting_defaults.set_pos_profile_defaults"
+)
 after_migrate.append("retail.pos_invoice_dates.configure")
 _pos_date_events = doc_events["POS Invoice"].get("before_validate", [])
 if isinstance(_pos_date_events, str):

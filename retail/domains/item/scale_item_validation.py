@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import re
-import secrets
 
 import frappe
 from frappe import _
@@ -13,7 +12,6 @@ DEFAULT_SCALE_PREFIX = "99"
 DEFAULT_SCALE_FORMAT = "Prefix 99 - 2-5-5"
 LEGACY_SCALE_BARCODE_SCRIPT = "generate unique scale barcode"
 VISIBLE_SCALE_TYPE_OPTIONS = "\nPrice\nWeight\nQuantity\nWeight+UPrice\nWeight+TotPrice"
-BARCODE_GENERATION_MAX_ATTEMPTS = 200
 
 
 def is_scale_item(doc) -> bool:
@@ -28,6 +26,9 @@ def ensure_item_barcode(doc, method=None):
 	if is_scale_item(doc) and doc.get("__retail_scale_barcode_preview") == barcode:
 		barcode = ""
 		doc.__retail_scale_barcode_preview = None
+	if not is_scale_item(doc) and doc.get("__retail_normal_barcode_preview") == barcode:
+		barcode = ""
+		doc.__retail_normal_barcode_preview = None
 	previous = doc.get_doc_before_save()
 	if previous and is_scale_item(previous) != is_scale_item(doc):
 		if barcode == (previous.get("custom_barcode") or "").strip():
@@ -47,15 +48,38 @@ def get_unique_item_barcode(exclude_name=None, scale_item=False):
 	if scale_item:
 		return get_next_scale_barcode()
 
-	for _ in range(BARCODE_GENERATION_MAX_ATTEMPTS):
-		barcode = generate_random_barcode(scale_item=scale_item)
+	return get_next_normal_barcode()
 
-		exists = frappe.db.exists("Item", {"custom_barcode": barcode, "name": ["!=", exclude_name or ""]})
-		item_barcode_exists = frappe.db.exists("Item Barcode", {"barcode": barcode})
-		if not exists and not item_barcode_exists:
-			return barcode
 
-	raise frappe.ValidationError("Unable to generate unique barcode. Please retry.")
+def normal_barcode(number):
+	body = f"200{number:09d}"
+	checksum = (-sum(int(digit) * (1 if index % 2 == 0 else 3)
+		for index, digit in enumerate(body))) % 10
+	return body + str(checksum)
+
+
+def get_next_normal_barcode():
+	"""Fill the first unused EAN-13 sequence; serialize until commit/rollback."""
+	frappe.db.sql("select name from `tabDocType` where name = 'Item' for update")
+	used = set()
+	for table, field in (("tabItem", "custom_barcode"), ("tabItem Barcode", "barcode")):
+		rows = frappe.db.sql(
+			f"select `{field}` from `{table}` "
+			f"where `{field}` like '200%' and char_length(`{field}`) = 13 for update"
+		)
+		for (barcode,) in rows:
+			if re.fullmatch(r"200[0-9]{10}", barcode or ""):
+				number = int(barcode[3:12])
+				if number and barcode == normal_barcode(number):
+					used.add(number)
+	number = 1
+	for allocated in sorted(used):
+		if allocated != number:
+			break
+		number += 1
+	if number > 999999999:
+		raise frappe.ValidationError("All normal barcode sequence numbers are in use.")
+	return normal_barcode(number)
 
 
 def get_next_scale_barcode():
@@ -75,12 +99,6 @@ def get_next_scale_barcode():
 		if barcode not in used:
 			return barcode
 	raise frappe.ValidationError("All scale barcode numbers from 9900001 to 9999999 are in use.")
-
-
-def generate_random_barcode(scale_item=False):
-	if scale_item:
-		return f"99{secrets.randbelow(10**5):05d}"
-	return str(10**12 + secrets.randbelow(9 * 10**12))
 
 
 def validate_scale_item(doc, method=None):

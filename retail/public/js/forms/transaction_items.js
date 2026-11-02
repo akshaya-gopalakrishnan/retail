@@ -92,6 +92,12 @@
 				queueVatTaxRowsSync(frm);
 				renderTransactionTotals(frm);
 			},
+			uom(frm, cdt, cdn) {
+				syncVatRates(frm, cdt, cdn, "rate");
+			},
+			conversion_factor(frm, cdt, cdn) {
+				syncVatRates(frm, cdt, cdn, "rate");
+			},
 			custom_rate_including_vat(frm, cdt, cdn) {
 				syncVatRates(frm, cdt, cdn, "inclusive");
 				queueVatTaxRowsSync(frm);
@@ -236,7 +242,13 @@
 		if (!isEditableDraft(frm)) return;
 
 		const row = locals[cdt]?.[cdn];
-		if (!row || row.__retail_vat_syncing || !row.item_code) return;
+		if (!row || !row.item_code) return;
+		if (row.__retail_vat_syncing) {
+			// Scanning first loads stock-UOM details, then the packing UOM/rate.
+			// Do not lose that second refresh while the first one is awaiting writes.
+			if (source === "rate" || source === "qty") row.__retail_vat_refresh_pending = true;
+			return;
+		}
 		if (!frappe.meta.get_docfield(cdt, "custom_rate_including_vat", cdn)) return;
 
 		row.__retail_vat_syncing = true;
@@ -299,7 +311,13 @@
 			queueVatTaxRowsSync(frm);
 			renderTransactionTotals(frm);
 		} finally {
-			if (row) row.__retail_vat_syncing = false;
+			if (row) {
+				row.__retail_vat_syncing = false;
+				if (row.__retail_vat_refresh_pending) {
+					delete row.__retail_vat_refresh_pending;
+					await syncVatRates(frm, cdt, cdn, "rate");
+				}
+			}
 		}
 	}
 

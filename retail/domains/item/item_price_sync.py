@@ -28,6 +28,27 @@ LEGACY_ITEM_RATE_CLIENT_SCRIPTS = (
 )
 
 
+def get_purchase_master_lookup_rate(args, item_code):
+	"""Missing Standard Buying price fallback, before ERPNext applies pricing rules."""
+	item = frappe.get_cached_doc("Item", item_code)
+	uom = args.get("uom") or item.stock_uom
+	if uom == item.stock_uom:
+		rate = flt(item.get("custom_purchase_net_rate") or item.get("custom_default_purchase_rate"))
+	else:
+		packing = next((row for row in item.get("custom_retail_packing_detail") or []
+			if row.get("uom") == uom and not row.get("disabled")), None)
+		if not packing:
+			return None
+		rate = flt(packing.get("purchase_net_rate"))
+	if rate <= 0:
+		return None
+	# ERPNext expects price-list currency here, then converts to transaction currency.
+	plc_factor = flt(args.get("plc_conversion_rate"))
+	if plc_factor <= 0:
+		return None
+	return rate / plc_factor
+
+
 def sync_simple_item_prices(doc, method=None):
 	if isinstance(doc, str):
 		doc = frappe.get_doc("Item", doc)

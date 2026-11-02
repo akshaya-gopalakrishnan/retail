@@ -109,6 +109,40 @@ async function main() {
  assert.equal(row.discount_amount, 5);
  assert.equal(row.discount_percentage, 5);
  assert.equal(row.custom_rate_including_vat, 99.75);
+ // Barcode scanning can change Nos to Box while an earlier VAT write is pending.
+ for (const dt of ['Purchase Receipt Item', 'Purchase Invoice Item']) {
+  const row = {doctype: dt, name: 'SCAN', item_code: 'I-80', qty: 1, uom: 'Nos',
+   conversion_factor: 1, rate: 9.52, tax_rate: 5,
+   custom_rate_including_vat: 0, custom_amount_including_vat: 0};
+  locals[dt].SCAN = row;
+  const frm = {doc: {doctype: dt.slice(0, -5), docstatus: 0, items: [row]}, fields_dict: {}};
+  const originalSet = frappe.model.set_value;
+  let release;
+  let first = true;
+  frappe.model.set_value = async (...args) => {
+   if (first) {
+    first = false;
+    await new Promise(resolve => { release = resolve; });
+   }
+   await originalSet(...args);
+  };
+  handlers[dt].rate[0](frm, dt, 'SCAN');
+  await flush();
+  assert.ok(release, 'First Nos VAT update is awaiting a write');
+  Object.assign(row, {uom: 'Box-10', conversion_factor: 10, rate: 95.24});
+  handlers[dt].rate[0](frm, dt, 'SCAN');
+  handlers[dt].uom[0](frm, dt, 'SCAN');
+  handlers[dt].conversion_factor[0](frm, dt, 'SCAN');
+  release();
+  await flush();
+  await flush();
+  assert.equal(row.rate, 95.24);
+  assert.equal(row.custom_rate_including_vat, 100);
+  assert.equal(row.custom_amount_including_vat, 100);
+  assert.equal(row.custom_vat_amount, 4.76, `${dt}: VAT must use the box rate after scanning`);
+  frappe.model.set_value = originalSet;
+ }
+ console.log('PASS: PR/PI barcode scan refresh replaces per-Nos VAT with box VAT');
  console.log('PASS: automatic VAT refreshes cannot create discounts, slow lookup preserves pricing, intentional discounts remain');
  console.log('PASS: delayed form loading and VAT rates/amounts, quantity, zero-rated and zero-price rows across 14 transaction item types');
 }

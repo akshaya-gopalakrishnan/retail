@@ -40,13 +40,14 @@ test('arrows move spatially across both columns and within the current column', 
  }
 });
 
-test('Ctrl+S commits the active value before saving and suppresses repeated saves', async () => {
+test('Ctrl+S commits the active value, saves/closes and suppresses repeated saves', async () => {
  const form = fixture();
  let release;
  const order = [];
  const active = field(0, 0, () => new Promise(resolve => { order.push('commit'); release = resolve; }));
  form.keyboard_fields = () => [active];
- form.save_and_new = async () => { order.push('save'); };
+ form.save_and_close = async () => { order.push('close'); };
+ form.save_and_new = async () => { order.push('new'); };
  const first = event('s', active.$input[0], true);
  form.handle_key(first);
  form.handle_key(event('s', active.$input[0], true));
@@ -54,7 +55,7 @@ test('Ctrl+S commits the active value before saving and suppresses repeated save
  assert.deepEqual(order, ['commit']);
  release();
  await new Promise(setImmediate);
- assert.deepEqual(order, ['commit', 'save']);
+ assert.deepEqual(order, ['commit', 'close']);
 });
 
 test('open link suggestions retain native up/down selection', () => {
