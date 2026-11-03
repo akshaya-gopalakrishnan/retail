@@ -82,9 +82,10 @@ def map_packing_uoms(doc):
 		uom = base if base == doc.get("stock_uom") and factor == 1 else f"{base}-{suffix}"
 		if uom == doc.get("stock_uom") and factor != 1:
 			frappe.throw("Stock UOM must have conversion factor 1.")
-		if uom in seen:
-			frappe.throw(f"Duplicate packing UOM {uom}; use one packing row per UOM and factor.")
-		seen.add(uom)
+		packing_key = (uom, (row.get("barcode") or "").strip())
+		if packing_key in seen:
+			frappe.throw(f"Duplicate packing UOM {uom} and barcode; use a different barcode for alternate packing rows.")
+		seen.add(packing_key)
 		if not frappe.db.exists("UOM", uom):
 			frappe.get_doc({"doctype": "UOM", "uom_name": uom,
 				"enabled": 1, "must_be_whole_number": frappe.db.get_value(
