@@ -173,6 +173,10 @@
         },
         {
           columns: 2,
+          fieldname: "custom_item_barcode"
+        },
+        {
+          columns: 2,
           fieldname: "serial_no"
         },
         {
@@ -300,6 +304,10 @@
         {
           columns: 2,
           fieldname: "item_name"
+        },
+        {
+          columns: 2,
+          fieldname: "custom_item_barcode"
         },
         {
           columns: 2,
@@ -8743,4 +8751,4 @@
     ["Purchase Order", "Purchase Invoice", "Purchase Receipt"].map((doctype) => [doctype, user_grid_view_settings_default[doctype]])
   );
 })();
-//# sourceMappingURL=retail_desk.bundle.64V6VSP2.js.map
+//# sourceMappingURL=retail_desk.bundle.HIUH6MT2.js.map

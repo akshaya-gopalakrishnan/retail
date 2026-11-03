@@ -1082,3 +1082,8 @@ for _recovery_dt in ("POS Sync Log", "POS Accepted Transaction", "POS Settlement
 	if isinstance(_scripts, str):
 		_scripts = [_scripts]
 	doctype_js[_recovery_dt] = [*_scripts, "public/js/forms/pos_admin_recovery.js"]
+
+for _purchase_barcode_dt in ("Purchase Invoice", "Purchase Receipt"):
+	doctype_js[_purchase_barcode_dt].append("public/js/forms/purchase_item_barcode.js")
+after_migrate.append("retail.patches.show_purchase_item_barcode.install")
+after_sync.append("retail.patches.show_purchase_item_barcode.install")

@@ -13,7 +13,7 @@ function arrangeRetailItemFilters(listview) {
 	const boxed = row("retail-item-filter-boxes");
 	const checks = row("retail-item-filter-checks");
 	const order = ["custom_document_code", "name", "item_code", "item_name", "custom_barcode",
-		"item_group", "variant_of", "custom_scale_item", "has_variants", "has_batch_no", "has_serial_no"];
+		"item_group", "brand", "variant_of", "custom_scale_item", "has_variants", "has_batch_no", "has_serial_no"];
 	const rank = key => order.includes(key) ? order.indexOf(key) : order.length;
 	Object.entries(listview.page.fields_dict)
 		.sort(([a], [b]) => rank(a) - rank(b))
@@ -28,6 +28,14 @@ frappe.listview_settings["Item"].refresh = function (listview) {
 
 frappe.listview_settings["Item"].onload = function (listview) {
 	const wrapper = listview.filter_area.standard_filters_wrapper;
+	const brand = listview.page.fields_dict.brand || listview.page.add_field({
+		fieldname: "brand",
+		fieldtype: "Link",
+		options: "Brand",
+		label: __("Brand"),
+		onchange: () => listview.filter_area.debounced_refresh_list_view(),
+	}, wrapper);
+	brand.$wrapper.show();
 	const previous_name = listview.page.fields_dict.item_name;
 	const previous_name_value = previous_name?.get_value() || "";
 	previous_name?.$wrapper.remove();

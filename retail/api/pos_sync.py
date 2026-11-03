@@ -1268,11 +1268,16 @@ def _additional_pos_promotions(counter_doc, modified_after=None):
 @frappe.whitelist()
 def get_pos_buy_x_get_y_promotions(branch=None, counter_code=None, modified_after=None):
 	_payload, counter_doc, modified_after = _pos_promotion_payload(branch, counter_code, modified_after)
-	child_fields = ["name", "idx", "add_to", "item", "item_group", "brand", "uom"]
+	child_fields = ["name", "idx", "add_to", "item", "item_group", "brand", "uom", "group_no", "qty"]
 	promotions = [
 		_promotion_doc_payload(doc, "products", child_fields)
 		for doc in _get_promotion_docs("Buy X Get Y Promotion", counter_doc, modified_after)
 	]
+	# Keep the products array and every existing field; legacy rows form group 1.
+	from retail.promotions.buy_get_groups import row_values
+	for promotion in promotions:
+		for row in promotion["products"]:
+			row.update(row_values(promotion, row))
 	return with_item_identity({
 		"status": "Success",
 		"server_time": now_datetime(),

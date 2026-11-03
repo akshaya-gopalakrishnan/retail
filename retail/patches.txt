@@ -85,3 +85,7 @@ retail.patches.compact_pos_invoice_layout
 retail.patches.repair_pos_tax_breakup
 retail.patches.show_pos_invoice_dates
 retail.patches.move_pos_business_date
+retail.patches.buy_get_item_groups
+retail.patches.buy_get_form_layout
+
+retail.patches.show_purchase_item_barcode

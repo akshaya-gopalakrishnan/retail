@@ -304,3 +304,11 @@ body.retail-family-resizing {
 		width: 100%;
 	}
 }
+
+.retail-family-pagination {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 12px;
+	margin-top: 12px;
+}
