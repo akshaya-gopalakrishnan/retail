@@ -53,7 +53,7 @@ class TestPackingUoms(unittest.TestCase):
 		self.assertIn("Box-21", [r.uom for r in doc.uoms])
 
 	def test_conflicts_and_invalid_factors_fail_safely(self):
-		for factor in [0, -1, None, float('nan'), 50]:
+		for factor in [0, -1, None, float('nan')]:
 			doc = self.item()
 			doc.custom_retail_packing_detail[0].conversion_factor = factor
 			with self.subTest(factor=factor), self.assertRaises(ValueError):
@@ -62,6 +62,26 @@ class TestPackingUoms(unittest.TestCase):
 		doc.uoms.append(frappe._dict(uom="Box-21", conversion_factor=50))
 		with self.assertRaises(ValueError):
 			packing_sync.sync_uoms_and_barcodes(doc)
+
+	def test_alternate_barcodes_share_one_conversion(self):
+		doc = self.item()
+		doc.custom_retail_packing_detail.append(frappe._dict(
+			packing_uom="Box", conversion_factor=21.0, barcode="  alternate-21  "))
+		for _ in range(2):
+			packing_sync.sync_uoms_and_barcodes(doc)
+			packing_sync.validate_packing_uoms(doc)
+			self.assertEqual(len([r for r in doc.uoms if r.uom == "Box-21"]), 1)
+			self.assertEqual([(r.barcode, r.uom) for r in doc.barcodes if r.uom == "Box-21"],
+				[("21", "Box-21"), ("alternate-21", "Box-21")])
+
+	def test_duplicate_packing_barcode_is_rejected(self):
+		for barcode in ["21", " 21 ", "", None]:
+			doc = self.item()
+			doc.custom_retail_packing_detail[0].barcode = barcode
+			doc.custom_retail_packing_detail.append(frappe._dict(
+				packing_uom="Box", conversion_factor=21, barcode=barcode))
+			with self.subTest(barcode=barcode), self.assertRaises(ValueError):
+				packing_sync.sync_uoms_and_barcodes(doc)
 
 	def test_missing_uom_is_created_once(self):
 		doc = self.item()

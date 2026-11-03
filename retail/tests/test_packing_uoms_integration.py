@@ -17,12 +17,20 @@ class TestPackingUomsIntegration(FrappeTestCase):
         for factor in [21, 50, 100]:
             item.append('custom_retail_packing_detail', {'uom': 'Box', 'conversion_factor': factor,
                 'barcode': item.name + '-' + str(factor), 'selling_rate': factor*10, 'purchase_rate': factor*5})
+        item.append('custom_retail_packing_detail', {'packing_uom': 'Box', 'conversion_factor': 21,
+            'barcode': item.name + '-21-alternate', 'selling_rate': 210, 'purchase_rate': 105})
         for attempt in range(2):
             item.save(ignore_permissions=True)
+            assert len([row for row in item.uoms if row.uom == 'Box-21']) == 1
             for row in item.custom_retail_packing_detail:
                 assert row.uom == 'Box-' + str(int(row.conversion_factor)), row.uom
                 assert get_conversion_factor(item.name, row.uom)['conversion_factor'] == row.conversion_factor
                 assert scan_barcode(row.barcode)['uom'] == row.uom
+                from retail.domains.item.packing_scan import scan_barcode as retail_scan_barcode
+                scanned = retail_scan_barcode(row.barcode)
+                assert scanned['item_code'] == item.name
+                assert scanned['uom'] == row.uom
+                assert scanned['conversion_factor'] == row.conversion_factor
                 for price_list in ['Standard Selling', 'Standard Buying']:
                     assert frappe.db.count('Item Price', {'item_code': item.name, 'uom': row.uom, 'price_list': price_list}) == 1
         company = frappe.db.get_value('Company', {}, ['name', 'default_currency'], as_dict=True)
