@@ -3,6 +3,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import flt
 from retail.promotions.schedule import sync_scheme_hours
+from retail.promotions.buy_get_groups import group_rows, validate_groups
 
 from retail.promotions.scheme_builder import (
 	add_product_to_scheme,
@@ -36,8 +37,6 @@ class BuyXGetYPromotion(Document):
 		free_rows = self.get_free_rows()
 		if not buy_rows:
 			frappe.throw(_("Add at least one Buy Item."))
-		if len(buy_rows) > 1:
-			frappe.throw(_("Only one Buy Item row is allowed. Add the other products as Free Items."))
 		if not self.same_product_only and not free_rows:
 			frappe.throw(_("Add at least one Free Item."))
 
@@ -60,29 +59,29 @@ class BuyXGetYPromotion(Document):
 				frappe.throw(_("Row #{0}: Free Item must be an Item.").format(row.idx))
 			if not row.item:
 				frappe.throw(_("Row #{0}: Select the Free Item.").format(row.idx))
+		validate_groups(self)
 
 	def sync_promotional_scheme(self):
 		retire_linked_schemes(self)
-		buy_rows = self.get_buy_rows()
-		free_rows = self.get_free_rows()
 		apply_on = {"ITEM": "Item Code", "CATEGORY": "Item Group", "BRAND": "Brand"}[self.promotion_scope]
-		scheme = build_base_scheme(self, apply_on)
-
-		for row in buy_rows:
-			add_product_to_scheme(scheme, row)
-
-		if self.same_product_only:
-			scheme.append("product_discount_slabs", self.get_product_slab())
-		else:
-			for row in free_rows:
+		for rows in group_rows(self).values():
+			# Native schemes cannot enforce per-item AND quantities. Do not turn
+			# a combo into independent offers that grant gifts for a partial buy.
+			if len(rows["buy"]) != 1:
+				continue
+			buy = rows["buy"][0]
+			scheme = build_base_scheme(self, apply_on)
+			add_product_to_scheme(scheme, buy)
+			for reward in ([None] if self.same_product_only else rows["get"]):
 				slab = self.get_product_slab()
-				slab.update({"free_item": row.item, "free_item_uom": row.uom})
+				slab["min_qty"] = buy.qty
+				if reward:
+					slab.update(free_item=reward.item, free_item_uom=reward.uom, free_qty=reward.qty)
 				scheme.append("product_discount_slabs", slab)
-
-		scheme.name = f"{self.name}-{frappe.generate_hash(length=6)}"
-		scheme.insert(ignore_permissions=True)
-		sync_scheme_hours(self, scheme)
-		self.append("linked_schemes", {"promotional_scheme": scheme.name})
+			scheme.name = f"{self.name}-{frappe.generate_hash(length=6)}"
+			scheme.insert(ignore_permissions=True)
+			sync_scheme_hours(self, scheme)
+			self.append("linked_schemes", {"promotional_scheme": scheme.name})
 		update_linked_schemes(self)
 
 	def get_product_slab(self):

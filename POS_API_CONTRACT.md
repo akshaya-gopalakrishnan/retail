@@ -3709,7 +3709,74 @@ Response example:
 Buy Item rows follow `promotion_scope`. Free Item rows always identify a specific
 `item`; their `item_group` and `brand` are blank. With `same_product_only: 1`,
 the free product is the qualifying purchased Item, including when qualification
-uses CATEGORY or BRAND. Quantity and free-quantity calculations are unchanged.
+uses CATEGORY or BRAND. Legacy rows keep their original quantities; grouped row quantities are described below.
+
+#### Grouped Buy/Get item rows (additive patch)
+
+The same `get_pos_buy_x_get_y_promotions` endpoint, the
+`buy_x_get_y_promotions` array on `get_pos_promo_prices`, and the existing
+master-data download retain their existing fields and response envelopes.
+Each existing `products[]` row additionally includes:
+
+| Field | Meaning |
+|---|---|
+| `group_no` | Positive integer linking Buy and Free rows within this promotion. Scope the key by promotion name plus group number. |
+| `qty` | Required Buy quantity or awarded Free quantity, in this row's `uom`. |
+
+```json
+[
+  {"group_no": 1, "add_to": "Buy Item", "item": "SHAMPOO", "qty": 2, "uom": "Nos"},
+  {"group_no": 1, "add_to": "Buy Item", "item": "CONDITIONER", "qty": 1, "uom": "Nos"},
+  {"group_no": 1, "add_to": "Free Item", "item": "SOAP", "qty": 2, "uom": "Nos"},
+  {"group_no": 1, "add_to": "Free Item", "item": "TOWEL", "qty": 1, "uom": "Nos"},
+  {"group_no": 2, "add_to": "Buy Item", "item": "TEA", "qty": 3, "uom": "Box"},
+  {"group_no": 2, "add_to": "Free Item", "item": "CUP", "qty": 2, "uom": "Nos"}
+]
+```
+
+This shows product-row additions only; actual rows retain their name, idx,
+item identity, barcode/serial fields, scope fields and matching_item_groups.
+
+.NET implementation:
+
+- Group the complete current `products` array by `group_no`. All Buy rows
+  within a group are AND conditions; groups qualify independently.
+- Sum purchased quantities for each required item across bill rows, converting
+  through Item UOM factors to the promotion row's UOM. Exclude automatic Free
+  rows from qualification. Each required quantity must be met.
+- With `same_product_only: 0`, award **all** Free rows in that group at zero
+  rate, using each Free row's `qty` and `uom`. Two gifts mean both gifts.
+- Keep existing `same_product_only` behavior: when it is 1, the reward is the
+  qualifying purchased item using parent `free_qty`. For a multi-buy group,
+  this means each required Buy item receives that quantity in its Buy UOM;
+  explicit Free rows are ignored, as before.
+- Preserve the current non-recursive behavior: grant the configured reward
+  quantities once when the group qualifies, without multiplying by full sets.
+- Keep parent `buy_qty` and `free_qty` for legacy compatibility. Explicit row
+  quantities take precedence; clients reading older responses may fall back
+  to group 1 and the parent quantity for the row type.
+- Track generated gift lines by promotion and group. Re-evaluate on bill
+  edits; remove that group's automatic gifts if any Buy requirement is no
+  longer met. Keep paid purchase lines and gifts from other qualifying groups.
+- Upsert each downloaded promotion as a complete configuration, replacing its
+  old products array even on incremental downloads. This removes moved/deleted
+  groups and rows; do not append product deltas. Preserve existing version,
+  disabled, company/warehouse, date/time and server timezone checks. Never
+  reprice completed bills. Do one full promotion download after this update.
+
+The ERP form hides the legacy Buy Qty, Free Qty and Same Product Only controls;
+their stored values and API fields remain for compatibility. New product rows
+default to Qty 1 and use their own editable quantity.
+
+The ERP form defaults to ITEM and locks Apply Promotion To. Existing saved
+CATEGORY/BRAND offers retain their scope and matching metadata. Existing rows
+are backfilled into group 1 with their original parent Buy/Free quantities.
+
+Native ERPNext schemes are retained for groups with one Buy row. Multi-buy
+AND groups are external POS configurations: no native scheme is generated
+for them, because independent native item rules would incorrectly grant gifts
+on a partial purchase. The .NET client must implement the grouped evaluation
+before using these offers; this ERP patch does not update the .NET executable.
 
 #### Buy one/get one with a different item, category or brand
 

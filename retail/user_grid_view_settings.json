@@ -139,6 +139,10 @@
       },
       {
         "columns": 2,
+        "fieldname": "custom_item_barcode"
+      },
+      {
+        "columns": 2,
         "fieldname": "serial_no"
       },
       {
@@ -266,6 +270,10 @@
       {
         "columns": 2,
         "fieldname": "item_name"
+      },
+      {
+        "columns": 2,
+        "fieldname": "custom_item_barcode"
       },
       {
         "columns": 2,

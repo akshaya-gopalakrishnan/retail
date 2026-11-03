@@ -126,8 +126,15 @@ def ensure_workspace():
 	).insert(ignore_permissions=True)
 
 
-def get_data(filters):
+def get_data(filters, item_codes=None):
 	conditions, values = get_conditions(filters)
+	stock_condition = ""
+	if item_codes is not None:
+		if not item_codes:
+			return []
+		values["page_item_codes"] = tuple(item_codes)
+		conditions += " and item.name in %(page_item_codes)s"
+		stock_condition = " where item_code in %(page_item_codes)s"
 	rows = frappe.db.sql(
 		f"""
 		select
@@ -180,6 +187,7 @@ def get_data(filters):
 		left join (
 			select item_code, sum(actual_qty) as real_stock_qty
 			from `tabBin`
+			{stock_condition}
 			group by item_code
 		) stock_balance on stock_balance.item_code = item.name
 		left join (
@@ -189,6 +197,7 @@ def get_data(filters):
 				sum(case when actual_qty < 0 then abs(actual_qty) else 0 end) as out_qty
 			from `tabStock Ledger Entry`
 			where is_cancelled = 0
+				{stock_condition.replace(' where ', ' and ')}
 			group by item_code
 		) stock_movement on stock_movement.item_code = item.name
 		where item.name is not null

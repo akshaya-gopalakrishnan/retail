@@ -48,6 +48,10 @@ retail.ItemFamilyList = class ItemFamilyList {
 		this.visible_columns = this.get_saved_columns();
 		this.column_widths = this.get_saved_widths();
 		this.current_families = [];
+		this.start = 0;
+		this.page_length = 50;
+		this.request_id = 0;
+		this.has_more = false;
 		this.make_actions();
 		this.make_body();
 		this.make_filters();
@@ -143,6 +147,11 @@ retail.ItemFamilyList = class ItemFamilyList {
 						</thead>
 						<tbody></tbody>
 					</table>
+				</div>
+				<div class="retail-family-pagination">
+					<button class="btn btn-default btn-sm retail-family-previous" disabled>${__("Previous")}</button>
+					<span class="retail-family-page-number"></span>
+					<button class="btn btn-default btn-sm retail-family-next" disabled>${__("Next")}</button>
 				</div>
 			</div>
 			`).appendTo(this.page.body.empty());
@@ -306,6 +315,9 @@ retail.ItemFamilyList = class ItemFamilyList {
 	}
 
 	bind_events() {
+		this.$body.on("click", ".retail-family-previous", () => this.change_page(-1));
+		this.$body.on("click", ".retail-family-next", () => this.change_page(1));
+		this.$body.on("click", ".retail-family-retry", () => this.refresh(false));
 		this.$body.on("click", ".retail-family-clear", () => this.clear_filters());
 		this.$body.on("change", ".retail-family-select-all", (event) => {
 			const checked = event.currentTarget.checked;
@@ -349,18 +361,50 @@ retail.ItemFamilyList = class ItemFamilyList {
 		return filters;
 	}
 
-	refresh() {
+	refresh(reset_page = true) {
+		if (reset_page) this.start = 0;
+		this.request_id += 1;
 		clearTimeout(this.refresh_timer);
 		this.refresh_timer = setTimeout(() => this.load(), 150);
 	}
 
+	change_page(direction) {
+		if (this.loading || (direction > 0 && !this.has_more)) return;
+		this.start = Math.max(0, this.start + direction * this.page_length);
+		this.refresh(false);
+	}
+
+	update_pagination() {
+		this.$body.find(".retail-family-previous").prop("disabled", this.loading || !this.start);
+		this.$body.find(".retail-family-next").prop("disabled", this.loading || !this.has_more);
+		this.$body.find(".retail-family-page-number").text(__("Page {0}", [Math.floor(this.start / this.page_length) + 1]));
+	}
+
 	async load() {
+		const request_id = this.request_id;
+		this.loading = true;
+		this.update_pagination();
 		this.$tbody.html(`<tr><td colspan="${this.get_colspan()}" class="text-muted loading-row">${__("Loading")}</td></tr>`);
-		const response = await frappe.call({
-			method: "retail.retail_app.page.retail_item_family_l.retail_item_family_l.get_rows",
-			args: { filters: this.get_filter_values() },
-		});
-		this.render(response.message || []);
+		try {
+			const response = await frappe.call({
+				method: "retail.retail_app.page.retail_item_family_l.retail_item_family_l.get_rows",
+				args: { filters: this.get_filter_values(), start: this.start, page_length: this.page_length },
+			});
+			if (request_id !== this.request_id) return;
+			this.has_more = Boolean(response.message?.has_more);
+			this.render(response.message?.families || []);
+		} catch (error) {
+			if (request_id !== this.request_id) return;
+			this.current_families = [];
+			this.has_more = false;
+			this.$tbody.html(`<tr><td colspan="${this.get_colspan()}" class="loading-row">${__("Unable to load items.")} <button class="btn btn-default btn-sm retail-family-retry">${__("Retry")}</button></td></tr>`);
+			this.update_selection_state();
+		} finally {
+			if (request_id === this.request_id) {
+				this.loading = false;
+				this.update_pagination();
+			}
+		}
 	}
 
 	render(families) {
@@ -398,7 +442,7 @@ retail.ItemFamilyList = class ItemFamilyList {
 	}
 
 	render_family(family) {
-		const serial = this.current_families.indexOf(family) + 1;
+		const serial = this.start + this.current_families.indexOf(family) + 1;
 		const rows = [this.render_family_row(family, serial)];
 		(family.packings || []).forEach((packing) => rows.push(this.render_packing_row(family, packing)));
 		return rows.join("");
