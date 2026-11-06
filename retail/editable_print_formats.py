@@ -9,6 +9,8 @@ import frappe
 from frappe.custom.doctype.property_setter.property_setter import make_property_setter
 
 SOURCES = {
+	"Journal Entry": "Journal Auditing Voucher",
+	"Payment Entry": "Bank and Cash Payment Voucher",
 	"POS Branch Day Closing": "POS Branch Day Closing - Retail",
 	"Sales Invoice": "Sales Invoice - Copy",
 	"Delivery Note": "Delivery Note- Copy",
@@ -198,5 +200,14 @@ def ensure_editable_print_formats():
 		if current and current not in (source_name, name, previous_name, "Standard"):
 			continue
 		if current != name:
-			make_property_setter(doctype, None, "default_print_format", name, "Data", for_doctype=True)
+			# A print default must not revalidate unrelated DocType customizations.
+			make_property_setter(
+				doctype,
+				None,
+				"default_print_format",
+				name,
+				"Data",
+				for_doctype=True,
+				validate_fields_for_doctype=False,
+			)
 		frappe.clear_cache(doctype=doctype)

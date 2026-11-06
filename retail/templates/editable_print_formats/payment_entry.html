@@ -1,0 +1,111 @@
+{% set is_transfer = doc.payment_type == "Internal Transfer" %}
+{% set is_pay = doc.payment_type == "Pay" %}
+{% set title = "Internal Transfer Voucher" if is_transfer else ("Payment Voucher" if is_pay else "Receipt Voucher") %}
+{% set currency = doc.paid_to_account_currency if is_pay else doc.paid_from_account_currency %}
+{% set amount = doc.received_amount if is_pay else doc.paid_amount %}
+{% set other_currency = doc.paid_from_account_currency if is_pay else doc.paid_to_account_currency %}
+{% set other_amount = doc.paid_amount if is_pay else doc.received_amount %}
+{% macro money(value, code) -%}{{ code or "" }} {{ frappe.utils.fmt_money(value or 0, precision=2) }}{%- endmacro %}
+
+<div class="retail-print-container">
+    {% if letter_head and not no_letterhead %}
+        <div class="retail-payment-letterhead">{{ letter_head }}</div>
+    {% endif %}
+
+    <table class="retail-title-table">
+        <tr>
+            <td class="retail-title-rule"><div></div></td>
+            <td class="retail-title-cell"><h1 class="document-title">{{ _(title) }}</h1></td>
+            <td class="retail-title-rule"><div></div></td>
+        </tr>
+    </table>
+    <div class="retail-document-number"># {{ doc.name | e }}</div>
+    {% if doc.docstatus != 1 %}
+        <div class="payment-status">{{ _("Cancelled") if doc.docstatus == 2 else _("Draft") }}</div>
+    {% endif %}
+
+    <table class="information-table">
+        <tr>
+            <td class="party-section">
+                <div class="section-label">{{ _("Company") if is_transfer else (_("Paid To") if is_pay else _("Received From")) }}</div>
+                <div class="party-name">{{ (doc.company if is_transfer else (doc.party_name or doc.party or "")) | e }}</div>
+                {% if doc.party_type and not is_transfer %}<div class="party-type">{{ _(doc.party_type) }}</div>{% endif %}
+                {% if doc.contact_person and not is_transfer %}<div class="contact-details">{{ _("Contact") }}: {{ doc.contact_person | e }}</div>{% endif %}
+                {% if doc.contact_email and not is_transfer %}<div class="contact-details">{{ doc.contact_email | e }}</div>{% endif %}
+            </td>
+            <td class="document-info-section">
+                <table class="document-details">
+                    <tr><td class="detail-label">{{ _("Date") }}:</td><td class="detail-value">{{ frappe.utils.formatdate(doc.posting_date, "dd MMM yyyy") if doc.posting_date else "" }}</td></tr>
+                    <tr><td class="detail-label">{{ _("Company") }}:</td><td class="detail-value">{{ doc.company | e }}</td></tr>
+                    {% if doc.mode_of_payment %}<tr><td class="detail-label">{{ _("Mode of Payment") }}:</td><td class="detail-value">{{ _(doc.mode_of_payment) | e }}</td></tr>{% endif %}
+                    {% if doc.reference_no %}<tr><td class="detail-label">{{ _("Reference / Cheque No") }}:</td><td class="detail-value">{{ doc.reference_no | e }}</td></tr>{% endif %}
+                    {% if doc.reference_date %}<tr><td class="detail-label">{{ _("Reference Date") }}:</td><td class="detail-value">{{ frappe.utils.formatdate(doc.reference_date, "dd MMM yyyy") }}</td></tr>{% endif %}
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    <table class="account-table">
+        <tr>
+            <td><div class="section-label">{{ _("From Account") }}</div><div>{{ doc.paid_from | e }}</div><div class="account-currency">{{ doc.paid_from_account_currency or "" }}</div></td>
+            <td><div class="section-label">{{ _("To Account") }}</div><div>{{ doc.paid_to | e }}</div><div class="account-currency">{{ doc.paid_to_account_currency or "" }}</div></td>
+        </tr>
+    </table>
+
+    {% if doc.references and not is_transfer %}
+        <div class="section-label allocation-heading">{{ _("Payment Allocation") }}</div>
+        <table class="item-table payment-references">
+            <thead>
+                <tr>
+                    <th class="col-number">{{ _("Sr No") }}</th>
+                    <th class="col-reference">{{ _("Reference") }}</th>
+                    <th class="col-date">{{ _("Due Date") }}</th>
+                    <th class="col-amount">{{ _("Document Amount") }}<br>{{ currency }}</th>
+                    <th class="col-amount">{{ _("Allocated Amount") }}<br>{{ currency }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in doc.references %}
+                    <tr>
+                        <td class="col-number">{{ loop.index }}</td>
+                        <td class="col-reference"><div class="reference-name">{{ row.reference_name | e }}</div><div class="reference-type">{{ _(row.reference_doctype) }}</div>{% if row.bill_no %}<div>{{ _("Supplier Invoice No") }}: {{ row.bill_no | e }}</div>{% endif %}{% if row.payment_term %}<div>{{ _(row.payment_term) | e }}</div>{% endif %}</td>
+                        <td class="col-date">{{ frappe.utils.formatdate(row.due_date, "dd MMM yyyy") if row.due_date else "" }}</td>
+                        <td class="col-amount">{{ frappe.utils.fmt_money(row.total_amount or 0, precision=2) }}</td>
+                        <td class="col-amount">{{ frappe.utils.fmt_money(row.allocated_amount or 0, precision=2) }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+
+    <table class="summary-table">
+        <tr>
+            <td class="summary-empty-section"></td>
+            <td class="totals-section">
+                <table class="totals-table">
+                    {% if not is_transfer and doc.references %}<tr><td>{{ _("Total Allocated") }}</td><td class="totals-value">{{ money(doc.total_allocated_amount, currency) }}</td></tr>{% endif %}
+                    {% if not is_transfer and doc.unallocated_amount %}<tr><td>{{ _("Unallocated Amount") }}</td><td class="totals-value">{{ money(doc.unallocated_amount, currency) }}</td></tr>{% endif %}
+                    <tr class="grand-total-row"><td>{{ _("Transfer Amount") if is_transfer else (_("Payment Amount") if is_pay else _("Receipt Amount")) }}</td><td class="totals-value">{{ money(amount, currency) }}</td></tr>
+                    {% if other_currency != currency or other_amount != amount %}<tr><td>{{ _("Paid from Account") if is_pay else _("Received in Account") }}</td><td class="totals-value">{{ money(other_amount, other_currency) }}</td></tr>{% endif %}
+                </table>
+            </td>
+        </tr>
+    </table>
+    {% if currency %}<div class="amount-words"><span class="section-label">{{ _("In Words") }}:</span> {{ frappe.utils.money_in_words(amount or 0, currency) }}</div>{% endif %}
+
+    {% if doc.remarks %}
+        <div class="notes-section"><div class="section-label">{{ _("Remarks") }}</div><div class="payment-remarks">{{ doc.remarks | e }}</div></div>
+    {% endif %}
+
+    <div class="signature-section">
+        <table class="signature-table">
+            <tr>
+                <td><div class="signature-line">{{ _("Prepared By") }}</div></td>
+                <td><div class="signature-line">{{ _("Authorized Signatory") }}</div></td>
+                <td><div class="signature-line">{{ _("Received By") }}</div></td>
+            </tr>
+        </table>
+    </div>
+
+    {% if footer and not no_letterhead %}<div class="retail-payment-footer">{{ footer }}</div>{% endif %}
+</div>

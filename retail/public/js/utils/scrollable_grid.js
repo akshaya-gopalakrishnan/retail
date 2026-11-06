@@ -29,6 +29,20 @@
 		let fields = this.user_defined_columns.length
 			? this.user_defined_columns
 			: this.editable_fields || this.docfields;
+		if (this.retail_purchase_tracking) {
+			// Tracking follows the selected Item even when a personal layout omits
+			// these fields. Work on copies; retain saved widths and preferences.
+			const names = ["serial_no", "batch_no"];
+			const identity = names.map(name => fields.find(field => field.fieldname === name) ||
+				(this.fields_map[name] && { ...this.fields_map[name], columns: 2, in_list_view: 1 }))
+				.filter(Boolean);
+			fields = fields.filter(field => !names.includes(field.fieldname));
+			let anchor = fields.findIndex(field => field.fieldname === "uom");
+			if (anchor < 0) anchor = fields.findIndex(field => field.fieldname === "item_name");
+			if (anchor < 0) anchor = fields.findIndex(field => field.fieldname === "item_code");
+			fields.splice(anchor + 1, 0, ...identity);
+			if (this.user_defined_columns.length) this.user_defined_columns = fields;
+		}
 		// A promotion's selected target stays visible even if saved columns omit it.
 		const target = this.retail_promotion_target;
 		if (target && this.fields_map[target]) {

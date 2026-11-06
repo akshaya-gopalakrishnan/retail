@@ -89,3 +89,9 @@ retail.patches.buy_get_item_groups
 retail.patches.buy_get_form_layout
 
 retail.patches.show_purchase_item_barcode
+retail.patches.customer_sales_person
+retail.patches.sales_order_sales_person
+retail.patches.sales_person_display_name
+retail.patches.user_pos_login_display
+retail.patches.items_expired_card
+retail.patches.remove_items_expired_card

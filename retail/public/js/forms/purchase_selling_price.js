@@ -24,10 +24,10 @@
 	itemDoctypes.forEach((doctype) => {
 		frappe.ui.form.on(doctype, {
 			item_code(frm, cdt, cdn) {
-				fetchCurrentSellingRate(frm, cdt, cdn);
+				return fetchCurrentSellingRate(frm, cdt, cdn);
 			},
 			uom(frm, cdt, cdn) {
-				fetchCurrentSellingRate(frm, cdt, cdn);
+				return fetchCurrentSellingRate(frm, cdt, cdn);
 			},
 			rate(frm, cdt, cdn) {
 				updateMargin(frm, cdt, cdn);
@@ -239,15 +239,20 @@
 		if (frm.doc.docstatus !== 0) return;
 
 		const row = locals[cdt]?.[cdn];
-		if (!row?.item_code || row.custom_cur_sell_rate === undefined) return;
+		if (!row?.item_code || !frappe.meta.has_field(cdt, "custom_cur_sell_rate")) return;
+		const itemCode = row.item_code;
+		const uom = row.uom;
+		const request = row.__retail_selling_request = (row.__retail_selling_request || 0) + 1;
 
 		const response = await frappe.call({
 			method: "retail.domains.purchase.selling_price.get_standard_selling_rate",
 			args: {
-				item_code: row.item_code,
-				uom: row.uom,
+				item_code: itemCode,
+				uom,
 			},
 		});
+		if (locals[cdt]?.[cdn] !== row || row.item_code !== itemCode || row.uom !== uom ||
+			row.__retail_selling_request !== request) return;
 		const rate = flt(response.message);
 		const values = { custom_cur_sell_rate: rate };
 		if (row.custom_upd_sell_price && !flt(row.custom_new_sell_rate)) {
@@ -262,11 +267,13 @@
 		if (frm.doc.docstatus !== 0) return;
 
 		const row = locals[cdt]?.[cdn];
-		if (!row || row.__retail_sell_price_syncing || row.custom_new_sell_incl === undefined) return;
+		if (!row || row.__retail_sell_price_syncing || !frappe.meta.has_field(cdt, "custom_new_sell_incl")) return;
 
 		const exclusiveRate = flt(row.custom_new_sell_rate || row.custom_cur_sell_rate);
+		const itemCode = row.item_code, uom = row.uom;
 		const vatRate = await getSellingVatRate(frm, row);
-		if (!locals[cdt]?.[cdn] || locals[cdt][cdn].item_code !== row.item_code) return;
+		if (locals[cdt]?.[cdn] !== row || row.item_code !== itemCode || row.uom !== uom ||
+			exclusiveRate !== flt(row.custom_new_sell_rate || row.custom_cur_sell_rate)) return;
 
 		row.__retail_sell_price_syncing = true;
 		try {
@@ -282,11 +289,13 @@
 		if (frm.doc.docstatus !== 0) return;
 
 		const row = locals[cdt]?.[cdn];
-		if (!row || row.__retail_sell_price_syncing || row.custom_new_sell_incl === undefined) return;
+		if (!row || row.__retail_sell_price_syncing || !frappe.meta.has_field(cdt, "custom_new_sell_incl")) return;
 
 		const inclusiveRate = flt(row.custom_new_sell_incl);
+		const itemCode = row.item_code, uom = row.uom;
 		const vatRate = await getSellingVatRate(frm, row);
-		if (!locals[cdt]?.[cdn] || locals[cdt][cdn].item_code !== row.item_code) return;
+		if (locals[cdt]?.[cdn] !== row || row.item_code !== itemCode || row.uom !== uom ||
+			inclusiveRate !== flt(row.custom_new_sell_incl)) return;
 
 		const divisor = 1 + vatRate / 100;
 		row.__retail_sell_price_syncing = true;
@@ -339,7 +348,7 @@
 		if (frm.doc.docstatus !== 0) return;
 
 		const row = locals[cdt]?.[cdn];
-		if (!row || row.custom_new_sell_rate === undefined) return;
+		if (!row || !frappe.meta.has_field(cdt, "custom_new_sell_rate")) return;
 
 		const sellingRate = flt(row.custom_new_sell_rate || row.custom_cur_sell_rate);
 		const purchaseRate = flt(row.rate || row.net_rate);
@@ -350,7 +359,6 @@
 			custom_sell_margin: flt(margin, 2),
 			custom_sell_margin_pct: flt(marginPercent, 3),
 		});
-		frm.refresh_field("items");
 	}
 
 	function confirmSellPriceUpdates(frm) {

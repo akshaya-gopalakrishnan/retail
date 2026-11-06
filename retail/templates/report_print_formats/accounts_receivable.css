@@ -1,0 +1,72 @@
+
+ .print-format-gutter { margin: 0; }
+ .print-format, .print-format.landscape {
+   width: auto; max-width: none; min-height: 0; padding: 0;
+   margin-bottom: 12mm; margin-left: 10mm; margin-right: 10mm;
+   font-family: Arial, Helvetica, sans-serif; font-size: 9pt; color: #333; line-height: 1.3;
+ }
+ .print-format .letter-head { margin-bottom: 4mm; }
+ .print-format .retail-letterhead { width: 100%; table-layout: fixed; border-collapse: collapse; }
+ .print-format .retail-letterhead td { border: 0 !important; padding: 0 !important; vertical-align: bottom; }
+ .print-format .retail-logo { width: 50%; text-align: left; }
+ .print-format .retail-company { width: 50%; text-align: right; }
+ .print-format .retail-logo img { width: 205px !important; max-width: 100% !important; max-height: 65px; height: auto !important; object-fit: contain; }
+ .print-format .retail-company img { width: 170px !important; max-width: 100% !important; max-height: 85px; height: auto !important; object-fit: contain; }
+ .retail-receivable-title { width: 100%; border-collapse: collapse; margin: 2mm 0 3mm; }
+ .print-format .retail-receivable-title td { border: 0 !important; padding: 0 !important; vertical-align: middle; }
+ .retail-receivable-rule { width: 50%; }
+ .retail-receivable-rule div { border-top: 1px solid #777; }
+ .print-format .retail-receivable-title .retail-receivable-heading { padding: 0 6mm !important; white-space: nowrap; }
+ .retail-receivable-heading h1 { margin: 0; color: #2d6dc4; font-size: 17pt; font-weight: normal; text-transform: uppercase; }
+ .retail-receivable-meta { display: table; width: 100%; margin-bottom: 3mm; font-size: 8.5pt; }
+ .retail-receivable-meta > div { display: table-cell; padding-right: 4mm; vertical-align: top; }
+ .retail-receivable-meta > div:last-child { padding-right: 0; text-align: right; }
+ .retail-receivable-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+ .retail-receivable-table thead { display: table-header-group; }
+ .print-format .retail-receivable-table th {
+   background: #2d6dc4 !important; color: #fff !important; border: 1px solid #2d6dc4;
+   padding: 2mm 1.5mm !important; font-size: 8pt; font-weight: normal; vertical-align: middle;
+   -webkit-print-color-adjust: exact; print-color-adjust: exact;
+ }
+ .print-format .retail-receivable-table td { padding: 0.7mm 1.5mm !important; border: 0; vertical-align: top; font-size: 8.5pt; }
+ .retail-receivable-table .number { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+ .retail-receivable-table .date { white-space: nowrap; }
+ .retail-receivable-table tbody { break-inside: avoid; page-break-inside: avoid; }
+ .print-format .retail-receivable-table .retail-receivable-detail > td { padding-top: 0 !important; padding-bottom: 0.7mm !important; border-bottom: 1px solid #d8dfe8; color: #555; }
+ .retail-receivable-notes { margin-top: 1mm; font-size: 7.5pt; color: #555; }
+ .retail-receivable-footer { display: table; width: 100%; border-top: 1px solid #ddd; padding-top: 1mm; margin-top: 1mm; font-size: 7.5pt; color: #666; break-inside: avoid; }
+ .retail-receivable-footer > div { display: table-cell; }
+ .retail-receivable-footer > div:last-child { text-align: right; }
+ /* The PDF footer reserves 15mm before an optional letterhead footer. */
+ .print-format .wrapper > .page-number:first-child { margin-top: -15mm !important; }
+ /* Compact browser spacing; preserve repeated-header clearance for PDF. */
+ @supports (display: grid) {
+   .print-format .letter-head { margin-bottom: 2mm; }
+   .retail-receivable-title { margin: 1mm 0 2mm; }
+ }
+ @media screen { .print-format { width: 210mm; max-width: 100%; box-sizing: border-box; margin: 0 auto !important; padding: 9mm 10mm !important; } .print-format.landscape { width: 297mm; } }
+ @media print { .print-format-gutter { margin: 0 !important; padding: 0 !important; } .print-format { margin: 0 !important; box-shadow: none; } }
+.retail-receivable-table { margin-bottom: 3mm; }
+.retail-receivable-report[data-orientation="Portrait"] .retail-receivable-heading h1 { font-size: 15pt; }
+.retail-receivable-report[data-orientation="Portrait"] .retail-receivable-heading { white-space: nowrap; text-align: center; }
+.retail-receivable-report[data-orientation="Portrait"] .retail-receivable-meta { display: block; }
+.retail-receivable-report[data-orientation="Portrait"] .retail-receivable-meta > div { display: inline-block; margin: 0 4mm 1mm 0; text-align: left; }
+.retail-receivable-table .total-caption { display: block; text-align: left; }
+.retail-receivable-table .text { overflow-wrap: anywhere; word-wrap: break-word; }
+.print-format .retail-receivable-table th { white-space: normal; overflow-wrap: normal; }
+
+
+.retail-receivable-meta { display: block; line-height: 1.5; }
+.retail-receivable-meta > div { display: block; margin-bottom: 1mm; }
+.retail-receivable-meta > span { display: inline-block; margin-right: 4mm; }
+.reference-type { margin-top: 0.5mm; color: #666; font-size: 7pt; }
+.print-format .retail-receivable-detail > td { border: 0; padding: 0 1.5mm 0.5mm !important; font-size: 7.5pt; }
+.retail-receivable-detail > td > span { display: inline-block; margin: 0 4mm 0.5mm 0; white-space: pre-wrap; }
+.print-format .retail-receivable-ageing > td { padding: 0 1.5mm 1.2mm !important; border-bottom: 1px solid #d8dfe8; }
+.ageing-grid { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.print-format .retail-receivable-table .ageing-grid td { padding: 0 2mm 0 0 !important; font-size: 7.5pt; color: #555; }
+.print-format .retail-receivable-subtotal > tr > td { background: #f3f6fb !important; font-weight: bold; }
+.print-format .retail-receivable-total > tr > td { background: #edf3fc !important; font-weight: bold; }
+.print-format .retail-receivable-total > tr:first-child > td { border-top: 1.5px solid #2d6dc4; }
+.print-format .retail-receivable-table > tbody > tr:first-child > td { padding-top: 1.5mm !important; }
+.retail-receivable-report[data-orientation="Portrait"] .ageing-grid td span { display: block; }

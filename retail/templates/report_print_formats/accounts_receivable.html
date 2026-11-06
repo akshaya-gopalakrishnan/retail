@@ -1,0 +1,112 @@
+{%
+ const settings = typeof print_settings === "undefined" ? {} : print_settings;
+ const portrait = settings.orientation === "Portrait";
+ const applied_filters = report.get_filter_values();
+ const company = report.retail_print_company || {};
+ const escape = (value) => frappe.utils.escape_html(String(value == null ? "" : value));
+ const date = (value) => value ? frappe.datetime.str_to_user(value) : "";
+ const numeric = (col) => ["Currency", "Float", "Int", "Percent"].includes(col.fieldtype);
+ const money = (value) => value == null ? "—" : format_number(value, null, 2);
+ const source_columns = report.columns.filter((col) => col.fieldname && col.fieldname !== "_check" && !col.hidden);
+ const lookup = Object.fromEntries(source_columns.map((col) => [col.fieldname, col]));
+ const party_field = lookup.customer_name ? "customer_name" : "party";
+ const party_names = Object.fromEntries(data.filter((row) => row.party && row.voucher_no).map((row) => [row.party, row.customer_name || row.party_name || row.party]));
+ const party_name = (row) => row.customer_name || row.party_name || party_names[row.party] || row.party || "";
+ const grand_total = (row) => !!row.is_total_row || (!row.voucher_no && row.party === "Total");
+ const subtotal = (row) => !grand_total(row) && !!row.bold && !row.voucher_no && !!row.party;
+ const printable_rows = data.filter((row) => row.voucher_no || row.party || row.is_total_row);
+ const detail_rows = printable_rows.filter((row) => !grand_total(row) && !subtotal(row));
+ const picked = !!settings.pick_columns;
+ const primary_fields = portrait ? ["posting_date", party_field, "voucher_no", "outstanding"] : ["posting_date", party_field, "voucher_no", "due_date", "invoiced", "paid", "credit_note", "outstanding"];
+ if (applied_filters.in_party_currency) primary_fields.push("currency");
+ const labels = {posting_date: __("Date"), [party_field]: __("Customer / Party"), voucher_no: __("Reference"), invoiced: __("Invoiced"), paid: __("Paid"), credit_note: __("Credit Note"), outstanding: __("Outstanding")};
+ const selected_columns = picked ? columns.filter((col) => col.fieldname && settings.columns.includes(col.fieldname)) : primary_fields.filter((field) => lookup[field]).map((field) => ({...lookup[field], label: labels[field] || lookup[field].label}));
+ const weight = (col) => col.fieldname === party_field ? (portrait ? 58 : 57) : col.fieldname === "voucher_no" ? 34 : col.fieldtype === "Date" ? 28 : col.fieldname === "currency" ? 18 : numeric(col) ? 28 : 45;
+ const bands = [];
+ if (!picked) bands.push(selected_columns);
+ else {
+   const anchors = selected_columns.filter((col) => ["voucher_no", party_field].includes(col.fieldname));
+   const anchor_width = anchors.reduce((sum, col) => sum + weight(col), 0);
+   let group = [], width = anchor_width;
+   for (const col of selected_columns.filter((col) => !anchors.includes(col))) {
+     if (group.length && width + weight(col) > (portrait ? 180 : 267)) {
+       bands.push(selected_columns.filter((item) => anchors.includes(item) || group.includes(item)));
+       group = []; width = anchor_width;
+     }
+     group.push(col); width += weight(col);
+   }
+   if (group.length || anchors.length) bands.push(selected_columns.filter((item) => anchors.includes(item) || group.includes(item)));
+ }
+ const ageing_columns = source_columns.filter((col) => /^range\d+$/.test(col.fieldname));
+ const detail_fields = ["due_date", "age", "invoiced", "paid", "credit_note", "payment_term", "invoice_grand_total", "future_ref", "future_amount", "remaining_balance", "sales_person", "delivery_notes", "po_no", "remarks"];
+ const detail_columns = detail_fields.filter((field) => lookup[field] && !primary_fields.includes(field)).map((field) => lookup[field]);
+ const cell_value = (row, col) => {
+   const raw = row[col.fieldname];
+   if (["customer_name", "party"].includes(col.fieldname)) return escape(party_name(row));
+   if (col.fieldtype === "Date") return escape(date(raw));
+   if (numeric(col)) return raw == null ? "—" : col.fieldtype === "Int" ? format_number(raw, null, 0) : money(raw) + (col.fieldtype === "Percent" ? "%" : "");
+   return escape(raw);
+ };
+ const filter_value = (field, raw) => {
+   const values = Array.isArray(raw) ? raw : [raw];
+   return values.map((value) => field === "party" ? (party_names[value] || value) : ["from_date", "report_date"].includes(field) ? date(value) : typeof value === "number" && [0, 1].includes(value) ? (value ? __("Yes") : __("No")) : value).join(", ");
+ };
+ const active_filters = Object.entries(applied_filters).filter(([field, value]) => field !== "company" && value != null && value !== "" && value !== 0 && (!Array.isArray(value) || value.length));
+%}
+<style>
+ @page { size: A4 {%= portrait ? "portrait" : "landscape" %}; margin: 9mm 10mm 12mm; }
+ .print-format { margin-top: {%= settings.repeat_header_footer && settings.letter_head ? "32mm" : "9mm" %}; }
+</style>
+<section class="retail-receivable-report" data-orientation="{%= portrait ? 'Portrait' : 'Landscape' %}">
+ <table class="retail-receivable-title"><tr>
+  <td class="retail-receivable-rule"><div></div></td>
+  <td class="retail-receivable-heading"><h1>{%= __("Accounts Receivable") %}</h1></td>
+  <td class="retail-receivable-rule"><div></div></td>
+ </tr></table>
+ {% if (settings.include_filters) { %}
+ <div class="retail-receivable-meta" data-report-filters>
+  <div><strong>{%= __("Company") %}:</strong> {%= escape(company.company_name || applied_filters.company) %}</div>
+  {% for (const [field, raw] of active_filters) { %}<span><strong>{%= escape(report.get_filter(field)?.df.label || field) %}:</strong> {%= escape(filter_value(field, raw)) %}</span>{% } %}
+ </div>
+ {% } %}
+ <div class="retail-receivable-notes">{%= __("Currency") %}: {%= escape(applied_filters.in_party_currency ? __("As shown for each account") : company.default_currency) %}</div>
+
+ {% for (const band of bands) { %}
+ {% const label_index = Math.max(0, band.findIndex((col) => !numeric(col) && col.fieldtype !== "Date" && col.fieldname !== "currency")); %}
+ {% const band_weight = band.reduce((sum, col) => sum + weight(col), 0); %}
+ <table class="retail-receivable-table" data-print-fields="{%= escape(band.map((col) => col.fieldname).join(',')) %}">
+  <colgroup>{% for (const col of band) { %}<col style="width: {%= weight(col) * 100 / band_weight %}%">{% } %}</colgroup>
+  <thead><tr>{% for (const col of band) { %}<th class="{%= numeric(col) ? 'number' : 'text' %}">{%= escape(col.label || col.name) %}</th>{% } %}</tr></thead>
+  {% for (const row of printable_rows) { %}
+  {% const total = grand_total(row), sub = subtotal(row); %}
+  <tbody class="{%= total ? 'retail-receivable-total' : sub ? 'retail-receivable-subtotal' : 'retail-receivable-entry' %}" data-voucher="{%= escape(row.voucher_no || '') %}">
+   <tr>
+    {% for (let index = 0; index < band.length; index++) { const col = band[index]; %}
+    <td class="{%= numeric(col) ? 'number' : 'text' %}">
+     {% if ((total || sub) && index === label_index && !numeric(col)) { %}{%= total ? __("Total") : escape(party_name(row)) + " — " + __("Subtotal") %}
+     {% } else if ((total || sub) && !numeric(col) && col.fieldname !== "currency") { %}
+     {% } else { %}
+      {% if ((total || sub) && index === 0 && numeric(col)) { %}<span class="total-caption">{%= total ? __("Total") : escape(party_name(row)) + " — " + __("Subtotal") %}</span>{% } %}
+      {%= cell_value(row, col) %}
+      {% if (!picked && col.fieldname === "voucher_no" && row.voucher_type) { %}<div class="reference-type">{%= escape(__(row.voucher_type)) %}</div>{% } %}
+     {% } %}
+    </td>
+    {% } %}
+   </tr>
+   {% if (!picked) { %}
+   {% const row_details = detail_columns.filter((col) => (col.fieldtype === "Currency" || col.fieldtype === "Int") ? (!total && !sub || col.fieldtype === "Currency") : !total && !sub && row[col.fieldname]); %}
+   {% if (row_details.length) { %}<tr class="retail-receivable-detail"><td colspan="{%= band.length %}">{% for (const col of row_details) { %}<span><strong>{%= escape(col.label) %}:</strong> {%= cell_value(row, col) %}</span>{% } %}</td></tr>{% } %}
+   {% if (ageing_columns.length) { %}
+   <tr class="retail-receivable-ageing"><td colspan="{%= band.length %}">
+    <table class="ageing-grid"><tr>{% for (const col of ageing_columns) { %}<td><span>{%= escape(col.label) %}:</span> <strong>{%= cell_value(row, col) %}</strong></td>{% } %}</tr></table>
+   </td></tr>
+   {% } %}
+   {% } %}
+  </tbody>
+  {% } %}
+  {% if (!detail_rows.length) { %}<tbody><tr><td colspan="{%= band.length %}">{%= __("No outstanding entries found for the selected filters.") %}</td></tr></tbody>{% } %}
+ </table>
+ {% } %}
+ <div class="retail-receivable-notes">{%= __("Negative outstanding amounts represent credits or advances. Ageing follows the selected report settings.") %}</div>
+ <div class="retail-receivable-footer"><div>{%= __("Printed by") %}: {%= escape(frappe.session.user_fullname || frappe.session.user) %} · {%= escape(frappe.datetime.now_datetime()) %}</div><div>{%= __("Entries") %}: {%= detail_rows.length %}</div></div>
+</section>

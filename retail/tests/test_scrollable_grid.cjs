@@ -394,7 +394,9 @@ test('purchase defaults render when both browser settings are empty', () => {
     f.grid.docfields = piItemMeta.fields.map(df => ({...df}));
     f.grid.fields_map = Object.fromEntries(f.grid.docfields.map(df => [df.fieldname, df]));
     f.handlers['Purchase Invoice'].refresh(f.frm);
-    assert.deepEqual(names(f.grid).slice(0, 4), ['item_code', 'item_name', 'serial_no', 'batch_no']);
+    assert.deepEqual(names(f.grid).slice(0, 2), ['item_code', 'item_name']);
+    const uom = names(f.grid).indexOf('uom');
+    assert.deepEqual(names(f.grid).slice(uom + 1, uom + 3), ['serial_no', 'batch_no']);
     assert.deepEqual(f.frappe.model.user_settings['Purchase Invoice'], settings);
   }
 });
@@ -461,4 +463,29 @@ test('Purchase Receipt uses shipped identity columns when browser layouts are em
   await f.handlers['Purchase Receipt Item'].item_code(f.frm);
   assert.ok(names(f.grid).includes('item_name'));
   assert.ok(names(f.grid).includes('batch_no'));
+});
+
+test('omitted tracking columns appear after UOM while saved purchase widths remain intact', async()=>{
+ const columns=[{fieldname:'item_code',columns:2,width_px:101},{fieldname:'item_name',columns:2,width_px:106},
+  {fieldname:'uom',columns:1,width_px:64},{fieldname:'qty',columns:1,width_px:142}];
+ const settings={RetailScrollableGrid:{items:columns}};
+ const f=fixture(settings);
+ const before=JSON.stringify(settings);
+ const meta=JSON.parse(fs.readFileSync(path.join(__dirname,'../../../erpnext/erpnext/accounts/doctype/purchase_invoice_item/purchase_invoice_item.json')));
+ f.grid.docfields=meta.fields.map(df=>({...df}));
+ f.grid.fields_map=Object.fromEntries(f.grid.docfields.map(df=>[df.fieldname,df]));
+ f.grid.grid_rows=[];f.frm.doc={items:[],update_stock:1};
+ f.frappe.db={get_list:async()=>[{name:'serial',has_serial_no:1,has_batch_no:0},{name:'batch',has_serial_no:0,has_batch_no:1}]};
+ f.handlers['Purchase Invoice'].refresh(f.frm);
+ vm.runInContext(fs.readFileSync(path.join(__dirname,'../public/js/forms/purchase_stock_identity.js'),'utf8'),f.context);
+ await f.handlers['Purchase Invoice'].refresh(f.frm);
+ assert.deepEqual(names(f.grid),['item_code','item_name','uom','qty']);
+ f.frm.doc.items=[{item_code:'serial'},{item_code:'batch'}];
+ await f.handlers['Purchase Invoice Item'].item_code(f.frm);
+ assert.deepEqual(names(f.grid),['item_code','item_name','uom','serial_no','batch_no','qty']);
+ assert.equal(f.grid.visible_columns[0][0].width_px,101);
+ assert.equal(f.grid.visible_columns.at(-1)[0].width_px,142);
+ assert.equal(JSON.stringify(settings),before);
+ f.frm.doc.items=[];await f.handlers['Purchase Invoice Item'].items_remove(f.frm);
+ assert.deepEqual(names(f.grid),['item_code','item_name','uom','qty']);
 });

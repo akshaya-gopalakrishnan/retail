@@ -1,0 +1,145 @@
+{%
+ const settings = typeof print_settings === "undefined" ? {} : print_settings;
+ const portrait = settings.orientation === "Portrait";
+ const orientation = portrait ? "portrait" : "landscape";
+ const repeated_letterhead = settings.repeat_header_footer && settings.letter_head;
+ const applied_filters = report.get_filter_values();
+ const company = report.retail_print_company || {};
+ const escape = (value) => frappe.utils.escape_html(String(value == null ? "" : value));
+ const date = (value) => value ? frappe.datetime.str_to_user(value) : "";
+ const money = (value) => value == null ? "—" : format_number(value, null, 2);
+ const numeric_types = ["Currency", "Float", "Int", "Percent"];
+ const numeric = (col) => numeric_types.includes(col.fieldtype);
+ const source_columns = report.columns.filter((col) => col.fieldname && col.fieldname !== "_check");
+ const lookup = Object.fromEntries(source_columns.map((col) => [col.fieldname, col]));
+ const counter = lookup.counter_name ? "counter_name" : "counter";
+ const picked = !!settings.pick_columns;
+ const labels = {invoice_count: __("Bills"), return_count: __("Returns"), profit_percent: __("Margin %")};
+ labels[counter] = __("Counter");
+ const landscape_fields = ["posting_date", counter, "invoice_count", "return_count", "gross_sales", "discount", "sales_returns", "net_sales", "vat", "cost_amount", "gross_profit", "profit_percent"];
+ const portrait_fields = ["posting_date", counter, "invoice_count", "return_count", "net_sales", "gross_profit", "profit_percent"];
+ const landscape_widths = [9, 18, 5, 5, 8.5, 7, 8, 9, 6.5, 8.5, 8.5, 7];
+ const portrait_widths = [14, 25, 8, 8, 17, 17, 11];
+ const default_fields = portrait ? portrait_fields : landscape_fields;
+ const default_widths = portrait ? portrait_widths : landscape_widths;
+ const selected_columns = picked ? columns.filter((col) => col.fieldname && settings.columns.includes(col.fieldname)) : default_fields.filter((field) => lookup[field]).map((field) => ({...lookup[field], label: labels[field] || lookup[field].label}));
+ const weight = (col) => col.fieldtype === "Date" ? 25 : col.fieldtype === "Int" ? 14 : numeric(col) ? 24 : col.fieldname === "source_status" ? 60 : 40;
+ let bands = [];
+ if (!picked) {
+   bands = [selected_columns];
+ } else {
+   const anchors = selected_columns.filter((col) => col.fieldname === "posting_date" || col.fieldname === counter);
+   const anchor_width = anchors.reduce((sum, col) => sum + weight(col), 0);
+   let group = [];
+   let width = anchor_width;
+   for (const col of selected_columns.filter((col) => !anchors.includes(col))) {
+     if (group.length && width + weight(col) > (portrait ? 180 : 267)) {
+       bands.push(selected_columns.filter((item) => anchors.includes(item) || group.includes(item)));
+       group = [];
+       width = anchor_width;
+     }
+     group.push(col);
+     width += weight(col);
+   }
+   if (group.length || anchors.length) bands.push(selected_columns.filter((item) => anchors.includes(item) || group.includes(item)));
+ }
+ const status = (value) => [...new Set(String(value || "").split(";").map((part) => {
+   part = part.trim();
+   if (part === "Recorded / Posted") return "";
+   if (part.startsWith("Stock repost Queued:") || part.startsWith("Stock repost In Progress:")) return __("Cost recalculation pending");
+   if (part.startsWith("Stock repost Failed:")) return __("Cost recalculation needs review");
+   if (part.startsWith("No matched posted stock valuation:")) return __("Stock cost unavailable");
+   if (part.startsWith("No active GL for ")) return __("Accounting entry unavailable");
+   if (part.includes("VAT item allocation") || part.includes("Recorded tax rows do not reconcile")) return __("Tax totals need review");
+   return part;
+ }).filter(Boolean))].join(" · ");
+ const value = (row, col) => {
+   const raw = row[col.fieldname];
+   if (col.fieldname === "source_status") return escape(status(raw) || raw);
+   if (col.fieldtype === "Date") return escape(date(raw));
+   if (col.fieldtype === "Percent") return raw == null ? __("N/A") : money(raw) + "%";
+   if (numeric(col)) {
+     if (raw == null) return "—";
+     return col.fieldtype === "Int" ? format_number(raw, null, 0) : col.fieldtype === "Currency" ? money(raw) : frappe.format(raw, col, {inline: true});
+   }
+   if (col.fieldname === counter && !raw && !row.is_total_row) return __("Unassigned");
+   return escape(raw);
+ };
+ const financial_details = ["gross_sales", "discount", "sales_returns", "vat", "cost_amount"].map((field) => lookup[field]).filter(Boolean);
+ const other_details = ["items_sold", "paid_amount", "outstanding_amount", "average_bill_value"].map((field) => lookup[field]).filter(Boolean);
+ const detail_rows = data.filter((row) => !row.is_total_row);
+ const printed_by = frappe.session.user_fullname || (frappe.boot.user || {}).full_name || frappe.session.user;
+%}
+
+<style>
+ @page { size: A4 {%= orientation %}; margin: 9mm 10mm 12mm; }
+ .print-format { margin-top: {%= repeated_letterhead ? "32mm" : "9mm" %}; }
+</style>
+<section class="retail-sales-report" data-orientation="{%= portrait ? 'Portrait' : 'Landscape' %}">
+ <table class="retail-sales-title"><tr>
+  <td class="retail-sales-rule"><div></div></td>
+  <td class="retail-sales-heading"><h1>{%= __("Daily Sales Summary") %}</h1></td>
+  <td class="retail-sales-rule"><div></div></td>
+ </tr></table>
+ {% if (settings.include_filters) { %}
+ <div class="retail-sales-meta" data-report-filters>
+  <div><strong>{%= __("Company") %}:</strong> {%= escape(company.company_name || applied_filters.company || __("All companies")) %}</div>
+  <div><strong>{%= __("Period") %}:</strong> {%= escape(date(applied_filters.from_date)) %} – {%= escape(date(applied_filters.to_date)) %}</div>
+  <div><strong>{%= __("Counter") %}:</strong> {%= escape(applied_filters.counter || __("All counters")) %}</div>
+ </div>
+ {% } %}
+ {% if (company.default_currency) { %}<div class="retail-sales-notes">{%= __("Currency") %}: {%= escape(company.default_currency) %}</div>{% } %}
+
+ {% for (const band of bands) { %}
+ {% const label_index = band.findIndex((col) => !numeric(col)); %}
+ {% const band_weight = band.reduce((sum, col) => sum + weight(col), 0); %}
+ <table class="retail-sales-table" data-print-fields="{%= escape(band.map((col) => col.fieldname).join(',')) %}">
+  <colgroup>
+   {% for (const col of band) { %}<col style="width: {%= picked ? weight(col) * 100 / band_weight : default_widths[default_fields.indexOf(col.fieldname)] %}%">{% } %}
+  </colgroup>
+  <thead><tr>
+   {% for (const col of band) { %}<th class="{%= numeric(col) ? 'number' : 'text' %} {%= col.fieldtype === 'Int' ? 'count' : '' %} {%= col.fieldname === counter ? 'counter' : '' %}">{%= escape(col.label || col.name) %}</th>{% } %}
+  </tr></thead>
+  {% for (const row of data) { %}
+  <tbody>
+   <tr class="{%= row.is_total_row ? 'retail-sales-total' : '' %}">
+    {% for (let index = 0; index < band.length; index++) { const col = band[index]; %}
+    <td class="{%= numeric(col) ? 'number' : 'text' %} {%= col.fieldtype === 'Int' ? 'count' : '' %} {%= col.fieldname === counter ? 'counter' : '' %}">
+     {% if (row.is_total_row && index === label_index) { %}{%= __("Total") %}
+     {% } else if (row.is_total_row && !numeric(col)) { %}
+     {% } else { %}
+      {% if (row.is_total_row && label_index < 0 && index === 0) { %}<span class="total-caption">{%= __("Total") %}</span>{% } %}
+      {%= value(row, col) %}
+     {% } %}
+    </td>
+    {% } %}
+   </tr>
+   {% if (!picked && portrait) { %}
+   <tr class="retail-sales-detail {%= row.is_total_row ? 'retail-sales-total-detail' : '' %}"><td colspan="{%= band.length %}">
+    <table class="retail-sales-detail-grid" role="presentation"><tr>
+     {% for (const col of financial_details) { %}<td><span class="detail-label">{%= escape(col.label) %}:</span> <strong>{%= value(row, col) %}</strong></td>{% } %}
+    </tr></table>
+   </td></tr>
+   {% } %}
+   {% if (!picked && !row.is_total_row) { %}
+   <tr class="retail-sales-detail"><td colspan="{%= band.length %}">
+    <table class="retail-sales-detail-grid" role="presentation"><tr>
+     {% for (const col of other_details) { %}<td><span class="detail-label">{%= escape(col.label) %}:</span> <strong>{%= value(row, col) %}</strong></td>{% } %}
+     <td class="retail-sales-status">{%= escape(status(row.source_status)) %}</td>
+    </tr></table>
+   </td></tr>
+   {% } %}
+  </tbody>
+  {% } %}
+  {% if (!detail_rows.length) { %}<tbody><tr><td colspan="{%= band.length %}">{%= __("No sales found for the selected filters.") %}</td></tr></tbody>{% } %}
+ </table>
+ {% } %}
+ {% if (!picked) { %}<div class="retail-sales-notes">
+  {%= __("Net sales = gross sales − discount − sales returns. Sales amounts exclude VAT. COGS = cost of goods sold.") %}
+  {% if (data.some((row) => row.cost_amount == null || row.net_sales == null || row.vat == null)) { %}{%= __("— = unavailable; N/A = margin unavailable.") %}{% } %}
+ </div>{% } %}
+ <div class="retail-sales-footer">
+  <div>{%= __("Printed by") %}: {%= escape(printed_by) %} · {%= escape(frappe.datetime.now_datetime()) %}</div>
+  <div>{%= __("Daily / counter entries") %}: {%= detail_rows.length %}</div>
+ </div>
+</section>

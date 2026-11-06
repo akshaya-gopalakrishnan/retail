@@ -141,6 +141,7 @@ doctype_js = {
 		"public/js/forms/foc_qty.js",
 		"public/js/forms/purchase_selling_price.js",
 		"public/js/forms/purchase_history.js",
+		"public/js/forms/purchase_receipt_quick_entry.js",
 	],
 	"Purchase Invoice": [
 		"public/js/forms/foc_qty.js",
@@ -207,6 +208,7 @@ after_install = [
 # Print Format fixtures must exist before creating site-owned editable copies.
 after_sync = [
 	"retail.editable_print_formats.ensure_editable_print_formats",
+	"retail.report_print_formats.ensure_report_print_formats",
 	"retail.setup.ensure_print_languages",
 ]
 
@@ -275,6 +277,9 @@ has_permission = {
 # Hook on document methods and events
 
 doc_events = {
+	"Sales Person": {
+		"before_naming": "retail.sales_person_identity.before_naming",
+	},
 	"Van Session": {
 		"validate": "retail.van_assignment.validate_session",
 		"before_update_after_submit": "retail.van_assignment.validate_session",
@@ -295,6 +300,7 @@ doc_events = {
 		"on_update": "retail.pos_login.sync_employee_pos_user",
 	},
 	"User": {
+		"onload": ["retail.pos_login.load_user_pos_login"],
 		"validate": "retail.pos_login.apply_user_pos_login",
 		"after_insert": "retail.grid_view_settings.apply_default_grid_view_settings_for_user",
 	},
@@ -452,7 +458,9 @@ doc_events = {
 		"on_update_after_submit": "retail.domains.item.item_price_sync.sync_latest_transaction_item_prices",
 	},
 	"Sales Order": {
+		"before_insert": "retail.sales_order_sales_person.assign_creator",
 		"validate": [
+			"retail.sales_order_sales_person.validate",
 			"retail.domains.foc.apply_foc_quantities",
 			"retail.domains.transactions.vat.set_vat_rates",
 		],
@@ -681,6 +689,8 @@ fixtures = [
 					*[
 						f"{dt}-main-default_print_format"
 						for dt in (
+							"Journal Entry",
+							"Payment Entry",
 							"Sales Invoice",
 							"Delivery Note",
 							"Quotation",
@@ -722,6 +732,7 @@ fixtures = [
 					"Invoice Count Today",
 					"Low Stock Items",
 					"Out of Stock Items",
+					"Expired Items",
 					"Return Amount Today",
 					"Damage Amount Today",
 					"Cash in Hand Today",
@@ -881,7 +892,10 @@ has_permission["Celesta License Settings"] = "retail.licensing.client.has_permis
 # Enforce license validity and assigned seats at login only for now.
 # Existing sessions and API requests must not revalidate licensing.
 on_login = "retail.licensing.enforcement.on_login"
-on_session_creation = "retail.licensing.enforcement.on_session_creation"
+on_session_creation = [
+	"retail.licensing.enforcement.on_session_creation",
+	"retail.login_sales_person.on_session_creation",
+]
 # Restrict only invalid-license repair admissions; never revalidate normal requests.
 auth_hooks.insert(0, "retail.licensing.enforcement.guard_request")
 
@@ -1087,3 +1101,14 @@ for _purchase_barcode_dt in ("Purchase Invoice", "Purchase Receipt"):
 	doctype_js[_purchase_barcode_dt].append("public/js/forms/purchase_item_barcode.js")
 after_migrate.append("retail.patches.show_purchase_item_barcode.install")
 after_sync.append("retail.patches.show_purchase_item_barcode.install")
+
+after_migrate.append("retail.patches.customer_sales_person.execute")
+after_sync.append("retail.patches.customer_sales_person.execute")
+after_migrate.append("retail.patches.sales_order_sales_person.execute")
+after_sync.append("retail.patches.sales_order_sales_person.execute")
+after_migrate.append("retail.patches.sales_person_display_name.execute")
+after_sync.append("retail.patches.sales_person_display_name.execute")
+after_migrate.append("retail.patches.user_pos_login_display.execute")
+after_sync.append("retail.patches.user_pos_login_display.execute")
+doctype_js["Sales Person"] = "public/js/forms/sales_person_identity.js"
+doctype_js["Sales Order"].append("public/js/forms/sales_order_sales_person.js")

@@ -70,7 +70,10 @@ class TestEditablePrintPortability(unittest.TestCase):
 			self.assertNotIn("<style", target.html)
 			self.assertIn(".invoice { color: blue; }", target.css)
 			target.insert.assert_called_once_with(ignore_permissions=True)
-			setter.assert_called_once()
+			setter.assert_called_once_with(
+				"Sales Invoice", None, "default_print_format", "Sales Invoice - A4", "Data",
+				for_doctype=True, validate_fields_for_doctype=False,
+			)
 
 	def test_all_released_layouts_are_packaged(self):
 		for doctype in formats.SOURCES:

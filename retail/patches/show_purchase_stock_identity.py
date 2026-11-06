@@ -14,7 +14,9 @@ def add_columns(columns):
 	if not isinstance(columns, list) or not columns:
 		return columns
 	result = list(columns)
-	anchor = next((i for i, c in enumerate(result) if c.get("fieldname") == "item_name"), None)
+	anchor = next((i for i, c in enumerate(result) if c.get("fieldname") == "uom"), None)
+	if anchor is None:
+		anchor = next((i for i, c in enumerate(result) if c.get("fieldname") == "item_name"), None)
 	if anchor is None:
 		anchor = next((i for i, c in enumerate(result) if c.get("fieldname") == "item_code"), None)
 	if anchor is None:

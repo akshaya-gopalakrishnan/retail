@@ -1,0 +1,94 @@
+{% set company_currency = frappe.db.get_value("Company", doc.company, "default_currency", cache=True) %}
+{% macro money(value) -%}{{ frappe.utils.fmt_money(value or 0, precision=doc.precision("total_debit")) }}{%- endmacro %}
+{% macro display_name(doctype, name) -%}
+    {% if name %}
+        {% set title_field = frappe.get_meta(doctype).title_field %}
+        {{ ((frappe.db.get_value(doctype, name, title_field, cache=True) if title_field else name) or name) | e }}
+    {% endif %}
+{%- endmacro %}
+
+<div class="retail-print-container">
+    {% if letter_head and not no_letterhead %}<div class="retail-journal-letterhead">{{ letter_head }}</div>{% endif %}
+
+    <table class="retail-title-table">
+        <tr>
+            <td class="retail-title-rule"><div></div></td>
+            <td class="retail-title-cell"><h1 class="document-title">{{ _("Journal Voucher") }}</h1></td>
+            <td class="retail-title-rule"><div></div></td>
+        </tr>
+    </table>
+    <div class="retail-document-number"># {{ doc.name | e }}</div>
+    {% if doc.docstatus != 1 %}<div class="journal-status">{{ _("Cancelled") if doc.docstatus == 2 else _("Draft") }}</div>{% endif %}
+
+    <table class="information-table">
+        <tr>
+            <td class="company-section">
+                <div class="section-label">{{ _("Company") }}</div>
+                <div class="company-name">{{ display_name("Company", doc.company) }}</div>
+                {% if doc.pay_to_recd_from %}<div class="payee-details"><span class="section-label">{{ _("Pay To / Received From") }}:</span> {{ doc.pay_to_recd_from | e }}</div>{% endif %}
+            </td>
+            <td class="document-info-section">
+                <table class="document-details">
+                    <tr><td class="detail-label">{{ _("Date") }}:</td><td class="detail-value">{{ frappe.utils.formatdate(doc.posting_date, "dd MMM yyyy") if doc.posting_date else "" }}</td></tr>
+                    <tr><td class="detail-label">{{ _("Entry Type") }}:</td><td class="detail-value">{{ _(doc.voucher_type or "Journal Entry") | e }}</td></tr>
+                    <tr><td class="detail-label">{{ _("Currency") }}:</td><td class="detail-value">{{ company_currency }}</td></tr>
+                    {% if doc.cheque_no %}<tr><td class="detail-label">{{ _("Reference / Cheque No") }}:</td><td class="detail-value">{{ doc.cheque_no | e }}</td></tr>{% endif %}
+                    {% if doc.cheque_date %}<tr><td class="detail-label">{{ _("Reference Date") }}:</td><td class="detail-value">{{ frappe.utils.formatdate(doc.cheque_date, "dd MMM yyyy") }}</td></tr>{% endif %}
+                    {% if doc.bill_no %}<tr><td class="detail-label">{{ _("Bill No") }}:</td><td class="detail-value">{{ doc.bill_no | e }}</td></tr>{% endif %}
+                    {% if doc.bill_date %}<tr><td class="detail-label">{{ _("Bill Date") }}:</td><td class="detail-value">{{ frappe.utils.formatdate(doc.bill_date, "dd MMM yyyy") }}</td></tr>{% endif %}
+                    {% if doc.finance_book %}<tr><td class="detail-label">{{ _("Finance Book") }}:</td><td class="detail-value">{{ doc.finance_book | e }}</td></tr>{% endif %}
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    <table class="item-table journal-accounts">
+        <thead>
+            <tr>
+                <th class="col-number">{{ _("Sr No") }}</th>
+                <th class="col-account">{{ _("Account / Party") }}</th>
+                <th class="col-reference">{{ _("Reference") }}</th>
+                <th class="col-amount">{{ _("Debit") }}<br>{{ company_currency }}</th>
+                <th class="col-amount">{{ _("Credit") }}<br>{{ company_currency }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in doc.accounts %}
+                <tr class="journal-account-row">
+                    <td class="col-number">{{ loop.index }}</td>
+                    <td class="col-account">
+                        <div class="account-name">{{ display_name("Account", row.account) }}</div>
+                        {% if row.party and row.party_type %}<div class="party-details"><span class="section-label">{{ _(row.party_type) }}:</span> {{ display_name(row.party_type, row.party) }}</div>{% endif %}
+                        {% if row.cost_center %}<div class="row-detail">{{ _("Cost Center") }}: {{ display_name("Cost Center", row.cost_center) }}</div>{% endif %}
+                        {% if row.account_currency and row.account_currency != company_currency %}<div class="row-detail">{{ _("Exchange Rate") }}: {{ row.exchange_rate or 0 }}</div>{% endif %}
+                        {% if row.user_remark %}<div class="row-remark">{{ row.user_remark | e }}</div>{% endif %}
+                    </td>
+                    <td class="col-reference">
+                        {% if row.reference_name %}<div class="reference-name">{{ row.reference_name | e }}</div><div class="row-detail">{{ _(row.reference_type or "") }}</div>{% endif %}
+                        {% if row.project %}<div class="row-detail">{{ _("Project") }}: {{ display_name("Project", row.project) }}</div>{% endif %}
+                    </td>
+                    <td class="col-amount"><div>{{ money(row.debit) }}</div>{% if row.account_currency and row.account_currency != company_currency %}<div class="account-currency-amount">{{ row.account_currency }} {{ frappe.utils.fmt_money(row.debit_in_account_currency or 0, precision=row.precision("debit_in_account_currency")) }}</div>{% endif %}</td>
+                    <td class="col-amount"><div>{{ money(row.credit) }}</div>{% if row.account_currency and row.account_currency != company_currency %}<div class="account-currency-amount">{{ row.account_currency }} {{ frappe.utils.fmt_money(row.credit_in_account_currency or 0, precision=row.precision("credit_in_account_currency")) }}</div>{% endif %}</td>
+                </tr>
+            {% endfor %}
+            <tr class="journal-totals-row"><td colspan="3">{{ _("Total") }} ({{ company_currency }})</td><td class="col-amount">{{ money(doc.total_debit) }}</td><td class="col-amount">{{ money(doc.total_credit) }}</td></tr>
+        </tbody>
+    </table>
+
+    {% if doc.difference %}<div class="journal-difference"><span class="section-label">{{ _("Difference") }}:</span> {{ company_currency }} {{ money(doc.difference) }}</div>{% endif %}
+    <div class="amount-words"><span class="section-label">{{ _("Total Debit in Words") }}:</span> {{ frappe.utils.money_in_words(doc.total_debit or 0, company_currency) }}</div>
+
+    {% if doc.user_remark or doc.remark %}<div class="notes-section"><div class="section-label">{{ _("Narration") }}</div><div class="journal-narration">{{ (doc.user_remark or doc.remark) | e }}</div></div>{% endif %}
+
+    <div class="signature-section">
+        <table class="signature-table">
+            <tr>
+                <td><div class="signature-line">{{ _("Prepared By") }}</div></td>
+                <td><div class="signature-line">{{ _("Checked By") }}</div></td>
+                <td><div class="signature-line">{{ _("Authorized Signatory") }}</div></td>
+            </tr>
+        </table>
+    </div>
+
+    {% if footer and not no_letterhead %}<div class="retail-journal-footer">{{ footer }}</div>{% endif %}
+</div>

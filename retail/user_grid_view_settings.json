@@ -142,16 +142,16 @@
         "fieldname": "custom_item_barcode"
       },
       {
+        "columns": 1,
+        "fieldname": "uom"
+      },
+      {
         "columns": 2,
         "fieldname": "serial_no"
       },
       {
         "columns": 2,
         "fieldname": "batch_no"
-      },
-      {
-        "columns": 1,
-        "fieldname": "uom"
       },
       {
         "columns": 1,
@@ -276,16 +276,16 @@
         "fieldname": "custom_item_barcode"
       },
       {
+        "columns": 1,
+        "fieldname": "uom"
+      },
+      {
         "columns": 2,
         "fieldname": "serial_no"
       },
       {
         "columns": 2,
         "fieldname": "batch_no"
-      },
-      {
-        "columns": 1,
-        "fieldname": "uom"
       },
       {
         "columns": 1,

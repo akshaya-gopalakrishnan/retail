@@ -1733,6 +1733,13 @@ Response example:
 
 Save the returned customer ID before using it on a bill. Existing customers return `action: "Updated"`. Empty text clears a field; omitted fields stay unchanged.
 
+Optional `sales_person_id` accepts the Sales Person Code (`custom_document_code`)
+returned in customer master downloads and saves the Customer's `custom_sales_person`
+assignment. Alternatively, send `custom_sales_person` with the ERP Sales Person
+Link name. Unknown values are rejected; if both fields are supplied they must
+identify the same person. Omitted or null values leave the assignment unchanged;
+an empty string clears it. The response envelope is unchanged.
+
 Request JSON:
 
 ```json
@@ -1745,6 +1752,7 @@ Request JSON:
   "territory": "All Territories",
   "mobile_no": "9715XXXXXXXX",
   "email_id": "customer@example.com",
+  "sales_person_id": "SP2-2",
   "tax_id": ""
 }
 ```
@@ -1756,6 +1764,29 @@ Response example:
 ```
 
 ### Customer master: loyalty and customer vouchers (additive)
+
+Customer rows also include `custom_sales_person`: the Sales Person selected in
+Customer → Sales Team → Sales Person, or `null` when unassigned. POS customer rows
+also include `sales_person_id` (the unique `Sales Person.custom_document_code`) and `sales_person_name`
+(the Sales Person's display name). Both are `null` when unassigned. For example:
+`{"name": "C-1", "customer_name": "Example Customer", "custom_sales_person": "Mith", "sales_person_id": "SP2-2", "sales_person_name": "Mith"}`.
+Use `sales_person_id` for matching and `sales_person_name` for display.
+The ID is the existing Sales Person Code, not the person's name.
+Existing `custom_sales_person` remains the ERP Link value for compatibility. A missing linked record returns a null display name.
+This is an assignment value; it does not restrict downloads to that salesperson.
+It is included in full and incremental POS master downloads. For the Sales Order
+app's `get_sales_order_data`, include `custom_sales_person` in the Customer query's
+`fields`, or request `include_details: true` to receive the full customer document
+(subject to existing ERP permissions).
+For its display name, the Sales Order app can query `Sales Person` with
+`fields: ["name", "custom_document_code", "sales_person_name"]` through the same endpoint and match
+`Customer.custom_sales_person` to `Sales Person.name`; use `custom_document_code`
+as the unique salesperson ID. New Sales Persons store a unique ERP
+`name` / `sales_person_name` such as `SP-1 - Ahmed`; `custom_display_name` stores
+the repeatable human name `Ahmed`. Login, POS customer master and Sales Order
+`sales_person_name` responses use `custom_display_name`, falling back to the
+legacy ERP name for existing Sales Persons. Request `custom_display_name` too
+when downloading Sales Person master records through `get_sales_order_data`.
 
 The existing `get_pos_master_data` → `customers` rows retain all original customer,
 credit-limit, unused-credit-note and settlement fields. Each row additionally has:
@@ -5580,8 +5611,14 @@ Users are created in ERP; the app does not register users.
 Successful response example:
 
 ```json
-{"message":"Logged In","home_page":"/app","full_name":"Sales Person"}
+{"message":"Logged In","home_page":"/app","full_name":"Sales Person","sales_person_id":"SP2-2","sales_person_name":"Mith"}
 ```
+
+`sales_person_id` and `sales_person_name` are added to the existing response using
+the authenticated User → active Employee → enabled, non-group Sales Person link.
+Both are `null` if a link is missing or more than one matching Employee or Sales
+Person exists. Existing login fields, cookies and authentication rules remain
+unchanged. These identity fields do not grant access or filter customer records.
 
 Keep the returned `sid` cookie and send it on every following request. ERP authentication
 settings, including two-factor authentication where enabled, still apply. Session-authenticated
@@ -5661,9 +5698,34 @@ Shipping Rule, Incoterm, Brand and Item Group.
 
 List orders using this same API:
 
+Sales Orders include `sales_person_id` and `sales_person_name`. New orders receive
+these from the creating user's linked active Employee / enabled Sales Person.
+Unmapped or ambiguous creators receive null values. The ID can be changed while
+the order is a draft; the name follows that ID. Both are locked after submission.
+Existing orders are not backfilled. Full-document reads and save responses include
+these fields; request both explicitly in order-list `fields` to display or filter
+by the login's Sales Person ID. This does not add backend access restrictions.
+
 ```json
-{"queries":[{"doctype":"Sales Order","fields":["name","customer","customer_name","transaction_date","delivery_date","grand_total","currency","status","docstatus","modified"],"page_length":1000}]}
+{"queries":[{"doctype":"Sales Order","fields":["name","customer","customer_name","sales_person_id","sales_person_name","transaction_date","delivery_date","grand_total","currency","status","docstatus","modified"],"page_length":1000}]}
 ```
+
+To download orders for the salesperson returned at login, use that login's
+`sales_person_id` in `filters` (replace the example `SP2-2`):
+
+```json
+{"queries":[{"doctype":"Sales Order","fields":["name","customer","sales_person_id","sales_person_name","grand_total","status","modified"],"filters":{"sales_person_id":"SP2-2"},"page_length":1000}]}
+```
+
+Both identity fields appear on each order inside
+`message.results[0].documents`. Shortened response example:
+
+```json
+{"message":{"status":"Success","results":[{"doctype":"Sales Order","documents":[{"name":"SO-100","customer":"C-100","sales_person_id":"SP2-2","sales_person_name":"Mith","grand_total":210,"status":"Draft","modified":"2026-11-04 12:00:00.000000"}],"has_more":false,"next_start":1}]}}
+```
+
+The save/submit response includes the same fields at
+`message.order.sales_person_id` and `message.order.sales_person_name`.
 
 Use `filters` for customer, dates, status, owner, etc. No extra own-order restriction is added.
 Read an order or master with its full permitted child rows:

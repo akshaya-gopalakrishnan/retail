@@ -12,7 +12,7 @@ def execute():
 					"label": "POS Login ID",
 					"fieldtype": "Int",
 					"insert_after": "pos_login_enabled",
-					"description": "Unique numeric login ID used by cashier in POS.",
+					"description": "",
 				},
 			],
 		},

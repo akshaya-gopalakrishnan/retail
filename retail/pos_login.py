@@ -85,6 +85,22 @@ def sync_employee_pos_user(doc, method=None):
 		frappe.db.set_value("User", doc.pos_login_user, "pos_cashier_employee", doc.name, update_modified=False)
 
 
+def load_user_pos_login(doc, method=None):
+	"""Display existing Employee settings without writing either document."""
+	rows = frappe.get_list(
+		"Employee", filters={"user_id": doc.name},
+		fields=["name", "pos_login_id", "pos_login_enabled"], page_length=2,
+	) if frappe.has_permission("Employee", "read") else []
+	if len(rows) == 1:
+		employee = rows[0]
+		doc.pos_cashier_employee = employee.name
+		doc.pos_login_id = employee.pos_login_id
+		doc.pos_login_enabled = employee.pos_login_enabled
+	else:
+		doc.pos_cashier_employee = None
+		doc.pos_login_id = None
+
+
 def apply_user_pos_login(doc, method=None):
 	if not doc.meta.has_field("pos_cashier_employee"):
 		return

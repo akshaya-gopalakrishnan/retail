@@ -1015,12 +1015,25 @@ def _customer_master_rows(company, modified_filter=None):
 	customers = frappe.get_all(
 		"Customer",
 		filters=[["disabled", "=", 0], *modified_filter],
-		fields=["name", "customer_name", "customer_group", "territory", "modified"],
+		fields=["name", "customer_name", "customer_group", "territory", "custom_sales_person", "modified"],
 		limit_page_length=0,
 	)
 
 	if not customers:
 		return customers
+
+	sales_person_ids = list({row.custom_sales_person for row in customers if row.custom_sales_person})
+	sales_people = {
+		row.name: row
+		for row in frappe.get_all(
+			"Sales Person", filters={"name": ["in", sales_person_ids]},
+			fields=["name", "custom_document_code", "sales_person_name", "custom_display_name"], limit_page_length=0,
+		)
+	} if sales_person_ids else {}
+	for customer in customers:
+		person = sales_people.get(customer.custom_sales_person) or frappe._dict()
+		customer["sales_person_id"] = person.get("custom_document_code") or None
+		customer["sales_person_name"] = person.get("custom_display_name") or person.get("sales_person_name")
 
 	customer_names = [customer.name for customer in customers]
 	customer_groups = list({customer.customer_group for customer in customers if customer.customer_group})
@@ -2756,6 +2769,7 @@ def upsert_customer(data=None, **kwargs):
 		name = frappe.db.get_value("Customer", {"external_pos_customer_id": external_id}, "name")
 		values = {key: payload.get(key) for key in ("customer_name", "customer_group", "territory", "mobile_no", "email_id", "tax_id") if payload.get(key) is not None}
 		values["external_pos_customer_id"] = external_id
+		values.update(_customer_sales_person_values(payload))
 		if name:
 			frappe.db.set_value("Customer", name, values)
 			return {"status": "Success", "action": "Updated", "customer": name}
@@ -2766,6 +2780,22 @@ def upsert_customer(data=None, **kwargs):
 		return {"status": "Success", "action": "Created", "customer": customer.name}
 
 	return _run("Customer Upsert", payload, handler)
+
+
+def _customer_sales_person_values(payload):
+	"""Resolve the POS code or the existing ERP Link without changing omitted values."""
+	assignments = []
+	for key, field in (("sales_person_id", "custom_document_code"), ("custom_sales_person", "name")):
+		value = payload.get(key)
+		if value is None:
+			continue
+		person = frappe.db.get_value("Sales Person", {field: value}, "name") if value else ""
+		if value and not person:
+			frappe.throw(_("Unknown Sales Person: {0}").format(value))
+		assignments.append(person)
+	if len(set(assignments)) > 1:
+		frappe.throw(_("sales_person_id and custom_sales_person must identify the same Sales Person."))
+	return {"custom_sales_person": assignments[0]} if assignments else {}
 
 
 def _default_company():
