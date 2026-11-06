@@ -1,6 +1,74 @@
 // Use native row fields and server bundle creation; do not change Stock Settings.
 (() => {
 	const tracking = [["serial_no", "has_serial_no"], ["batch_no", "has_batch_no"]];
+	function bindCreate(frm, row, field, control) {
+		const input = control?.$input?.[0];
+		if (!input || input.__retail_tracking_create) return;
+		input.__retail_tracking_create = true;
+		input.setAttribute("title", __("Alt+Enter: create batch / serial numbers"));
+		input.addEventListener("keydown", event => {
+			if (event.key !== "Enter" || !event.altKey || event.ctrlKey || event.metaKey || event.repeat ||
+				Number(frm.doc.docstatus || 0) !== 0 || frm.doc.is_return || !frm.perm?.[0]?.write ||
+				row.serial_and_batch_bundle || control.df.read_only) return;
+			event.preventDefault();
+			event.stopImmediatePropagation();
+			createTracking(frm, row, field, control);
+		}, true);
+	}
+
+	function createTracking(frm, row, field, control) {
+		const itemCode = row.item_code;
+		if (!itemCode) return;
+		const current = () => Number(frm.doc.docstatus || 0) === 0 && row.item_code === itemCode &&
+			(frm.doc.items || []).includes(row) && !row.serial_and_batch_bundle;
+		const fill = async values => {
+			await frappe.model.set_value(row.doctype, row.name, values);
+			control.set_input?.(row[field] || "");
+		};
+		if (field === "batch_no") {
+			if (!frappe.model.can_create("Batch")) return;
+			return frappe.ui.form.make_quick_entry("Batch", batch => {
+				if (current()) return fill({batch_no: batch.name, use_serial_batch_fields: 1});
+			}, dialog => dialog.set_value("item", itemCode), undefined, true);
+		}
+		const count = Number(row.qty || 0) * Number(row.conversion_factor || 1);
+		if (!Number.isInteger(count) || count < 1) {
+			frappe.msgprint(__("Enter a positive whole stock quantity before generating serial numbers."));
+			return;
+		}
+		// Fill the native field; ERPNext creates/validates the Serial No masters
+		// through its normal receipt workflow, including separate FOC rows.
+		const dialog = new frappe.ui.Dialog({title: __("Create Serial Numbers"), fields: [
+			{fieldname: "quantity", fieldtype: "Int", label: __("Serial Numbers to Generate"), default: count, read_only: 1},
+			{fieldname: "first_serial_no", fieldtype: "Data", label: __("First Serial No"), reqd: 1,
+				description: __("For example, SN-0001 generates SN-0001, SN-0002, and so on for this row's stock quantity.")},
+		], primary_action_label: __("Fill Serial Numbers"), primary_action: async values => {
+			if (!current()) return;
+			if (count !== Number(row.qty || 0) * Number(row.conversion_factor || 1)) {
+				frappe.throw(__("Quantity changed. Open serial number generation again."));
+			}
+			const first = values.first_serial_no.trim();
+			const match = first.match(/^(.*?)(\d+)$/);
+			if (!match && count !== 1) frappe.throw(__("The first serial number must end with a number."));
+			const serials = Array.from({length: count}, (_, index) => match
+				? match[1] + String(BigInt(match[2]) + BigInt(index)).padStart(match[2].length, "0") : first);
+			const others = new Set((frm.doc.items || []).filter(other => other !== row)
+				.flatMap(other => String(other.serial_no || "").split(/\s*\n\s*/)));
+			if (serials.some(serial => others.has(serial))) frappe.throw(__("A generated serial number is already in another receipt row."));
+			const existing = await frappe.db.get_list("Serial No", {fields: ["name"], filters: {name: ["in", serials]}, limit: count});
+			if (existing.length) frappe.throw(__("Serial number {0} already exists. Choose another starting number.", [existing[0].name]));
+			if (!current()) return;
+			if (count !== Number(row.qty || 0) * Number(row.conversion_factor || 1)) {
+				frappe.throw(__("Quantity changed. Open serial number generation again."));
+			}
+			await fill({serial_no: serials.join("\n"), use_serial_batch_fields: 1});
+			dialog.hide();
+		}});
+		dialog.show();
+		return dialog;
+	}
+	window.retail = window.retail || {};
+	window.retail.purchase_tracking = { bindCreate };
 	function applicable(frm, row, flag) {
 		return Boolean(Number(frm.__retail_purchase_tracking.items.get(row.item_code)?.[flag])) &&
 			(frm.doctype !== "Purchase Invoice" || (Number(frm.doc.update_stock) === 1 && !Number(row.is_fixed_asset)));
@@ -22,6 +90,7 @@
 			if (column.field) {
 				column.field.df = column.df;
 				column.field.refresh();
+				if (show) bindCreate(frm, row.doc, field, column.field);
 			}
 			const editing = row.row.hasClass("editable-row");
 			column.field_area?.toggle(show && editing);
@@ -41,6 +110,7 @@
 	async function sync(frm, reload = false) {
 		const grid = frm.fields_dict.items?.grid;
 		if (!grid) return;
+		grid.retail_purchase_tracking = true;
 		const state = frm.__retail_purchase_tracking ||= { items: new Map(), generation: 0 };
 		if (!state.bound) {
 			state.bound = true;

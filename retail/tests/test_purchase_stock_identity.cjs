@@ -14,7 +14,8 @@ function fixture(doctype = 'Purchase Receipt') {
  const frappe = {ui:{form:{on:(dt, events)=>handlers[dt]=events}},db:{
   get_list:async (_dt,args)=>args.filters.name[1].map(code=>masters.get(code)).filter(Boolean),
  }};
- vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../public/js/forms/purchase_stock_identity.js'),'utf8'), {frappe,$:()=>({on:(_name,fn)=>render=fn})});
+ const context={frappe,$:()=>({on:(_name,fn)=>render=fn}),__:s=>s};context.window=context;
+ vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../public/js/forms/purchase_stock_identity.js'),'utf8'), context);
  const grid={fields_map:{},visible_columns:[],resets:0,
   update_docfield_property(field,key,value){
    (properties[field]||={})[key]=value;
@@ -34,7 +35,7 @@ function fixture(doctype = 'Purchase Receipt') {
   render(null,row);return row;
  };
  const rowMetadata=doc=>Object.fromEntries(gridRow(doc).docfields.map(df=>[df.fieldname,df]));
- return {handlers,properties,masters,frappe,frm,rowMetadata,gridRow,sharedColumns,grid};
+ return {handlers,properties,masters,frappe,frm,rowMetadata,gridRow,sharedColumns,grid,context};
 }
 
 test('empty and ordinary purchases hide both identity columns',async()=>{
@@ -135,4 +136,58 @@ test('non-stock invoices and submitted purchases retain native allocation mode',
  f.frm.doc.update_stock=1;f.frm.doc.docstatus=1;
  await f.handlers['Purchase Invoice Item'].item_code(f.frm);
  assert.equal(f.frm.doc.items[0].use_serial_batch_fields,undefined);
+});
+
+function creationFixture(field='serial_no', values={}) {
+ const f=fixture();let keydown,prompt,quick;
+ const row={doctype:'Purchase Receipt Item',name:'new-row',item_code:'serial',qty:2,conversion_factor:3,...values};
+ f.frm.doc.items=[row];f.frm.perm=[{write:1}];
+ const control={df:{},$input:[{setAttribute(){},addEventListener(_event,fn){keydown=fn;}}]};
+ f.frappe.model={can_create:()=>true,async set_value(_dt,_name,values){Object.assign(row,values);}};
+ f.frappe.db.get_list=async()=>[];
+ f.frappe.ui.form.make_quick_entry=(...args)=>quick=args;
+ f.frappe.ui.Dialog=class {
+  constructor(options){prompt={fields:options.fields,callback:options.primary_action};}
+  show(){} hide(){prompt.hidden=true;}
+ };
+ f.frappe.throw=message=>{throw Error(message);};f.frappe.msgprint=()=>{};
+ f.context.retail.purchase_tracking.bindCreate(f.frm,row,field,control);
+ const press=(extra={})=>{const e={key:'Enter',altKey:true,preventDefault(){this.prevented=true;},stopImmediatePropagation(){},...extra};keydown(e);return e;};
+ return {...f,row,control,press,prompt:()=>prompt,quick:()=>quick};
+}
+
+test('Alt+Enter generates one padded serial per stock unit without creating masters',async()=>{
+ const f=creationFixture();assert.equal(f.press().prevented,true);
+ assert.equal(f.prompt().fields[0].default,6);
+ await f.prompt().callback({first_serial_no:'SN-0098'});
+ assert.equal(f.row.serial_no,'SN-0098\nSN-0099\nSN-0100\nSN-0101\nSN-0102\nSN-0103');
+ assert.equal(f.row.qty,2);assert.equal(f.row.use_serial_batch_fields,1);
+ assert.equal(f.prompt().hidden,true);
+});
+
+test('batch shortcut opens native Quick Entry with the Item and returns the saved batch',async()=>{
+ const f=creationFixture('batch_no');f.press();
+ const [doctype,inserted,init,doc,force]=f.quick();let selected;
+ init({set_value:(field,value)=>selected={field,value}});
+ assert.equal(doctype,'Batch');assert.equal(selected.field,'item');assert.equal(selected.value,'serial');
+ assert.equal(doc,undefined);assert.equal(force,true);
+ await inserted({name:'NEW-BATCH'});assert.equal(f.row.batch_no,'NEW-BATCH');
+});
+
+test('tracking shortcut respects read-only, returns, bundles and normal Enter',()=>{
+ for(const setup of [f=>f.frm.doc.docstatus=1,f=>f.frm.doc.is_return=1,f=>f.frm.perm=[],
+  f=>f.row.serial_and_batch_bundle='BUNDLE',f=>f.control.df.read_only=1]) {
+  const f=creationFixture();setup(f);assert.equal(f.press().prevented,undefined);assert.equal(f.prompt(),undefined);
+ }
+ const f=creationFixture();assert.equal(f.press({altKey:false}).prevented,undefined);
+});
+
+test('serial generation rejects duplicate masters, changed quantity and fractional units',async()=>{
+ const f=creationFixture();f.press();f.row.qty=3;
+ await assert.rejects(f.prompt().callback({first_serial_no:'SN-001'}),/Quantity changed/);
+ f.row.qty=2;f.frappe.db.get_list=async()=>[{name:'SN-001'}];
+ await assert.rejects(f.prompt().callback({first_serial_no:'SN-001'}),/already exists/);
+ assert.equal(f.prompt().hidden,undefined);
+ assert.equal(f.row.serial_no,undefined);
+ const fraction=creationFixture('serial_no',{qty:0.5,conversion_factor:1});fraction.press();assert.equal(fraction.prompt(),undefined);
 });

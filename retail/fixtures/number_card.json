@@ -222,5 +222,21 @@
   "show_percentage_stats": 1,
   "stats_time_interval": "Daily",
   "type": "Custom"
+ },
+ {
+  "color": "#DC2626",
+  "docstatus": 0,
+  "doctype": "Number Card",
+  "document_type": "Stock Ledger Entry",
+  "function": "Count",
+  "is_public": 1,
+  "is_standard": 1,
+  "label": "Expired Items",
+  "method": "retail.retail_app.report.expired_items.expired_items.get_expired_items_count",
+  "module": "Retail-app",
+  "name": "Expired Items",
+  "show_full_number": 1,
+  "show_percentage_stats": 0,
+  "type": "Custom"
  }
 ]

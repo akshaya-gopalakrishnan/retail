@@ -7,8 +7,9 @@
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
- "field_order": ["details_section", "description", "disabled", "column_break_1", "active_from", "active_from_time", "active_to", "active_to_time", "company", "warehouse", "buy_qty", "free_qty", "same_product_only", "notes", "promotion_scope", "priority", "products_section", "products", "system_section", "linked_schemes"],
+ "field_order": ["code_column", "disabled", "details_section", "description", "column_break_1", "active_from", "active_from_time", "active_to", "active_to_time", "company", "warehouse", "buy_qty", "free_qty", "same_product_only", "notes", "promotion_scope", "priority", "products_section", "products", "system_section", "linked_schemes"],
  "fields": [
+  {"fieldname": "code_column", "fieldtype": "Column Break"},
   {"fieldname": "promotion_scope", "fieldtype": "Select", "label": "Apply Promotion To", "default": "ITEM", "read_only": 1, "options": "ITEM\nCATEGORY\nBRAND", "reqd": 1},
   {"fieldname": "active_to_time", "fieldtype": "Time", "label": "Active To Time"},
   {"fieldname": "active_from_time", "fieldtype": "Time", "label": "Active From Time"},

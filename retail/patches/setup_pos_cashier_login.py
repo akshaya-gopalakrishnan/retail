@@ -25,7 +25,7 @@ def execute():
 					"label": "POS Login ID",
 					"fieldtype": "Int",
 					"insert_after": "pos_login_enabled",
-					"description": "Unique numeric login ID used by cashier in POS.",
+					"description": "",
 				},
 				{
 					"fieldname": "pos_login_user",
@@ -33,7 +33,7 @@ def execute():
 					"fieldtype": "Link",
 					"options": "User",
 					"insert_after": "pos_login_id",
-					"description": "ERPNext user/login id used by this cashier in POS.",
+					"description": "",
 				},
 				{
 					"fieldname": "pos_quick_pin",
@@ -41,7 +41,7 @@ def execute():
 					"fieldtype": "Data",
 					"length": 4,
 					"insert_after": "pos_login_user",
-					"description": "Enter a 4 digit POS PIN. The PIN is hashed and the raw value is not stored.",
+					"description": "",
 					"no_copy": 1,
 				},
 				{
@@ -84,15 +84,16 @@ def execute():
 					"fieldtype": "Link",
 					"options": "Employee",
 					"insert_after": "pos_login_enabled",
-					"description": "Employee/cashier represented by this user in POS.",
+					"description": "",
 				},
 				{
 					"fieldname": "pos_quick_pin",
+					"hidden": 1,
 					"label": "Set POS Quick PIN",
 					"fieldtype": "Data",
 					"length": 4,
 					"insert_after": "pos_cashier_employee",
-					"description": "Enter a 4 digit POS PIN. It is saved on the linked Employee as hash/salt.",
+					"description": "",
 					"no_copy": 1,
 				},
 			]

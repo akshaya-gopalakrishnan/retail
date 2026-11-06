@@ -176,16 +176,16 @@
           fieldname: "custom_item_barcode"
         },
         {
+          columns: 1,
+          fieldname: "uom"
+        },
+        {
           columns: 2,
           fieldname: "serial_no"
         },
         {
           columns: 2,
           fieldname: "batch_no"
-        },
-        {
-          columns: 1,
-          fieldname: "uom"
         },
         {
           columns: 1,
@@ -310,16 +310,16 @@
           fieldname: "custom_item_barcode"
         },
         {
+          columns: 1,
+          fieldname: "uom"
+        },
+        {
           columns: 2,
           fieldname: "serial_no"
         },
         {
           columns: 2,
           fieldname: "batch_no"
-        },
-        {
-          columns: 1,
-          fieldname: "uom"
         },
         {
           columns: 1,
@@ -1054,6 +1054,19 @@
         return df ? [__spreadProps(__spreadValues({}, df), { columns: entry.columns, width_px: entry.width_px, in_list_view: 1 })] : [];
       });
       let fields = this.user_defined_columns.length ? this.user_defined_columns : this.editable_fields || this.docfields;
+      if (this.retail_purchase_tracking) {
+        const names = ["serial_no", "batch_no"];
+        const identity = names.map((name) => fields.find((field) => field.fieldname === name) || this.fields_map[name] && __spreadProps(__spreadValues({}, this.fields_map[name]), { columns: 2, in_list_view: 1 })).filter(Boolean);
+        fields = fields.filter((field) => !names.includes(field.fieldname));
+        let anchor = fields.findIndex((field) => field.fieldname === "uom");
+        if (anchor < 0)
+          anchor = fields.findIndex((field) => field.fieldname === "item_name");
+        if (anchor < 0)
+          anchor = fields.findIndex((field) => field.fieldname === "item_code");
+        fields.splice(anchor + 1, 0, ...identity);
+        if (this.user_defined_columns.length)
+          this.user_defined_columns = fields;
+      }
       const target = this.retail_promotion_target;
       if (target && this.fields_map[target]) {
         fields = [this.fields_map[target], ...fields.filter((field) => (typeof field === "string" ? field : field.fieldname) !== target)];
@@ -2091,12 +2104,14 @@
         setup_columns.call(this);
         const fieldname = code_field(this);
         this.columns = this.columns.filter((column) => {
-          var _a3, _b2, _c2;
-          if (((_a3 = column.df) == null ? void 0 : _a3.fieldname) === fieldname)
+          var _a3, _b2, _c2, _d;
+          if (this.doctype === "Sales Person" && ["name", "sales_person_name"].includes((_a3 = column.df) == null ? void 0 : _a3.fieldname))
             return false;
-          if (((_b2 = column.df) == null ? void 0 : _b2.fieldname) === "name" && fieldname === "item_code")
+          if (((_b2 = column.df) == null ? void 0 : _b2.fieldname) === fieldname)
             return false;
-          if (((_c2 = column.df) == null ? void 0 : _c2.fieldname) === "name" && fieldname === "custom_document_code") {
+          if (((_c2 = column.df) == null ? void 0 : _c2.fieldname) === "name" && fieldname === "item_code")
+            return false;
+          if (((_d = column.df) == null ? void 0 : _d.fieldname) === "name" && fieldname === "custom_document_code") {
             if (this.doctype !== "User" && this.meta.title_field && this.meta.title_field !== "name")
               return false;
             column.df = __spreadProps(__spreadValues({}, column.df), { label: this.doctype === "User" ? __("Login") : __("Name") });
@@ -8751,4 +8766,4 @@
     ["Purchase Order", "Purchase Invoice", "Purchase Receipt"].map((doctype) => [doctype, user_grid_view_settings_default[doctype]])
   );
 })();
-//# sourceMappingURL=retail_desk.bundle.HIUH6MT2.js.map
+//# sourceMappingURL=retail_desk.bundle.5YZKXQQZ.js.map

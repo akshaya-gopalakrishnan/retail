@@ -17,7 +17,7 @@
 		const section = frm.fields_dict.description.$wrapper.closest(".form-section");
 		section.addClass("buy-get-details");
 		const columns = [
-			["description", "disabled", "company", "warehouse"],
+			["description", "company", "warehouse"],
 			["active_from", "active_from_time", "active_to", "active_to_time"],
 			["promotion_scope", "priority", "notes"],
 		];

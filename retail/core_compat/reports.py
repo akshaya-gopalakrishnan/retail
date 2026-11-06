@@ -65,4 +65,6 @@ def get_script(report_name):
     if report_name in ("Accounts Receivable", "Accounts Payable"):
         filename = frappe.scrub(report_name) + ".js"
         result["script"] = Path(__file__).with_name(filename).read_text() + "\n//# sourceURL=retail_" + filename
+        print_script = frappe.scrub(report_name) + "_print.js"
+        result["script"] += "\n" + Path(__file__).with_name(print_script).read_text()
     return result

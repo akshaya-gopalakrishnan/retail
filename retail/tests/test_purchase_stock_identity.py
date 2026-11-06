@@ -28,7 +28,8 @@ class TestPurchaseStockIdentity(unittest.TestCase):
 		defaults = json.loads(get_fixture_path().read_text())
 		for parent in upgrade.DOCTYPES:
 			fields = [c["fieldname"] for c in defaults[parent][parent + " Item"]]
-			self.assertEqual(fields[:4], ["item_code", "item_name", "serial_no", "batch_no"])
+			self.assertEqual(fields[:3], ["item_code", "item_name", "custom_item_barcode"])
+			self.assertEqual(fields[fields.index("uom") + 1:fields.index("uom") + 3], ["serial_no", "batch_no"])
 			selection = [{"fieldname": "item_code", "columns": 2, "width_px": 213}, {"fieldname": "qty", "columns": 1}]
 			_save_user_settings(self.token, parent, {
 				"GridView": {parent + " Item": selection},

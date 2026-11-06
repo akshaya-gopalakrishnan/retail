@@ -26,7 +26,7 @@ def get_data(filters=None):
 	last_sold_dates = get_last_sold_dates(item_codes, filters)
 	barcodes = get_barcodes(item_codes)
 	suppliers = get_suppliers(item_codes)
-	purchase_suppliers = get_purchase_suppliers(item_codes)
+	purchase_suppliers = get_purchase_suppliers(item_codes, filters)
 
 	days = max(date_diff(getdate(filters.to_date), getdate(filters.from_date)) + 1, 1)
 	max_net_qty = flt(filters.get("max_net_qty"))
@@ -82,6 +82,9 @@ def get_stock_rows(filters):
 	conditions = ["i.disabled = 0", "i.is_stock_item = 1"]
 	values = {}
 
+	if filters.get("company"):
+		conditions.append("w.company = %(company)s")
+		values["company"] = filters.company
 	if filters.get("warehouse"):
 		conditions.append("b.warehouse = %(warehouse)s")
 		values["warehouse"] = filters.warehouse
@@ -105,6 +108,7 @@ def get_stock_rows(filters):
 			i.last_purchase_rate
 		from `tabItem` i
 		left join `tabBin` b on b.item_code = i.name
+		left join `tabWarehouse` w on w.name = b.warehouse
 		where {" and ".join(conditions)}
 		group by i.name, coalesce(b.warehouse, '')
 		""",
@@ -128,6 +132,9 @@ def get_sales_map(filters, item_codes):
 		"item_codes": tuple(item_codes),
 	}
 
+	if filters.get("company"):
+		conditions.append("si.company = %(company)s")
+		values["company"] = filters.company
 	if filters.get("warehouse"):
 		conditions.append("sii.warehouse = %(warehouse)s")
 		values["warehouse"] = filters.warehouse
@@ -164,8 +171,9 @@ def get_last_sold_dates(item_codes, filters):
 	if not item_codes:
 		return {}
 
+	company_condition = "and si.company = %(company)s" if filters.get("company") else ""
 	rows = frappe.db.sql(
-		"""
+		f"""
 		select sii.item_code, max(si.posting_date) as last_sold_date
 		from `tabSales Invoice Item` sii
 		inner join `tabSales Invoice` si on si.name = sii.parent
@@ -173,9 +181,10 @@ def get_last_sold_dates(item_codes, filters):
 			and ifnull(si.is_return, 0) = 0
 			and sii.item_code in %(item_codes)s
 			and si.posting_date <= %(to_date)s
+			{company_condition}
 		group by sii.item_code
 		""",
-		{"item_codes": tuple(item_codes), "to_date": filters.to_date},
+		{"item_codes": tuple(item_codes), "to_date": filters.to_date, "company": filters.get("company")},
 		as_dict=True,
 	)
 
@@ -236,12 +245,15 @@ def get_suppliers(item_codes):
 	return suppliers
 
 
-def get_purchase_suppliers(item_codes):
+def get_purchase_suppliers(item_codes, filters=None):
 	if not item_codes:
 		return {}
 
+	company = (filters or {}).get("company")
+	invoice_company = "and pi.company = %(company)s" if company else ""
+	receipt_company = "and pr.company = %(company)s" if company else ""
 	rows = frappe.db.sql(
-		"""
+		f"""
 		select item_code, supplier
 		from (
 			select
@@ -254,6 +266,7 @@ def get_purchase_suppliers(item_codes):
 			where pi.docstatus = 1
 				and pii.item_code in %(item_codes)s
 				and ifnull(pi.supplier, '') != ''
+				{invoice_company}
 
 			union all
 
@@ -267,10 +280,11 @@ def get_purchase_suppliers(item_codes):
 			where pr.docstatus = 1
 				and pri.item_code in %(item_codes)s
 				and ifnull(pr.supplier, '') != ''
+				{receipt_company}
 		) purchases
 		order by item_code, posting_date desc, creation desc
 		""",
-		{"item_codes": tuple(item_codes)},
+		{"item_codes": tuple(item_codes), "company": company},
 		as_dict=True,
 	)
 

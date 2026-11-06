@@ -1,0 +1,66 @@
+
+ .print-format-gutter { margin: 0; }
+ .print-format, .print-format.landscape {
+   width: auto; max-width: none; min-height: 0; padding: 0;
+   margin-bottom: 12mm; margin-left: 10mm; margin-right: 10mm;
+   font-family: Arial, Helvetica, sans-serif; font-size: 9pt; color: #333; line-height: 1.3;
+ }
+ .print-format .letter-head { margin-bottom: 4mm; }
+ .print-format .retail-letterhead { width: 100%; table-layout: fixed; border-collapse: collapse; }
+ .print-format .retail-letterhead td { border: 0 !important; padding: 0 !important; vertical-align: bottom; }
+ .print-format .retail-logo { width: 50%; text-align: left; }
+ .print-format .retail-company { width: 50%; text-align: right; }
+ .print-format .retail-logo img { width: 205px !important; max-width: 100% !important; max-height: 65px; height: auto !important; object-fit: contain; }
+ .print-format .retail-company img { width: 170px !important; max-width: 100% !important; max-height: 85px; height: auto !important; object-fit: contain; }
+ .retail-sales-title { width: 100%; border-collapse: collapse; margin: 2mm 0 3mm; }
+ .print-format .retail-sales-title td { border: 0 !important; padding: 0 !important; vertical-align: middle; }
+ .retail-sales-rule { width: 50%; }
+ .retail-sales-rule div { border-top: 1px solid #777; }
+ .print-format .retail-sales-title .retail-sales-heading { padding: 0 6mm !important; white-space: nowrap; }
+ .retail-sales-heading h1 { margin: 0; color: #2d6dc4; font-size: 17pt; font-weight: normal; text-transform: uppercase; }
+ .retail-sales-meta { display: table; width: 100%; margin-bottom: 3mm; font-size: 8.5pt; }
+ .retail-sales-meta > div { display: table-cell; padding-right: 4mm; vertical-align: top; }
+ .retail-sales-meta > div:last-child { padding-right: 0; text-align: right; }
+ .retail-sales-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+ .retail-sales-table thead { display: table-header-group; }
+ .print-format .retail-sales-table th {
+   background: #2d6dc4 !important; color: #fff !important; border: 1px solid #2d6dc4;
+   padding: 2mm 1.5mm !important; font-size: 8pt; font-weight: normal; vertical-align: middle;
+   -webkit-print-color-adjust: exact; print-color-adjust: exact;
+ }
+ .print-format .retail-sales-table td { padding: 0.7mm 1.5mm !important; border: 0; vertical-align: top; font-size: 8.5pt; }
+ .retail-sales-table .number { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+ .retail-sales-table .date { white-space: nowrap; }
+ .retail-sales-table .count { text-align: center; }
+ .print-format .retail-sales-table .counter { padding-left: 2mm !important; padding-right: 3mm !important; overflow-wrap: anywhere; line-height: 1.2; }
+ .retail-sales-table tbody { break-inside: avoid; page-break-inside: avoid; }
+ .print-format .retail-sales-table .retail-sales-detail > td { padding-top: 0 !important; padding-bottom: 0.7mm !important; border-bottom: 1px solid #d8dfe8; color: #555; }
+ .retail-sales-detail-grid { width: 100%; border-collapse: collapse; table-layout: fixed; }
+ .print-format .retail-sales-table .retail-sales-detail-grid td { width: 20%; padding: 0 4mm 0 0 !important; border: 0; font-size: 8pt; }
+ .print-format .retail-sales-table .retail-sales-detail-grid td:last-child { padding-right: 0 !important; }
+ .retail-sales-status { color: #72501c; }
+ .print-format .retail-sales-table .retail-sales-total td { border-top: 1.5px solid #2d6dc4; border-bottom: 1.5px solid #2d6dc4; background: #edf3fc !important; font-weight: bold; padding-top: 2mm !important; padding-bottom: 2mm !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+ .retail-sales-notes { margin-top: 1mm; font-size: 7.5pt; color: #555; }
+ .retail-sales-footer { display: table; width: 100%; border-top: 1px solid #ddd; padding-top: 1mm; margin-top: 1mm; font-size: 7.5pt; color: #666; break-inside: avoid; }
+ .retail-sales-footer > div { display: table-cell; }
+ .retail-sales-footer > div:last-child { text-align: right; }
+ /* The PDF footer reserves 15mm before an optional letterhead footer. */
+ .print-format .wrapper > .page-number:first-child { margin-top: -15mm !important; }
+ /* Compact browser spacing; preserve repeated-header clearance for PDF. */
+ @supports (display: grid) {
+   .print-format .letter-head { margin-bottom: 2mm; }
+   .retail-sales-title { margin: 1mm 0 2mm; }
+ }
+ @media screen { .print-format { width: 210mm; max-width: 100%; box-sizing: border-box; margin: 0 auto !important; padding: 9mm 10mm !important; } .print-format.landscape { width: 297mm; } }
+ @media print { .print-format-gutter { margin: 0 !important; padding: 0 !important; } .print-format { margin: 0 !important; box-shadow: none; } }
+.retail-sales-table { margin-bottom: 3mm; }
+.retail-sales-report[data-orientation="Portrait"] .retail-sales-heading h1 { font-size: 15pt; }
+.retail-sales-report[data-orientation="Portrait"] .retail-sales-heading { white-space: nowrap; text-align: center; }
+.retail-sales-report[data-orientation="Portrait"] .retail-sales-detail-grid .detail-label { display: block; }
+.retail-sales-report[data-orientation="Portrait"] .retail-sales-meta { display: block; }
+.retail-sales-report[data-orientation="Portrait"] .retail-sales-meta > div { display: inline-block; margin: 0 4mm 1mm 0; text-align: left; }
+.retail-sales-table .total-caption { display: block; text-align: left; }
+.retail-sales-table .text { overflow-wrap: anywhere; word-wrap: break-word; }
+.print-format .retail-sales-table th { white-space: normal; overflow-wrap: normal; }
+.print-format .retail-sales-total-detail > td { background: #edf3fc !important; font-weight: bold; }
+

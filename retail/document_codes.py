@@ -7,6 +7,9 @@ import frappe
 from frappe.model.naming import getseries
 
 FIELD = "custom_document_code"
+# Sales Person and Sales Partner intentionally share the locked SP counter.
+SHARED_PREFIXES = {"SP": {"Sales Person", "Sales Partner"}}
+LEGACY_PREFIXES = {"Sales Person": ("SP2",)}
 
 
 @lru_cache(maxsize=1)
@@ -68,16 +71,18 @@ def install():
 def audit():
     import re
     rows = []
-    seen_prefixes = set()
+    seen_prefixes = {}
     for dt, prefix in prefixes().items():
-        assert prefix not in seen_prefixes, prefix
-        seen_prefixes.add(prefix)
+        if prefix in seen_prefixes:
+            assert {dt, seen_prefixes[prefix]} <= SHARED_PREFIXES.get(prefix, set()), prefix
+        seen_prefixes[prefix] = dt
         if not frappe.db.exists("DocType", dt):
             continue
         backfill_type(dt)
         values = frappe.get_all(dt, fields=["name", FIELD])
         codes = [row[FIELD] for row in values]
-        assert all(code and re.fullmatch(re.escape(prefix) + r"-[1-9][0-9]*", code) for code in codes), dt
+        accepted = "(?:" + "|".join(re.escape(p) for p in (prefix, *LEGACY_PREFIXES.get(dt, ()))) + ")"
+        assert all(code and re.fullmatch(accepted + r"-[1-9][0-9]*", code) for code in codes), dt
         assert len(codes) == len(set(codes)), dt
         rows.append({"doctype": dt, "prefix": prefix, "records": len(values)})
     path = frappe.get_site_path("private", "files", "document-code-coverage.json")

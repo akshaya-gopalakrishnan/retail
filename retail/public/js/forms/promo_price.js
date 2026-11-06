@@ -10,6 +10,7 @@
 			applyScope(frm, true);
 		},
 		refresh(frm) {
+			setupNotes(frm);
 			applyScope(frm);
 			preparePromoPriceFormatters(frm);
 			refreshPromoMethodLocks(frm);
@@ -30,6 +31,7 @@
 			refreshPromoMethodLocks(frm);
 			prepareBarcodeInput(frm);
 		},
+		notes(frm) { requestAnimationFrame(() => resizeNotes(frm)); },
 		scan_barcode(frm) {
 			const barcode = (frm.doc?.[BARCODE_FIELD] || "").trim();
 			if (!barcode) return;
@@ -87,6 +89,33 @@
 		},
 	});
 
+	function resizeNotes(frm) {
+		const input = frm.fields_dict.notes?.$input?.[0];
+		if (!input || !input.getClientRects().length) return;
+		input.style.height = "0px";
+		const style = getComputedStyle(input);
+		const border = parseFloat(style.borderTopWidth) + parseFloat(style.borderBottomWidth);
+		input.style.height = Math.max(32, input.scrollHeight + border) + "px";
+	}
+
+	function setupNotes(frm) {
+		const input = frm.fields_dict.notes.$input;
+		if (!input?.length) return;
+		input.attr("rows", 1).css({ "min-height": "32px", "overflow-y": "hidden", resize: "none" });
+		input.off("input.promo-notes").on("input.promo-notes", () => resizeNotes(frm));
+		frm._promo_notes_observer?.disconnect();
+		let width;
+		frm._promo_notes_observer = new ResizeObserver(entries => {
+			const nextWidth = entries[0].contentRect.width;
+			if (nextWidth !== width) {
+				width = nextWidth;
+				requestAnimationFrame(() => resizeNotes(frm));
+			}
+		});
+		frm._promo_notes_observer.observe(input[0]);
+		requestAnimationFrame(() => resizeNotes(frm));
+	}
+
 	function applyScope(frm, clear = false) {
 		const scope = frm.doc.promotion_scope || ((frm.doc.products || []).some(row => row.item_group) ? "CATEGORY" : "ITEM");
 		const target = { ITEM: "item", CATEGORY: "item_group", BRAND: "brand" }[scope];
@@ -96,7 +125,6 @@
 			grid?.update_docfield_property(field, "hidden", field !== target ? 1 : 0);
 			grid?.update_docfield_property(field, "read_only", field !== target ? 1 : 0);
 		}
-		frm.toggle_display("scan_barcode_section", scope === "ITEM");
 		frm.toggle_display("scan_barcode", scope === "ITEM");
 		if (scope !== "ITEM") frm.remove_custom_button(__("Scan Barcode (Camera)"));
 		if (clear) {
