@@ -467,7 +467,7 @@
 		const rowRate = flt(row.tax_rate);
 		if (rowRate) return rowRate;
 
-		const response = await frappe.call({
+		const request = {
 			method: "retail.domains.transactions.vat.get_transaction_item_vat_rate",
 			args: {
 				item_code: row.item_code,
@@ -476,7 +476,8 @@
 				transaction_type: parentDoc.transaction_type,
 				item_tax_template: row.item_tax_template,
 			},
-		});
+		};
+		const response = await (frm.__quick_receipt?.lookup(request) || frappe.call(request));
 		return flt(response.message);
 	}
 

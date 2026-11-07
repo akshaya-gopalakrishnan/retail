@@ -249,6 +249,77 @@ test('repeat scans reuse the item master and table controls while retaining quan
  assert.equal(made,initial*2);assert.equal(entry.rows.get(first.row.name),first);
 });
 
+test('Quick Entry shares concurrent and completed reads within an action, including zero VAT, then refreshes on the next action',async()=>{
+ const {entry,frappe}=fixture();entry.dialog.$wrapper.is=()=>true;
+ let calls=0,resolve;
+ frappe.call=()=>{calls++;return new Promise(done=>{resolve=done;});};
+ const request={method:'vat',args:{item_code:'A',item_tax_template:'ZERO'}};
+ await entry.enqueue(async()=>{
+  const first=entry.lookup(request),second=entry.lookup(request);
+  assert.equal(first,second);assert.equal(calls,1);
+  resolve({message:0});assert.equal((await first).message,0);
+  assert.equal((await entry.lookup(request)).message,0);assert.equal(calls,1);
+ });
+ frappe.call=async()=>{calls++;return {message:5};};
+ await entry.enqueue(async()=>{assert.equal((await entry.lookup(request)).message,5);});
+ assert.equal(calls,2);
+ await entry.enqueue(async()=>{
+  await entry.lookup(request);
+  await entry.lookup({...request,args:{item_code:'A',item_tax_template:'VAT5'}});
+  await entry.lookup({...request,args:{item_code:'B',item_tax_template:'ZERO'}});
+ });
+ assert.equal(calls,5,'different item/template keys must not share VAT');
+ assert.equal(entry.failed,undefined);
+});
+
+test('failed lookups can retry and closed or replaced dialogs never serve cached reads',async()=>{
+ const {entry,frm,frappe}=fixture();entry.dialog.$wrapper.is=()=>true;let calls=0;
+ const request={method:'vat',args:{item_code:'A'}};
+ frappe.call=async()=>{if(++calls===1)throw Error('offline');return {message:calls};};
+ await entry.enqueue(async()=>{
+  await assert.rejects(entry.lookup(request),/offline/);
+  assert.equal((await entry.lookup(request)).message,2);
+  entry.dialog.$wrapper.is=()=>false;
+  assert.equal((await entry.lookup(request)).message,3);
+  entry.dialog.$wrapper.is=()=>true;frm.__quick_receipt={};
+  assert.equal((await entry.lookup(request)).message,4);
+ });
+ assert.equal(entry.failed,undefined);
+});
+
+test('new-item VAT and selling lookups start together before any field handler changes the row',async()=>{
+ const {entry,frm,frappe}=fixture();entry.dialog.$wrapper.is=()=>true;
+ frappe.meta={has_field:()=>true};
+ frm.__retail_purchase_tracking={items:new Map()};
+ const requests=[],resolve=[];
+ frappe.call=request=>{requests.push(request);return new Promise(done=>resolve.push(done));};
+ const adding=entry.enqueue(()=>entry.add({item_code:'A'}));
+ while(requests.length<3)await new Promise(setImmediate);
+ assert.equal(frm.doc.items[0].item_code,undefined);
+ assert.deepEqual(requests.map(r=>r.method.split('.').pop()).sort(),
+  ['get_item_selling_vat_rate','get_standard_selling_rate','get_transaction_item_vat_rate']);
+ for(const done of resolve)done({message:0});
+ await adding;
+ assert.equal(frm.doc.items[0].item_code,'A');assert.equal(frm.doc.items[0].qty,1);
+ assert.equal(frm.__retail_purchase_tracking.items.get('A'),entry.items.get('A'));
+ assert.equal(entry.failed,undefined);
+});
+
+test('barcode refresh uses Quick Entry masters, queries only missing items, and resumes normal reads when closed',async()=>{
+ const {entry,frm,frappe,handlers,context}=fixture();entry.dialog.$wrapper.is=()=>true;
+ entry.items.set('A',{name:'A',custom_barcode:'MASTER-A'});
+ frm.doc.items=[{item_code:'A'},{item_code:'B'}];
+ const reads=[];
+ frappe.db.get_list=async(_dt,options)=>{reads.push(options.filters.name[1]);return options.filters.name[1].map(name=>({name,custom_barcode:'DB-'+name}));};
+ vm.runInContext(fs.readFileSync(path.join(__dirname,'../public/js/forms/purchase_item_barcode.js'),'utf8'),context);
+ await handlers['Purchase Receipt'].refresh(frm);
+ assert.deepEqual(Array.from(reads[0]),['B']);
+ assert.equal(frm.doc.items[0].custom_item_barcode,'MASTER-A');assert.equal(frm.doc.items[1].custom_item_barcode,'DB-B');
+ entry.dialog.$wrapper.is=()=>false;
+ await handlers['Purchase Receipt'].refresh(frm);
+ assert.deepEqual(Array.from(reads[1]),['A','B']);assert.equal(frm.doc.items[0].custom_item_barcode,'DB-A');
+});
+
 test('queued edits proceed before delayed calculations and Save waits for the final debounce',async()=>{
  const {entry,frm,context}=fixture();let now=10000,next=0;
  const timers=new Map();
