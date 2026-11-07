@@ -244,13 +244,14 @@
 		const uom = row.uom;
 		const request = row.__retail_selling_request = (row.__retail_selling_request || 0) + 1;
 
-		const response = await frappe.call({
+		const lookup = {
 			method: "retail.domains.purchase.selling_price.get_standard_selling_rate",
 			args: {
 				item_code: itemCode,
 				uom,
 			},
-		});
+		};
+		const response = await (frm.__quick_receipt?.lookup(lookup) || frappe.call(lookup));
 		if (locals[cdt]?.[cdn] !== row || row.item_code !== itemCode || row.uom !== uom ||
 			row.__retail_selling_request !== request) return;
 		const rate = flt(response.message);
@@ -312,10 +313,11 @@
 		const itemCode = row?.item_code;
 		if (!itemCode) return 0;
 
-		const response = await frappe.call({
+		const request = {
 			method: "retail.domains.purchase.selling_price.get_item_selling_vat_rate",
 			args: { item_code: itemCode },
-		});
+		};
+		const response = await (frm.__quick_receipt?.lookup(request) || frappe.call(request));
 		return flt(response.message) || getPurchaseFormVatRate(frm, row);
 	}
 

@@ -175,12 +175,46 @@
 
 		enqueue(action) {
 			this.pending++;
-			this.queue = this.queue.then(action).catch(error => {
+			this.queue = this.queue.then(() => {
+				// Reuse read-only lookups within one action, then fetch fresh values on the next edit.
+				this.lookups = new Map();
+				return action();
+			}).catch(error => {
 				console.error(error);
 				this.dialog.get_field("status").$wrapper.text(__("Could not apply the last action. Check the message and correct the entry before saving."));
 				this.failed = true;
 			}).finally(() => { this.pending--; });
 			return this.queue;
+		}
+
+		lookup(request) {
+			if (!this.lookups || this.frm.__quick_receipt !== this || !this.dialog.$wrapper.is(":visible")) {
+				return frappe.call(request);
+			}
+			const cache = this.lookups;
+			const key = JSON.stringify([request.method, request.args]);
+			if (!cache.has(key)) {
+				const pending = Promise.resolve(frappe.call(request)).catch(error => {
+					cache.delete(key);
+					throw error;
+				});
+				cache.set(key, pending);
+			}
+			return cache.get(key);
+		}
+
+		async prepareItem(row, itemCode) {
+			// These reads do not depend on one another. Finish them before native field
+			// handlers run serially, so a remote connection pays for one round trip.
+			const purchaseVat = this.lookup({method: "retail.domains.transactions.vat.get_transaction_item_vat_rate", args: {
+				item_code: itemCode, child_doctype: row.doctype, parent_doctype: this.frm.doc.doctype,
+				transaction_type: this.frm.doc.transaction_type, item_tax_template: row.item_tax_template,
+			}});
+			const selling = frappe.meta.has_field(row.doctype, "custom_cur_sell_rate") ? [
+				this.lookup({method: "retail.domains.purchase.selling_price.get_standard_selling_rate", args: {item_code: itemCode, uom: row.uom}}),
+				this.lookup({method: "retail.domains.purchase.selling_price.get_item_selling_vat_rate", args: {item_code: itemCode}}),
+			] : [];
+			await Promise.all([purchaseVat, ...selling]);
 		}
 
 		header(field) {
@@ -245,6 +279,8 @@
 			const frm = this.frm;
 			const master = this.items.get(scan.item_code) || await frappe.db.get_doc("Item", scan.item_code);
 			this.items.set(scan.item_code, master);
+			// The tracking handler needs only flags from this already-authorized Item read.
+			frm.__retail_purchase_tracking?.items.set(scan.item_code, master);
 			if (scan.serial_no && (frm.doc.items || []).some(row => row.item_code === scan.item_code &&
 				String(row.serial_no || "").split(/\s*\n\s*/).includes(scan.serial_no))) {
 				frappe.throw(__("This serial number is already in the receipt."));
@@ -260,6 +296,7 @@
 			} else {
 				row = (frm.doc.items || []).find(row => !row.item_code) || frm.add_child("items");
 				if (master.has_serial_no || master.has_batch_no) row.use_serial_batch_fields = 1;
+				if (this.lookups && this.dialog.$wrapper.is(":visible")) await this.prepareItem(row, scan.item_code);
 				await this.setRowValue(row, "item_code", scan.item_code);
 				await this.setRowValue(row, "uom", uom);
 				await this.setRowValue(row, {qty: 1, warehouse: frm.doc.set_warehouse});
