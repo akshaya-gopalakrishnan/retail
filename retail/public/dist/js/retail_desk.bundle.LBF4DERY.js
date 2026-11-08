@@ -2104,14 +2104,16 @@
         setup_columns.call(this);
         const fieldname = code_field(this);
         this.columns = this.columns.filter((column) => {
-          var _a3, _b2, _c2, _d;
-          if (this.doctype === "Sales Person" && ["name", "sales_person_name"].includes((_a3 = column.df) == null ? void 0 : _a3.fieldname))
+          var _a3, _b2, _c2, _d, _e;
+          if (this.doctype === "Item Group" && ((_a3 = column.df) == null ? void 0 : _a3.fieldname) === "name")
             return false;
-          if (((_b2 = column.df) == null ? void 0 : _b2.fieldname) === fieldname)
+          if (this.doctype === "Sales Person" && ["name", "sales_person_name"].includes((_b2 = column.df) == null ? void 0 : _b2.fieldname))
             return false;
-          if (((_c2 = column.df) == null ? void 0 : _c2.fieldname) === "name" && fieldname === "item_code")
+          if (((_c2 = column.df) == null ? void 0 : _c2.fieldname) === fieldname)
             return false;
-          if (((_d = column.df) == null ? void 0 : _d.fieldname) === "name" && fieldname === "custom_document_code") {
+          if (((_d = column.df) == null ? void 0 : _d.fieldname) === "name" && fieldname === "item_code")
+            return false;
+          if (((_e = column.df) == null ? void 0 : _e.fieldname) === "name" && fieldname === "custom_document_code") {
             if (this.doctype !== "User" && this.meta.title_field && this.meta.title_field !== "name")
               return false;
             column.df = __spreadProps(__spreadValues({}, column.df), { label: this.doctype === "User" ? __("Login") : __("Name") });
@@ -7485,6 +7487,15 @@
           }
         }
       }
+      window.retail = window.retail || {};
+      window.retail.transaction_items = window.retail.transaction_items || {};
+      window.retail.transaction_items.flushVatTaxRows = async (frm) => {
+        while (frm.__retail_syncing_vat_tax_rows || frm.__retail_running_erpnext_totals) {
+          await new Promise((resolve) => setTimeout(resolve, 16));
+        }
+        clearTimeout(frm.__retail_vat_tax_rows_timer);
+        await syncVatTaxRows(frm);
+      };
       function queueVatTaxRowsSync(frm) {
         if (!canSyncVatTaxRows(frm))
           return;
@@ -7624,11 +7635,12 @@
         return flt(row.rate);
       }
       async function getVatRate(frm, row, childDoctype) {
+        var _a;
         const parentDoc = (frm == null ? void 0 : frm.doc) || {};
         const rowRate = flt(row.tax_rate);
         if (rowRate)
           return rowRate;
-        const response = await frappe.call({
+        const request = {
           method: "retail.domains.transactions.vat.get_transaction_item_vat_rate",
           args: {
             item_code: row.item_code,
@@ -7637,7 +7649,8 @@
             transaction_type: parentDoc.transaction_type,
             item_tax_template: row.item_tax_template
           }
-        });
+        };
+        const response = await (((_a = frm.__quick_receipt) == null ? void 0 : _a.lookup(request)) || frappe.call(request));
         return flt(response.message);
       }
       function taxHandlers() {
@@ -8766,4 +8779,4 @@
     ["Purchase Order", "Purchase Invoice", "Purchase Receipt"].map((doctype) => [doctype, user_grid_view_settings_default[doctype]])
   );
 })();
-//# sourceMappingURL=retail_desk.bundle.5YZKXQQZ.js.map
+//# sourceMappingURL=retail_desk.bundle.LBF4DERY.js.map

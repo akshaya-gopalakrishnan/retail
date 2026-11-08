@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const path = require('node:path');
 const source = fs.readFileSync(path.join(__dirname, '../public/js/forms/purchase_receipt_quick_entry.js'), 'utf8');
-function fixture() {
+function fixture(doctype = "Purchase Receipt", updateStock = 0) {
  const handlers={}, messages=[], changes=[], created=[];
  const element=()=>new Proxy({0:{listeners:{},scrollIntoView(){},addEventListener(name,handler){this.listeners[name]=handler;}}}, {get:(obj,key)=>key in obj ? obj[key] : key==='is' ? ()=>false : ()=>element()});
  const $=()=>element();
@@ -17,12 +17,13 @@ function fixture() {
     input.val=(next)=>{if(next===undefined)return value;value=next;return input;};
     this.fields_dict[df.fieldname]={df,events,$input:input,$wrapper:element(),set_input(v){value=v;},set_focus(){}};
    }}
+  set_df_property(field,key,value){this.fields_dict[field].df[key]=value;}
   get_value(field){return this.values[field];} get_field(field){return this.fields_dict[field];}
   async set_value(field,value){this.values[field]=value;this.fields_dict[field]?.set_input(value);this.fields_dict[field]?.df.onchange?.();} show(){} hide(){this.hidden=true;}
  }
- const frm={doc:{doctype:'Purchase Receipt',docstatus:0,supplier:'Supplier',company:'Company',set_warehouse:'Stores',items:[],currency:'AED'},
+ const frm={doc:{doctype,update_stock:updateStock,docstatus:0,supplier:'Supplier',company:'Company',set_warehouse:'Stores',items:[],currency:'AED'},
   perm:[{write:1}],is_new:()=>false,is_dirty:()=>false,refresh_field(){},
-  add_child(){const row={doctype:'Purchase Receipt Item',name:'row-'+this.doc.items.length,qty:0};this.doc.items.push(row);return row;},
+  add_child(){const row={doctype:doctype+' Item',name:'row-'+this.doc.items.length,qty:0};this.doc.items.push(row);return row;},
   async set_value(field,value){this.doc[field]=value;},async save(){this.saved=true;},savesubmit(){this.submitting=true;}};
  const frappe={flags:{},utils:{escape_html:String},ui:{Dialog,form:{on:(dt,h)=>handlers[dt]=h,
   make_control:({df})=>({df,$wrapper:element(),$input:element(),set_input(v){this.value=v;},get_value(){return this.value;},refresh(){}})}},
@@ -425,8 +426,8 @@ test('new item search uses the Item purchase UOM and its packing barcode',async(
  assert.equal(frm.doc.items[0].uom,'Box-12');assert.equal(entry.barcode(frm.doc.items[0]),'PACK-12');
 });
 
-test('Quick Entry rate, amount and quantity edits run the full-form VAT handlers for taxable and zero-rated items',async()=>{
- const {entry,frm,frappe,context}=fixture();await entry.add({item_code:'A'});
+for (const doctype of ['Purchase Receipt', 'Purchase Invoice']) test(`${doctype} Quick Entry runs native VAT handlers for taxable and zero-rated items`,async()=>{
+ const {entry,frm,frappe,context}=fixture(doctype);await entry.add({item_code:'A'});
  const row=frm.doc.items[0],cdt=row.doctype,events={};
  Object.assign(row,{qty:2,rate:100,amount:200,custom_rate_including_vat:105,custom_amount_including_vat:210,custom_vat_amount:10});
  frm.fields_dict={};
@@ -467,4 +468,73 @@ test('Quick Entry rate, amount and quantity edits run the full-form VAT handlers
  await edit('qty',0);
  assert.equal(row.amount,0);assert.equal(row.custom_amount_including_vat,0);assert.equal(row.custom_vat_amount,0);
  assert.equal(entry.rows.get(row.name).controls.custom_vat_amount.value,0);
+});
+
+for (const updateStock of [0, 1]) {
+ test(`PI quick entry uses invoice rows, native edits and preserves Update Stock=${updateStock} on Submit + New`,async()=>{
+  const {entry,frm,handlers,created,context,changes}=fixture('Purchase Invoice',updateStock);
+  assert.equal(entry.dialog.opts.title,'Quick Purchase Invoice');
+  assert.equal(entry.dialog.get_field('update_stock').df.default,updateStock);
+  assert.equal(entry.dialog.get_field('set_warehouse').df.reqd,Boolean(updateStock));
+  await entry.add({item_code:'A',uom:'Nos'});
+  await entry.add({item_code:'A',uom:'Nos'});
+  assert.equal(frm.doc.items.length,1);assert.equal(frm.doc.items[0].qty,2);
+  assert.equal(frm.doc.items[0].doctype,'Purchase Invoice Item');
+  context.QuickReceipt.prototype.render.call(entry);
+  for(const [field,value] of Object.entries({qty:4,custom_foc_qty:2,rate:10,custom_rate_including_vat:10.5,amount:40,custom_amount_including_vat:42})){
+   const control=entry.rows.get(frm.doc.items[0].name).controls[field];control.value=value;control.df.onchange();await entry.queue;
+   assert.ok(changes.some(change=>change.values[field]===value));
+  }
+  await entry.dialog.set_value('bill_no','INV-123');await entry.dialog.set_value('bill_date','2026-11-08');await entry.queue;
+  assert.equal(frm.doc.bill_no,'INV-123');assert.equal(frm.doc.bill_date,'2026-11-08');
+  await entry.save(true);frm.doc.docstatus=1;await handlers['Purchase Invoice'].on_submit(frm);
+  assert.equal(created[0].dt,'Purchase Invoice');assert.equal(created[0].defaults.update_stock,updateStock);
+  assert.equal(created[0].defaults.bill_no,undefined);assert.equal(created[0].defaults.supplier,undefined);
+  assert.equal(context.frappe.flags.retail_new_pi_quick_entry,true);
+  assert.equal(context.frappe.flags.retail_new_pr_quick_entry,undefined);
+ });
+}
+test('PI Update Stock changes warehouse requirements and tracked columns through native header handler',async()=>{
+ const {entry,frm,frappe,context}=fixture('Purchase Invoice');
+ frm.doc.set_warehouse='';assert.equal(entry.required(),true);
+ frappe.db.get_doc=async(_dt,name)=>({name,stock_uom:'Nos',has_serial_no:1});
+ await entry.add({item_code:'Serial'});context.QuickReceipt.prototype.render.call(entry);
+ assert.equal(entry.rows.get(frm.doc.items[0].name).controls.serial_no,undefined);
+ await entry.dialog.set_value('update_stock',1);await entry.queue;
+ assert.equal(frm.doc.update_stock,1);assert.equal(entry.required(),false);
+ assert.equal(entry.dialog.get_field('set_warehouse').df.reqd,true);
+ context.QuickReceipt.prototype.render.call(entry);
+ assert.ok(entry.rows.get(frm.doc.items[0].name).controls.serial_no);
+ await entry.dialog.set_value('update_stock',0);await entry.queue;
+ context.QuickReceipt.prototype.render.call(entry);
+ assert.equal(entry.rows.get(frm.doc.items[0].name).controls.serial_no,undefined);
+ assert.equal(entry.required(),true);
+});
+
+test('Quick Entry settlement waits for the shared document VAT totals pipeline',async()=>{
+ const {entry,context,frm}=fixture('Purchase Invoice');
+ let finished=false;
+ context.window.retail={transaction_items:{flushVatTaxRows:async target=>{
+  assert.equal(target,frm);
+  await new Promise(resolve=>setTimeout(resolve,10));
+  frm.doc.total_taxes_and_charges=2;frm.doc.grand_total=42;finished=true;
+ }}};
+ await context.QuickReceipt.prototype.settle.call(entry);
+ assert.equal(finished,true);assert.equal(frm.doc.grand_total,42);
+});
+
+test('PI without Update Stock merges repeated additions even when the header warehouse is unset',async()=>{
+ const {entry,frm}=fixture('Purchase Invoice');delete frm.doc.set_warehouse;
+ await entry.add({item_code:'A'});frm.doc.items[0].warehouse='';
+ await entry.add({item_code:'A'});
+ assert.equal(frm.doc.items.length,1);assert.equal(frm.doc.items[0].qty,2);
+});
+
+for (const updateStock of [0,1]) test(`PI scanner delegates packing identity and merges repeated scans with Update Stock=${updateStock}`,async()=>{
+ const {entry,frm,frappe}=fixture('Purchase Invoice',updateStock);
+ frappe.call=async request=>{assert.equal(request.method,'retail.domains.item.packing_scan.scan_barcode');return {message:{item_code:'A',uom:'Box-10',barcode:'PACK-10'}};};
+ const scan=entry.dialog.get_field('scan');
+ scan.$input.val('PACK-10');await entry.scan();scan.$input.val('PACK-10');await entry.scan();
+ assert.equal(frm.doc.items.length,1);assert.equal(frm.doc.items[0].doctype,'Purchase Invoice Item');
+ assert.equal(frm.doc.items[0].qty,2);assert.equal(frm.doc.items[0].uom,'Box-10');assert.equal(frm.doc.items[0].barcode,'PACK-10');
 });

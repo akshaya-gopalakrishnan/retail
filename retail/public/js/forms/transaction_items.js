@@ -321,6 +321,18 @@
 		}
 	}
 
+
+	// Quick Entry waits for the same VAT/totals pipeline before displaying final totals or saving.
+	window.retail = window.retail || {};
+	window.retail.transaction_items = window.retail.transaction_items || {};
+	window.retail.transaction_items.flushVatTaxRows = async frm => {
+		while (frm.__retail_syncing_vat_tax_rows || frm.__retail_running_erpnext_totals) {
+			await new Promise(resolve => setTimeout(resolve, 16));
+		}
+		clearTimeout(frm.__retail_vat_tax_rows_timer);
+		await syncVatTaxRows(frm);
+	};
+
 	function queueVatTaxRowsSync(frm) {
 		if (!canSyncVatTaxRows(frm)) return;
 

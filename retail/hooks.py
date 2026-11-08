@@ -126,6 +126,7 @@ doctype_list_js = {
 	"Counter": "public/js/hide_transaction_id_list.js",
 }
 doctype_js = {
+	"Company": "public/js/forms/company.js",
 	"Buy X Get Y Promotion": "public/js/forms/buy_x_get_y_promotion.js",
 	"Promo Price": "public/js/forms/promo_price.js",
 	"Employee": "public/js/forms/pos_login.js",
@@ -147,6 +148,7 @@ doctype_js = {
 		"public/js/forms/foc_qty.js",
 		"public/js/forms/purchase_selling_price.js",
 		"public/js/forms/purchase_history.js",
+		"public/js/forms/purchase_receipt_quick_entry.js",
 	],
 	"Sales Order": "public/js/forms/foc_qty.js",
 	"Delivery Note": "public/js/forms/foc_qty.js",
@@ -1080,7 +1082,10 @@ if isinstance(_pos_date_events, str):
 	_pos_date_events = [_pos_date_events]
 doc_events["POS Invoice"]["before_validate"] = [*_pos_date_events, "retail.pos_invoice_dates.set_business_date"]
 
-for _item_filter_dt in ("POS Invoice", "Sales Invoice", "Purchase Order", "Purchase Invoice", "Purchase Receipt"):
+for _item_filter_dt in (
+	"POS Invoice", "Sales Invoice", "Purchase Order", "Purchase Invoice", "Purchase Receipt",
+	"Quotation", "Sales Order", "Delivery Note", "Supplier Quotation",
+):
 	_scripts = doctype_list_js.get(_item_filter_dt, [])
 	if isinstance(_scripts, str):
 		_scripts = [_scripts]

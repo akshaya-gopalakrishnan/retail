@@ -3,13 +3,15 @@ import frappe
 from frappe.utils import flt
 
 
-def invoice_profitability(invoice, posted_item_costs, *, vat_accounts):
+def invoice_profitability(invoice, posted_item_costs, *, vat_accounts, promotion_discounts=None):
     """Read submitted sales amounts in company currency, without rate fallbacks.
 
     Callers supply current posted costs keyed by invoice item, and the company's
     explicitly identified VAT accounts. Freight and other taxes are not VAT.
     Distributed discount is already the net (tax-exclusive) invoice reduction;
     adding the header discount as well would count it twice.
+    Recorded POS promotion savings restore the pre-promotion reporting price;
+    final revenue, VAT, payments and posted stock costs remain authoritative.
     """
     if invoice.get("doctype") not in ("Sales Invoice", "POS Invoice"):
         raise ValueError("Profitability accepts customer sales documents only")
@@ -30,13 +32,16 @@ def invoice_profitability(invoice, posted_item_costs, *, vat_accounts):
         result.tax_status = "Recorded tax rows do not reconcile to header total taxes"
     if not invoice.get("is_return"):
         conversion = flt(invoice.get("conversion_rate")) or 1
+        if promotion_discounts is None:
+            promotion_discounts = invoice_promotion_discounts(invoice)
+        promotion_discount = sum(promotion_discounts.values()) * conversion
         item_discount = sum(item_discount_value(i, conversion) for i in items)
         distributed = sum(flt(i.get("distributed_discount_amount")) * conversion for i in items)
         if item_discount and any(t.get("included_in_print_rate") for t in taxes):
             result.gross_sales = result.discount = None
             result.revenue_status = "Tax-inclusive item discount lacks a verified net discount allocation"
         else:
-            result.discount = item_discount + distributed
+            result.discount = item_discount + distributed + promotion_discount
             result.gross_sales = net + result.discount
     if abs(sum(flt(i.get("base_net_amount")) for i in items) - net) > 0.01:
         result.revenue_status = "Invoice item net amounts do not reconcile to header net total"
@@ -184,6 +189,49 @@ def source_status(doc, values):
     return "; ".join(messages) or "Recorded / Posted"
 
 
+def invoice_promotion_discounts(invoice):
+    """Read immutable POS evidence, including exact consolidated item links.
+
+    Values are per-line totals excluding VAT in invoice currency. Nothing is
+    inferred from current Item prices or written back to submitted documents.
+    """
+    import json
+    from retail.promotions.history import discounts_by_item_row
+
+    items = invoice.get("items") or []
+    if invoice.get("doctype") == "POS Invoice":
+        if invoice.get("pos_sync_source") != "Offline POS":
+            return {}
+        payload = invoice.get("custom_pos_completed_payload") or {}
+        if isinstance(payload, str):
+            try:
+                payload = json.loads(payload)
+            except (TypeError, ValueError):
+                return {}
+        precision = invoice.precision("net_total") if callable(getattr(invoice, "precision", None)) else 2
+        by_row = discounts_by_item_row(payload, precision=precision or 2)
+        result = {}
+        for item in items:
+            position = item.get("idx")
+            if position not in by_row:
+                continue
+            # The saved position must still identify the same sold item.
+            if item.get("item_code") == payload["items"][position - 1].get("item_code"):
+                result[item.get("name")] = by_row[position]
+        return result
+    if invoice.get("doctype") != "Sales Invoice":
+        return {}
+    references = {item.get("pos_invoice") for item in items
+        if item.get("pos_invoice") and item.get("pos_invoice_item")}
+    by_invoice = {}
+    for name in references:
+        original = frappe.get_doc("POS Invoice", name)
+        by_invoice[name] = invoice_promotion_discounts(original) if original.docstatus == 1 else {}
+    return {item.get("name"): by_invoice[item.pos_invoice][item.pos_invoice_item]
+        for item in items if item.get("pos_invoice") in by_invoice
+        and item.get("pos_invoice_item") in by_invoice[item.pos_invoice]}
+
+
 def invoice_rows(doc, *, vat_accounts_by_company=None):
     """Allocate persisted invoice fields to items, preserving header reconciliation.
 
@@ -200,7 +248,9 @@ def invoice_rows(doc, *, vat_accounts_by_company=None):
         accounts = vat_accounts_by_company[doc.company]
     else:
         accounts = recorded_vat_accounts(doc.company)
-    values = invoice_profitability(doc, costs, vat_accounts=accounts)
+    promotion_discounts = invoice_promotion_discounts(doc)
+    values = invoice_profitability(doc, costs, vat_accounts=accounts,
+        promotion_discounts=promotion_discounts)
     status = source_status(doc, values)
     conversion = flt(doc.conversion_rate) or 1
     vat_by_code = {}
@@ -237,7 +287,9 @@ def invoice_rows(doc, *, vat_accounts_by_company=None):
             sold_qty=0 if doc.is_return else flt(item.stock_qty),
             return_qty=-flt(item.stock_qty) if doc.is_return else 0,
             transaction_type="Return" if doc.is_return else "Sale", source_status=status)
-        row.discount = item_discount_value(item, conversion) + flt(item.distributed_discount_amount) * conversion
+        row.discount = (item_discount_value(item, conversion)
+            + flt(item.distributed_discount_amount) * conversion
+            + promotion_discounts.get(item.name, 0) * conversion)
         row.gross_sales = row.net_sales + row.discount
         row.sales_returns = 0
         if doc.is_return:

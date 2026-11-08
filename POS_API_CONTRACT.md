@@ -5463,6 +5463,16 @@ an exchange is split. The metadata never changes posted invoice amounts.
 Existing saved nested evidence is read by promotion reports without saving
 submitted invoices. POS Discount Report displays a separate Promotion Discount
 (Ex VAT) column; it is not added again to reported financial discounts.
+Sales and profitability reports also include these recorded promotion savings
+in their Discount and pre-discount Gross Sales breakdowns, excluding VAT and in
+company currency. The recorded item discount and promotion saving are separate
+reductions and are added together, including when both appear on the same line.
+Promotion amounts are line totals, counted once per promotion and item row;
+they are not
+multiplied by quantity. Consolidated Sales Invoice reports follow the exact
+original POS invoice-item links. Final Net Sales, VAT, payments, posted stock
+costs and submitted invoice amounts are unchanged. Returns retain the existing
+Sales Returns breakdown rather than creating positive Gross Sales or Discount.
 
 The optional `item_row` is the 1-based position in request `items`; omit it when
 the item code (with barcode/UOM if needed) identifies one row. One entry per promotion

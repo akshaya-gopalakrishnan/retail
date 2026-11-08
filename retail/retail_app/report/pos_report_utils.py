@@ -339,7 +339,7 @@ def pos_item_wise_sales(filters):
         value = str(filters.get(field) or "").strip().lower()
         if value:
             rows[:] = [row for row in rows if value in str(row.get(field) or "").lower()]
-    return report_result(rows, item_sales_columns(), ['item_code', 'item_name', 'item_group', 'warehouse',
+    return report_result(rows, item_sales_columns(), ['item_code', 'item_name', 'item_group', 'brand', 'warehouse',
                                                       'barcode', 'serial_no', 'batch_no', 'serial_and_batch_bundle'])
 
 
@@ -629,8 +629,7 @@ def payment_mode_summary(filters):
 def completed_discount_rows(rows):
 	"""Use immutable POS discounts, including receipts saved by older mappers."""
 	from retail.pos_completed_sale import exclusive_line_amount
-	from retail.promotions.history import applications_for, resolve_item_row
-	import math
+	from retail.promotions.history import discounts_by_item_row
 	result = []
 	seen = set()
 	for row in rows:
@@ -638,23 +637,8 @@ def completed_discount_rows(rows):
 		index = cint(row.pop("item_index", 0)) - 1
 		if payload and 0 <= index < len(payload.get("items") or []):
 			item = payload["items"][index]
-			row.promotion_discount_amount = 0
-			promotion_keys = set()
-			applications = applications_for(payload)
-			for application in applications if isinstance(applications, list) else []:
-				if not isinstance(application, dict):
-					continue
-				position, error = resolve_item_row(application, payload['items'])
-				key = (str(application.get('promotion_type')), str(application.get('promotion')), position)
-				if error or position != index + 1 or key in promotion_keys:
-					continue
-				promotion_keys.add(key)
-				try:
-					amount = float(application.get('discount_amount') or 0)
-					if math.isfinite(amount):
-						row.promotion_discount_amount += (-1 if flt(item.get('qty')) < 0 else 1) * abs(amount)
-				except (ValueError, TypeError, OverflowError):
-					pass
+			row.promotion_discount_amount = ((-1 if flt(item.get('qty')) < 0 else 1)
+				* discounts_by_item_row(payload).get(index + 1, 0))
 			row.discount_amount = flt(item.get("discount_amount"))
 			row.discount_percentage = flt(item.get("discount_percentage"))
 			row.distributed_discount_amount = 0
@@ -973,6 +957,7 @@ def item_sales_columns():
 		{"label": _("Batch"), "fieldname": "batch_no", "fieldtype": "Small Text", "width": 130},
 		{"label": _("Serial and Batch Bundle"), "fieldname": "serial_and_batch_bundle", "fieldtype": "Link", "options": "Serial and Batch Bundle", "width": 150},
 		{"label": _("Item Group"), "fieldname": "item_group", "fieldtype": "Link", "options": "Item Group", "width": 130},
+		{"label": _("Brand"), "fieldname": "brand", "fieldtype": "Link", "options": "Brand", "width": 130},
 		{"label": _("Warehouse"), "fieldname": "warehouse", "fieldtype": "Link", "options": "Warehouse", "width": 140},
 		{"label": _("Sold Qty"), "fieldname": "sold_qty", "fieldtype": "Float", "width": 100},
 		{"label": _("Return Qty"), "fieldname": "return_qty", "fieldtype": "Float", "width": 100},

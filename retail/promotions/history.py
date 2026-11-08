@@ -185,6 +185,39 @@ def applications_for(payload, precision=2):
     return applications if reported else None
 
 
+def discounts_by_item_row(payload, precision=2):
+    """Read each recorded promotion saving once, excluding VAT, per sold line.
+
+    These are reporting amounts only. They must never be applied to the final
+    invoice amounts again or multiplied by the item's quantity.
+    """
+    if not isinstance(payload, dict):
+        return {}
+    items = payload.get('items')
+    if not isinstance(items, list) or any(not isinstance(item, dict) for item in items):
+        return {}
+    applications = applications_for(payload, precision=precision)
+    if not isinstance(applications, list):
+        return {}
+    discounts, seen = {}, set()
+    for application in applications:
+        if not isinstance(application, dict):
+            continue
+        position, error = resolve_item_row(application, items)
+        key = (str(application.get('promotion_type')), str(application.get('promotion')), position)
+        if error or key in seen:
+            continue
+        try:
+            amount = float(application.get('discount_amount'))
+        except (TypeError, ValueError, OverflowError):
+            continue
+        if not math.isfinite(amount) or not amount:
+            continue
+        seen.add(key)
+        discounts[position] = discounts.get(position, 0) + abs(amount)
+    return discounts
+
+
 def capture(doc, method=None):
     from retail.pos_completed_sale import payload_for
     payload = payload_for(doc)

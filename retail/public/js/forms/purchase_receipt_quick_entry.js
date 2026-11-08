@@ -1,4 +1,4 @@
-/* Quick Entry edits the real document; all prices and quantities use PR handlers. */
+/* Quick Entry edits the real document; all prices and quantities use native purchase handlers. */
 (() => {
 	const esc = value => frappe.utils.escape_html(String(value ?? ""));
 	const editable = frm => frm.doc.docstatus === 0 && !frm.doc.is_return && frm.perm?.[0]?.write;
@@ -10,12 +10,12 @@
 		const border = parseFloat(style.borderTopWidth) + parseFloat(style.borderBottomWidth);
 		input.style.height = Math.max(32, input.scrollHeight + border) + "px";
 	}
-	frappe.ui.form.on("Purchase Receipt", {
+	for (const doctype of ["Purchase Receipt", "Purchase Invoice"]) frappe.ui.form.on(doctype, {
 		refresh(frm) {
 			if (!editable(frm)) return;
 			frm.add_custom_button(__("Quick Entry"), () => open(frm));
-			if (frm.is_new() && frappe.flags.retail_new_pr_quick_entry) {
-				delete frappe.flags.retail_new_pr_quick_entry;
+			if (frm.is_new() && frappe.flags[quickEntryFlag(frm.doc.doctype)]) {
+				delete frappe.flags[quickEntryFlag(frm.doc.doctype)];
 				open(frm);
 			}
 		},
@@ -25,10 +25,14 @@
 			delete frm.__quick_receipt_next;
 			if (frm.__quick_receipt) frm.__quick_receipt.submitting = false;
 			frm.__quick_receipt?.dialog.hide();
-			frappe.flags.retail_new_pr_quick_entry = true;
-			return frappe.new_doc("Purchase Receipt", defaults);
+			frappe.flags[quickEntryFlag(frm.doc.doctype)] = true;
+			return frappe.new_doc(frm.doc.doctype, defaults);
 		},
 	});
+
+	function quickEntryFlag(doctype) {
+		return doctype === "Purchase Invoice" ? "retail_new_pi_quick_entry" : "retail_new_pr_quick_entry";
+	}
 
 	function bindSupplierTab(field, action) {
 		if (!field?.$input?.[0]) return;
@@ -58,26 +62,40 @@
 	class QuickReceipt {
 		constructor(frm) {
 			this.frm = frm;
+			this.isInvoice = frm.doc.doctype === "Purchase Invoice";
 			this.queue = Promise.resolve();
 			this.pending = 0;
 			this.items = new Map();
 			this.selectedRows = new Set();
 			this.dialog = new frappe.ui.Dialog({
-				title: __("Quick Purchase Receipt"), size: "extra-large",
+				title: __(this.isInvoice ? "Quick Purchase Invoice" : "Quick Purchase Receipt"), size: "extra-large",
 				fields: [
 					{fieldname: "supplier", fieldtype: "Link", options: "Supplier", label: __("Supplier"), reqd: 1,
 						default: frm.doc.supplier, onchange: () => this.header("supplier")},
 					{fieldtype: "Column Break"},
-					{fieldname: "set_warehouse", fieldtype: "Link", options: "Warehouse", label: __("Accepted Warehouse"), reqd: 1,
+					{fieldname: "set_warehouse", fieldtype: "Link", options: "Warehouse", label: __(this.isInvoice ? "Warehouse" : "Accepted Warehouse"), reqd: !this.isInvoice || Boolean(Number(frm.doc.update_stock)),
 						default: frm.doc.set_warehouse, get_query: () => ({filters: {company: frm.doc.company, is_group: 0}}),
 						onchange: () => this.header("set_warehouse")},
 					{fieldtype: "Section Break"},
+					...(this.isInvoice ? [
+						{fieldname: "update_stock", fieldtype: "Check", label: __("Update Stock"),
+							default: frm.doc.update_stock, onchange: () => this.header("update_stock")},
+						{fieldtype: "Column Break"},
+					] : []),
 					{fieldname: "custom_update_item_master_rates", fieldtype: "Check", label: __("Update Item Master Rates"),
 						default: frm.doc.custom_update_item_master_rates, onchange: () => this.header("custom_update_item_master_rates")},
 					{fieldtype: "Column Break"},
 					{fieldname: "posting_date", fieldtype: "Date", label: __("Date"), reqd: 1,
 						default: frm.doc.posting_date, onchange: () => this.header("posting_date")},
 					{fieldtype: "Section Break"},
+					...(this.isInvoice ? [
+						{fieldname: "bill_no", fieldtype: "Data", label: __("Supplier Invoice No"),
+							default: frm.doc.bill_no, onchange: () => this.header("bill_no")},
+						{fieldtype: "Column Break"},
+						{fieldname: "bill_date", fieldtype: "Date", label: __("Supplier Invoice Date"),
+							default: frm.doc.bill_date, onchange: () => this.header("bill_date")},
+						{fieldtype: "Section Break"},
+					] : []),
 					{fieldname: "scan", fieldtype: "Data", options: "Barcode", label: __("Scan Barcode"),
 						description: __("Scan, or enter a barcode and press Enter / Tab."), onchange: () => this.scan()},
 					{fieldtype: "Column Break"},
@@ -89,7 +107,7 @@
 						if (code) this.enqueue(() => this.add({item_code: code}));
 					}},
 					{fieldtype: "Section Break"},
-					{fieldname: "find", fieldtype: "Data", label: __("Find in Receipt"), onchange: () => this.filter()},
+					{fieldname: "find", fieldtype: "Data", label: __(this.isInvoice ? "Find in Invoice" : "Find in Receipt"), onchange: () => this.filter()},
 					{fieldname: "items_html", fieldtype: "HTML"},
 					{fieldname: "totals", fieldtype: "HTML"},
 					{fieldname: "status", fieldtype: "HTML"},
@@ -162,7 +180,7 @@
 					const {message} = await frappe.call({method: "retail.domains.item.packing_scan.scan_barcode", args: {search_value: barcode}});
 					if (!message?.item_code) frappe.throw(__("No item found for barcode {0}", [barcode]));
 					if (message.scale_barcode_type) {
-						frappe.throw(__("Use the full Purchase Receipt for this scale barcode."));
+						frappe.throw(__("Use the full {0} for this scale barcode.", [this.frm.doc.doctype]));
 					}
 					await this.add(message);
 					this.dialog.get_field("status").$wrapper.text(__("Added barcode: {0}", [barcode]));
@@ -224,15 +242,22 @@
 			this.enqueue(async () => {
 				if (field === "posting_date") await this.frm.set_value("set_posting_time", 1);
 				await this.frm.set_value(field, value);
+				if (field === "update_stock") {
+					this.dialog.set_df_property("set_warehouse", "reqd", Boolean(Number(this.frm.doc.update_stock)));
+				}
 				this.scheduleSync();
 				this.render();
 			});
 		}
 
 		required() {
-			if (this.frm.doc.supplier && this.frm.doc.set_warehouse) return true;
-			frappe.msgprint(__("Select Supplier and Accepted Warehouse first."));
+			if (this.frm.doc.supplier && (!this.stockEnabled() || this.frm.doc.set_warehouse)) return true;
+			frappe.msgprint(__(this.stockEnabled() ? "Select Supplier and Warehouse first." : "Select Supplier first."));
 			return false;
+		}
+
+		stockEnabled() {
+			return !this.isInvoice || Boolean(Number(this.frm.doc.update_stock));
 		}
 
 		scheduleSync(delay = 1000) {
@@ -272,6 +297,7 @@
 			}
 			await new Promise(resolve => frappe.after_ajax(resolve));
 			for (const row of this.frm.doc.items || []) await this.rowReady(row);
+			await window.retail?.transaction_items?.flushVatTaxRows?.(this.frm);
 		}
 
 		async add(scan) {
@@ -287,7 +313,7 @@
 			}
 			const uom = scan.uom || master.purchase_uom || master.stock_uom;
 			const matches = (frm.doc.items || []).filter(row => row.item_code === scan.item_code && row.uom === uom &&
-				!row.custom_foc_parent && !row.serial_and_batch_bundle && !row.rejected_qty && row.warehouse === frm.doc.set_warehouse &&
+				!row.custom_foc_parent && !row.serial_and_batch_bundle && !row.rejected_qty && (row.warehouse || "") === (frm.doc.set_warehouse || "") &&
 				(!scan.batch_no || !row.batch_no || row.batch_no === scan.batch_no));
 			// Do not merge distinct PO lines or rows with different negotiated rates.
 			let row = matches.length === 1 ? matches[0] : null;
@@ -371,13 +397,16 @@
 			// Build completely before replacing the visible table.
 			const wrapper = $("<div></div>");
 			try {
-			const masterFor = row => this.items.get(row.item_code) || this.frm.__retail_purchase_tracking?.items.get(row.item_code) || {};
+			const masterFor = row => {
+				if (!this.stockEnabled() || (this.isInvoice && Number(row.is_fixed_asset))) return {};
+				return this.items.get(row.item_code) || this.frm.__retail_purchase_tracking?.items.get(row.item_code) || {};
+			};
 			const serial = (this.frm.doc.items || []).some(row => masterFor(row).has_serial_no);
 			const batch = (this.frm.doc.items || []).some(row => masterFor(row).has_batch_no);
 			const layout = JSON.stringify([serial, batch]);
 			const reuse = this.layout === layout;
 			wrapper.html(`<div style="max-height:45vh;overflow:auto"><table class="table table-bordered" style="min-width:1050px;margin:0">
-				<thead style="position:sticky;top:0;background:var(--fg-color);z-index:2"><tr><th style="width:36px"><input type="checkbox" class="quick-receipt-select-all" aria-label="${esc(__("Select all visible rows"))}"></th>${["Item Name", "Barcode", "UOM", ...(serial ? ["Serial No"] : []), ...(batch ? ["Batch No"] : []), "Accepted Qty", "FOC Qty", "Rate Including VAT", "Rate Excluding VAT", "Amount Including VAT", "Amount Excluding VAT", "VAT Amount"].map(label => `<th>${__(label)}</th>`).join("")}</tr></thead><tbody></tbody></table></div>
+				<thead style="position:sticky;top:0;background:var(--fg-color);z-index:2"><tr><th style="width:36px"><input type="checkbox" class="quick-receipt-select-all" aria-label="${esc(__("Select all visible rows"))}"></th>${["Item Name", "Barcode", "UOM", ...(serial ? ["Serial No"] : []), ...(batch ? ["Batch No"] : []), this.isInvoice ? "Qty" : "Accepted Qty", "FOC Qty", "Rate Including VAT", "Rate Excluding VAT", "Amount Including VAT", "Amount Excluding VAT", "VAT Amount"].map(label => `<th>${__(label)}</th>`).join("")}</tr></thead><tbody></tbody></table></div>
 				<div class="quick-receipt-selection hidden" role="toolbar" aria-label="${esc(__("Selected rows"))}" style="position:sticky;bottom:12px;z-index:3;width:max-content;margin:12px auto 0;padding:8px 12px;border-radius:var(--border-radius-md);background:var(--fg-color);box-shadow:var(--shadow-md)">
 					<span class="quick-receipt-selection-count" aria-live="polite" style="margin-right:12px"></span><button type="button" class="btn btn-sm btn-danger quick-receipt-delete">${__("Delete")}</button>
 				</div>`);
@@ -408,7 +437,7 @@
 					["uom", "Link", "UOM"],
 					...(serial ? [["serial_no", "Small Text", "Serial No"]] : []),
 					...(batch ? [["batch_no", "Link", "Batch No"]] : []),
-					["qty", "Float", "Accepted Qty"], ["custom_foc_qty", "Float", "FOC Qty"],
+					["qty", "Float", this.isInvoice ? "Qty" : "Accepted Qty"], ["custom_foc_qty", "Float", "FOC Qty"],
 					["custom_rate_including_vat", "Currency", "Rate Including VAT"], ["rate", "Currency", "Rate Excluding VAT"],
 					["custom_amount_including_vat", "Currency", "Amount Including VAT"], ["amount", "Currency", "Amount Excluding VAT"],
 					["custom_vat_amount", "Currency", "VAT Amount"],
@@ -601,6 +630,8 @@
 				await this.settle();
 				if (this.frm.is_dirty() || this.frm.is_new()) await this.frm.save("Save", null, null, () => {});
 				if (this.frm.doc.docstatus !== 0 || this.frm.is_dirty()) return;
+				// Saving a new document changes its route and can close the modal.
+				this.dialog.show();
 				this.render();
 				this.dialog.get_field("status").$wrapper.text(__("Saved draft: {0}", [this.frm.doc.name]));
 				if (submit) {
@@ -609,6 +640,7 @@
 						company: this.frm.doc.company, set_warehouse: this.frm.doc.set_warehouse,
 						custom_allow_selling_price: this.frm.doc.custom_allow_selling_price,
 						custom_update_item_master_rates: this.frm.doc.custom_update_item_master_rates,
+						...(this.isInvoice ? {update_stock: this.frm.doc.update_stock} : {}),
 					};
 					this.frm.savesubmit(null, null, () => {
 						delete this.frm.__quick_receipt_next;
