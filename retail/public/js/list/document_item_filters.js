@@ -1,6 +1,9 @@
 // Instance-local filters; native list queries still enforce document permissions.
 (() => {
-	const doctypes = ["POS Invoice", "Sales Invoice", "Purchase Order", "Purchase Invoice", "Purchase Receipt"];
+	const itemDoctypes = ["POS Invoice", "Sales Invoice", "Purchase Order", "Purchase Invoice", "Purchase Receipt"];
+	const relatedDoctypes = ["Quotation", "Sales Order", "Delivery Note", "Sales Invoice",
+		"Supplier Quotation", "Purchase Order", "Purchase Receipt", "Purchase Invoice"];
+	const doctypes = [...new Set([...itemDoctypes, ...relatedDoctypes])];
 	for (const doctype of doctypes) {
 		const settings = frappe.listview_settings[doctype] ||= {};
 		if (settings.retail_item_filters_installed) continue;
@@ -16,8 +19,8 @@
 				listview.start = 0;
 				listview.refresh();
 			}, 250);
-			const fields = [["item_code", "Item", "Link", "Item"]];
-			if (doctype !== "Purchase Order") {
+			const fields = itemDoctypes.includes(doctype) ? [["item_code", "Item", "Link", "Item"]] : [];
+			if (itemDoctypes.includes(doctype) && doctype !== "Purchase Order") {
 				fields.push(["serial_no", "Serial No", "Link", "Serial No"], ["batch_no", "Batch No", "Link", "Batch"]);
 			}
 			for (const [fieldname, label, fieldtype, options] of fields) {
@@ -44,6 +47,33 @@
 						return { filters: item ? { [fieldname === "batch_no" ? "item" : "item_code"]: item } : {} };
 					};
 				}
+			}
+			if (relatedDoctypes.includes(doctype)) {
+				const related = controls.related_document = frappe.ui.form.make_control({
+					parent: listview.filter_area.standard_filters_wrapper,
+					df: {
+						fieldname: "retail_filter_related_document", fieldtype: "Autocomplete",
+						label: __("Related Document"), placeholder: __("Related Document"),
+						input_class: "input-xs", onchange: refresh,
+					},
+					only_input: true,
+				});
+				related.refresh();
+				related.$wrapper.addClass("col-md-3");
+				related.translate_values = false;
+				// Debounce lookups and discard stale responses while the user types.
+				related.execute_query_if_exists = frappe.utils.debounce(async function (term) {
+					const { message } = await frappe.call({
+						method: "retail.related_document_filters.search", args: { txt: term, doctype },
+					});
+					if (this.$input.is(":focus") && this.$input.val() === term) this.set_data(message || []);
+				}, 250);
+				related.get_query = () => "retail.related_document_filters.search";
+				// Document IDs are text, including when rendered in suggestions.
+				related.awesomplete.item = function (item) {
+					return $("<li>").attr("aria-selected", "false").text(item.label).get(0);
+				};
+				related.$input.attr("title", __("Search a document ID, then select its document type and ID."));
 			}
 			// The native X calls FilterArea.clear; include our instance-local controls.
 			const clear = listview.filter_area.clear.bind(listview.filter_area);

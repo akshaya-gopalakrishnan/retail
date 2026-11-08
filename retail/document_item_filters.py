@@ -6,6 +6,8 @@ import frappe
 from frappe.desk import reportview
 from frappe.model import get_permitted_fields
 
+from retail.related_document_filters import LIST_DOCTYPES, connected_documents
+
 
 DOCTYPES = {
 	"POS Invoice": "POS Invoice Item",
@@ -18,15 +20,21 @@ FLAG = "retail_document_item_filter"
 
 
 def normalize(doctype, value):
-	if doctype not in DOCTYPES:
+	if doctype not in DOCTYPES and doctype not in LIST_DOCTYPES:
 		frappe.throw("Unsupported document list", frappe.ValidationError)
 	frappe.has_permission(doctype, "read", throw=True)
 	value = frappe.parse_json(value) if isinstance(value, str) else value
-	if not isinstance(value, dict) or set(value) - {"item_code", "serial_no", "batch_no"}:
+	allowed = {"item_code", "serial_no", "batch_no"} if doctype in DOCTYPES else set()
+	if doctype in LIST_DOCTYPES:
+		allowed.add("related_document")
+	if not isinstance(value, dict) or set(value) - allowed:
 		frappe.throw("Invalid item filters", frappe.ValidationError)
-	fields = get_permitted_fields(DOCTYPES[doctype], parenttype=doctype)
+	fields = get_permitted_fields(DOCTYPES[doctype], parenttype=doctype) if doctype in DOCTYPES else []
 	result = {}
 	for key, text in value.items():
+		if key == "related_document":
+			result[key] = connected_documents(text, doctype=doctype)
+			continue
 		if not isinstance(text, str) or len(text) > 140 or "\n" in text or "\r" in text:
 			frappe.throw("Invalid item filter value", frappe.ValidationError)
 		text = text.strip()
@@ -71,7 +79,14 @@ def query_conditions(user=None, doctype=None):
 	active = frappe.flags.get(FLAG)
 	if not active or active[0] != doctype or not active[1]:
 		return ""
-	criteria = active[1]
+	criteria = {key: value for key, value in active[1].items() if key != "related_document"}
+	related = ""
+	if "related_document" in active[1]:
+		names = active[1]["related_document"]
+		related = (f"`tab{doctype}`.name IN ({', '.join(frappe.db.escape(name) for name in names)})"
+			if names else "1=0")
+	if not criteria:
+		return related
 	child = DOCTYPES[doctype]
 	escape = frappe.db.escape
 	conditions = [
@@ -100,4 +115,5 @@ def query_conditions(user=None, doctype=None):
 			f"AND rbe.{field} = {value})"
 		)
 		conditions.append(f"({legacy} OR {bundle})")
-	return f"EXISTS (SELECT 1 FROM `tab{child}` ri WHERE {' AND '.join(conditions)})"
+	item_condition = f"EXISTS (SELECT 1 FROM `tab{child}` ri WHERE {' AND '.join(conditions)})"
+	return f"({related}) AND ({item_condition})" if related else item_condition

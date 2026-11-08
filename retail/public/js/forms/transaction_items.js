@@ -321,6 +321,18 @@
 		}
 	}
 
+
+	// Quick Entry waits for the same VAT/totals pipeline before displaying final totals or saving.
+	window.retail = window.retail || {};
+	window.retail.transaction_items = window.retail.transaction_items || {};
+	window.retail.transaction_items.flushVatTaxRows = async frm => {
+		while (frm.__retail_syncing_vat_tax_rows || frm.__retail_running_erpnext_totals) {
+			await new Promise(resolve => setTimeout(resolve, 16));
+		}
+		clearTimeout(frm.__retail_vat_tax_rows_timer);
+		await syncVatTaxRows(frm);
+	};
+
 	function queueVatTaxRowsSync(frm) {
 		if (!canSyncVatTaxRows(frm)) return;
 
@@ -467,7 +479,7 @@
 		const rowRate = flt(row.tax_rate);
 		if (rowRate) return rowRate;
 
-		const response = await frappe.call({
+		const request = {
 			method: "retail.domains.transactions.vat.get_transaction_item_vat_rate",
 			args: {
 				item_code: row.item_code,
@@ -476,7 +488,8 @@
 				transaction_type: parentDoc.transaction_type,
 				item_tax_template: row.item_tax_template,
 			},
-		});
+		};
+		const response = await (frm.__quick_receipt?.lookup(request) || frappe.call(request));
 		return flt(response.message);
 	}
 

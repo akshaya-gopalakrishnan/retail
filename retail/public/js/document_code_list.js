@@ -88,6 +88,7 @@
 			const fieldname = code_field(this);
 			// Keep the descriptive subject beside the short identifier.
 			this.columns = this.columns.filter(column => {
+				if (this.doctype === "Item Group" && column.df?.fieldname === "name") return false;
 				if (this.doctype === "Sales Person" && ["name", "sales_person_name"].includes(column.df?.fieldname)) return false;
 				if (column.df?.fieldname === fieldname) return false;
 				if (column.df?.fieldname === "name" && fieldname === "item_code") return false;
