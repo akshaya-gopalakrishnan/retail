@@ -1057,8 +1057,16 @@ def _customer_master_rows(company, modified_filter=None):
 			)
 		}
 
+	company_credit_limit = frappe.get_cached_value("Company", company, "credit_limit")
 	for customer in customers:
-		credit_limit = get_credit_limit(customer.name, company)
+		# Match ERPNext get_credit_limit exactly, including zero-value fallback
+		# and group bypass semantics, without queries per customer.
+		customer_detail = customer_credit_details.get(customer.name)
+		group_detail = group_credit_details.get(customer.customer_group)
+		credit_limit = customer_detail.credit_limit if customer_detail else None
+		if not credit_limit and group_detail and not group_detail.bypass_credit_limit_check:
+			credit_limit = group_detail.credit_limit
+		credit_limit = flt(credit_limit or company_credit_limit)
 		credit_detail = customer_credit_details.get(customer.name) or group_credit_details.get(
 			customer.customer_group
 		)
@@ -1114,13 +1122,21 @@ def health_check(branch=None, counter_code=None):
 	return response
 
 
-def _pos_selling_price(item, uom=None, barcode=None):
+def _pos_price_tax_rate(template, rates=None):
+	if rates is None:
+		return flt(get_item_tax_rate(template))
+	if template not in rates:
+		rates[template] = flt(get_item_tax_rate(template)) if template else 0
+	return rates[template]
+
+
+def _pos_selling_price(item, uom=None, barcode=None, tax_rates=None):
 	"""Return the maintained VAT-inclusive customer price for this sale unit."""
 	if not uom or uom == item.get("stock_uom"):
 		gross = item.get("custom_sales_gross_rate")
 		if gross is not None:
 			return flt(gross)
-		return flt(flt(item.get("standard_rate")) * (1 + flt(get_item_tax_rate(item.get("custom_tax"))) / 100), 2)
+		return flt(flt(item.get("standard_rate")) * (1 + _pos_price_tax_rate(item.get("custom_tax"), tax_rates) / 100), 2)
 	packings = [row for row in item.get("custom_retail_packing_detail") or [] if row.get("uom") == uom]
 	packing = next((row for row in packings if barcode and row.get("barcode") == barcode), None)
 	if packing is None and packings:
@@ -1140,16 +1156,35 @@ def _pos_item_prices(fields, modified_filter, changed_item_codes, sales_item_cod
 		filters=[["item_code", "in", sales_item_codes]] if sales_item_codes is not None else [],
 		or_filters=or_filters, limit_page_length=0
 	)
-	items = {}
+	# Price-only deltas may refer to items outside the Item delta. Read the
+	# pricing inputs for all selling rows in bulk, retaining the shared price
+	# calculation and the saved packing order used by get_cached_doc.
+	codes = sorted({row.item_code for row in rows if cint(row.get("selling"))})
+	items = {
+		item.name: item for item in frappe.get_all("Item", filters={"name": ["in", codes]},
+			fields=["name", "stock_uom", "custom_sales_gross_rate", "standard_rate", "custom_tax"],
+			limit_page_length=0)
+	} if codes else {}
+	missing = set(codes) - items.keys()
+	if missing:
+		frappe.throw(_("Item {0} not found").format(sorted(missing)[0]), frappe.DoesNotExistError)
+	packing_codes = sorted({row.item_code for row in rows if cint(row.get("selling"))
+		and row.get("uom") and row.uom != items[row.item_code].stock_uom})
+	if packing_codes:
+		for packing in frappe.get_all("Retail Packing Detail",
+			filters={"parenttype": "Item", "parentfield": "custom_retail_packing_detail",
+				"parent": ["in", packing_codes]},
+			fields=["parent", "uom", "barcode", "selling_gross_rate"],
+			order_by="idx asc", limit_page_length=0):
+			items[packing.parent].setdefault("custom_retail_packing_detail", []).append(packing)
+	tax_rates = {}
 	for row in rows:
 		if not cint(row.pop("selling", 0)):
 			continue
-		if row.item_code not in items:
-			items[row.item_code] = frappe.get_cached_doc("Item", row.item_code)
 		item = items[row.item_code]
-		gross = _pos_selling_price(item, row.get("uom"), row.get("barcode"))
+		gross = _pos_selling_price(item, row.get("uom"), row.get("barcode"), tax_rates)
 		if gross is None:
-			gross = flt(flt(row.price_list_rate) * (1 + flt(get_item_tax_rate(item.get("custom_tax"))) / 100), 2)
+			gross = flt(flt(row.price_list_rate) * (1 + _pos_price_tax_rate(item.get("custom_tax"), tax_rates) / 100), 2)
 		row["price_list_rate"] = gross
 		row["rate_includes_vat"] = 1
 	return rows
@@ -1213,6 +1248,10 @@ def _pos_promotion_payload(branch=None, counter_code=None, modified_after=None):
 
 @frappe.whitelist()
 def get_pos_promo_prices(branch=None, counter_code=None, modified_after=None):
+	return _get_pos_promo_prices(branch, counter_code, modified_after)
+
+
+def _get_pos_promo_prices(branch=None, counter_code=None, modified_after=None, *, include_additional=True):
 	_payload, counter_doc, modified_after = _pos_promotion_payload(branch, counter_code, modified_after)
 	child_fields = [
 		"name",
@@ -1268,7 +1307,7 @@ def get_pos_promo_prices(branch=None, counter_code=None, modified_after=None):
 		"counter": counter_doc.name,
 		"counter_code": counter_doc.counter_code,
 		"promotions": promotions,
-		**_additional_pos_promotions(counter_doc, modified_after),
+		**(_additional_pos_promotions(counter_doc, modified_after) if include_additional else {}),
 	}, counter_doc.warehouse)
 
 
@@ -1479,9 +1518,15 @@ def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
 	apply_master_batches(items, counter_doc.warehouse)
 	item_group_by_item = {item.item_code: item.item_group for item in items}
 	_apply_item_tax_fields(items)
-	stock_by_item = _get_current_stock_by_item(counter_doc.warehouse, set(item_codes) | set(packing_parent_items))
+	stock_by_item = _warehouse_stock_by_item(
+		counter_doc.warehouse, sorted(set(item_codes) | set(packing_parent_items))
+	)
 	all_item_packings = []
-	if item_codes:
+	if not modified_after:
+		# A full download already fetched every packing. Use independent rows:
+		# the nested and top-level stock fields are enriched separately below.
+		all_item_packings = [frappe._dict(row.copy()) for row in packing_details]
+	elif item_codes:
 		all_item_packings = frappe.get_all(
 			"Retail Packing Detail",
 			filters=[
@@ -1500,23 +1545,23 @@ def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
 		packing["packing_group"] = item_group_by_item.get(packing.item_code)
 		_apply_packing_tax_fields(packing, items_by_code)
 		packing["current_stock"] = _packing_current_stock(
-			stock_by_item.get(packing.item_code, 0), packing.conversion_factor
+			(stock_by_item.get(packing.item_code) or {}).get("actual_qty", 0), packing.conversion_factor
 		)
 		packings_by_item.setdefault(packing.item_code, []).append(packing)
 	for item in items:
 		item["selling_rate"] = flt(item.get("selling_gross_rate"))
 		item["rate_includes_vat"] = 1
-		item["current_stock"] = stock_by_item.get(item.item_code, 0)
+		item["current_stock"] = (stock_by_item.get(item.item_code) or {}).get("actual_qty", 0)
 		item["packings"] = packings_by_item.get(item.item_code, [])
 	for packing in packing_details:
 		packing["packing_group"] = item_group_by_item.get(packing.item_code)
 		_apply_packing_tax_fields(packing, items_by_code)
 		packing["current_stock"] = _packing_current_stock(
-			stock_by_item.get(packing.item_code, 0), packing.conversion_factor
+			(stock_by_item.get(packing.item_code) or {}).get("actual_qty", 0), packing.conversion_factor
 		)
 
-	_apply_current_stock_to_items(items, counter_doc.warehouse)
-	_apply_current_stock_to_packings(packing_details, counter_doc.warehouse)
+	_apply_current_stock_to_items(items, counter_doc.warehouse, stock_by_item)
+	_apply_current_stock_to_packings(packing_details, counter_doc.warehouse, stock_by_item)
 
 	return with_item_identity({
 		"status": "Success",
@@ -1556,7 +1601,9 @@ def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
 			],
 			limit_page_length=0,
 		),
-		"promo_prices": get_pos_promo_prices(branch, counter_code, modified_after)["promotions"],
+		# Master data consumes only Promo Price rows. Avoid building and then
+		# discarding pricing rules, schemes, loyalty and voucher snapshots.
+		"promo_prices": _get_pos_promo_prices(branch, counter_code, modified_after, include_additional=False)["promotions"],
 		"buy_x_get_y_promotions": get_pos_buy_x_get_y_promotions(branch, counter_code, modified_after)["promotions"],
 		"gift_voucher_promotions": get_gift_voucher_promotions({"branch": branch, "counter_code": counter_code})["promotions"],
 		"customers": _customer_master_rows(counter_doc.company, modified_filter),
@@ -1578,7 +1625,7 @@ def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
 			],
 			limit_page_length=0,
 		),
-	}, counter_doc.warehouse)
+	}, counter_doc.warehouse, known_items=items)
 
 
 def _pos_payment_modes(modified_filter):
@@ -1616,16 +1663,20 @@ def _apply_item_tax_fields(items):
 		return
 
 	rates_by_template = {}
+
+	def rate_for(template):
+		if template not in rates_by_template:
+			rates_by_template[template] = flt(get_item_tax_rate(template)) if template else 0
+		return rates_by_template[template]
+
 	for item in items:
 		sales_template = item.get("sales_vat_template") or item.get("sales_item_tax_template")
 		template = sales_template
-		if template not in rates_by_template:
-			rates_by_template[template] = flt(get_item_tax_rate(template)) if template else 0
-		rate = rates_by_template[template]
+		rate = rate_for(template)
 		item["sales_vat_template"] = template
 		item["item_tax_template"] = template
 		item["sales_vat_rate"] = _format_tax_rate(rate)
-		item["purchase_vat_rate"] = _format_tax_rate(get_item_tax_rate(item.get("purchase_vat_template")))
+		item["purchase_vat_rate"] = _format_tax_rate(rate_for(item.get("purchase_vat_template")))
 		item["tax_rate"] = rate
 		item["is_taxable"] = 1 if rate > 0 else 0
 
@@ -3033,9 +3084,10 @@ def _warehouse_stock_by_item(warehouse, item_codes):
 
 
 
-def _apply_current_stock_to_items(items, warehouse):
+def _apply_current_stock_to_items(items, warehouse, stock_by_item=None):
 	item_codes = [item.item_code for item in items if item.item_code]
-	stock_by_item = _warehouse_stock_by_item(warehouse, item_codes)
+	if stock_by_item is None:
+		stock_by_item = _warehouse_stock_by_item(warehouse, item_codes)
 
 	for item in items:
 		stock = stock_by_item.get(item.item_code) or frappe._dict()
@@ -3054,9 +3106,10 @@ def _apply_current_stock_to_items(items, warehouse):
 
 
 
-def _apply_current_stock_to_packings(packings, warehouse):
+def _apply_current_stock_to_packings(packings, warehouse, stock_by_item=None):
 	item_codes = sorted({packing.item_code for packing in packings if packing.item_code})
-	stock_by_item = _warehouse_stock_by_item(warehouse, item_codes)
+	if stock_by_item is None:
+		stock_by_item = _warehouse_stock_by_item(warehouse, item_codes)
 
 	for packing in packings:
 		stock = stock_by_item.get(packing.item_code) or frappe._dict()

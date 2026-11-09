@@ -516,10 +516,14 @@ SUMMARY_FIELDS = {
 
 
 def summary(filters):
+    return _summarize_allocations(frappe.get_all("POS Settlement Allocation", filters=filters,
+        fields=["settlement_type", "requested_amount", "applied_amount", "unresolved_amount", "status"]))
+
+
+def _summarize_allocations(rows):
     result = dict.fromkeys(tuple(SUMMARY_FIELDS.values()) + (
         "credit_notes_applied", "credit_notes_unresolved", "pending_credit_allocations", "unresolved_settlement_amount"), 0.0)
-    for row in frappe.get_all("POS Settlement Allocation", filters=filters,
-            fields=["settlement_type", "requested_amount", "applied_amount", "unresolved_amount", "status"]):
+    for row in rows:
         field = SUMMARY_FIELDS.get(row.settlement_type)
         if field:
             result[field] += flt(row.requested_amount)
@@ -544,8 +548,14 @@ def add_customer_summaries(rows, company, customer_field):
     report.list_parties = {row.name: row for row in parties}
     report.run({"account_type": "Receivable", "naming_by": ["Selling Settings", "cust_master_name"]})
     current_balances = {name: flt(report.total_row_map.get(name, {}).get("outstanding")) for name in names}
+    allocations = {}
+    for allocation in frappe.get_all("POS Settlement Allocation",
+            filters={"company": company, "customer": ["in", names]},
+            fields=["customer", "settlement_type", "requested_amount", "applied_amount", "unresolved_amount", "status"],
+            limit_page_length=0):
+        allocations.setdefault(allocation.customer, []).append(allocation)
     for row in rows:
-        row.update(summary({"company": company, "customer": row[customer_field]}))
+        row.update(_summarize_allocations(allocations.get(row[customer_field], [])))
         row["current_receivable"] = current_balances.get(row[customer_field], 0)
         available = flt(row.get("unused_credit_note_amount", 0))
         if "unused_credit_notes" not in row:
