@@ -15,9 +15,27 @@ function arrangeRetailItemFilters(listview) {
 	const order = ["custom_document_code", "name", "item_code", "item_name", "custom_barcode",
 		"item_group", "brand", "variant_of", "custom_scale_item", "has_variants", "has_batch_no", "has_serial_no"];
 	const rank = key => order.includes(key) ? order.indexOf(key) : order.length;
+	const positions = new Map([[boxed[0], 0], [checks[0], 0]]);
+	const active = document.activeElement;
+	const selection = active && typeof active.selectionStart === "number"
+		? [active.selectionStart, active.selectionEnd, active.selectionDirection] : null;
 	Object.entries(listview.page.fields_dict)
 		.sort(([a], [b]) => rank(a) - rank(b))
-		.forEach(([, control]) => control.$wrapper.appendTo(control.df.fieldtype === "Check" ? checks : boxed));
+		.forEach(([, control]) => {
+			const target = control.df.fieldtype === "Check" ? checks[0] : boxed[0];
+			const position = positions.get(target);
+			const element = control.$wrapper[0];
+			// Reattaching even an already-positioned input blurs it in Chromium.
+			if (target.children[position] !== element) {
+				target.insertBefore(element, target.children[position] || null);
+			}
+			positions.set(target, position + 1);
+		});
+	// A newly added filter can require a move; retain the user's current caret.
+	if (active?.isConnected && wrapper[0].contains(active) && document.activeElement === document.body) {
+		active.focus({ preventScroll: true });
+		if (selection) active.setSelectionRange(...selection);
+	}
 }
 
 const originalRetailItemFilterRefresh = frappe.listview_settings["Item"].refresh;

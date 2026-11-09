@@ -12,8 +12,13 @@ def execute():
 			"depends_on": "eval:!!doc.pos_cashier_employee",
 		},
 		{
-			"fieldname": "pos_login_id", "label": "POS Login ID", "fieldtype": "Int",
+			"fieldname": "pos_cashier_name", "label": "POS Cashier Name", "fieldtype": "Data",
 			"insert_after": "pos_cashier_employee", "read_only": 1, "no_copy": 1,
+			"fetch_from": "pos_cashier_employee.employee_name",
+		},
+		{
+			"fieldname": "pos_login_id", "label": "POS Login ID", "fieldtype": "Int",
+			"insert_after": "pos_cashier_name", "read_only": 1, "no_copy": 1,
 		},
 	]})
 	# Leave the Employee link visible as context, but assign it on Employee.

@@ -11,6 +11,10 @@ RUN chmod 755 /usr/local/bin/retail-entrypoint.sh
 COPY --chown=frappe:frappe apps/hrms /home/frappe/frappe-bench/apps/hrms
 COPY --chown=frappe:frappe apps/retail /home/frappe/frappe-bench/apps/retail
 
+RUN /home/frappe/frappe-bench/env/bin/python \
+	/home/frappe/frappe-bench/apps/retail/deployment/docker/block_hosted_tests.py \
+	/home/frappe/frappe-bench
+
 USER frappe
 
 RUN cd /home/frappe/frappe-bench \

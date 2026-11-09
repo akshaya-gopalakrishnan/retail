@@ -56,12 +56,19 @@ class RetailReport(Report):
             return execute(frappe._dict(filters or {}))
         from retail.report_transaction_identity import enrich_report
 
+        if self.name in ("Stock Ledger", "Stock Balance"):
+            from retail.stock_report_barcodes import execute
+
+            result = execute(self.name, filters, super().execute_module)
+            return enrich_report(self.name, result, filters)
         return enrich_report(self.name, super().execute_module(filters), filters)
 
 
 @frappe.whitelist()
 def get_script(report_name):
     result = standard_get_script(report_name)
+    if report_name in ("Stock Ledger", "Stock Balance"):
+        result["script"] += "\n" + Path(__file__).with_name("stock_report_barcodes.js").read_text()
     if report_name in ("Accounts Receivable", "Accounts Payable"):
         filename = frappe.scrub(report_name) + ".js"
         result["script"] = Path(__file__).with_name(filename).read_text() + "\n//# sourceURL=retail_" + filename
