@@ -47,6 +47,35 @@ class TestTranslationFailures(unittest.TestCase):
 		get.assert_called_once()
 		self.cache.set_value.assert_any_call(arabic_name.GOOGLE_COOLDOWN_KEY, True, expires_in_sec=120)
 
+	def test_cached_success_is_refreshed_without_translation(self):
+		rows = [{"packing_name": "Water"}, {"packing_name": "Water"}]
+		self.cache.get_value.side_effect = None
+		self.cache.get_value.return_value = "ماء"
+		with patch.object(arabic_name, "translate_item_name_to_arabic") as translate:
+			arabic_name.fill_arabic_packing_names(rows)
+		translate.assert_not_called()
+		self.assertEqual([row["arabic_packing_name"] for row in rows], ["ماء", "ماء"])
+		self.assertEqual(self.cache.set_value.call_args.kwargs, {"expires_in_sec": 86400})
+
+	def test_cached_failure_does_not_extend_retry_window(self):
+		self.cache.get_value.side_effect = None
+		self.cache.get_value.return_value = ""
+		with patch.object(arabic_name, "translate_item_name_to_arabic") as translate:
+			arabic_name.fill_arabic_packing_names([{"packing_name": "Water"}])
+		translate.assert_not_called()
+		self.cache.set_value.assert_not_called()
+
+	def test_background_warmer_deduplicates_without_changing_saved_rows(self):
+		rows = [frappe._dict(packing_name="Water", arabic_packing_name=""),
+			frappe._dict(packing_name="Water", arabic_packing_name=None),
+			frappe._dict(packing_name="Juice", arabic_packing_name="Saved")]
+		with patch.object(frappe, "get_all", side_effect=[["ITEM"], rows]), patch.object(frappe, "enqueue") as enqueue:
+			result = arabic_name.warm_pos_packing_translations()
+		self.assertEqual(result, {"names": 1, "batches": 1})
+		self.assertEqual(enqueue.call_args.kwargs["texts"], ["Water"])
+		self.assertTrue(enqueue.call_args.kwargs["deduplicate"])
+		self.assertEqual(rows[2].arabic_packing_name, "Saved")
+
 	def test_google_success_after_cooldown_expires(self):
 		self.cache_values[arabic_name.GOOGLE_COOLDOWN_KEY] = True
 		response = Mock(status_code=200)

@@ -3,7 +3,7 @@ import frappe
 from frappe.utils import cint
 
 
-def with_item_identity(payload, warehouse):
+def with_item_identity(payload, warehouse, known_items=None):
 	from retail.pos_serials import apply_master_serials
 
 	rows = []
@@ -20,12 +20,15 @@ def with_item_identity(payload, warehouse):
 			for child in value:
 				collect(child)
 	collect(payload)
-	codes = sorted({code for _, code in rows if code})
+	# Only callers that have just loaded master rows and serial availability
+	# may supply these request-local values. Other endpoints keep fresh reads.
+	by_code = {item.item_code: item for item in (known_items or [])}
+	codes = sorted({code for _, code in rows if code} - by_code.keys())
 	items = frappe.get_all("Item", filters={"name": ["in", codes]},
 		fields=["name as item_code", "item_name", "custom_barcode as barcode", "has_serial_no", "disabled"],
 		limit_page_length=0) if codes else []
 	apply_master_serials(items, warehouse)
-	by_code = {item.item_code: item for item in items}
+	by_code.update({item.item_code: item for item in items})
 	for row, code in rows:
 		item = by_code.get(code, {})
 		row["barcode"] = row.get("barcode") or item.get("barcode") or ""

@@ -751,6 +751,7 @@ after_install.append("retail.document_codes.install")
 boot_session = [boot_session, "retail.document_codes.boot", "retail.column_preferences.boot_session"]
 
 scheduler_events = {"hourly": ["retail.document_codes.backfill_missing"]}
+scheduler_events["hourly"].append("retail.domains.item.arabic_name.warm_pos_packing_translations")
 
 # Retail owns loyalty validation and ledger reversals; no ERPNext core edits.
 # Frappe v15 has no extend_doctype_class. Keep these existing scoped subclasses

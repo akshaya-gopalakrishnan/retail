@@ -62,9 +62,42 @@ def fill_arabic_packing_names(rows):
 			if translated is None:
 				result = translate_item_name_to_arabic(text)
 				translated = result.get("translated_text") or ""
-				frappe.cache.set_value(key, translated, expires_in_sec=86400 if translated else 60)
+				if not translated:
+					frappe.cache.set_value(key, "", expires_in_sec=60)
+			# Keep successful, actively used translations warm. Empty results
+			# retain the short retry period so provider recovery is respected.
+			if translated:
+				frappe.cache.set_value(key, translated, expires_in_sec=86400)
 			translations[text] = translated
 		row["arabic_packing_name"] = translations[text]
+
+
+def warm_pos_packing_translations():
+	"""Prepare the existing API translation cache away from download requests.
+
+	Saved names and Item.modified are never changed. Split work so a large
+	catalog cannot consume one unbounded worker job.
+	"""
+	sales_items = frappe.get_all("Item", filters={"is_sales_item": 1}, pluck="name")
+	if not sales_items:
+		return {"names": 0, "batches": 0}
+	rows = frappe.get_all("Retail Packing Detail",
+		filters={"parenttype": "Item", "parentfield": "custom_retail_packing_detail",
+			"parent": ["in", sales_items]},
+		fields=["packing_name", "arabic_packing_name"], limit_page_length=0)
+	texts = sorted({(row.packing_name or "").strip() for row in rows
+		if not (row.arabic_packing_name or "").strip() and (row.packing_name or "").strip()})
+	for offset in range(0, len(texts), 50):
+		batch = texts[offset:offset + 50]
+		digest = hashlib.sha256(json.dumps(batch).encode()).hexdigest()
+		frappe.enqueue("retail.domains.item.arabic_name.warm_pos_packing_translation_batch",
+			queue="long", timeout=900, texts=batch,
+			job_id=f"pos-packing-translations-{digest}", deduplicate=True)
+	return {"names": len(texts), "batches": (len(texts) + 49) // 50}
+
+
+def warm_pos_packing_translation_batch(texts):
+	fill_arabic_packing_names([{"packing_name": text} for text in texts])
 
 
 def ensure_item_arabic_name_field():
