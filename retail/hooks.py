@@ -1117,3 +1117,11 @@ after_migrate.append("retail.patches.user_pos_login_display.execute")
 after_sync.append("retail.patches.user_pos_login_display.execute")
 doctype_js["Sales Person"] = "public/js/forms/sales_person_identity.js"
 doctype_js["Sales Order"].append("public/js/forms/sales_order_sales_person.js")
+
+# Sales Order app diagnostics also capture pre-dispatch authentication failures.
+after_request.append("retail.sales_order_api_log.after_request")
+has_permission["Sales Order API Log"] = "retail.sales_order_api_log.has_permission"
+permission_query_conditions["Sales Order API Log"] = "retail.sales_order_api_log.query_conditions"
+
+after_migrate.append("retail.patches.show_item_default_supplier.execute")
+after_sync.append("retail.patches.show_item_default_supplier.execute")

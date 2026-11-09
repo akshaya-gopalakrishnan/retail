@@ -8,7 +8,8 @@ from frappe.utils import flt, getdate
 
 
 LEVEL_LABELS = ("Department", "Sub Department", "Category", "Sub Category", "Family")
-AMOUNT_FIELDS = ("quantity", "gross_sales", "discount", "sales_returns", "net_sales", "vat", "cost_amount")
+AMOUNT_FIELDS = ("quantity", "gross_sales", "discount", "sales_returns", "net_sales", "vat", "cost_amount",
+                 "gross_sales_incl_vat", "discount_incl_vat", "net_sales_incl_vat")
 ROOT_GROUPS = {"", None, "All Item Groups"}
 
 

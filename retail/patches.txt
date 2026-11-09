@@ -95,3 +95,4 @@ retail.patches.sales_person_display_name
 retail.patches.user_pos_login_display
 retail.patches.items_expired_card
 retail.patches.remove_items_expired_card
+retail.patches.show_item_default_supplier

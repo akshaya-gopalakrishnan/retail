@@ -1,0 +1,82 @@
+{
+ "doctype": "DocType",
+ "name": "Sales Order API Log",
+ "module": "Retail-app",
+ "autoname": "SOLOG-.#####",
+ "engine": "InnoDB",
+ "field_order": [
+  "operation",
+  "user",
+  "status",
+  "http_status",
+  "endpoint",
+  "error_type",
+  "request_json",
+  "response_json"
+ ],
+ "fields": [
+  {
+   "fieldname": "operation",
+   "label": "Operation",
+   "fieldtype": "Data",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "user",
+   "label": "User",
+   "fieldtype": "Data",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "status",
+   "label": "Status",
+   "fieldtype": "Data",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "http_status",
+   "label": "HTTP Status",
+   "fieldtype": "Int",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "endpoint",
+   "label": "Endpoint",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "error_type",
+   "label": "Error Type",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "request_json",
+   "label": "Request Summary",
+   "fieldtype": "Code",
+   "read_only": 1,
+   "options": "JSON"
+  },
+  {
+   "fieldname": "response_json",
+   "label": "Response Summary",
+   "fieldtype": "Code",
+   "read_only": 1,
+   "options": "JSON"
+  }
+ ],
+ "permissions": [
+  {
+   "role": "Super Admin",
+   "read": 1,
+   "report": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC"
+}

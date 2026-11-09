@@ -88,6 +88,35 @@ class TestReportPromotionDiscounts(unittest.TestCase):
             promotion='Second offer', promotion_discount_amount=1.05)]
         self.assertEqual(discounts_by_item_row(payload), {1:4})
 
+    def test_inclusive_columns_and_mixed_rate_totals(self):
+        rows = self.rows(sale())
+        self.assertEqual(tuple(round(rows[0][key], 2) for key in reports.VAT_INCLUSIVE_FIELDS),
+                         (10, 1, 9))
+        # ERP tax allocation can retain fractions below currency precision.
+        rows[0].vat = .42579042457091243
+        reports.set_vat_inclusive_sales(rows[0])
+        self.assertEqual(tuple(rows[0][key] for key in reports.VAT_INCLUSIVE_FIELDS), (10, 1, 9))
+        # A second item at zero VAT must not inherit the first item's VAT rate.
+        rows[1].vat = 0
+        reports.set_vat_inclusive_sales(rows[1])
+        total = reports.profitability_total(rows, 'item_code')
+        self.assertEqual(tuple(round(total[key], 2) for key in reports.VAT_INCLUSIVE_FIELDS),
+                         (35, 1, 34))
+        fields = [c['fieldname'] for c in reports.profitability_columns()]
+        for field in ('gross_sales', 'discount', 'net_sales'):
+            self.assertEqual(fields[fields.index(field) + 1], field + '_incl_vat')
+
+    def test_inclusive_returns_and_unknown_allocation(self):
+        row = frappe._dict(net_sales=-100, vat=-5, discount=0, gross_sales=0)
+        reports.set_vat_inclusive_sales(row)
+        self.assertEqual(tuple(row[key] for key in reports.VAT_INCLUSIVE_FIELDS), (0, 0, -105))
+        row.update(net_sales=100, vat=None, discount=10, gross_sales=110)
+        reports.set_vat_inclusive_sales(row)
+        self.assertTrue(all(row[key] is None for key in reports.VAT_INCLUSIVE_FIELDS))
+        row.update(net_sales=0, vat=0)
+        reports.set_vat_inclusive_sales(row)
+        self.assertIsNone(row.discount_incl_vat)
+
     def test_exclusive_vat_and_legacy_header_evidence(self):
         payload = json.loads(sale().custom_pos_completed_payload)
         payload['items'][0]['rate_includes_vat'] = 0

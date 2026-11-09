@@ -67,7 +67,7 @@ def profitability_total(rows, label_field, revenue="net_sales", margin="profit_p
     """Preserve unavailable inputs and calculate margin from aggregate amounts."""
     total = frappe._dict({label_field: frappe._("Total"), "is_total_row": 1})
     fields = [revenue, "cost_amount"]
-    fields += ["gross_sales", "discount", "sales_returns", "vat"]
+    fields += ["gross_sales", "discount", "sales_returns", "vat", *VAT_INCLUSIVE_FIELDS]
     for field in fields:
         total[field] = (
             None if any(row.get(field) is None for row in rows)
@@ -121,11 +121,32 @@ def sales_cost_sql():
 
 
 VALUE_FIELDS = ("gross_sales", "discount", "sales_returns", "net_sales", "vat", "cost_amount")
+VAT_INCLUSIVE_FIELDS = ("gross_sales_incl_vat", "discount_incl_vat", "net_sales_incl_vat")
+
+
+def set_vat_inclusive_sales(row, precision=2):
+    """Use recorded item VAT before grouping across different VAT rates.
+
+    A zero net sale cannot establish VAT on a nonzero discount. Unknown
+    allocations remain blank rather than assuming a current master tax rate.
+    """
+    net, vat, discount = row.get("net_sales"), row.get("vat"), row.get("discount")
+    row.net_sales_incl_vat = flt(net + vat, precision) if net is not None and vat is not None else None
+    row.discount_incl_vat = None
+    if discount == 0:
+        row.discount_incl_vat = 0
+    elif discount is not None and vat is not None and net:
+        row.discount_incl_vat = flt(discount * (1 + vat / net), precision)
+    row.gross_sales_incl_vat = None
+    if row.get("gross_sales") == 0:
+        row.gross_sales_incl_vat = 0
+    elif row.get("gross_sales") is not None and row.net_sales_incl_vat is not None and row.discount_incl_vat is not None:
+        row.gross_sales_incl_vat = flt(row.net_sales_incl_vat + row.discount_incl_vat, precision)
 
 
 def profitability_columns(columns=()):
     """One presentation contract, including explicit source discrepancies."""
-    replaced = set(VALUE_FIELDS) | {"net_amount", "sales_amount", "return_amount",
+    replaced = set(VALUE_FIELDS + VAT_INCLUSIVE_FIELDS) | {"net_amount", "sales_amount", "return_amount",
         "gross_profit", "margin_percent", "profit_percent", "cost_status", "source_status"}
     result = [c for c in columns if c["fieldname"] not in replaced]
     for field, label in zip(VALUE_FIELDS + ("gross_profit", "profit_percent"),
@@ -133,6 +154,9 @@ def profitability_columns(columns=()):
              "Gross Profit", "Gross Profit Margin %")):
         result.append(dict(fieldname=field, label=frappe._(label),
             fieldtype="Percent" if field == "profit_percent" else "Currency", width=145))
+        if field in ("gross_sales", "discount", "net_sales"):
+            result.append(dict(fieldname=field + "_incl_vat", label=frappe._(label + " Incl. VAT"),
+                fieldtype="Currency", width=180))
     result.append(dict(fieldname="source_status", label=frappe._("Source Status"), fieldtype="Data", width=350))
     return result
 
@@ -304,6 +328,8 @@ def invoice_rows(doc, *, vat_accounts_by_company=None):
             row.vat = values.vat
         if row.vat is None:
             row.source_status += "; VAT item allocation does not reconcile"
+        precision = doc.precision("base_net_total") if callable(getattr(doc, "precision", None)) else 2
+        set_vat_inclusive_sales(row, precision=precision if precision is not None else 2)
         if doc.doctype == "Sales Invoice" and item.get("pos_invoice"):
             dimensions = frappe.db.get_value("POS Invoice", item.pos_invoice,
                 ["pos_branch", "pos_counter", "pos_cashier", "pos_cashier_employee"], as_dict=True)

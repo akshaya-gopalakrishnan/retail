@@ -89,15 +89,17 @@ def load_user_pos_login(doc, method=None):
 	"""Display existing Employee settings without writing either document."""
 	rows = frappe.get_list(
 		"Employee", filters={"user_id": doc.name},
-		fields=["name", "pos_login_id", "pos_login_enabled"], page_length=2,
+		fields=["name", "employee_name", "pos_login_id", "pos_login_enabled"], page_length=2,
 	) if frappe.has_permission("Employee", "read") else []
 	if len(rows) == 1:
 		employee = rows[0]
 		doc.pos_cashier_employee = employee.name
+		doc.pos_cashier_name = employee.employee_name
 		doc.pos_login_id = employee.pos_login_id
 		doc.pos_login_enabled = employee.pos_login_enabled
 	else:
 		doc.pos_cashier_employee = None
+		doc.pos_cashier_name = None
 		doc.pos_login_id = None
 
 
