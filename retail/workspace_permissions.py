@@ -292,7 +292,6 @@ REPORT_SIDEBAR_GROUPS = (
 		(
 			"Item Group Sales Analysis",
 			"Daily Sales Summary",
-			"Counter Performance",
 			"Sales Payment Mode Summary",
 			"Daily Transaction Log",
 			"Daily Profit Report",

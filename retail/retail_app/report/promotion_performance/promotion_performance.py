@@ -43,8 +43,6 @@ def enrich(rows):
             row['profit_note'] = 'Invalid or excluded promotion item evidence'
         elif counts[key] > 1:
             row['profit_note'] = 'Multiple promotions share this item; profit allocation requires review'
-        elif row.status not in ('Schedule Valid', 'Return Linked'):
-            row['profit_note'] = row.get('reason') or 'Promotion evidence requires review'
         elif abs(flt(row.quantity) - flt(line.qty)) > 0.00001:
             row['profit_note'] = 'Promotion quantity differs from posted line quantity'
         elif abs(flt(row.sales_amount) * flt(doc.conversion_rate) - flt(line.base_net_amount)) > 0.02:
@@ -60,8 +58,12 @@ def enrich(rows):
                 row.margin = row.gross_profit / flt(line.base_net_amount) * 100 if line.base_net_amount else None
                 row.profit_status = 'Complete'
                 row['profit_note'] = 'Cost includes all stock on this line, including free goods'
+                # Rule validation is advisory for a completed POS sale. Exact
+                # line attribution and posted stock establish its actual profit.
+                if row.status not in ('Schedule Valid', 'Return Linked'):
+                    row['profit_note'] += '; Evidence review: ' + (row.get('reason') or 'Promotion evidence requires review')
         row['base_sales'] = flt(row.sales_amount) * flt(doc.conversion_rate)
-        row['base_discount'] = flt(row.discount_amount) * flt(doc.conversion_rate)
+        row['base_discount'] = row.discount_amount if row.discount_amount is not None else 0
         result.append(row)
     return result
 
@@ -139,7 +141,7 @@ def columns(detail=False):
         specs += [('sales_bills', 'Sales Bills', 'Int'), ('return_bills', 'Return Bills', 'Int'),
                   ('customers', 'Purchasing Customers', 'Int'), ('average_bill', 'Net Sales per Sales Bill', 'Currency')]
     specs += [('base_sales', 'Net Sales (Excl. VAT)', 'Currency'),
-              ('base_discount', 'Promotion Discount (Excl. VAT)', 'Currency'),
+              ('base_discount', 'Promotion Discount', 'Currency'),
               ('cost', 'Posted Goods Cost (Incl. Free)', 'Currency'), ('gross_profit', 'Gross Profit', 'Currency'),
               ('margin', 'Gross Margin %', 'Percent'), ('profit_status', 'Profit Status', 'Data')]
     if detail:

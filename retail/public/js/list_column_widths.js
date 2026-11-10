@@ -2,7 +2,7 @@
 (() => {
 	const clamp = width => Math.max(70, Math.min(1200, Math.round(width)));
 	const key = view => `retail:list-widths:v1:${frappe.session.user}:${view.doctype}`;
-	const column_key = column => `${column.type}:${column.balance_field || column.df?.fieldname || column.type}`;
+	const column_key = column => `${column.type}:${column.identity_field || column.balance_field || column.df?.fieldname || column.type}`;
 	const order_key = view => `${key(view)}:order`;
 	function column_order(view) {
 		if (!view._retail_list_order) {
@@ -50,6 +50,7 @@
 	}
 	function default_width(column) {
 		const df = column.df || {};
+		if (column.retail_compact_width) return column.retail_compact_width;
 		if (column.type === "Status") return 110;
 		if (column.type === "Subject" && ["name", "item_code", "custom_document_code"].includes(df.fieldname)) return 140;
 		if (frappe.model.is_numeric_field(df)) return 145;
@@ -63,7 +64,11 @@
 		if (!head) return;
 		view.$result.addClass("retail-list-widths");
 		const saved = preferences(view);
-		const order = column_order(view);
+		let order = column_order(view);
+		if (view.retail_status_last) {
+			const status = view.columns.filter(column => column.type === "Status" || column.df?.fieldname === "status").map(column_key);
+			order = order.filter(key => !status.includes(key)).concat(status);
+		}
 		const headers = Array.from(head.children).filter(el => el.classList.contains("list-row-col"));
 		const widths = view.columns.map(column => saved[column_key(column)] || default_width(column));
 		const visible = headers.map((el, index) => ({ el, index })).filter(({el}) => getComputedStyle(el).display !== "none");
@@ -77,7 +82,7 @@
 		root.style.setProperty("--retail-list-gutter", `${gutter}px`);
 		// Reclaim spare space for unsized text fields; explicit widths remain exact.
 		const spare = Math.max(0, available_width - 170 - visible.reduce((sum, {index}) => sum + widths[index] + 15, 0));
-		const flexible = visible.filter(({index}) => !saved[column_key(view.columns[index])] && !frappe.model.is_numeric_field(view.columns[index].df || {}) && view.columns[index].type !== "Status" && !["name", "item_code", "custom_document_code"].includes(view.columns[index].df?.fieldname));
+		const flexible = visible.filter(({index}) => !view.columns[index].retail_compact_width && !saved[column_key(view.columns[index])] && !frappe.model.is_numeric_field(view.columns[index].df || {}) && view.columns[index].type !== "Status" && !["name", "item_code", "custom_document_code"].includes(view.columns[index].df?.fieldname));
 		for (const {index} of flexible) widths[index] += spare / flexible.length;
 		root.style.setProperty("--retail-list-width", `${Math.floor(170 + visible.reduce((sum, {index}) => sum + widths[index] + 15, 0))}px`);
 		for (const row of root.querySelectorAll(".list-row > .level-left, .list-row-head > .level-left:not(.checkbox-actions)")) {

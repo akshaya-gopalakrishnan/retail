@@ -288,10 +288,11 @@ test('failed lookups can retry and closed or replaced dialogs never serve cached
  assert.equal(entry.failed,undefined);
 });
 
-test('new-item VAT and selling lookups start together before any field handler changes the row',async()=>{
+test('cached Item masters still fetch fresh VAT and selling reads together before field writes',async()=>{
  const {entry,frm,frappe}=fixture();entry.dialog.$wrapper.is=()=>true;
  frappe.meta={has_field:()=>true};
  frm.__retail_purchase_tracking={items:new Map()};
+ entry.items.set('A',{name:'A',stock_uom:'Nos'});
  const requests=[],resolve=[];
  frappe.call=request=>{requests.push(request);return new Promise(done=>resolve.push(done));};
  const adding=entry.enqueue(()=>entry.add({item_code:'A'}));
@@ -537,4 +538,47 @@ for (const updateStock of [0,1]) test(`PI scanner delegates packing identity and
  scan.$input.val('PACK-10');await entry.scan();scan.$input.val('PACK-10');await entry.scan();
  assert.equal(frm.doc.items.length,1);assert.equal(frm.doc.items[0].doctype,'Purchase Invoice Item');
  assert.equal(frm.doc.items[0].qty,2);assert.equal(frm.doc.items[0].uom,'Box-10');assert.equal(frm.doc.items[0].barcode,'PACK-10');
+});
+
+test('first Item bundles authorized master and zero-rate lookups into one request without changing row writes',async()=>{
+ const {entry,frm,frappe,changes}=fixture();entry.dialog.$wrapper.is=()=>true;
+ frappe.meta={has_field:()=>true};let synced;
+ frappe.model.sync=doc=>{synced=doc;};
+ const calls=[];
+ frappe.call=async request=>{
+  calls.push(request);
+  assert.equal(request.method,'retail.domains.purchase.quick_entry.item_data');
+  return {message:{item:{name:'A',stock_uom:'Nos',has_batch_no:1},lookups:[
+   {method:'retail.domains.transactions.vat.get_transaction_item_vat_rate',args:{item_code:'A',child_doctype:'Purchase Receipt Item',parent_doctype:'Purchase Receipt',transaction_type:null,item_tax_template:null},message:0},
+   {method:'retail.domains.purchase.selling_price.get_standard_selling_rate',args:{item_code:'A',uom:null},message:0},
+   {method:'retail.domains.purchase.selling_price.get_item_selling_vat_rate',args:{item_code:'A'},message:0},
+  ]}};
+ };
+ await entry.enqueue(()=>entry.add({item_code:'A',uom:'Box-10',barcode:'PACK'}));
+ assert.equal(entry.failed,undefined);assert.equal(calls.length,1);
+ assert.equal(synced.name,'A');
+ const row=frm.doc.items[0];
+ assert.equal(row.item_code,'A');assert.equal(row.uom,'Box-10');assert.equal(row.qty,1);
+ assert.equal(row.barcode,'PACK');assert.equal(row.use_serial_batch_fields,1);
+ assert.deepEqual(changes.map(c=>Object.keys(c.values)),[['item_code'],['uom'],['qty','warehouse']]);
+ frappe.call=async()=>({message:5});
+ await entry.enqueue(async()=>assert.equal((await entry.lookup({method:'retail.domains.transactions.vat.get_transaction_item_vat_rate',args:{item_code:'A',child_doctype:'Purchase Receipt Item',parent_doctype:'Purchase Receipt'}})).message,5));
+});
+
+test('denied bundled Item reads fail before a child row or field mutation is created',async()=>{
+ const {entry,frm,frappe,changes}=fixture();entry.dialog.$wrapper.is=()=>true;
+ frappe.call=async()=>{throw Error('Not permitted');};
+ await entry.enqueue(()=>entry.add({item_code:'A'}));
+ assert.equal(entry.failed,true);assert.equal(frm.doc.items.length,0);assert.equal(changes.length,0);
+});
+
+test('cached reads cannot let UOM writes finish ahead of native pricing callbacks',async()=>{
+ const {entry,frm,frappe}=fixture();
+ const row=frm.add_child('items');let nativeDone,finished=false;
+ frappe.after_ajax=callback=>{nativeDone=callback;};
+ const change=entry.setRowValue(row,'uom','Box-10').then(()=>{finished=true;});
+ await new Promise(setImmediate);
+ assert.equal(row.uom,'Box-10');assert.equal(finished,false);
+ row.conversion_factor=10;row.rate=380;nativeDone();await change;
+ assert.equal(finished,true);assert.equal(row.rate,380);assert.equal(row.conversion_factor,10);
 });

@@ -71,6 +71,8 @@ def get_invoice_rows(filters):
 			remarks
 		from `tabSales Invoice`
 		where docstatus in (1, 2)
+			and ifnull(is_pos, 0) = 0
+			and ifnull(is_consolidated, 0) = 0
 			and posting_date between %(from_date)s and %(to_date)s
 			and (%(company)s is null or company = %(company)s)
 			and (%(counter)s is null or custom_counter = %(counter)s)

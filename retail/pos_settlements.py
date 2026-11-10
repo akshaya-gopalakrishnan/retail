@@ -318,8 +318,12 @@ def resolve_transaction(transaction):
         elif transaction.pos_invoice and frappe.db.get_value("POS Invoice", transaction.pos_invoice, target) != name:
             frappe.db.set_value("POS Invoice", transaction.pos_invoice, target, name)
             audit(transaction, f"Dependency resolved later: {external} = {payload[external]}.", "Info")
-    if resolved.get("pos_shift_no") and transaction.pos_invoice:
-        frappe.db.set_value("POS Invoice", transaction.pos_invoice, "pos_shift_no", resolved.pos_shift_no)
+    if (resolved.get("pos_shift_no") and transaction.pos_invoice
+            and frappe.db.get_value("POS Invoice", transaction.pos_invoice, "pos_shift_no") != resolved.pos_shift_no):
+        # Recovery may retry indefinitely while another dependency is missing.
+        # Filling lifecycle metadata must not make an old sale look newly updated.
+        frappe.db.set_value("POS Invoice", transaction.pos_invoice, "pos_shift_no",
+            resolved.pos_shift_no, update_modified=False)
     if status == "Reconciled" and missing_lifecycle:
         status = "Pending Dependency"
     transaction.status = status

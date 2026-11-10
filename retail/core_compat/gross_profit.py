@@ -19,6 +19,20 @@ from erpnext.stock.report.stock_ledger.stock_ledger import get_item_group_condit
 from erpnext.stock.utils import get_incoming_rate
 
 
+def sales_source_condition(filters, invoice):
+	"""Keep original bills and their consolidated posting from being counted twice."""
+	source = filters.get("sales_source") or "Trading Sales"
+	is_pos = Coalesce(invoice.is_pos, 0)
+	is_consolidated = Coalesce(invoice.is_consolidated, 0)
+	if source == "Trading Sales":
+		return (is_pos == 0) & (is_consolidated == 0)
+	if source == "POS Sales":
+		return (is_pos == 1) | (is_consolidated == 1)
+	if source == "Trading + POS Sales":
+		return None
+	frappe.throw(_("Invalid Sales Source"))
+
+
 def execute(filters=None):
 	if not filters:
 		filters = frappe._dict()
@@ -728,21 +742,19 @@ class GrossProfitGenerator:
 		)
 
 	def get_returned_invoice_items(self):
-		returned_invoices = frappe.db.sql(
-			"""
-			select
-				si.name, si_item.item_code, si_item.stock_qty as qty, si_item.base_net_amount as base_amount, si.return_against
-			from
-				`tabSales Invoice` si, `tabSales Invoice Item` si_item
-			where
-				si.name = si_item.parent
-				and si.docstatus = 1
-				and si.is_return = 1
-				and si.posting_date between %(from_date)s and %(to_date)s
-		""",
-			{"from_date": self.filters.from_date, "to_date": self.filters.to_date},
-			as_dict=1,
+		invoice = frappe.qb.DocType("Sales Invoice")
+		item = frappe.qb.DocType("Sales Invoice Item")
+		query = (
+			frappe.qb.from_(invoice).join(item).on(invoice.name == item.parent)
+			.select(invoice.name, item.item_code, item.stock_qty.as_("qty"),
+				item.base_net_amount.as_("base_amount"), invoice.return_against)
+			.where((invoice.docstatus == 1) & (invoice.is_return == 1))
+			.where(invoice.posting_date.between(self.filters.from_date, self.filters.to_date))
 		)
+		source_condition = sales_source_condition(self.filters, invoice)
+		if source_condition is not None:
+			query = query.where(source_condition)
+		returned_invoices = query.run(as_dict=True)
 
 		self.returned_invoices = frappe._dict()
 		for inv in returned_invoices:
@@ -930,6 +942,10 @@ class GrossProfitGenerator:
 			.on(Item.name == SalesInvoiceItem.item_code)
 			.where((SalesInvoice.docstatus == 1) & (SalesInvoice.is_opening != "Yes"))
 		)
+
+		source_condition = sales_source_condition(self.filters, SalesInvoice)
+		if source_condition is not None:
+			query = query.where(source_condition)
 
 		query = self.apply_common_filters(query, SalesInvoice, SalesInvoiceItem, SalesTeam, Item)
 

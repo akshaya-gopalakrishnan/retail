@@ -94,6 +94,8 @@
 						{fieldtype: "Column Break"},
 						{fieldname: "bill_date", fieldtype: "Date", label: __("Supplier Invoice Date"),
 							default: frm.doc.bill_date, onchange: () => this.header("bill_date")},
+						{fieldtype: "Column Break"},
+						{fieldname: "find", fieldtype: "Data", label: __("Find in Invoice"), onchange: () => this.filter()},
 						{fieldtype: "Section Break"},
 					] : []),
 					{fieldname: "scan", fieldtype: "Data", options: "Barcode", label: __("Scan Barcode"),
@@ -104,10 +106,13 @@
 					{fieldtype: "Column Break"},
 					{fieldname: "add", fieldtype: "Button", label: __("Add Item"), click: () => {
 						const code = this.dialog.get_value("item");
-						if (code) this.enqueue(() => this.add({item_code: code}));
+						if (code) this.enqueue(() => this.add(this.packingChoice?.item_code === code ? this.packingChoice : {item_code: code}));
 					}},
+					...(!this.isInvoice ? [
+						{fieldtype: "Column Break"},
+						{fieldname: "find", fieldtype: "Data", label: __("Find in Receipt"), onchange: () => this.filter()},
+					] : []),
 					{fieldtype: "Section Break"},
-					{fieldname: "find", fieldtype: "Data", label: __(this.isInvoice ? "Find in Invoice" : "Find in Receipt"), onchange: () => this.filter()},
 					{fieldname: "items_html", fieldtype: "HTML"},
 					{fieldname: "totals", fieldtype: "HTML"},
 					{fieldname: "status", fieldtype: "HTML"},
@@ -116,7 +121,16 @@
 				secondary_action_label: __("Submit + New"), secondary_action: () => this.save(true),
 			});
 			this.dialog.$wrapper.find(".modal-dialog").css({width: "96vw", maxWidth: "1600px"});
+			const itemInput = this.dialog.get_field("item").$wrapper.find(".control-input");
+			itemInput.css({display: "flex", alignItems: "center", gap: "8px"});
+			itemInput.children().css({flex: "1 1 auto", minWidth: 0});
+			const add = this.dialog.get_field("add");
+			add.$wrapper.closest(".form-column").hide();
+			add.$input.css({flex: "0 0 auto", margin: 0}).appendTo(itemInput);
 			bindSupplierTab(this.dialog.get_field("supplier"), () => this.supplierFromTab());
+			window.retail?.purchase_packing_search?.bind(this.dialog.get_field("item"), choice => {
+				this.packingChoice = choice;
+			});
 			// FieldGroup binds Enter to Save on text inputs. This field must scan instead.
 			this.dialog.get_field("scan").$input.off("keypress").on("keydown.quickReceipt", event => {
 				if (!["Enter", "Tab"].includes(event.key)) return;
@@ -210,7 +224,7 @@
 				return frappe.call(request);
 			}
 			const cache = this.lookups;
-			const key = JSON.stringify([request.method, request.args]);
+			const key = this.lookupKey(request);
 			if (!cache.has(key)) {
 				const pending = Promise.resolve(frappe.call(request)).catch(error => {
 					cache.delete(key);
@@ -219,6 +233,36 @@
 				cache.set(key, pending);
 			}
 			return cache.get(key);
+		}
+
+		lookupKey(request) {
+			// JSON omits undefined; the equivalent HTTP null optional arguments must
+			// use the same key when results arrive from the bundled server read.
+			const args = request.args || {};
+			return JSON.stringify([request.method, Object.keys(args).sort()
+				.filter(key => args[key] != null).map(key => [key, args[key]])]);
+		}
+
+		async readItem(scan) {
+			if (this.items.has(scan.item_code)) return this.items.get(scan.item_code);
+			if (!this.lookups || this.frm.__quick_receipt !== this || !this.dialog.$wrapper.is(":visible")) {
+				return frappe.db.get_doc("Item", scan.item_code);
+			}
+			this.dialog.get_field("status").$wrapper.text(__("Adding item…"));
+			const empty = (this.frm.doc.items || []).find(row => !row.item_code);
+			const {message} = await this.lookup({
+				method: "retail.domains.purchase.quick_entry.item_data",
+				args: {item_code: scan.item_code, parent_doctype: this.frm.doc.doctype,
+					uom: scan.uom, transaction_type: this.frm.doc.transaction_type,
+					item_tax_template: empty?.item_tax_template},
+			});
+			if (message?.item?.name !== scan.item_code) frappe.throw(__("Could not load the selected Item."));
+			for (const result of message.lookups || []) {
+				const key = this.lookupKey(result);
+				if (!this.lookups.has(key)) this.lookups.set(key, Promise.resolve({message: result.message}));
+			}
+			frappe.model.sync(message.item);
+			return message.item;
 		}
 
 		async prepareItem(row, itemCode) {
@@ -287,6 +331,12 @@
 		async setRowValue(row, field, value) {
 			await this.rowReady(row);
 			await frappe.model.set_value(row.doctype, row.name, field, value);
+			if (field === "uom") {
+				// The core UOM handler can start callback-based price requests without
+				// returning their promise. Cached Retail reads must not let the next
+				// field overtake those native callbacks and temporarily zero the rate.
+				await new Promise(resolve => frappe.after_ajax(resolve));
+			}
 			await this.rowReady(row);
 		}
 
@@ -303,7 +353,7 @@
 		async add(scan) {
 			if (!this.required()) return;
 			const frm = this.frm;
-			const master = this.items.get(scan.item_code) || await frappe.db.get_doc("Item", scan.item_code);
+			const master = await this.readItem(scan);
 			this.items.set(scan.item_code, master);
 			// The tracking handler needs only flags from this already-authorized Item read.
 			frm.__retail_purchase_tracking?.items.set(scan.item_code, master);
@@ -339,6 +389,7 @@
 			frm.refresh_field("items");
 			this.render();
 			this.dialog.set_value("item", "");
+			this.packingChoice = null;
 			const element = this.rows.get(row.name)?.element;
 			element?.addClass("table-success");
 			element?.[0].scrollIntoView({block: "nearest"});
@@ -586,9 +637,26 @@
 			} finally { this.syncing = false; }
 			const doc = this.frm.doc;
 			const qty = (doc.items || []).filter(row => !row.custom_foc_parent).reduce((sum, row) => sum + flt(row.qty) + flt(row.custom_foc_qty), 0);
-			this.dialog.get_field("totals").$wrapper.text(
-				__("Total Qty (including FOC): {0} | Net: {1} | VAT / Charges: {2} | Grand Total: {3}",
-					[qty, format_currency(doc.net_total, doc.currency), format_currency(doc.total_taxes_and_charges, doc.currency), format_currency(doc.grand_total, doc.currency)]));
+			const totals = this.dialog.get_field("totals").$wrapper;
+			if (!totals.find(".quick-receipt-totals").length) {
+				const summary = $('<div class="quick-receipt-totals" role="group"></div>')
+					.attr("aria-label", __("Totals"))
+					.css({display: "flex", alignItems: "center", flexWrap: "nowrap", gap: "16px", marginTop: "12px",
+						padding: "8px 0", fontSize: "14px", lineHeight: "1.6", whiteSpace: "nowrap", overflowX: "auto"});
+				for (const [key, label] of [["qty", "Total Qty (including FOC)"], ["net", "Net"], ["tax", "VAT / Charges"], ["grand", "Grand Total"]]) {
+					if (key !== "qty") $('<span aria-hidden="true">|</span>').css({color: "var(--border-color)", fontWeight: 400}).appendTo(summary);
+					const group = $('<span></span>').css({display: "inline-flex", alignItems: "baseline", gap: "6px", flexShrink: 0});
+					$('<span class="text-muted"></span>').text(__(label) + ":").css("font-weight", 400).appendTo(group);
+					$('<span></span>').attr("data-total", key).css({fontWeight: key === "grand" ? 700 : 600,
+						color: "var(--text-color)", fontVariantNumeric: "tabular-nums"}).appendTo(group);
+					group.appendTo(summary);
+				}
+				totals.empty().append(summary);
+			}
+			for (const [key, value] of Object.entries({qty, net: format_currency(doc.net_total, doc.currency),
+				tax: format_currency(doc.total_taxes_and_charges, doc.currency), grand: format_currency(doc.grand_total, doc.currency)})) {
+				totals.find(`[data-total="${key}"]`).text(value);
+			}
 		}
 
 		filter() {

@@ -307,6 +307,18 @@ def report_rows(filters):
                 if not application.get('promotion') or not application.get('promotion_type'):
                     continue
                 row = dict(application)
+                # Display nested terminal evidence verbatim, including on older
+                # invoices whose stored audit normalized discounts excluding VAT.
+                position = row.get('item_row')
+                payload_items = payload.get('items') or []
+                if isinstance(position, int) and 1 <= position <= len(payload_items):
+                    item = payload_items[position - 1]
+                    row['cashier_discount_amount'] = item.get('discount_amount', 0)
+                    matches = [a for a in item.get('applied_promotions', [])
+                        if isinstance(a, dict) and a.get('promotion') == row.get('promotion')
+                        and a.get('promotion_type') == row.get('promotion_type')]
+                    if len(matches) == 1 and matches[0].get('promotion_discount_amount') is not None:
+                        row['discount_amount'] = matches[0]['promotion_discount_amount']
                 row['item_name'] = item_names.get(row.get('item_row'))
                 row.update(invoice=invoice.name, **{k: v for k, v in invoice.items() if k != 'name'})
                 if filters.get('promotion') and row.get('promotion') != filters.promotion:
@@ -330,9 +342,10 @@ def columns(summary=False):
                   ('pos_counter','Counter','Data',130), ('pos_cashier','Cashier','Data',130),
                   ('item_code','Item','Link',130), ('barcode','Barcode','Data',120), ('uom','UOM','Data',90)]
     specs += [('quantity','Net Quantity','Float',100), ('free_quantity','Net Free Quantity','Float',120),
-              ('discount_amount','Net Promotion Discount (Ex VAT)','Currency',180),
+              ('discount_amount','Promotion Discount','Currency',180),
               ('sales_amount','Attributed Net Sales (Ex VAT)','Currency',180)]
     if not summary:
+        specs += [('cashier_discount_amount', 'Cashier Discount', 'Currency', 180)]
         specs += [('reason','Check Notes','Data',350)]
     return [dict(fieldname=k, label=label, fieldtype=t, width=w,
                  **({'options': {'invoice':'POS Invoice','item_code':'Item','currency':'Currency','company':'Company'}.get(k, 'currency')}
@@ -365,7 +378,7 @@ def execute_summary(filters=None):
     labels = {
         'promotion': 'Promotion Name', 'receipts': 'Sales Bills', 'return_receipts': 'Return Bills',
         'quantity': 'Net Quantity (Incl. Free)', 'free_quantity': 'Free Quantity',
-        'uom': 'Unit', 'discount_amount': 'Promotion Discount (Excl. VAT)',
+        'uom': 'Unit', 'discount_amount': 'Promotion Discount',
         'sales_amount': 'Net Sales (Excl. VAT)',
     }
     order = ['promotion_type', 'promotion', 'company', 'receipts', 'return_receipts',

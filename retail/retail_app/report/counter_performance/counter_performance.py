@@ -10,7 +10,7 @@ def execute(filters=None):
 def get_data(filters):
     from retail.retail_app.report.profitability import profitability_rows, aggregate_profitability, profitability_total
     from retail.report_transaction_identity import enrich_profitability_rows
-    source_rows = profitability_rows(filters)
+    source_rows = profitability_rows(filters, trading_only=True)
     enrich_profitability_rows(source_rows)
     rows = aggregate_profitability(source_rows,
         ["invoice_no", "posting_date", "posting_time", "counter", "cashier", "customer_name", "status", "is_return"])

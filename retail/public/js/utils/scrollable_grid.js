@@ -394,7 +394,8 @@
 				closePopup();
 				return;
 			}
-			const width = Math.min(Math.max(rect.width, 280), innerWidth - 16);
+			const width = Math.min(Math.max(rect.width,
+				popup.list.classList.contains("retail-packing-results") ? 560 : 280), innerWidth - 16);
 			const below = innerHeight - rect.bottom - 12;
 			const above = below < 180 && rect.top > below;
 			Object.assign(popup.host.style, {

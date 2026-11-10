@@ -67,6 +67,8 @@ class RetailReport(Report):
 @frappe.whitelist()
 def get_script(report_name):
     result = standard_get_script(report_name)
+    if report_name == "Gross Profit":
+        result["script"] += "\n" + Path(__file__).with_name("gross_profit_filters.js").read_text()
     if report_name in ("Stock Ledger", "Stock Balance"):
         result["script"] += "\n" + Path(__file__).with_name("stock_report_barcodes.js").read_text()
     if report_name in ("Accounts Receivable", "Accounts Payable"):
