@@ -9,6 +9,25 @@ from retail import hooks, install
 
 
 class TestInstallPortability(unittest.TestCase):
+	def test_scale_default_is_prepared_on_fresh_install_and_migration(self):
+		format_setup = (
+			"retail.retail_app.doctype.scale_barcode_format.scale_barcode_format."
+			"ensure_default_scale_barcode_format"
+		)
+		field_setup = "retail.domains.item.scale_item_validation.ensure_scale_item_setup"
+		for lifecycle in (hooks.after_sync, hooks.after_migrate):
+			self.assertIn(format_setup, lifecycle)
+			self.assertIn(field_setup, lifecycle)
+		self.assertLess(hooks.after_sync.index(format_setup), hooks.after_sync.index(field_setup))
+
+	def test_scale_default_setup_preserves_existing_format(self):
+		from retail.retail_app.doctype.scale_barcode_format import scale_barcode_format
+
+		with patch.object(scale_barcode_format, "frappe") as frappe:
+			frappe.db.exists.return_value = True
+			scale_barcode_format.ensure_default_scale_barcode_format()
+			frappe.get_doc.assert_not_called()
+
 	def test_pos_schema_gate_detects_missing_fresh_install_fields(self):
 		import frappe
 		from retail.pos_sync_schema import validate

@@ -953,6 +953,9 @@ for _sidebar_dt in _sidebar_doctypes:
 after_sync = [
 	"retail.build_asset_manifest.install",
 	"retail.install.ensure_workspace_routes",
+	# Item's scale_format fixture default needs its linked record before use.
+	"retail.retail_app.doctype.scale_barcode_format.scale_barcode_format.ensure_default_scale_barcode_format",
+	"retail.domains.item.scale_item_validation.ensure_scale_item_setup",
 	*after_install,
 	*after_sync,
 ]
