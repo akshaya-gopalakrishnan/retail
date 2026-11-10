@@ -264,6 +264,10 @@ def validate_disposable_company():
     # stage. Run that native stage here too, rather than masking missing links.
     from erpnext.setup.setup_wizard.operations.install_fixtures import install
     install(country="United Arab Emirates")
+    # Price lists belong to a separate native Setup Wizard stage. Item's
+    # on_update price synchronization requires them even on this empty site.
+    from erpnext.setup.setup_wizard.operations.defaults_setup import create_price_lists
+    create_price_lists({"currency": "AED"})
     company = frappe.get_doc({
         "doctype": "Company", "company_name": "Retail UAE Installation Validation",
         "abbr": "RUV", "default_currency": "AED", "country": "United Arab Emirates",

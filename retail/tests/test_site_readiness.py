@@ -115,7 +115,10 @@ class TestSiteReadiness(unittest.TestCase):
         def get_doc(*args, **kwargs):
             events.append("company")
             raise RuntimeError("test stopped before insertion")
-        with patch.dict("os.environ", {"RETAIL_DISPOSABLE_VALIDATION": "1"}), patch.object(frappe, "local", SimpleNamespace(site="retail-test.localhost")), patch.object(frappe, "db", Mock(count=Mock(return_value=0))), patch.object(ready, "validate"), patch("erpnext.setup.setup_wizard.operations.install_fixtures.install", side_effect=setup), patch.object(frappe, "get_doc", side_effect=get_doc):
+        def price_lists(args):
+            self.assertEqual(args, {"currency": "AED"})
+            events.append("price lists")
+        with patch.dict("os.environ", {"RETAIL_DISPOSABLE_VALIDATION": "1"}), patch.object(frappe, "local", SimpleNamespace(site="retail-test.localhost")), patch.object(frappe, "db", Mock(count=Mock(return_value=0))), patch.object(ready, "validate"), patch("erpnext.setup.setup_wizard.operations.install_fixtures.install", side_effect=setup), patch("erpnext.setup.setup_wizard.operations.defaults_setup.create_price_lists", side_effect=price_lists), patch.object(frappe, "get_doc", side_effect=get_doc):
             with self.assertRaisesRegex(RuntimeError, "test stopped"):
                 ready.validate_disposable_company()
-        self.assertEqual(events, ["native setup", "company"])
+        self.assertEqual(events, ["native setup", "price lists", "company"])
