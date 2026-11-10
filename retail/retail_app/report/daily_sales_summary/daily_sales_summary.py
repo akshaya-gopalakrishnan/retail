@@ -5,7 +5,7 @@ from frappe import _
 def execute(filters=None):
     from retail.retail_app.report.profitability import profitability_rows, report_result
     filters = frappe._dict(filters or {})
-    return report_result(profitability_rows(filters, van=False), get_columns(), ['posting_date', 'counter'])
+    return report_result(profitability_rows(filters, van=False, trading_only=True), get_columns(), ['posting_date', 'counter'])
 
 
 def get_columns():

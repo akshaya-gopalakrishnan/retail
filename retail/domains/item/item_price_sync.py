@@ -49,13 +49,56 @@ def get_purchase_master_lookup_rate(args, item_code):
 	return rate / plc_factor
 
 
+MANAGED_BUYING_FIELD = "custom_retail_item_buying_price"
+
+
+def _previous_item(doc):
+	previous = getattr(doc, "get_doc_before_save", None)
+	return previous() if doc.get("doctype") == "Item" and callable(previous) else None
+
+
+def _purchase_cleared(before, after, *, packing=False):
+	if not before:
+		return False
+	entry, net = ("purchase_rate", "purchase_net_rate") if packing else (
+		"custom_purchase_rate_entry", "custom_purchase_net_rate")
+	return (flt(before.get(entry)) > 0 or flt(before.get(net)) > 0) and (
+		flt(after.get(entry)) == 0 and flt(after.get(net)) == 0)
+
+
+def _clear_managed_buying_price(item_code, uom):
+	"""Zero only a proven Item-owned generic price; retain the price/audit identity."""
+	if not frappe.db.has_column("Item Price", MANAGED_BUYING_FIELD):
+		return
+	from frappe.utils import getdate
+	from retail.domains.purchase.price_history import lock_item
+
+	lock_item(item_code)
+	prices = frappe.get_all("Item Price", filters={
+		"item_code": item_code, "price_list": "Standard Buying", "uom": uom,
+	}, fields=["*"], order_by="creation asc, name asc")
+	if len(prices) != 1:
+		return  # Ambiguous, historical or manually maintained prices need review.
+	price = prices[0]
+	if not price.get(MANAGED_BUYING_FIELD) or any(price.get(field) for field in (
+		"supplier", "customer", "batch_no", "valid_upto", "reference", "note")):
+		return
+	if price.get("valid_from") and getdate(price.valid_from) != getdate(price.creation):
+		return
+	frappe.db.set_value("Item Price", price.name, "price_list_rate", 0)
+
+
 def sync_simple_item_prices(doc, method=None):
 	if isinstance(doc, str):
 		doc = frappe.get_doc("Item", doc)
 
 	sync_item_price(doc, "Standard Selling", _get_item_master_selling_rate(doc))
-	sync_item_price(doc, "Standard Buying", _get_item_master_buying_rate(doc))
-	sync_packing_item_prices(doc)
+	previous = _previous_item(doc)
+	if _purchase_cleared(previous, doc):
+		_clear_managed_buying_price(doc.name, doc.stock_uom)
+	else:
+		sync_item_price(doc, "Standard Buying", _get_item_master_buying_rate(doc))
+	sync_packing_item_prices(doc, previous=previous)
 
 
 def sync_latest_transaction_item_prices(doc, method=None):
@@ -139,7 +182,10 @@ def sync_transaction_item_prices(doc, standard_price_list, document_price_list=N
 
 
 
-def sync_packing_item_prices(doc):
+def sync_packing_item_prices(doc, previous=None):
+	previous = previous or _previous_item(doc)
+	old_rows = (previous.get("custom_retail_packing_detail") or []) if previous else []
+	current_rows = doc.get("custom_retail_packing_detail") or []
 	for row in doc.get("custom_retail_packing_detail") or []:
 		if not row.get("uom"):
 			continue
@@ -151,6 +197,14 @@ def sync_packing_item_prices(doc):
 			uom=row.uom,
 			barcode=row.get("barcode"),
 		)
+		old = next((old for old in old_rows if old.get("uom") == row.uom
+			and (flt(old.get("purchase_rate")) > 0 or flt(old.get("purchase_net_rate")) > 0)), None)
+		if _purchase_cleared(old, row, packing=True) and not any(
+			flt(other.get("purchase_net_rate") or other.get("purchase_rate")) > 0
+			for other in current_rows if other.get("uom") == row.uom
+		):
+			_clear_managed_buying_price(doc.get("item_code") or doc.get("name"), row.uom)
+			continue
 		sync_item_price(
 			doc,
 			"Standard Buying",
@@ -177,6 +231,12 @@ def sync_item_price(doc, price_list, rate, uom=None, barcode=None, source=None):
 	old = prices[0] if prices else None
 	price_name = old.name if old else frappe.generate_hash(length=10)
 	values = {"price_list_rate": rate}
+	if price_list == "Standard Buying" and frappe.db.has_column("Item Price", MANAGED_BUYING_FIELD):
+		# Never adopt pre-existing/manual rows. Transaction writes relinquish Item ownership.
+		if source or doc.get("doctype") != "Item":
+			values[MANAGED_BUYING_FIELD] = 0
+		elif not old:
+			values[MANAGED_BUYING_FIELD] = 1
 	if frappe.db.has_column("Item Price", "custom_barcode"):
 		values["custom_barcode"] = barcode if barcode is not None else get_item_price_barcode(item_code, uom)
 	if price_list == "Standard Selling" and price_history.ready():
@@ -424,6 +484,8 @@ def sync_item_master_purchase_rate_from_item_price(doc, method=None):
 
 
 def populate_item_price_barcode(doc, method=None):
+	if not doc.flags.retail_price_sync and doc.meta.has_field(MANAGED_BUYING_FIELD):
+		doc.set(MANAGED_BUYING_FIELD, 0)
 	if not frappe.db.has_column("Item Price", "custom_barcode") or not doc.get("item_code"):
 		return
 

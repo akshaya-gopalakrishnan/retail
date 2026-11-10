@@ -43,14 +43,6 @@ frappe.query_reports["Item Group Sales Analysis"] = {
 			reqd: 1,
 		},
 		{
-			fieldname: "sales_source",
-			label: __("Sales Source"),
-			fieldtype: "Select",
-			options: ["Both", "POS Invoice", "Sales Invoice"].join("\n"),
-			default: "Both",
-			reqd: 1,
-		},
-		{
 			fieldname: "item_group",
 			label: __("Item Group"),
 			fieldtype: "Link",

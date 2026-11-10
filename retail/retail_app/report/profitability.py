@@ -3,7 +3,7 @@ import frappe
 from frappe.utils import flt
 
 
-def invoice_profitability(invoice, posted_item_costs, *, vat_accounts, promotion_discounts=None):
+def invoice_profitability(invoice, posted_item_costs, *, vat_accounts, promotion_discounts=None, offline_values=None):
     """Read submitted sales amounts in company currency, without rate fallbacks.
 
     Callers supply current posted costs keyed by invoice item, and the company's
@@ -19,7 +19,11 @@ def invoice_profitability(invoice, posted_item_costs, *, vat_accounts, promotion
         raise ValueError("Profitability accepts submitted documents only")
     items = invoice.get("items") or []
     taxes = invoice.get("taxes") or []
-    net = flt(invoice.get("base_net_total"))
+    source_documents = {}
+    if offline_values is None:
+        offline_values = offline_payload_values(invoice, source_documents=source_documents)
+    net = sum(offline_values[i.get("name")].net_sales if i.get("name") in offline_values
+              else flt(i.get("base_net_amount")) for i in items) if offline_values else flt(invoice.get("base_net_total"))
     result = frappe._dict(net_sales=net, gross_sales=0, discount=0,
                          sales_returns=-net if invoice.get("is_return") else 0,
                          vat=sum(flt(t.get("base_tax_amount_after_discount_amount"))
@@ -33,17 +37,23 @@ def invoice_profitability(invoice, posted_item_costs, *, vat_accounts, promotion
     if not invoice.get("is_return"):
         conversion = flt(invoice.get("conversion_rate")) or 1
         if promotion_discounts is None:
-            promotion_discounts = invoice_promotion_discounts(invoice)
-        promotion_discount = sum(promotion_discounts.values()) * conversion
-        item_discount = sum(item_discount_value(i, conversion) for i in items)
-        distributed = sum(flt(i.get("distributed_discount_amount")) * conversion for i in items)
-        if item_discount and any(t.get("included_in_print_rate") for t in taxes):
+            promotion_discounts = invoice_promotion_discounts(invoice, source_documents=source_documents)
+        promotion_discount = sum(v for k, v in promotion_discounts.items() if k not in offline_values) * conversion
+        item_discount = sum(offline_values[i.get("name")].discount if i.get("name") in offline_values
+                            else item_discount_value(i, conversion) for i in items)
+        distributed = sum(flt(i.get("distributed_discount_amount")) * conversion for i in items if i.get("name") not in offline_values)
+        if item_discount and not offline_values and any(t.get("included_in_print_rate") for t in taxes):
             result.gross_sales = result.discount = None
             result.revenue_status = "Tax-inclusive item discount lacks a verified net discount allocation"
         else:
             result.discount = item_discount + distributed + promotion_discount
             result.gross_sales = net + result.discount
-    if abs(sum(flt(i.get("base_net_amount")) for i in items) - net) > 0.01:
+    if offline_values and len(offline_values) == len(items):
+        result.vat = sum(v.vat for v in offline_values.values())
+        if not invoice.get("is_return"):
+            result.discount = sum(flt(v.bill_discount) for v in offline_values.values())
+            result.gross_sales = result.net_sales + result.discount + result.sales_returns
+    if not offline_values and abs(sum(flt(i.get("base_net_amount")) for i in items) - net) > 0.01:
         result.revenue_status = "Invoice item net amounts do not reconcile to header net total"
         result.gross_sales = result.discount = None
     missing = [i.get("name") for i in items if posted_item_costs.get(i.get("name")) is None]
@@ -154,7 +164,7 @@ def profitability_columns(columns=()):
              "Gross Profit", "Gross Profit Margin %")):
         result.append(dict(fieldname=field, label=frappe._(label),
             fieldtype="Percent" if field == "profit_percent" else "Currency", width=145))
-        if field in ("gross_sales", "discount", "net_sales"):
+        if field in ("gross_sales", "net_sales"):
             result.append(dict(fieldname=field + "_incl_vat", label=frappe._(label + " Incl. VAT"),
                 fieldtype="Currency", width=180))
     result.append(dict(fieldname="source_status", label=frappe._("Source Status"), fieldtype="Data", width=350))
@@ -213,7 +223,69 @@ def source_status(doc, values):
     return "; ".join(messages) or "Recorded / Posted"
 
 
-def invoice_promotion_discounts(invoice):
+def offline_payload_values(invoice, *, source_documents=None):
+    """Read saved POS amounts without reconstructing terminal financial facts."""
+    import json
+    import math
+
+    items = invoice.get("items") or []
+    source_documents = source_documents if source_documents is not None else {}
+    if invoice.get("doctype") == "Sales Invoice":
+        sources = {}
+        for item in items:
+            name = item.get("pos_invoice")
+            if name and item.get("pos_invoice_item") and name not in sources:
+                if name not in source_documents:
+                    source_documents[name] = frappe.get_doc("POS Invoice", name)
+                original = source_documents[name]
+                sources[name] = offline_payload_values(original) if original.docstatus == 1 else {}
+        return {item.get("name"): sources[item.pos_invoice][item.pos_invoice_item]
+                for item in items if item.get("pos_invoice") in sources
+                and item.get("pos_invoice_item") in sources[item.pos_invoice]}
+    if invoice.get("doctype") != "POS Invoice" or invoice.get("pos_sync_source") != "Offline POS":
+        return {}
+    payload = invoice.get("custom_pos_completed_payload") or {}
+    if isinstance(payload, str):
+        try:
+            payload = json.loads(payload)
+        except (TypeError, ValueError):
+            return {}
+    if not isinstance(payload, dict) or not isinstance(payload.get("items"), list):
+        return {}
+    result = {}
+    for item in items:
+        position = item.get("idx")
+        if not isinstance(position, int) or not 1 <= position <= len(payload["items"]):
+            continue
+        line = payload["items"][position - 1]
+        if not isinstance(line, dict) or line.get("item_code") != item.get("item_code"):
+            continue
+        if line.get("vat_amount", line.get("tax_amount")) is None:
+            continue
+        try:
+            net = float(line["net_amount"])
+            vat = float(line.get("vat_amount", line.get("tax_amount", 0)))
+            discount = float(line.get("discount_amount") or 0)
+            amount = float(line["amount"])
+            if not all(math.isfinite(v) for v in (net, vat, discount, amount)):
+                continue
+        except (KeyError, TypeError, ValueError, OverflowError):
+            continue
+        sign = -1 if invoice.get("is_return") else 1
+        result[item.get("name")] = frappe._dict(
+            net_sales=sign * abs(net), vat=sign * abs(vat),
+            amount=sign * abs(amount), discount=discount, discount_incl_vat=discount,
+            # Header summaries are attached once, never distributed into items.
+            bill_discount=payload.get("discount_amount", 0) if position == 1 else 0,
+            bill_total=payload.get("grand_total") if position == 1 else 0,
+            cashier_discount_amount=line.get("discount_amount", 0),
+            promotion_discount_amounts=[a.get("promotion_discount_amount")
+                for a in line.get("applied_promotions", []) if isinstance(a, dict)
+                and a.get("promotion_discount_amount") is not None])
+    return result
+
+
+def invoice_promotion_discounts(invoice, *, source_documents=None):
     """Read immutable POS evidence, including exact consolidated item links.
 
     Values are per-line totals excluding VAT in invoice currency. Nothing is
@@ -248,8 +320,11 @@ def invoice_promotion_discounts(invoice):
     references = {item.get("pos_invoice") for item in items
         if item.get("pos_invoice") and item.get("pos_invoice_item")}
     by_invoice = {}
+    source_documents = source_documents if source_documents is not None else {}
     for name in references:
-        original = frappe.get_doc("POS Invoice", name)
+        if name not in source_documents:
+            source_documents[name] = frappe.get_doc("POS Invoice", name)
+        original = source_documents[name]
         by_invoice[name] = invoice_promotion_discounts(original) if original.docstatus == 1 else {}
     return {item.get("name"): by_invoice[item.pos_invoice][item.pos_invoice_item]
         for item in items if item.get("pos_invoice") in by_invoice
@@ -272,9 +347,11 @@ def invoice_rows(doc, *, vat_accounts_by_company=None):
         accounts = vat_accounts_by_company[doc.company]
     else:
         accounts = recorded_vat_accounts(doc.company)
-    promotion_discounts = invoice_promotion_discounts(doc)
+    source_documents = {}
+    promotion_discounts = invoice_promotion_discounts(doc, source_documents=source_documents)
+    offline_values = offline_payload_values(doc, source_documents=source_documents)
     values = invoice_profitability(doc, costs, vat_accounts=accounts,
-        promotion_discounts=promotion_discounts)
+        promotion_discounts=promotion_discounts, offline_values=offline_values)
     status = source_status(doc, values)
     conversion = flt(doc.conversion_rate) or 1
     vat_by_code = {}
@@ -314,7 +391,10 @@ def invoice_rows(doc, *, vat_accounts_by_company=None):
         row.discount = (item_discount_value(item, conversion)
             + flt(item.distributed_discount_amount) * conversion
             + promotion_discounts.get(item.name, 0) * conversion)
-        row.gross_sales = row.net_sales + row.discount
+        if item.name in offline_values:
+            row.net_sales = offline_values[item.name].net_sales
+            row.discount = offline_values[item.name].discount
+        row.gross_sales = row.net_sales + row.discount if row.discount is not None else None
         row.sales_returns = 0
         if doc.is_return:
             row.gross_sales = row.discount = 0
@@ -326,10 +406,25 @@ def invoice_rows(doc, *, vat_accounts_by_company=None):
                    if denominator else 0) if allocation_ok else None
         if len(doc.items) == 1:
             row.vat = values.vat
+        if item.name in offline_values:
+            row.vat = offline_values[item.name].vat
         if row.vat is None:
             row.source_status += "; VAT item allocation does not reconcile"
         precision = doc.precision("base_net_total") if callable(getattr(doc, "precision", None)) else 2
         set_vat_inclusive_sales(row, precision=precision if precision is not None else 2)
+        if item.name in offline_values:
+            raw = offline_values[item.name]
+            row.cashier_discount_amount = raw.cashier_discount_amount
+            # Keep each application amount, including multiple promotions, intact.
+            row.promotion_discount_amounts = ", ".join(str(v) for v in raw.promotion_discount_amounts)
+            row.discount_incl_vat = 0 if doc.is_return else flt(raw.discount_incl_vat, precision if precision is not None else 2)
+            row.gross_sales = 0 if doc.is_return else row.net_sales + flt(raw.cashier_discount_amount)
+            row.gross_sales_incl_vat = 0 if doc.is_return else row.gross_sales + row.vat
+            row.net_sales_incl_vat = raw.amount
+            row.discount = 0 if doc.is_return else raw.cashier_discount_amount
+            row.discount_incl_vat = row.discount
+            row.bill_discount = raw.bill_discount
+            row.bill_total = raw.bill_total
         if doc.doctype == "Sales Invoice" and item.get("pos_invoice"):
             dimensions = frappe.db.get_value("POS Invoice", item.pos_invoice,
                 ["pos_branch", "pos_counter", "pos_cashier", "pos_cashier_employee"], as_dict=True)
@@ -371,10 +466,15 @@ def load_dashboard_invoice(doctype, name):
     return frappe.get_doc(data)
 
 
-def profitability_rows(filters=None, doctype="Sales Invoice", *, van=False, dashboard=False):
+def profitability_rows(filters=None, doctype="Sales Invoice", *, van=False, dashboard=False, trading_only=False):
     from frappe.utils import getdate
     filters = frappe._dict(filters or {})
     conditions = {"docstatus": 1}
+    # Opt in at trading report boundaries; POS, van and dashboard callers keep their scope.
+    if trading_only:
+        if doctype != "Sales Invoice":
+            frappe.throw("Trading reports require Sales Invoice")
+        conditions.update(is_pos=0, is_consolidated=0)
     for key in ("company", "customer", "pos_profile"):
         if filters.get(key):
             conditions[key] = filters[key]
@@ -432,6 +532,16 @@ def aggregate_profitability(rows, fields):
                       "credit_notes_redeemed", "credit_notes_applied", "credit_notes_unresolved", "current_customer_outstanding"):
             if any(field in member for member in members):
                 row[field] = sum(flt(m.get(field)) for m in members)
+        for field in ("cashier_discount_amount", "promotion_discount_amounts"):
+            if any(field in m for m in members):
+                row[field] = ", ".join(str(m[field]) for m in members if field in m)
+        if "item_code" not in fields and any("bill_discount" in m for m in members):
+            row.discount = sum(flt(m.get("bill_discount")) if "bill_discount" in m else flt(m.discount) for m in members)
+            row.discount_incl_vat = row.discount
+            row.gross_sales = row.net_sales + row.discount + row.sales_returns
+            row.gross_sales_incl_vat = row.gross_sales + row.vat if row.vat is not None else None
+            if all(m.get("bill_total") is not None for m in members):
+                row.net_sales_incl_vat = sum(flt(m.bill_total) for m in members)
         row.invoice_count = len({m.invoice_no for m in members if not m.is_return})
         row.return_count = len({m.invoice_no for m in members if m.is_return})
         row.item_count = len({m.item_code for m in members})
@@ -453,6 +563,13 @@ def report_result(rows, columns, groups=None):
     data = aggregate_profitability(rows, groups) if groups else rows
     if data:
         total = profitability_total(rows, next((c["fieldname"] for c in columns if c.get("fieldtype") in ("Data", "Link")), columns[0]["fieldname"]))
+        if groups and "item_code" not in groups and any("bill_discount" in row for row in rows):
+            total.discount = sum(flt(r.get("bill_discount")) if "bill_discount" in r else flt(r.discount) for r in rows)
+            total.discount_incl_vat = total.discount
+            total.gross_sales = total.net_sales + total.discount + total.sales_returns
+            total.gross_sales_incl_vat = total.gross_sales + total.vat if total.vat is not None else None
+            if all(r.get("bill_total") is not None for r in rows):
+                total.net_sales_incl_vat = sum(flt(r.bill_total) for r in rows)
         total.source_status = "; ".join(sorted({r.source_status for r in data if r.source_status and r.source_status != "Recorded / Posted"})) or "Recorded / Posted"
         for field in ("cash_amount", "card_amount", "other_payment_amount", "credit_sales", "credit_notes_issued",
                       "credit_notes_redeemed", "credit_notes_applied", "credit_notes_unresolved", "current_customer_outstanding"):
@@ -462,7 +579,8 @@ def report_result(rows, columns, groups=None):
     from retail.transaction_identity import append_columns, columns as identity_columns
     if any("retail_transaction_uom" in row for row in rows):
         columns = append_columns(columns, identity_columns(grouped=bool(groups)))
-    return profitability_columns(columns), data, None, None, None, True
+    columns = profitability_columns(columns)
+    return columns, data, None, None, None, True
 
 
 def item_discount_value(item, conversion):

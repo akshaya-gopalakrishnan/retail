@@ -84,6 +84,31 @@ class TestSettlementFacts(unittest.TestCase):
                 raise RuntimeError()
         self.assertEqual(frappe.flags.get('pos_settlement_recovery'), original)
 
+    def test_recovery_shift_metadata_preserves_invoice_recency(self):
+        for current, resolved in (("POE-32", "POE-32"), (None, "POE-32"),
+                                  ("POE-old", "POE-32"), ("POE-32", None)):
+            with self.subTest(current=current, resolved=resolved):
+                transaction = frappe._dict(doctype="POS Accepted Transaction", name="accepted",
+                    pos_invoice="POS-102", sync_type="POS Sale", external_pos_reference="sale")
+                db = Mock()
+                db.get_value.return_value = current
+                with patch.object(frappe, "db", db), patch.object(frappe, "get_all", return_value=[]), \
+                        patch("retail.pos_admin_recovery.effective_payload", return_value={}), \
+                        patch("retail.pos_external_refs.resolve_completed",
+                            return_value=frappe._dict(pos_shift_no=resolved)), \
+                        patch("retail.pos_transaction_display.refresh_accepted_invoice_links"), \
+                        patch("retail.pos_transaction_display.payload_transaction_type", return_value="POS Invoice"):
+                    settlement.resolve_transaction(transaction)
+                shift_writes = [call for call in db.set_value.call_args_list
+                    if call.args[:3] == ("POS Invoice", "POS-102", "pos_shift_no")]
+                if resolved and current != resolved:
+                    self.assertEqual(len(shift_writes), 1)
+                    self.assertEqual(shift_writes[0].args[3], resolved)
+                    self.assertEqual(shift_writes[0].kwargs, {"update_modified": False})
+                else:
+                    self.assertEqual(shift_writes, [])
+                self.assertEqual(transaction.status, "Reconciled")
+
 
 def run_integration():
     if frappe.local.site != 'retail-test.localhost':

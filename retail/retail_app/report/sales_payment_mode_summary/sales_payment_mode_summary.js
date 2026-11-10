@@ -32,11 +32,5 @@ frappe.query_reports["Sales Payment Mode Summary"] = {
 			fieldtype: "Link",
 			options: "Mode of Payment",
 		},
-		{
-			fieldname: "include_pos_invoices",
-			label: __("Include POS Invoices"),
-			fieldtype: "Check",
-			default: 0,
-		},
 	],
 };

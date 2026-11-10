@@ -96,3 +96,6 @@ retail.patches.user_pos_login_display
 retail.patches.items_expired_card
 retail.patches.remove_items_expired_card
 retail.patches.show_item_default_supplier
+retail.patches.remove_counter_performance_from_sales
+retail.patches.make_item_shelf_life_optional
+retail.patches.show_supplier_tax_id

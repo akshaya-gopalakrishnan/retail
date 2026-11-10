@@ -11,7 +11,7 @@ def execute(filters=None):
              "Brand": "brand", "Warehouse": "warehouse", "Customer": "customer", "Monthly": "month"}.get(filters.get("group_by") or "Invoice")
     if not field:
         frappe.throw("Unsupported grouping")
-    rows = profitability_rows(filters)
+    rows = profitability_rows(filters, trading_only=True)
     for row in rows:
         row.sales_group = str(row.posting_date)[:7] if field == "month" else row.get(field)
     return report_result(rows, [dict(fieldname="sales_group", label=filters.get("group_by") or "Invoice", fieldtype="Data", width=200)], ["sales_group"])

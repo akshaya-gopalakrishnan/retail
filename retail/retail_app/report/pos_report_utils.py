@@ -637,8 +637,7 @@ def completed_discount_rows(rows):
 		index = cint(row.pop("item_index", 0)) - 1
 		if payload and 0 <= index < len(payload.get("items") or []):
 			item = payload["items"][index]
-			row.promotion_discount_amount = ((-1 if flt(item.get('qty')) < 0 else 1)
-				* discounts_by_item_row(payload).get(index + 1, 0))
+			row.promotion_discount_amount = ", ".join(str(a["promotion_discount_amount"]) for a in item.get("applied_promotions", []) if isinstance(a, dict) and a.get("promotion_discount_amount") is not None)
 			row.discount_amount = flt(item.get("discount_amount"))
 			row.discount_percentage = flt(item.get("discount_percentage"))
 			row.distributed_discount_amount = 0
@@ -649,9 +648,14 @@ def completed_discount_rows(rows):
 			row.price_list_rate = flt(item.get("rate")) / factor if factor > 0 else 0
 			if item.get("amount") is not None:
 				row.rate = exclusive_line_amount(item, factor) / flt(item.get("qty")) if factor > 0 and flt(item.get("qty")) else 0
-			if not any(flt(row.get(key)) for key in ("discount_amount", "discount_percentage", "invoice_discount_amount", "promotion_discount_amount")):
+			if not any(flt(row.get(key)) for key in ("discount_amount", "discount_percentage", "invoice_discount_amount")) and not row.promotion_discount_amount:
 				continue
-		row.line_discount_amount = flt(row.get("discount_amount")) * flt(row.get("qty"))
+		if payload and 0 <= index < len(payload.get("items") or []):
+			# Terminal cashier discount is a line total, not a unit amount.
+			row.line_discount_amount = flt(row.discount_amount)
+			# Keep the payload value in both compatibility fields; never divide by quantity.
+		else:
+			row.line_discount_amount = flt(row.get("discount_amount")) * flt(row.get("qty"))
 		result.append(row)
 	return result
 
@@ -1092,11 +1096,11 @@ def discount_columns():
 		{"label": _("Price List Rate"), "fieldname": "price_list_rate", "fieldtype": "Currency", "width": 120},
 		{"label": _("Rate"), "fieldname": "rate", "fieldtype": "Currency", "width": 100},
 		{"label": _("Discount %"), "fieldname": "discount_percentage", "fieldtype": "Percent", "width": 100},
-		{"label": _("Discount per Unit"), "fieldname": "discount_amount", "fieldtype": "Currency", "width": 130},
+		{"label": _("Cashier Discount"), "fieldname": "discount_amount", "fieldtype": "Currency", "width": 130},
 		{"label": _("Line Discount Total"), "fieldname": "line_discount_amount", "fieldtype": "Currency", "width": 140},
 		{"label": _("Distributed Discount"), "fieldname": "distributed_discount_amount", "fieldtype": "Currency", "width": 140},
 		{"label": _("Reported Bill Discount"), "fieldname": "invoice_discount_amount", "fieldtype": "Currency", "width": 130},
-		{"label": _("Promotion Discount (Ex VAT)"), "fieldname": "promotion_discount_amount", "fieldtype": "Currency", "width": 180},
+		{"label": _("Promotion Discounts"), "fieldname": "promotion_discount_amount", "fieldtype": "Data", "width": 180},
 		{"label": _("Net Sales"), "fieldname": "net_amount", "fieldtype": "Currency", "width": 120},
 	]
 

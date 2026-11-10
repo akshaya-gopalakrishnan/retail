@@ -716,6 +716,10 @@ def _sync_last_purchase_rate_from_item_master(doc):
 	rate = _get_item_master_purchase_rate(doc)
 	if rate > 0:
 		doc.set("last_purchase_rate", rate)
+	else:
+		from retail.domains.item.item_price_sync import _previous_item, _purchase_cleared
+		if _purchase_cleared(_previous_item(doc), doc):
+			doc.set("last_purchase_rate", 0)
 
 
 def _get_item_master_purchase_rate(doc):
@@ -741,6 +745,14 @@ def update_packing_vat_prices(doc):
 
 def _set_missing_packing_purchase_rate_from_item(doc, row):
 	if flt(row.get("purchase_rate")) > 0:
+		return
+	from retail.domains.item.item_price_sync import _previous_item
+	previous = _previous_item(doc)
+	# A positive saved row explicitly cleared by this edit is not an empty new
+	# packing. Do not refill it from the unit rate before its VAT is recalculated.
+	if previous and any(old.get("uom") == row.get("uom") and (
+		flt(old.get("purchase_rate")) > 0 or flt(old.get("purchase_net_rate")) > 0
+	) for old in previous.get("custom_retail_packing_detail") or []):
 		return
 
 	factor = flt(row.get("conversion_factor") or 1) or 1

@@ -67,3 +67,33 @@ class TestPromotionPerformance(unittest.TestCase):
             result=enrich(rows)
         cost.assert_not_called()
         self.assertTrue(all(r.gross_profit is None for r in result))
+
+    def test_advisory_promotion_warning_does_not_hide_posted_profit(self):
+        class Doc(frappe._dict):
+            @property
+            def items(self):
+                return [frappe._dict(idx=1, name='LINE', qty=10, base_net_amount=47.62)]
+        doc = Doc(customer='CUST', company='C', conversion_rate=1)
+        row = self.row()
+        row.update(status='Review Required', reason='Unknown promotion type/reference',
+                   promotion_type='PP4-8', quantity=10, sales_amount=47.62)
+        with patch.object(frappe, 'get_doc', return_value=doc), \
+             patch.object(frappe, 'get_cached_value', return_value='AED'), \
+             patch(MODULE+'.posted_cost', return_value=95.2):
+            result = enrich([row])[0]
+        self.assertEqual(result.cost, 95.2)
+        self.assertAlmostEqual(result.gross_profit, -47.58)
+        self.assertAlmostEqual(result.margin, -99.91600168)
+        self.assertEqual(result.profit_status, 'Complete')
+        self.assertEqual(result.status, 'Review Required')
+        self.assertIn('Unknown promotion type/reference', result.profit_note)
+        group = next(iter(summarize([result])[0].values()))
+        self.assertEqual(group.cost, 95.2)
+        self.assertAlmostEqual(group.gross_profit, -47.58)
+
+        row.quantity = 9
+        with patch.object(frappe, 'get_doc', return_value=doc), \
+             patch.object(frappe, 'get_cached_value', return_value='AED'), \
+             patch(MODULE+'.posted_cost') as cost:
+            self.assertIsNone(enrich([row])[0].cost)
+        cost.assert_not_called()

@@ -89,6 +89,8 @@ validation_compose run --rm checker bash -lc '
     ./env/bin/python -m unittest retail.tests.test_install_portability \
         retail.tests.test_deployment_setup retail.tests.test_recovered_pos_display \
         retail.tests.test_editable_print_portability retail.tests.test_core_compat \
+        retail.tests.test_site_readiness retail.tests.test_item_buying_price_clear \
+        retail.tests.test_purchase_packing_search retail.tests.test_purchase_quick_entry_data \
         retail.test_promotion_migration_resources retail.tests.test_chart_labels
     bench set-config -g db_host db
     bench set-config -g db_port 3306
@@ -102,9 +104,12 @@ validation_compose run --rm checker bash -lc '
         --mariadb-user-host-login-scope "%" \
         --install-app erpnext --install-app hrms --install-app retail
     bench --site retail-test.localhost execute retail.pos_sync_schema.validate
+    bench --site retail-test.localhost execute retail.site_readiness.validate
+    RETAIL_DISPOSABLE_VALIDATION=1 bench --site retail-test.localhost execute retail.site_readiness.validate_disposable_company
     bench --site retail-test.localhost migrate
     bench --site retail-test.localhost migrate
     bench --site retail-test.localhost execute retail.pos_sync_schema.validate
+    bench --site retail-test.localhost execute retail.site_readiness.validate
 '
 
 # A new container must be able to use the persisted site and validate its schema.

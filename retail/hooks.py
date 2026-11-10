@@ -139,12 +139,14 @@ doctype_js = {
 		"public/js/forms/purchase_history.js",
 	],
 	"Purchase Receipt": [
+		"public/js/forms/purchase_packing_search.js",
 		"public/js/forms/foc_qty.js",
 		"public/js/forms/purchase_selling_price.js",
 		"public/js/forms/purchase_history.js",
 		"public/js/forms/purchase_receipt_quick_entry.js",
 	],
 	"Purchase Invoice": [
+		"public/js/forms/purchase_packing_search.js",
 		"public/js/forms/foc_qty.js",
 		"public/js/forms/purchase_selling_price.js",
 		"public/js/forms/purchase_history.js",
@@ -1126,3 +1128,17 @@ permission_query_conditions["Sales Order API Log"] = "retail.sales_order_api_log
 
 after_migrate.append("retail.patches.show_item_default_supplier.execute")
 after_sync.append("retail.patches.show_item_default_supplier.execute")
+
+# Additive schema coverage: fresh sites skip historical migration patches.
+after_sync.append("retail.site_readiness.install_schema")
+after_migrate.append("retail.site_readiness.install_schema")
+after_sync.append("retail.domains.item.naming.install_item_code_defaults")
+after_sync.append("retail.site_readiness.initialize_item_defaults")
+after_sync.append("retail.patches.make_item_shelf_life_optional.execute")
+after_migrate.append("retail.patches.make_item_shelf_life_optional.execute")
+after_sync.append("retail.patches.show_supplier_tax_id.execute")
+after_migrate.append("retail.patches.show_supplier_tax_id.execute")
+doctype_list_js["Sales Invoice"].append("public/js/list/sales_invoice_columns.js")
+doc_events.setdefault("Company", {}).setdefault("on_update", []).append(
+    "retail.site_readiness.initialize_item_defaults"
+)

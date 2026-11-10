@@ -103,7 +103,9 @@ class TestReportPromotionDiscounts(unittest.TestCase):
         self.assertEqual(tuple(round(total[key], 2) for key in reports.VAT_INCLUSIVE_FIELDS),
                          (35, 1, 34))
         fields = [c['fieldname'] for c in reports.profitability_columns()]
-        for field in ('gross_sales', 'discount', 'net_sales'):
+        self.assertNotIn('discount_incl_vat', fields)
+        self.assertIn('discount', fields)
+        for field in ('gross_sales', 'net_sales'):
             self.assertEqual(fields[fields.index(field) + 1], field + '_incl_vat')
 
     def test_inclusive_returns_and_unknown_allocation(self):

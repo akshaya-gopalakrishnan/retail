@@ -78,8 +78,7 @@ def get_conditions(filters):
 	if filters.get("payment_mode"):
 		conditions.append("pay.mode_of_payment = %(payment_mode)s")
 		values["payment_mode"] = filters.payment_mode
-	if not filters.get("include_pos_invoices"):
-		conditions.append("ifnull(si.is_pos, 0) = 0")
+	conditions.extend(["ifnull(si.is_pos, 0) = 0", "ifnull(si.is_consolidated, 0) = 0"])
 
 	return " and ".join(conditions), values
 

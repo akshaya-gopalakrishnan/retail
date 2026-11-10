@@ -106,12 +106,20 @@ def initialize_company(doc, method=None):
 	doc.flags.pop("retail_initial_account_choices", None)
 
 
+def _account_types(spec):
+	# The native UAE chart classifies received post-dated cheques as receivables.
+	# Accept that existing ledger without retyping it or changing other tenders.
+	if spec[0] == "Post Dated Cheques Received" and spec[2] == "Bank":
+		return ("Bank", "Receivable")
+	return ("", "Income Account") if spec[2] == "Income Account" else (spec[2],)
+
+
 def _valid_account(name, company, spec):
 	if not name:
 		return False
 	account = frappe.db.get_value("Account", name,
 		["company", "root_type", "account_type", "account_currency", "is_group", "disabled"], as_dict=True)
-	valid_types = ("", "Income Account") if spec[2] == "Income Account" else (spec[2],)
+	valid_types = _account_types(spec)
 	return bool(account and account.company == company.name and account.root_type == spec[1]
 		and (account.account_type or "") in valid_types and not account.is_group and not account.disabled
 		and account.account_currency == company.default_currency)
@@ -121,8 +129,8 @@ def _resolve_account(company, spec):
 	label, root, account_type, preferred_names = spec
 	filters = {"company": company.name, "root_type": root, "is_group": 0,
 		"disabled": 0, "account_currency": company.default_currency}
-	if account_type == "Income Account":
-		filters["account_type"] = ["in", ["", "Income Account"]]
+	if len(_account_types(spec)) > 1:
+		filters["account_type"] = ["in", list(_account_types(spec))]
 	elif account_type:
 		filters["account_type"] = account_type
 	accounts = frappe.get_all("Account", filters=filters, fields=["name", "account_name"], order_by="name")

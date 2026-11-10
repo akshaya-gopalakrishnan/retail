@@ -36,27 +36,22 @@ def get_filters(filters=None):
 	filters.setdefault("from_date", getdate())
 	filters.setdefault("to_date", getdate())
 	filters.setdefault("report_view", "Department + Sub Department + Category")
-	filters.setdefault("sales_source", "Both")
+	filters.sales_source = "Sales Invoice"
 	return filters
 
 
 def get_sales_rows(filters):
     from retail.retail_app.report.profitability import profitability_rows
     rows = []
-    sources = ("Sales Invoice", "POS Invoice") if filters.sales_source == "Both" else (filters.sales_source,)
     narrowed = dict(filters)
     narrowed.pop("item_group", None)
     descendants = get_descendant_item_groups(filters.item_group) if filters.get("item_group") else None
-    for source in sources:
-        for row in profitability_rows(narrowed, source):
-            # A consolidated invoice and its original bills are the same revenue.
-            if filters.sales_source == "Both" and source == "Sales Invoice" and frappe.db.get_value("Sales Invoice", row.invoice_no, "is_consolidated"):
-                continue
-            if descendants and row.item_group not in descendants:
-                continue
-            row.quantity = row.qty
-            row.invoice_count = 1
-            rows.append(row)
+    for row in profitability_rows(narrowed, "Sales Invoice", trading_only=True):
+        if descendants and row.item_group not in descendants:
+            continue
+        row.quantity = row.qty
+        row.invoice_count = 1
+        rows.append(row)
     return rows
 
 def get_conditions(filters, invoice_alias, item_alias, include_branch=False):
