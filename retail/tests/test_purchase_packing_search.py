@@ -72,3 +72,38 @@ class TestPackingSearchPagination(unittest.TestCase):
             with self.assertRaises(PermissionError):
                 search.search('Search')
         self.assertFalse(self.calls)
+
+    def add_names(self):
+        self.db.executemany('insert into tabItem values (?,?,?,?,0,1,0,?)', [
+            (code, name, '', 'Nos', '2026-11-11') for code, name in [
+                ('PEN', 'Pen Drive'), ('REV', 'Drive Pen'),
+                ('LONG', 'Premium Pen Drive Storage'), ('PART', 'Spending Driven'),
+                ('OTHER', 'Pen Holder'),
+            ]])
+
+    def test_reordered_words_and_abbreviations(self):
+        self.add_names()
+        for text in ('d p', 'dri pe', 'drive pen', '  DRI   PE  '):
+            with self.subTest(text=text):
+                rows = search.search(text, page_length=50)
+                codes = [r.item_code for r in rows]
+                self.assertIn('PEN', codes)
+                if text != 'd p':
+                    self.assertNotIn('OTHER', codes)
+                self.assertLess(codes.index('PEN'), codes.index('PART'))
+        rows = search.search('drive pen')
+        self.assertEqual(rows[0].item_code, 'REV')
+        self.assertEqual(search.search('pen drive')[0].item_code, 'PEN')
+
+    def test_literal_name_wildcards_do_not_match_everything(self):
+        self.assertEqual(search.search('Search %'), [])
+
+    def test_reordered_search_preserves_packing_and_permissions(self):
+        self.add_names()
+        self.db.execute('insert into `tabRetail Packing Detail` values (?,?,?,?,?,?,?,?,?)',
+                        ('PACK', 'PEN', 'Item', 'Pen Drive Carton', 'PACKBAR', 'Box', 'Box', 10, 0))
+        rows = search.search('dri pe')
+        packing = next(r for r in rows if r.packing_id == 'PACK')
+        self.assertEqual((packing.item_code, packing.barcode, packing.conversion_factor), ('PEN', 'PACKBAR', 10))
+        self.allowed = lambda code: code != 'PEN'
+        self.assertFalse(any(r.item_code == 'PEN' for r in search.search('dri pe')))

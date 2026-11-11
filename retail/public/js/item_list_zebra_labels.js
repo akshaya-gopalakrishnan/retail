@@ -77,15 +77,12 @@ frappe.listview_settings["Item"].onload = function (listview) {
 	const suggest_names = frappe.utils.debounce(async () => {
 		const sequence = ++name_request;
 		const term = item_name.$input.val() || "";
-		const rows = await frappe.db.get_list("Item", {
-			fields: ["item_name"],
-			filters: [["item_name", "like", `%${term}%`]],
-			distinct: true,
-			order_by: "item_name asc",
-			limit: 30,
+		const {message: names} = await frappe.call({
+			method: "retail.domains.item.desk_search.names", args: {txt: term},
+			no_spinner: true,
 		});
 		if (sequence !== name_request || term !== item_name.$input.val()) return;
-		item_name.set_data(rows.filter(row => row.item_name).map(row => row.item_name));
+		item_name.set_data(names || []);
 		if (item_name.$input.is(":focus")) item_name.awesomplete.evaluate();
 	}, 200);
 	item_name.$input.on("input focus", suggest_names);
