@@ -79,7 +79,8 @@
 		// idle interval before advisory reads join the global AJAX chain.
 		if (["Purchase Receipt", "Purchase Invoice"].includes(frm.doc.doctype) &&
 			(frappe.request?.ajax_count || (frm.doc.items || []).some(row =>
-				row.__retail_vat_syncing || row.__retail_sell_price_syncing) || frm.__quick_receipt?.pending)) {
+				row.__retail_vat_syncing || row.__retail_sell_price_syncing) || frm.__quick_receipt?.pending ||
+				frm.__retail_purchase_action?.active)) {
 			state.timer = setTimeout(() => refresh(frm), 250);
 			return;
 		}

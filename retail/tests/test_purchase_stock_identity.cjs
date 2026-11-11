@@ -45,6 +45,21 @@ test('empty and ordinary purchases hide both identity columns',async()=>{
  assert.equal(f.properties.serial_no.hidden,true);assert.equal(f.properties.batch_no.hidden,true);
 });
 
+test('item loading reuses authorized flags and falls back when the bundle lacks fields',async()=>{
+ const f=fixture();let calls=0;
+ const getList=f.frappe.db.get_list;
+ f.frappe.db.get_list=(...args)=>{calls++;return getList(...args);};
+ f.frm.__retail_purchase_action={};
+ f.context.retail.transaction_items={preparedPurchaseItem:async (_frm,code)=>({name:code,has_serial_no:1,has_batch_no:0})};
+ f.frm.doc.items=[{item_code:'serial'}];
+ await f.handlers['Purchase Receipt Item'].item_code(f.frm);
+ assert.equal(calls,0);assert.equal(f.properties.serial_no.hidden,false);
+ f.context.retail.transaction_items.preparedPurchaseItem=async (_frm,code)=>({name:code});
+ f.frm.doc.items=[{item_code:'batch'}];
+ await f.handlers['Purchase Receipt Item'].item_code(f.frm);
+ assert.equal(calls,1);assert.equal(f.properties.batch_no.hidden,false);
+});
+
 test('mixed rows show shared headers but only applicable row inputs',async()=>{
  const f=fixture();f.frm.doc.items=['normal','serial','batch'].map(item_code=>({item_code}));
  await f.handlers['Purchase Receipt'].refresh(f.frm);

@@ -52,6 +52,9 @@
 				if (version !== request || !control.$input.is(":focus")) return;
 				const rows = message || [];
 				const allRows = existing.concat(rows.slice(0, pageSize));
+				// Match native Link search: the permission-checked result already
+				// contains the Item title, so selection need not fetch it again.
+				for (const packing of allRows) frappe.utils.add_link_title?.("Item", packing.item_code, packing.item_name);
 				const choices = allRows.map(packing => ({
 					value: JSON.stringify([packing.item_code, packing.packing_id]),
 					label: packing.item_name, packing,
@@ -110,7 +113,40 @@
 				.finally(() => { control.__retail_packing_busy = false; });
 		});
 	}
-	window.retail.purchase_packing_search = {bind};
+	function installScanner(frm) {
+		const scanner = frm.cscript?.barcode_scanner;
+		if (!scanner || scanner.__retail_packing_input) return;
+		scanner.__retail_packing_input = true;
+		const pending = new Map();
+		const update = scanner.update_table;
+		const setBarcode = scanner.set_barcode;
+		const enabled = () => frm.doc.docstatus === 0 && !frm.doc.is_return && !frm.doc.is_internal_supplier;
+		scanner.update_table = async function (data, ...args) {
+			if (!enabled() || !data?.barcode || !data.item_code || !data.uom) return update.call(this, data, ...args);
+			const key = data.barcode;
+			let entry = pending.get(key);
+			if (!entry) { entry = {...data, count: 0}; pending.set(key, entry); }
+			entry.count++;
+			try {
+				return await update.call(this, data, ...args);
+			} finally {
+				if (--entry.count === 0) pending.delete(key);
+			}
+		};
+		scanner.set_barcode = async function (row, barcode, ...args) {
+			const data = pending.get(barcode);
+			if (!enabled() || !data) return setBarcode.call(this, row, barcode, ...args);
+			const previousUom = row.uom;
+			if (!row.item_code) row.uom = data.uom;
+			try {
+				return await setBarcode.call(this, row, barcode, ...args);
+			} catch (error) {
+				if (!row.item_code) row.uom = previousUom;
+				throw error;
+			}
+		};
+	}
+	window.retail.purchase_packing_search = {bind, installScanner};
 
 	if (!document.getElementById("retail-packing-search-style")) {
 		$("<style id='retail-packing-search-style'>").text(`
@@ -123,7 +159,9 @@
 	}
 
 	for (const doctype of ["Purchase Receipt", "Purchase Invoice"]) frappe.ui.form.on(doctype, {
+		scan_barcode: installScanner,
 		refresh(frm) {
+			installScanner(frm);
 			if (frm.__retail_packing_focus) return;
 			frm.__retail_packing_focus = true;
 			frm.wrapper.addEventListener("focus", event => {

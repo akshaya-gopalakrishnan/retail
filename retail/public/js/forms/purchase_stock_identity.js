@@ -119,6 +119,16 @@
 		if (reload) state.items.clear();
 		const generation = ++state.generation;
 		const codes = [...new Set((frm.doc.items || []).map(row => row.item_code).filter(Boolean))];
+		// Item loading already fetched permission-filtered metadata. Reuse only
+		// the required fields from that action; ordinary refresh keeps its read.
+		if (frm.__retail_purchase_action && window.retail?.transaction_items?.preparedPurchaseItem) {
+			const prepared = await Promise.all(codes.filter(code => !state.items.has(code)).map(code =>
+				window.retail.transaction_items.preparedPurchaseItem(frm, code)));
+			if (generation !== state.generation) return;
+			for (const item of prepared) {
+				if (item && Object.hasOwn(item, "has_serial_no") && Object.hasOwn(item, "has_batch_no")) state.items.set(item.name, item);
+			}
+		}
 		const missing = codes.filter(code => !state.items.has(code));
 		if (missing.length) {
 			const items = await frappe.db.get_list("Item", {
