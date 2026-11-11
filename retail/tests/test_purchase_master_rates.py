@@ -151,7 +151,7 @@ class TestPurchaseMasterRates(unittest.TestCase):
                 self.assertEqual(values[f'custom_{prefix}_rate_entry'], 105)
                 self.assertEqual(values[f'custom_{prefix}_rate_includes_vat'], 1)
                 if direction == 'Purchase':
-                    self.assertEqual(values['last_purchase_rate'], 100)
+                    self.assertNotIn('last_purchase_rate', values)
 
     def test_permission_denial_stops_master_update(self):
         with patch.object(master_rates.rate_audit, '_require_price_manager', side_effect=PermissionError), patch.object(

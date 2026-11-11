@@ -6,7 +6,7 @@ const path = require('node:path');
 const source = fs.readFileSync(path.join(__dirname, '../public/js/forms/purchase_receipt_quick_entry.js'), 'utf8');
 function fixture(doctype = "Purchase Receipt", updateStock = 0) {
  const handlers={}, messages=[], changes=[], created=[];
- const element=()=>new Proxy({0:{listeners:{},scrollIntoView(){},addEventListener(name,handler){this.listeners[name]=handler;}}}, {get:(obj,key)=>key in obj ? obj[key] : key==='is' ? ()=>false : ()=>element()});
+ const element=()=>new Proxy({0:{listeners:{},querySelectorAll(){return [];},scrollIntoView(){},addEventListener(name,handler){this.listeners[name]=handler;}}}, {get:(obj,key)=>key in obj ? obj[key] : key==='is' ? ()=>false : ()=>element()});
  const $=()=>element();
  class Dialog {
   constructor(opts){this.opts=opts;this.values={};this.fields_dict={};this.$wrapper=element();
@@ -39,6 +39,42 @@ function fixture(doctype = "Purchase Receipt", updateStock = 0) {
  entry.rows=new Map();frm.__quick_receipt=entry;
  return {entry,frm,frappe,handlers,messages,changes,created,context};
 }
+test('Quick Entry blocks input Enter saving and routes Tab and Shift+Enter to scan',()=>{
+ const {entry,frappe}=fixture();let scanned=0;
+ frappe.ui.open_dialogs=[entry.dialog];
+ entry.dialog.get_field('scan').set_focus=()=>scanned++;
+ const listeners=entry.dialog.$wrapper[0].listeners;
+ const target={matches:()=>true};
+ const event=key=>({key,target,preventDefault(){this.prevented=true;},stopImmediatePropagation(){this.stopped=true;}});
+ const enter=event('Enter');listeners.keypress(enter);
+ assert.equal(enter.prevented,true);assert.equal(enter.stopped,true);
+ const tab=event('Tab');listeners.keydown(tab);assert.equal(scanned,1);assert.equal(tab.prevented,true);
+ const shift=event('Enter');shift.shiftKey=true;listeners.keydown(shift);assert.equal(scanned,2);
+ frappe.ui.open_dialogs=[{}];
+ const nested=event('Enter');listeners.keypress(nested);assert.equal(nested.prevented,undefined);
+});
+test('Search Item Enter adds the selected item and Tab returns to scanner',()=>{
+ const {entry}=fixture();let added=0,scanned=0,closed=0;
+ const item=entry.dialog.get_field('item');
+ entry.dialog.get_field('add').$input.trigger=()=>added++;
+ entry.dialog.get_field('scan').set_focus=()=>scanned++;
+ item.awesomplete={close(){closed++;}};
+ const press=(key,extra={})=>item.$input[0].listeners.keydown({key,preventDefault(){},stopImmediatePropagation(){},...extra});
+ press('Enter');assert.equal(added,1);
+ press('Enter',{repeat:true});assert.equal(added,1);
+ press('Tab');assert.equal(scanned,1);assert.equal(closed,1);assert.equal(added,1);
+});
+test('adding an item focuses its first editable table cell after Link callbacks',async()=>{
+ const {entry,frm,frappe}=fixture();const order=[];
+ const input={type:'text',tagName:'INPUT',tabIndex:0,getClientRects:()=>[{}],focus(){order.push('table');},select(){}};
+ frappe.after_ajax=fn=>{order.push('link');fn();};
+ entry.dialog.values.find='previous item';
+ entry.filter=()=>{};
+ entry.render=()=>{entry.rows=new Map(frm.doc.items.map(row=>[row.name,{element:{0:{querySelectorAll:()=>[input],scrollIntoView(){}},addClass(){}}}]));};
+ await entry.add({item_code:'A'});
+ assert.equal(entry.dialog.get_value('find'),'');
+ assert.equal(order.at(-1),'table');assert.ok(order.includes('link'));
+});
 test('packing aliases increment one item/UOM while other UOMs remain separate',async()=>{
  const {entry,frm}=fixture();
  await entry.add({item_code:'A',uom:'Box-10',barcode:'one'});
@@ -140,11 +176,17 @@ test('Tab-suffix and camera/change scans use the same lookup path',async()=>{
  field.$input.val('123');field.df.onchange();await entry.queue;
  assert.equal(calls,2);assert.equal(frm.doc.items[0].qty,2);assert.equal(field.df.options,'Barcode');
 });
-test('missing header or failed lookup retains barcode for correction',async()=>{
+test('missing header retains barcode; unknown barcode clears and refocuses scanner',async()=>{
  const {entry,frm,frappe}=fixture();const field=entry.dialog.get_field('scan');
+ let focused=0;field.set_focus=()=>focused++;
+ let feedback='';
+ entry.dialog.get_field('scan_feedback').$wrapper.html=value=>{feedback=value;};
+ entry.dialog.get_field('scan_feedback').$wrapper.empty=()=>{feedback='';};
+ frappe.show_alert=()=>{throw Error('Barcode errors must display inside Quick Entry');};
  frm.doc.supplier='';field.$input.val('123');await entry.scan();assert.equal(field.$input.val(),'123');
  frm.doc.supplier='Supplier';frappe.call=async()=>({message:{}});
- await entry.scan();assert.equal(field.$input.val(),'123');assert.equal(frm.doc.items.length,0);assert.equal(entry.failed,true);
+ await entry.scan();assert.equal(field.$input.val(),'');assert.equal(frm.doc.items.length,0);assert.equal(entry.failed,undefined);assert.equal(focused,1);
+ assert.match(feedback,/role="alert"/);assert.match(feedback,/Cannot find Item with barcode 123/);
 });
 test('Tab opens new Supplier even when a supplier is already selected',async()=>{
  const {entry,frm,frappe}=fixture();

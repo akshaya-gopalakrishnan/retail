@@ -234,6 +234,20 @@ test('spatial arrows follow screen direction and do not wrap item rows',async()=
  await f.key(f.cell(f.second,'item_code'),'ArrowLeft');assert.equal(f.document.activeElement,f.cell(f.second,'item_code').$input[0]);
  assert.deepEqual(f.delays,[]);
 });
+test('purchase row Enter reaches the row handler without toggling its checkbox',async()=>{
+ for (const doctype of ['Purchase Receipt', 'Purchase Invoice']) {
+  const f=fixture();f.frm.doctype=doctype;
+  const control=f.cell(f.row,'qty'),input=control.$input[0];
+  input.type='checkbox';input.checked=true;
+  input.click=()=>{throw Error('shared handler must not toggle purchase row checkbox');};
+  input.closest=selector=>selector==='.grid-row' ? {} : null;
+  input.matches=()=>true;
+  f.grid.wrapper=[{__retail_row_enter:true,contains:target=>target===input}];
+  assert.equal((await f.key(control)).prevented,undefined);
+  assert.equal(input.checked,true);
+  assert.equal((await f.key(control,'Enter',{shiftKey:true})).prevented,undefined);
+ }
+});
 test('checkboxes participate in spatial navigation and Enter toggles without leaving',async()=>{
  const f=fixture();const checkbox=f.optional.$input[0];f.optional.df.fieldtype='Check';checkbox.type='checkbox';checkbox.checked=false;
  checkbox.click=()=>{checkbox.checked=!checkbox.checked;f.frm.doc.remarks=Number(checkbox.checked);};

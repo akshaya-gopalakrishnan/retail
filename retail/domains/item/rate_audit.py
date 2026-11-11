@@ -358,7 +358,7 @@ def _preview_to_apply_args(row):
 
 def _get_item_rate_state(item, direction):
 	if direction == "Purchase":
-		net = flt(item.get("custom_purchase_net_rate") or item.get("custom_default_purchase_rate") or item.get("last_purchase_rate"))
+		net = flt(item.get("custom_purchase_net_rate") or item.get("custom_default_purchase_rate"))
 		gross = flt(item.get("custom_purchase_gross_rate"))
 		vat = flt(item.get("custom_purchase_vat_amount"))
 	else:
@@ -387,7 +387,6 @@ def _make_rate_state(net_rate, vat_rate, gross_rate=None):
 def _get_item_update_values(direction, state):
 	if direction == "Purchase":
 		values = {
-			"last_purchase_rate": state["net"],
 			"custom_default_purchase_rate": state["net"],
 			"custom_purchase_rate_entry": state["gross"],
 			"custom_purchase_rate_includes_vat": 1,

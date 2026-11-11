@@ -1,7 +1,5 @@
-"""In-memory lifecycle tests: intentional clears never adopt historical/manual prices."""
-import copy
+"""In-memory lifecycle tests for positive and zero maintained buying prices."""
 import unittest
-from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 import frappe
@@ -46,9 +44,9 @@ class TestBuyingPriceClear(unittest.TestCase):
         sync.sync_item_price({'item_code': 'SKU'}, 'Standard Buying', 0)
         self.db.set_value.assert_not_called()
 
-    def test_historical_manual_supplier_customer_batch_and_dated_prices_survive(self):
+    def test_specialized_prices_are_preserved_with_an_explicit_error(self):
         for changes in (
-            {sync.MANAGED_BUYING_FIELD: 0}, {'supplier': 'Supplier'},
+            {'supplier': 'Supplier'},
             {'customer': 'Customer'}, {'batch_no': 'Batch'},
             {'valid_upto': '2026-12-31'}, {'valid_from': '2027-01-01'},
             {'reference': 'PR-1'}, {'note': 'Negotiated price'},
@@ -56,16 +54,64 @@ class TestBuyingPriceClear(unittest.TestCase):
             with self.subTest(changes=changes):
                 old = self.price.copy()
                 self.price.update(changes)
-                sync._clear_managed_buying_price('SKU', 'Nos')
+                with patch.object(frappe, 'throw', side_effect=ValueError), self.assertRaises(ValueError):
+                    sync._clear_managed_buying_price('SKU', 'Nos')
                 self.db.set_value.assert_not_called()
                 self.price.clear()
                 self.price.update(old)
 
-    def test_duplicate_prices_and_missing_provenance_column_are_not_cleared(self):
-        with patch.object(frappe, 'get_all', return_value=[self.price, self.price.copy()]):
+    def test_duplicate_prices_stop_the_save_instead_of_silently_retaining_old_prices(self):
+        with patch.object(frappe, 'get_all', return_value=[self.price, self.price.copy()]), \
+                patch.object(frappe, 'throw', side_effect=ValueError), self.assertRaises(ValueError):
             sync._clear_managed_buying_price('SKU', 'Nos')
+        self.db.set_value.assert_not_called()
+
+    def test_legacy_manual_and_transaction_prices_clear_without_provenance_column(self):
         self.db.has_column.return_value = False
-        sync._clear_managed_buying_price('SKU', 'Nos')
+        self.price.pop(sync.MANAGED_BUYING_FIELD)
+        sync.sync_simple_item_prices(self.item())
+        self.db.set_value.assert_called_once_with('Item Price', 'PRICE', 'price_list_rate', 0)
+
+    def test_resaving_explicit_zero_repairs_a_stale_price_but_blank_does_not(self):
+        sync.sync_simple_item_prices(self.item(0))
+        self.db.set_value.assert_called_once_with('Item Price', 'PRICE', 'price_list_rate', 0)
+        self.db.set_value.reset_mock()
+        doc = self.item(0, None)
+        sync.sync_simple_item_prices(doc)
+        self.db.set_value.assert_not_called()
+
+    def test_zero_to_positive_to_zero_updates_same_record_and_preserves_history(self):
+        self.price[sync.MANAGED_BUYING_FIELD] = 0
+        self.price.price_list_rate = 0
+        doc = self.item(0, 5)
+        doc.custom_purchase_net_rate = 5
+        doc.custom_default_purchase_rate = 5
+        doc.custom_average_purchase_rate = 2
+        def persist(_doctype, name, field, value=None):
+            self.assertEqual(name, 'PRICE')
+            self.price.update(field if isinstance(field, dict) else {field: value})
+        self.db.set_value.side_effect = persist
+        with patch.object(sync, 'get_item_price_barcode', return_value='BAR'), \
+                patch.object(frappe, 'get_doc') as create:
+            sync.sync_simple_item_prices(doc)
+            self.assertEqual(self.price.price_list_rate, 5)
+            doc._before = frappe._dict(custom_purchase_rate_entry=5, custom_purchase_net_rate=5)
+            doc.custom_purchase_rate_entry = 0
+            doc.custom_purchase_net_rate = 0
+            doc.custom_default_purchase_rate = 0
+            sync.sync_simple_item_prices(doc)
+            self.assertEqual(self.price.price_list_rate, 0)
+            self.assertEqual(doc.last_purchase_rate, 38)
+            self.assertEqual(doc.custom_average_purchase_rate, 2)
+            create.assert_not_called()
+        self.db.set_value.reset_mock()
+        sync.sync_simple_item_prices(doc)
+        self.db.set_value.assert_not_called()
+
+    def test_zero_without_existing_price_does_not_create_a_record(self):
+        with patch.object(frappe, 'get_all', return_value=[]), patch.object(frappe, 'get_doc') as create:
+            sync.sync_simple_item_prices(self.item())
+            create.assert_not_called()
         self.db.set_value.assert_not_called()
 
     def test_packing_clear_targets_only_its_uom_and_does_not_clear_alternate_positive_price(self):
@@ -120,8 +166,6 @@ class TestBuyingPriceClear(unittest.TestCase):
         row = frappe._dict(uom='Box-36', purchase_rate=0, purchase_net_rate=1368,
                           conversion_factor=36)
         row.set = lambda key, value: row.__setitem__(key, value)
-        vat_pricing._sync_last_purchase_rate_from_item_master(doc)
-        self.assertEqual(doc.last_purchase_rate, 0)
         # Even with an independently positive unit price, clearing a saved pack
         # must survive the default-filling phase and reach VAT calculation.
         doc.custom_purchase_net_rate = 38
@@ -130,3 +174,7 @@ class TestBuyingPriceClear(unittest.TestCase):
         with patch.object(frappe, 'get_system_settings', return_value="Banker's Rounding"):
             vat_pricing._apply_packing_direction(doc, row, 'purchase')
         self.assertEqual(row.purchase_net_rate, 0)
+        doc._before.custom_retail_packing_detail[0].purchase_rate = 0
+        doc._before.custom_retail_packing_detail[0].purchase_net_rate = 0
+        vat_pricing._set_missing_packing_purchase_rate_from_item(doc, row)
+        self.assertEqual(row.purchase_rate, 0)

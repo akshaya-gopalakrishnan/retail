@@ -340,6 +340,12 @@
 		if (event.shiftKey && event.key !== "Enter") return;
 		if (!["Enter", "ArrowDown", "ArrowUp", "ArrowLeft", "ArrowRight", "Escape"].includes(event.key)) return;
 		const target = event.target;
+		// Purchase rows own Enter navigation, including editable checkboxes.
+		// Let their capture listener run before the shared checkbox toggle below.
+		const purchaseGrid = frm.fields_dict.items?.grid?.wrapper?.[0];
+		if (["Enter", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key) && ["Purchase Receipt", "Purchase Invoice"].includes(frm.doctype) &&
+			purchaseGrid?.__retail_row_enter && purchaseGrid.contains(target) &&
+			target.closest(".grid-row") && target.matches("input, select")) return;
 		const arrow = event.key.startsWith("Arrow");
 		const returnToScan = event.shiftKey && event.key === "Enter";
 		// Shift+Enter is an explicit exit from a field's suggestions, not a selection.

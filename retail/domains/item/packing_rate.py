@@ -6,9 +6,6 @@ import frappe
 
 
 PACKING_RATE_CLIENT_SCRIPT = '''frappe.ui.form.on("Item", {
-	last_purchase_rate(frm) {
-		fill_empty_packing_purchase_rates(frm);
-	},
 	custom_default_purchase_rate(frm) {
 		fill_empty_packing_purchase_rates(frm);
 	},
@@ -24,12 +21,12 @@ frappe.ui.form.on("Retail Packing Detail", {
 });
 
 function get_packing_base_purchase_rate(frm) {
-	return flt(frm.doc.custom_default_purchase_rate || frm.doc.last_purchase_rate);
+	return flt(frm.doc.custom_default_purchase_rate);
 }
 
 function set_default_packing_purchase_rate(frm, cdt, cdn) {
 	const row = locals[cdt][cdn];
-	if (flt(row.purchase_rate)) return;
+	if (!row.__islocal || flt(row.purchase_rate)) return;
 
 	const base_rate = get_packing_base_purchase_rate(frm);
 	if (!base_rate) return;

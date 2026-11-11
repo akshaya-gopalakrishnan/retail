@@ -1,4 +1,4 @@
-// Also display master barcodes on existing rows without saving historical documents.
+// Display the row's scanned/selected barcode; use the Item master only as a fallback.
 (() => {
 	async function refreshBarcodes(frm) {
 		const generation = frm.__retail_barcode_generation = (frm.__retail_barcode_generation || 0) + 1;
@@ -22,12 +22,14 @@
 		const barcodes = new Map(items.map(item => [item.name, item.custom_barcode || ""]));
 		for (const code of codes) if (cached.has(code)) barcodes.set(code, cached.get(code).custom_barcode || "");
 		for (const row of frm.doc.items || []) {
-			if (barcodes.has(row.item_code)) row.custom_item_barcode = barcodes.get(row.item_code);
+			if (row.barcode || barcodes.has(row.item_code)) {
+				row.custom_item_barcode = row.barcode || barcodes.get(row.item_code);
+			}
 		}
 		frm.refresh_field("items");
 	}
 	for (const parent of ["Purchase Invoice", "Purchase Receipt"]) {
 		frappe.ui.form.on(parent, { refresh: refreshBarcodes });
-		frappe.ui.form.on(`${parent} Item`, { item_code: refreshBarcodes });
+		frappe.ui.form.on(`${parent} Item`, { item_code: refreshBarcodes, barcode: refreshBarcodes });
 	}
 })();

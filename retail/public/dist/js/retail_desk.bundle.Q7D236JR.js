@@ -1904,7 +1904,7 @@
       clearSelection();
     });
     document.addEventListener("keydown", (event) => {
-      var _a, _b, _c, _d, _e, _f;
+      var _a, _b, _c, _d, _e, _f, _g, _h, _i;
       const repeatedEnter = event.repeat && event.key === "Enter";
       const token = repeatedEnter ? generation : ++generation;
       const frm = current();
@@ -1917,6 +1917,9 @@
       if (!["Enter", "ArrowDown", "ArrowUp", "ArrowLeft", "ArrowRight", "Escape"].includes(event.key))
         return;
       const target = event.target;
+      const purchaseGrid = (_d = (_c = (_b = frm.fields_dict.items) == null ? void 0 : _b.grid) == null ? void 0 : _c.wrapper) == null ? void 0 : _d[0];
+      if (["Enter", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key) && ["Purchase Receipt", "Purchase Invoice"].includes(frm.doctype) && (purchaseGrid == null ? void 0 : purchaseGrid.__retail_row_enter) && purchaseGrid.contains(target) && target.closest(".grid-row") && target.matches("input, select"))
+        return;
       const arrow = event.key.startsWith("Arrow");
       const returnToScan = event.shiftKey && event.key === "Enter";
       const blockedHere = returnToScan ? window.cur_dialog || frozen() || $(".modal:visible").length : blocked();
@@ -1942,14 +1945,14 @@
         return ((_a2 = field2 == null ? void 0 : field2.$input) == null ? void 0 : _a2[0]) === target || $(cell)[0] === target || ((_b2 = $(cell)[0]) == null ? void 0 : _b2.contains(target));
       });
       const field = (entry == null ? void 0 : entry.field) || headerFields(frm).find((field2) => field2.$input[0] === target);
-      if (!returnToScan && row && (((_b = api.children[row.doc.doctype]) == null ? void 0 : _b.enabled) === false || !row.grid.is_editable()))
+      if (!returnToScan && row && (((_e = api.children[row.doc.doctype]) == null ? void 0 : _e.enabled) === false || !row.grid.is_editable()))
         return;
       if (returnToScan) {
         if (!scan)
           return;
         consume(event);
-        (_c = field == null ? void 0 : field.awesomplete) == null ? void 0 : _c.close();
-        (_d = field == null ? void 0 : field.datepicker) == null ? void 0 : _d.hide();
+        (_f = field == null ? void 0 : field.awesomplete) == null ? void 0 : _f.close();
+        (_g = field == null ? void 0 : field.datepicker) == null ? void 0 : _g.hide();
         (async () => {
           if (field && !await commit(frm, field, target, token, false))
             return;
@@ -1980,7 +1983,7 @@
       }
       if ((row == null ? void 0 : row.doc) && entry) {
         const name = entry.df.fieldname;
-        const isInput = ((_f = (_e = entry.field) == null ? void 0 : _e.$input) == null ? void 0 : _f[0]) === target;
+        const isInput = ((_i = (_h = entry.field) == null ? void 0 : _h.$input) == null ? void 0 : _i[0]) === target;
         if (event.key === "Escape") {
           consume(event);
           target.blur();
@@ -8931,4 +8934,4 @@
     ["Purchase Order", "Purchase Invoice", "Purchase Receipt"].map((doctype) => [doctype, user_grid_view_settings_default[doctype]])
   );
 })();
-//# sourceMappingURL=retail_desk.bundle.KUOUQD5J.js.map
+//# sourceMappingURL=retail_desk.bundle.Q7D236JR.js.map
