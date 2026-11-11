@@ -7501,6 +7501,19 @@
       }
       window.retail = window.retail || {};
       window.retail.transaction_items = window.retail.transaction_items || {};
+      window.retail.transaction_items.purchaseRead = function(frm, request) {
+        var _a;
+        if (!["Purchase Receipt", "Purchase Invoice"].includes((_a = frm == null ? void 0 : frm.doc) == null ? void 0 : _a.doctype))
+          return frappe.call(request);
+        const pending = frm.__retail_purchase_reads || (frm.__retail_purchase_reads = /* @__PURE__ */ new Map());
+        const args = request.args || {};
+        const key = JSON.stringify([request.method, Object.keys(args).sort().filter((key2) => args[key2] != null).map((key2) => [key2, args[key2]])]);
+        if (!pending.has(key)) {
+          const read = Promise.resolve().then(() => frappe.call(request)).finally(() => pending.delete(key));
+          pending.set(key, read);
+        }
+        return pending.get(key);
+      };
       window.retail.transaction_items.flushVatTaxRows = async (frm) => {
         while (frm.__retail_syncing_vat_tax_rows || frm.__retail_running_erpnext_totals) {
           await new Promise((resolve) => setTimeout(resolve, 16));
@@ -7669,7 +7682,7 @@
             item_tax_template: row.item_tax_template
           }
         };
-        const response = await (((_a = frm.__quick_receipt) == null ? void 0 : _a.lookup(request)) || frappe.call(request));
+        const response = await (((_a = frm.__quick_receipt) == null ? void 0 : _a.lookup(request)) || window.retail.transaction_items.purchaseRead(frm, request));
         return flt(response.message);
       }
       function taxHandlers() {
@@ -8822,4 +8835,4 @@
     ["Purchase Order", "Purchase Invoice", "Purchase Receipt"].map((doctype) => [doctype, user_grid_view_settings_default[doctype]])
   );
 })();
-//# sourceMappingURL=retail_desk.bundle.5SIWKFEB.js.map
+//# sourceMappingURL=retail_desk.bundle.2YX5NJ6N.js.map

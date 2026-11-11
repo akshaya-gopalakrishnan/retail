@@ -325,6 +325,20 @@
 	// Quick Entry waits for the same VAT/totals pipeline before displaying final totals or saving.
 	window.retail = window.retail || {};
 	window.retail.transaction_items = window.retail.transaction_items || {};
+	// Share identical reads only while they are in flight. The next edit always
+	// reads fresh data; rejected requests must also be retried normally.
+	window.retail.transaction_items.purchaseRead = function (frm, request) {
+		if (!["Purchase Receipt", "Purchase Invoice"].includes(frm?.doc?.doctype)) return frappe.call(request);
+		const pending = frm.__retail_purchase_reads ||= new Map();
+		const args = request.args || {};
+		const key = JSON.stringify([request.method, Object.keys(args).sort()
+			.filter(key => args[key] != null).map(key => [key, args[key]])]);
+		if (!pending.has(key)) {
+			const read = Promise.resolve().then(() => frappe.call(request)).finally(() => pending.delete(key));
+			pending.set(key, read);
+		}
+		return pending.get(key);
+	};
 	window.retail.transaction_items.flushVatTaxRows = async frm => {
 		while (frm.__retail_syncing_vat_tax_rows || frm.__retail_running_erpnext_totals) {
 			await new Promise(resolve => setTimeout(resolve, 16));
@@ -498,7 +512,7 @@
 				item_tax_template: row.item_tax_template,
 			},
 		};
-		const response = await (frm.__quick_receipt?.lookup(request) || frappe.call(request));
+		const response = await (frm.__quick_receipt?.lookup(request) || window.retail.transaction_items.purchaseRead(frm, request));
 		return flt(response.message);
 	}
 

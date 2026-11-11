@@ -254,7 +254,7 @@
 		// Selling VAT does not depend on the price response. Read both together so
 		// full-form item/UOM changes do not pay for two serial network round trips.
 		const [response, vatRate] = await Promise.all([
-			frm.__quick_receipt?.lookup(lookup) || frappe.call(lookup),
+			purchaseRead(frm, lookup),
 			getSellingVatRate(frm, row),
 		]);
 		if (locals[cdt]?.[cdn] !== row || row.item_code !== itemCode || row.uom !== uom ||
@@ -322,8 +322,14 @@
 			method: "retail.domains.purchase.selling_price.get_item_selling_vat_rate",
 			args: { item_code: itemCode },
 		};
-		const response = await (frm.__quick_receipt?.lookup(request) || frappe.call(request));
+		const response = await purchaseRead(frm, request);
 		return flt(response.message) || getPurchaseFormVatRate(frm, row);
+	}
+
+	function purchaseRead(frm, request) {
+		return frm.__quick_receipt?.lookup(request)
+			|| window.retail?.transaction_items?.purchaseRead?.(frm, request)
+			|| frappe.call(request);
 	}
 
 	function getPurchaseFormVatRate(frm, row) {
