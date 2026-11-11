@@ -1145,3 +1145,10 @@ doctype_list_js["Sales Invoice"].append("public/js/list/sales_invoice_columns.js
 doc_events.setdefault("Company", {}).setdefault("on_update", []).append(
     "retail.site_readiness.initialize_item_defaults"
 )
+
+# Ranked, order-independent Item name search, owned by Retail.
+standard_queries = {"Item": "retail.domains.item.desk_search.item_query"}
+override_whitelisted_methods.update({
+	"frappe.desk.reportview.get": "retail.domains.item.desk_search.get",
+	"frappe.desk.reportview.get_count": "retail.domains.item.desk_search.get_count",
+})

@@ -4,6 +4,7 @@ import frappe
 from frappe.desk.reportview import get_match_cond
 from frappe.desk.search import search_widget
 from frappe.utils import cint
+from retail.domains.item.name_search import condition as name_condition, ranking
 
 RESULT_LIMIT = 5
 CANDIDATE_LIMIT = 20
@@ -17,6 +18,10 @@ def search(txt="", start=0, filters=None, query=None, reference_doctype=None, pa
 	match = get_match_cond("Item")
 	filters = frappe.parse_json(filters) if isinstance(filters, str) else filters
 	txt = str(txt or "").strip()[:140]
+	values = {}
+	name_match = name_condition("`tabItem`.item_name", txt, values)
+	packing_match = name_condition("p.packing_name", txt, values, "packing_word")
+	name_rank = ranking("item_name", txt, values)
 	sql = f"""
 		select * from (
 			select `tabItem`.name as item_code, `tabItem`.item_name,
@@ -27,7 +32,7 @@ def search(txt="", start=0, filters=None, query=None, reference_doctype=None, pa
 			from `tabItem`
 			where `tabItem`.disabled = 0 and `tabItem`.is_purchase_item = 1
 				and `tabItem`.has_variants = 0 {match}
-				and (`tabItem`.name like %(txt)s or `tabItem`.item_name like %(txt)s
+				and (`tabItem`.name like %(txt)s or {name_match}
 					or `tabItem`.custom_barcode like %(txt)s)
 			union all
 			select `tabItem`.name, `tabItem`.item_name, p.packing_name,
@@ -38,17 +43,17 @@ def search(txt="", start=0, filters=None, query=None, reference_doctype=None, pa
 			where `tabItem`.disabled = 0 and `tabItem`.is_purchase_item = 1
 				and `tabItem`.has_variants = 0 and coalesce(p.disabled, 0) = 0
 				and p.conversion_factor > 0 and coalesce(p.uom, '') != '' {match}
-				and (`tabItem`.name like %(txt)s or `tabItem`.item_name like %(txt)s
+				and (`tabItem`.name like %(txt)s or {name_match}
 					or `tabItem`.custom_barcode like %(txt)s or p.barcode like %(txt)s
-					or p.packing_name like %(txt)s or p.packing_uom like %(txt)s)
+					or {packing_match} or p.packing_uom like %(txt)s)
 		) choices
 		order by
 			case when barcode = %(exact)s then 0
 				when item_code = %(exact)s then 1
 				when item_name = %(exact)s then 2
 				when packing_name = %(exact)s then 3
-				when barcode like %(prefix)s then 4
-				when item_name like %(prefix)s then 5 else 6 end,
+				when barcode like %(prefix)s then 4 else 5 end,
+			{name_rank},
 			item_name, item_code, conversion_factor, packing_id
 		limit %(batch_size)s offset %(start)s
 		"""
@@ -76,7 +81,7 @@ def search(txt="", start=0, filters=None, query=None, reference_doctype=None, pa
 	# Stop as soon as this page is filled; later packings remain accessible by start.
 	while len(results) < start + page_length:
 		rows = frappe.db.sql(sql, {
-			"txt": "%" + txt + "%", "exact": txt, "prefix": txt + "%",
+			**values, "txt": "%" + txt + "%", "exact": txt, "prefix": txt + "%",
 			"start": offset, "batch_size": batch_size,
 		}, as_dict=True)
 		if not rows:
