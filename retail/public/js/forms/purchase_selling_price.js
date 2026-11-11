@@ -251,7 +251,12 @@
 				uom,
 			},
 		};
-		const response = await (frm.__quick_receipt?.lookup(lookup) || frappe.call(lookup));
+		// Selling VAT does not depend on the price response. Read both together so
+		// full-form item/UOM changes do not pay for two serial network round trips.
+		const [response, vatRate] = await Promise.all([
+			frm.__quick_receipt?.lookup(lookup) || frappe.call(lookup),
+			getSellingVatRate(frm, row),
+		]);
 		if (locals[cdt]?.[cdn] !== row || row.item_code !== itemCode || row.uom !== uom ||
 			row.__retail_selling_request !== request) return;
 		const rate = flt(response.message);
@@ -260,11 +265,11 @@
 			values.custom_new_sell_rate = rate;
 		}
 		await frappe.model.set_value(cdt, cdn, values);
-		await updateInclusiveRate(frm, cdt, cdn);
+		await updateInclusiveRate(frm, cdt, cdn, vatRate);
 		updateMargin(frm, cdt, cdn);
 	}
 
-	async function updateInclusiveRate(frm, cdt, cdn) {
+	async function updateInclusiveRate(frm, cdt, cdn, preparedVatRate) {
 		if (frm.doc.docstatus !== 0) return;
 
 		const row = locals[cdt]?.[cdn];
@@ -272,7 +277,7 @@
 
 		const exclusiveRate = flt(row.custom_new_sell_rate || row.custom_cur_sell_rate);
 		const itemCode = row.item_code, uom = row.uom;
-		const vatRate = await getSellingVatRate(frm, row);
+		const vatRate = preparedVatRate ?? await getSellingVatRate(frm, row);
 		if (locals[cdt]?.[cdn] !== row || row.item_code !== itemCode || row.uom !== uom ||
 			exclusiveRate !== flt(row.custom_new_sell_rate || row.custom_cur_sell_rate)) return;
 

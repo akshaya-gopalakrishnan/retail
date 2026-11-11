@@ -70,6 +70,10 @@
 
 	async function refresh(frm) {
 		const state = setup(frm), generation = state.generation;
+		// Advisory history must not join the native item/pricing AJAX chain.
+		// Coalesce edits made while those requests are still completing.
+		if (["Purchase Receipt", "Purchase Invoice"].includes(frm.doc.doctype)) await frappe.after_ajax();
+		if (generation !== state.generation) return;
 		state.comparisons = {};
 		if (!frm.doc.company || !frm.doc.supplier) {
 			state.message = __("Select a company and supplier to compare purchase rates.");

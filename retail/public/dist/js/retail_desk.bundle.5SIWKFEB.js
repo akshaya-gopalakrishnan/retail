@@ -7506,14 +7506,21 @@
           await new Promise((resolve) => setTimeout(resolve, 16));
         }
         clearTimeout(frm.__retail_vat_tax_rows_timer);
+        frm.__retail_vat_tax_rows_generation = (frm.__retail_vat_tax_rows_generation || 0) + 1;
         await syncVatTaxRows(frm);
       };
       function queueVatTaxRowsSync(frm) {
         if (!canSyncVatTaxRows(frm))
           return;
         clearTimeout(frm.__retail_vat_tax_rows_timer);
-        frm.__retail_vat_tax_rows_timer = setTimeout(() => {
-          syncVatTaxRows(frm);
+        const generation = frm.__retail_vat_tax_rows_generation = (frm.__retail_vat_tax_rows_generation || 0) + 1;
+        frm.__retail_vat_tax_rows_timer = setTimeout(async () => {
+          if (["Purchase Receipt", "Purchase Invoice"].includes(frm.doc.doctype)) {
+            await frappe.after_ajax();
+            if (generation !== frm.__retail_vat_tax_rows_generation)
+              return;
+          }
+          await syncVatTaxRows(frm);
         }, 200);
       }
       function canSyncVatTaxRows(frm) {
@@ -8815,4 +8822,4 @@
     ["Purchase Order", "Purchase Invoice", "Purchase Receipt"].map((doctype) => [doctype, user_grid_view_settings_default[doctype]])
   );
 })();
-//# sourceMappingURL=retail_desk.bundle.NOD567OL.js.map
+//# sourceMappingURL=retail_desk.bundle.5SIWKFEB.js.map

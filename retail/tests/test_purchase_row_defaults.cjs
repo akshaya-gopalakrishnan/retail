@@ -89,3 +89,21 @@ test('Item details assigning a default qty without a qty event still updates the
  await new Promise(setImmediate);
  assert.equal(f.row.custom_total_stock_qty,1);
 });
+
+for(const parent of ['Purchase Receipt','Purchase Invoice']) {
+ test(parent+': price and VAT reads start together and zero VAT is reused',async()=>{
+  const f=fixture(parent), pending=[], calls=[];
+  f.frappe.call=args=>{
+   calls.push(args.method);
+   return new Promise(resolve=>pending.push(()=>resolve({message:args.method.endsWith('get_standard_selling_rate')?20:0})));
+  };
+  const action=f.trigger('item_code');
+  await new Promise(setImmediate);
+  assert.equal(pending.length,2,'Both independent reads start before either response');
+  pending.forEach(resolve=>resolve());
+  await action;
+  assert.equal(calls.length,2,'Inclusive display reuses the VAT read, including zero');
+  assert.equal(f.row.custom_cur_sell_rate,20);
+  assert.equal(f.row.custom_new_sell_incl,20);
+ });
+}

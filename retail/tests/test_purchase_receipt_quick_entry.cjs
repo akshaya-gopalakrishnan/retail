@@ -22,7 +22,7 @@ function fixture(doctype = "Purchase Receipt", updateStock = 0) {
   async set_value(field,value){this.values[field]=value;this.fields_dict[field]?.set_input(value);this.fields_dict[field]?.df.onchange?.();} show(){} hide(){this.hidden=true;}
  }
  const frm={doc:{doctype,update_stock:updateStock,docstatus:0,supplier:'Supplier',company:'Company',set_warehouse:'Stores',items:[],currency:'AED'},
-  perm:[{write:1}],is_new:()=>false,is_dirty:()=>false,refresh_field(){},
+  script_manager:{async trigger(){}},perm:[{write:1}],is_new:()=>false,is_dirty:()=>false,refresh_field(){},
   add_child(){const row={doctype:doctype+' Item',name:'row-'+this.doc.items.length,qty:0};this.doc.items.push(row);return row;},
   async set_value(field,value){this.doc[field]=value;},async save(){this.saved=true;},savesubmit(){this.submitting=true;}};
  const frappe={flags:{},utils:{escape_html:String},ui:{Dialog,form:{on:(dt,h)=>handlers[dt]=h,
@@ -551,6 +551,7 @@ test('first Item bundles authorized master and zero-rate lookups into one reques
   return {message:{item:{name:'A',stock_uom:'Nos',has_batch_no:1},lookups:[
    {method:'retail.domains.transactions.vat.get_transaction_item_vat_rate',args:{item_code:'A',child_doctype:'Purchase Receipt Item',parent_doctype:'Purchase Receipt',transaction_type:null,item_tax_template:null},message:0},
    {method:'retail.domains.purchase.selling_price.get_standard_selling_rate',args:{item_code:'A',uom:null},message:0},
+   {method:'retail.domains.purchase.selling_price.get_standard_selling_rate',args:{item_code:'A',uom:'Box-10'},message:0},
    {method:'retail.domains.purchase.selling_price.get_item_selling_vat_rate',args:{item_code:'A'},message:0},
   ]}};
  };
@@ -582,3 +583,26 @@ test('cached reads cannot let UOM writes finish ahead of native pricing callback
  row.conversion_factor=10;row.rate=380;nativeDone();await change;
  assert.equal(finished,true);assert.equal(row.rate,380);assert.equal(row.conversion_factor,10);
 });
+
+for (const doctype of ['Purchase Receipt','Purchase Invoice']) {
+ test(doctype+': packing inputs reach the native item handler on the first load',async()=>{
+  const {entry,frm,frappe}=fixture(doctype);
+  const original=frappe.model.set_value;
+  let initialized;
+  frappe.model.set_value=async(dt,name,field,value)=>{
+   if(field==='item_code') {
+    const row=frm.doc.items.find(row=>row.name===name);
+    initialized={uom:row.uom,barcode:row.barcode};
+    // The native item handler retains UOM for barcode entry and clears the barcode.
+    if(!row.barcode)row.uom=null;
+    row.barcode=null;
+   }
+   return original(dt,name,field,value);
+  };
+  await entry.add({item_code:'A',uom:'Box-10',barcode:'PACK-ALIAS'});
+  assert.deepEqual(initialized,{uom:'Box-10',barcode:'PACK-ALIAS'});
+  assert.equal(frm.doc.items[0].barcode,'PACK-ALIAS');
+  assert.equal(frm.doc.items[0].uom,'Box-10');
+  assert.equal(frm.doc.items[0].qty,1);
+ });
+}

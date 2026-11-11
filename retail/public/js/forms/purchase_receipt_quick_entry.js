@@ -372,9 +372,25 @@
 			} else {
 				row = (frm.doc.items || []).find(row => !row.item_code) || frm.add_child("items");
 				if (master.has_serial_no || master.has_batch_no) row.use_serial_batch_fields = 1;
+				// Native barcode entry preserves the supplied UOM when loading item
+				// details. Seed the same inputs on the empty row so packing scans do
+				// not load stock-UOM pricing first and then price the packing again.
+				const barcode = scan.barcode || this.barcode({item_code: scan.item_code, uom});
+				const initializePacking = barcode && !frm.doc.is_internal_supplier;
+				if (initializePacking) {
+					row.barcode = barcode;
+					row.uom = uom;
+				}
 				if (this.lookups && this.dialog.$wrapper.is(":visible")) await this.prepareItem(row, scan.item_code);
 				await this.setRowValue(row, "item_code", scan.item_code);
 				await this.setRowValue(row, "uom", uom);
+				if (initializePacking) {
+					// Core's item callback starts this calculation without returning
+					// its promise. Await the native calculation before displaying the
+					// initialized packing, including its negotiated price/discounts.
+					await frm.script_manager.trigger("price_list_rate", row.doctype, row.name);
+					await this.rowReady(row);
+				}
 				await this.setRowValue(row, {qty: 1, warehouse: frm.doc.set_warehouse});
 			}
 			// Keep the scan identity without invoking the native barcode handler (which resets qty).
