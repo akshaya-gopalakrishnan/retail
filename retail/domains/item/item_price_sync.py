@@ -66,35 +66,63 @@ def _purchase_cleared(before, after, *, packing=False):
 		flt(after.get(entry)) == 0 and flt(after.get(net)) == 0)
 
 
-def _clear_managed_buying_price(item_code, uom):
-	"""Zero only a proven Item-owned generic price; retain the price/audit identity."""
-	if not frappe.db.has_column("Item Price", MANAGED_BUYING_FIELD):
-		return
-	from frappe.utils import getdate
-	from retail.domains.purchase.price_history import lock_item
+def _explicit_purchase_zero(row, *, packing=False):
+	entry, net = ("purchase_rate", "purchase_net_rate") if packing else (
+		"custom_purchase_rate_entry", "custom_purchase_net_rate")
+	return row.get(entry) not in (None, "") and flt(row.get(entry)) == 0 and flt(row.get(net)) == 0
 
-	lock_item(item_code)
+
+def _explicit_selling_zero(row, *, packing=False):
+	entry, net = ("selling_rate", "selling_net_rate") if packing else (
+		"custom_sales_rate_entry", "custom_sales_net_rate")
+	return row.get(entry) not in (None, "") and flt(row.get(entry)) == 0 and flt(row.get(net)) == 0
+
+
+def _clear_managed_buying_price(item_code, uom):
+	return _clear_item_price(item_code, uom, "Standard Buying")
+
+
+def _clear_item_price(item_code, uom, price_list):
+	"""Clear a matching generic maintained price, including legacy/unmarked records.
+
+	The same Item/list/UOM identifies positive and zero updates. Keep specialized
+	prices intact, but report conflicts instead of silently leaving an old rate.
+	"""
+	from frappe.utils import getdate
+	from retail.domains.purchase import price_history
+
+	price_history.lock_item(item_code)
 	prices = frappe.get_all("Item Price", filters={
-		"item_code": item_code, "price_list": "Standard Buying", "uom": uom,
+		"item_code": item_code, "price_list": price_list, "uom": uom,
 	}, fields=["*"], order_by="creation asc, name asc")
+	if not prices or all(flt(price.get("price_list_rate")) == 0 for price in prices):
+		return  # Do not create a new zero-price record.
 	if len(prices) != 1:
-		return  # Ambiguous, historical or manually maintained prices need review.
+		frappe.throw(f"Multiple Item Prices for {item_code} / {price_list} / {uom}. Resolve the duplicates before updating.")
 	price = prices[0]
-	if not price.get(MANAGED_BUYING_FIELD) or any(price.get(field) for field in (
-		"supplier", "customer", "batch_no", "valid_upto", "reference", "note")):
-		return
-	if price.get("valid_from") and getdate(price.valid_from) != getdate(price.creation):
-		return
-	frappe.db.set_value("Item Price", price.name, "price_list_rate", 0)
+	if any(price.get(field) for field in (
+		"supplier", "customer", "batch_no", "valid_upto", "reference", "note")) or (
+		price.get("valid_from") and getdate(price.valid_from) != getdate(price.creation)
+	):
+		frappe.throw(f"Item Price {price.name} for {item_code} / {uom} has specific conditions. Review that Item Price before clearing the maintained rate.")
+	if price_list == "Standard Selling" and price_history.ready():
+		values = {"price_list_rate": 0, price_history.POINTER: price_history.record_change(
+			item_code, uom, price, 0, price.name, source={"doctype": "Item", "name": item_code})}
+		frappe.db.set_value("Item Price", price.name, values)
+	else:
+		frappe.db.set_value("Item Price", price.name, "price_list_rate", 0)
 
 
 def sync_simple_item_prices(doc, method=None):
 	if isinstance(doc, str):
 		doc = frappe.get_doc("Item", doc)
 
-	sync_item_price(doc, "Standard Selling", _get_item_master_selling_rate(doc))
+	if _explicit_selling_zero(doc):
+		_clear_item_price(doc.name, doc.stock_uom, "Standard Selling")
+	else:
+		sync_item_price(doc, "Standard Selling", _get_item_master_selling_rate(doc))
 	previous = _previous_item(doc)
-	if _purchase_cleared(previous, doc):
+	if _purchase_cleared(previous, doc) or _explicit_purchase_zero(doc):
 		_clear_managed_buying_price(doc.name, doc.stock_uom)
 	else:
 		sync_item_price(doc, "Standard Buying", _get_item_master_buying_rate(doc))
@@ -190,16 +218,22 @@ def sync_packing_item_prices(doc, previous=None):
 		if not row.get("uom"):
 			continue
 
-		sync_item_price(
-			doc,
-			"Standard Selling",
-			row.get("selling_net_rate") or row.get("selling_rate"),
-			uom=row.uom,
-			barcode=row.get("barcode"),
-		)
+		if _explicit_selling_zero(row, packing=True) and not any(
+			flt(other.get("selling_net_rate") or other.get("selling_rate")) > 0
+			for other in current_rows if other.get("uom") == row.uom
+		):
+			_clear_item_price(doc.get("item_code") or doc.get("name"), row.uom, "Standard Selling")
+		else:
+			sync_item_price(
+				doc,
+				"Standard Selling",
+				row.get("selling_net_rate") or row.get("selling_rate"),
+				uom=row.uom,
+				barcode=row.get("barcode"),
+			)
 		old = next((old for old in old_rows if old.get("uom") == row.uom
 			and (flt(old.get("purchase_rate")) > 0 or flt(old.get("purchase_net_rate")) > 0)), None)
-		if _purchase_cleared(old, row, packing=True) and not any(
+		if (_purchase_cleared(old, row, packing=True) or _explicit_purchase_zero(row, packing=True)) and not any(
 			flt(other.get("purchase_net_rate") or other.get("purchase_rate")) > 0
 			for other in current_rows if other.get("uom") == row.uom
 		):
@@ -277,8 +311,7 @@ def sync_item_master_purchase_rate_from_price_list(doc, method=None, uom=None):
 	if rate <= 0:
 		return
 
-	values = {"last_purchase_rate": rate}
-	values.update(_get_item_master_vat_values(item_code, "purchase", rate))
+	values = _get_item_master_vat_values(item_code, "purchase", rate)
 
 	if not frappe.flags.in_install:
 		frappe.db.set_value("Item", item_code, values, update_modified=False)
@@ -372,7 +405,7 @@ def sync_item_master_purchase_rates_from_transaction_row(row):
 	if net_rate <= 0:
 		return
 
-	values = {"last_purchase_rate": net_rate}
+	values = {}
 	for fieldname, value in {
 		"custom_default_purchase_rate": net_rate,
 		"custom_purchase_net_rate": net_rate,
@@ -627,7 +660,6 @@ def _get_item_master_buying_rate(doc):
 	return (
 		doc.get("custom_default_purchase_rate")
 		or doc.get("custom_purchase_net_rate")
-		or doc.get("last_purchase_rate")
 	)
 
 

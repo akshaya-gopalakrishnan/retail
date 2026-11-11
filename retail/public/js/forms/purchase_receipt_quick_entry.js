@@ -2,6 +2,115 @@
 (() => {
 	const esc = value => frappe.utils.escape_html(String(value ?? ""));
 	const editable = frm => frm.doc.docstatus === 0 && !frm.doc.is_return && frm.perm?.[0]?.write;
+	function focusFirstEditable(root) {
+		const input = root && Array.from(root.querySelectorAll("input, textarea, select")).find(field =>
+			!field.disabled && !field.readOnly && !["hidden", "checkbox", "button", "submit"].includes(field.type) &&
+			field.tabIndex !== -1 && field.getClientRects().length);
+		if (!input) return false;
+		input.focus();
+		input.scrollIntoView?.({block: "nearest", inline: "nearest"});
+		if (input.tagName === "INPUT" && typeof input.select === "function") input.select();
+		return true;
+	}
+	function bindItemRowEnter(root, rowSelector, allowed, addRow, focusScan) {
+		if (!root || root.__retail_row_enter) return;
+		root.__retail_row_enter = true;
+		root.addEventListener("keydown", event => {
+			const arrows = ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"];
+			if (arrows.includes(event.key) && !event.shiftKey && !event.ctrlKey && !event.altKey && !event.metaKey &&
+				!event.isComposing && allowed()) {
+				const input = event.target, row = input.closest(rowSelector);
+				if (!row || !input.matches("input, textarea, select") || input.getAttribute("aria-expanded") === "true" ||
+					$(input).closest(".awesomplete").find("ul:visible").length) return;
+				const fieldsFor = element => Array.from(element.querySelectorAll("input, textarea, select")).filter(field =>
+					!field.disabled && !field.readOnly && !["hidden", "button", "submit"].includes(field.type) &&
+					!field.matches(".grid-row-check, .quick-receipt-select") && field.getClientRects().length);
+				const fields = fieldsFor(row), index = fields.indexOf(input);
+				if (index < 0) return;
+				event.preventDefault();
+				event.stopImmediatePropagation();
+				let next;
+				if (["ArrowLeft", "ArrowRight"].includes(event.key)) next = fields[index + (event.key === "ArrowLeft" ? -1 : 1)];
+				else {
+					const rows = Array.from(root.querySelectorAll(rowSelector)).filter(element => element.getClientRects().length);
+					const nextRow = rows[rows.indexOf(row) + (event.key === "ArrowUp" ? -1 : 1)];
+					if (nextRow) {
+						// Full-form controls are created when the row enters edit mode.
+						$(nextRow).data("grid_row")?.toggle_editable_row(true);
+						const candidates = fieldsFor(nextRow);
+						const name = input.getAttribute("data-fieldname");
+						next = (name && candidates.find(field => field.getAttribute("data-fieldname") === name)) || candidates[index];
+					}
+				}
+				if (next) {
+					next.focus();
+					next.scrollIntoView?.({block: "nearest", inline: "nearest"});
+				}
+				return;
+			}
+			if (event.key === "Tab" && !event.shiftKey && !event.ctrlKey && !event.altKey && !event.metaKey &&
+				!event.isComposing && allowed() && focusScan && event.target.closest(rowSelector)) {
+				event.preventDefault();
+				event.stopImmediatePropagation();
+				focusScan();
+				return;
+			}
+			if (event.key !== "Enter" || event.altKey || event.ctrlKey || event.metaKey || event.isComposing || !allowed()) return;
+			const input = event.target;
+			// Serial numbers keep multiline entry; Link suggestions keep native selection.
+			if (!input.matches("input:not([type=button]), select") ||
+				input.getAttribute("aria-expanded") === "true" ||
+				$(input).closest(".awesomplete").find("ul:visible").length) return;
+			const row = input.closest(rowSelector);
+			if (!row) return;
+			const inputs = Array.from(row.querySelectorAll("input, select")).filter(field =>
+				!field.disabled && !field.readOnly && field.type !== "hidden" &&
+				!field.matches(".grid-row-check, .quick-receipt-select, [type=submit]") &&
+				field.type !== "button" && field.tabIndex !== -1 && field.getClientRects().length);
+			const index = inputs.indexOf(input);
+			if (index < 0) return;
+			event.preventDefault();
+			event.stopImmediatePropagation();
+			if (event.repeat) return;
+			const next = inputs[index + (event.shiftKey ? -1 : 1)];
+			if (next) {
+				next.focus(); // Blur commits through the existing field handlers.
+				if (next.tagName === "INPUT" && next.type !== "checkbox" && typeof next.select === "function") next.select();
+			} else if (!event.shiftKey && addRow) {
+				input.blur();
+				addRow();
+			}
+		}, true);
+	}
+	const shortcutHelp = () => __("Alt+Q: Quick Entry · Alt+A: Add row / selected item · Alt+I: Item search · Alt+B: Barcode · Alt+S: Supplier · Alt+W: Warehouse");
+	function shortcutKey(event) {
+		if (!event.altKey || event.ctrlKey || event.metaKey || event.shiftKey || event.repeat || event.isComposing) return;
+		const key = event.key.toLowerCase();
+		return ["q", "a", "i", "b", "s", "w"].includes(key) ? key : undefined;
+	}
+	function bindFormShortcuts(frm) {
+		bindItemRowEnter(frm.fields_dict.items?.grid?.wrapper?.[0], ".grid-row", () =>
+			editable(frm) && window.cur_frm === frm && !$(".modal:visible").length,
+			() => frm.fields_dict.items.grid.wrapper.find(".grid-add-row:visible").first().trigger("click"),
+			() => frm.fields_dict.scan_barcode?.set_focus());
+		if (!frm.wrapper || frm.__retail_purchase_shortcuts) return;
+		frm.__retail_purchase_shortcuts = true;
+		frm.wrapper.addEventListener("keydown", event => {
+			const key = shortcutKey(event);
+			if (!key || !editable(frm) || window.cur_frm !== frm || $(".modal:visible").length) return;
+			const fields = {s: "supplier", w: "set_warehouse", b: "scan_barcode"};
+			const grid = frm.fields_dict.items?.grid;
+			if (fields[key] && !frm.fields_dict[fields[key]]?.$input?.is(":visible")) return;
+			event.preventDefault();
+			event.stopImmediatePropagation();
+			if (key === "q") open(frm);
+			else if (key === "a") grid?.wrapper.find(".grid-add-row:visible").first().trigger("click");
+			else if (key === "i") {
+				open(frm);
+				frm.__quick_receipt.dialog.get_field("item").set_focus();
+			} else frm.fields_dict[fields[key]]?.set_focus();
+		});
+	}
 	function resizeSerial(control) {
 		const input = control?.$input?.[0];
 		if (input?.tagName !== "TEXTAREA" || !input.getClientRects().length) return;
@@ -14,6 +123,8 @@
 		refresh(frm) {
 			if (!editable(frm)) return;
 			frm.add_custom_button(__("Quick Entry"), () => open(frm));
+			frm.custom_buttons?.[__("Quick Entry")]?.attr("title", shortcutHelp());
+			bindFormShortcuts(frm);
 			if (frm.is_new() && frappe.flags[quickEntryFlag(frm.doc.doctype)]) {
 				delete frappe.flags[quickEntryFlag(frm.doc.doctype)];
 				open(frm);
@@ -28,6 +139,26 @@
 			frappe.flags[quickEntryFlag(frm.doc.doctype)] = true;
 			return frappe.new_doc(frm.doc.doctype, defaults);
 		},
+	});
+	function focusPurchaseRow(frm, cdt, cdn) {
+		if (!editable(frm) || window.cur_frm !== frm || $(".modal:visible").length) return;
+		clearTimeout(frm.__retail_purchase_focus_timer);
+		// Item selection and barcode scans refresh the row after it is created.
+		// Wait for those callbacks before resolving the live grid row.
+		frm.__retail_purchase_focus_timer = setTimeout(() => {
+			frappe.after_ajax(() => {
+				if (!editable(frm) || window.cur_frm !== frm || $(".modal:visible").length) return;
+				const row = frm.fields_dict.items?.grid?.grid_rows_by_docname?.[cdn];
+				if (!row) return;
+				row.toggle_editable_row(true);
+				focusFirstEditable(row.row?.[0]);
+			});
+		}, 160);
+	}
+	for (const doctype of ["Purchase Receipt Item", "Purchase Invoice Item"]) frappe.ui.form.on(doctype, {
+		items_add: focusPurchaseRow,
+		item_code: focusPurchaseRow,
+		barcode: focusPurchaseRow,
 	});
 
 	function quickEntryFlag(doctype) {
@@ -98,6 +229,7 @@
 						{fieldname: "find", fieldtype: "Data", label: __("Find in Invoice"), onchange: () => this.filter()},
 						{fieldtype: "Section Break"},
 					] : []),
+					{fieldname: "scan_feedback", fieldtype: "HTML"},
 					{fieldname: "scan", fieldtype: "Data", options: "Barcode", label: __("Scan Barcode"),
 						description: __("Scan, or enter a barcode and press Enter / Tab."), onchange: () => this.scan()},
 					{fieldtype: "Column Break"},
@@ -113,6 +245,7 @@
 						{fieldname: "find", fieldtype: "Data", label: __("Find in Receipt"), onchange: () => this.filter()},
 					] : []),
 					{fieldtype: "Section Break"},
+					{fieldname: "keyboard_help", fieldtype: "HTML", options: `<div class="text-muted small">${esc(shortcutHelp())}</div>`},
 					{fieldname: "items_html", fieldtype: "HTML"},
 					{fieldname: "totals", fieldtype: "HTML"},
 					{fieldname: "status", fieldtype: "HTML"},
@@ -120,16 +253,75 @@
 				primary_action_label: __("Save"), primary_action: () => this.save(false),
 				secondary_action_label: __("Submit + New"), secondary_action: () => this.save(true),
 			});
+			const modal = this.dialog.$wrapper[0];
+			const ownsKeyboard = () => editable(this.frm) && frappe.ui.open_dialogs?.slice(-1)[0] === this.dialog;
+			// FieldGroup's text-input keypress handler otherwise invokes Save.
+			modal.addEventListener("keypress", event => {
+				if ((event.key === "Enter" || event.which === 13) && ownsKeyboard() && event.target.matches("input, select")) {
+					event.preventDefault();
+					event.stopImmediatePropagation();
+				}
+			}, true);
+			modal.addEventListener("keydown", event => {
+				if (!ownsKeyboard() || event.ctrlKey || event.altKey || event.metaKey || event.isComposing ||
+					!event.target.matches("input, textarea, select")) return;
+				if (event.key === "Tab" || (event.key === "Enter" && event.shiftKey)) {
+					event.preventDefault();
+					event.stopImmediatePropagation();
+					for (const field of Object.values(this.dialog.fields_dict)) field.awesomplete?.close();
+					this.dialog.get_field("scan").set_focus();
+					return;
+				}
+				if (event.key !== "Enter" || event.target.closest("tbody tr") || event.target.tagName === "TEXTAREA") return;
+				const search = this.dialog.get_field("item"), scan = this.dialog.get_field("scan");
+				if ([search.$input[0], scan.$input[0]].includes(event.target)) return;
+				const control = Object.values(this.dialog.fields_dict).find(field => field.$input?.[0] === event.target);
+				if (control?.awesomplete?.opened) return;
+				event.preventDefault();
+				event.stopImmediatePropagation();
+				if (event.repeat) return;
+				const fields = Array.from(modal.querySelectorAll("input, select")).filter(input =>
+					!input.disabled && !input.readOnly && !["hidden", "button", "submit"].includes(input.type) &&
+					input.tabIndex !== -1 && input.getClientRects().length);
+				const next = fields[fields.indexOf(event.target) + 1];
+				if (next) next.focus();
+			}, true);
 			this.dialog.$wrapper.find(".modal-dialog").css({width: "96vw", maxWidth: "1600px"});
+			bindItemRowEnter(this.dialog.get_field("items_html").$wrapper[0], "tbody tr", () =>
+				editable(this.frm) && frappe.ui.open_dialogs?.slice(-1)[0] === this.dialog,
+				() => this.dialog.get_field("item").set_focus(),
+				() => this.dialog.get_field("scan").set_focus());
 			const itemInput = this.dialog.get_field("item").$wrapper.find(".control-input");
 			itemInput.css({display: "flex", alignItems: "center", gap: "8px"});
 			itemInput.children().css({flex: "1 1 auto", minWidth: 0});
 			const add = this.dialog.get_field("add");
 			add.$wrapper.closest(".form-column").hide();
-			add.$input.css({flex: "0 0 auto", margin: 0}).appendTo(itemInput);
+			add.$input.css({flex: "0 0 auto", margin: 0, border: "2px solid var(--border-color)"}).appendTo(itemInput);
 			bindSupplierTab(this.dialog.get_field("supplier"), () => this.supplierFromTab());
+			const search = this.dialog.get_field("item");
+			search.$input[0].addEventListener("keydown", event => {
+				if (event.ctrlKey || event.altKey || event.metaKey || event.shiftKey || event.isComposing) return;
+				if (!["Enter", "Tab"].includes(event.key)) return;
+				event.preventDefault();
+				event.stopImmediatePropagation();
+				if (event.repeat) return;
+				if (event.key === "Tab") {
+					search.awesomplete?.close();
+					this.dialog.get_field("scan").set_focus();
+				} else if (search.awesomplete?.opened && search.awesomplete.selected) {
+					this.addSelectedPacking = true;
+					search.awesomplete.select(undefined, undefined, event);
+					Promise.resolve().then(() => { this.addSelectedPacking = false; });
+				} else {
+					this.dialog.get_field("add").$input.trigger("click");
+				}
+			}, true);
 			window.retail?.purchase_packing_search?.bind(this.dialog.get_field("item"), choice => {
 				this.packingChoice = choice;
+				if (this.addSelectedPacking) {
+					this.addSelectedPacking = false;
+					this.enqueue(() => this.add(choice));
+				}
 			});
 			// FieldGroup binds Enter to Save on text inputs. This field must scan instead.
 			this.dialog.get_field("scan").$input.off("keypress").on("keydown.quickReceipt", event => {
@@ -141,8 +333,15 @@
 				this.scan();
 			});
 			this.dialog.$wrapper.on("keydown.quickReceipt", event => {
-				if (event.altKey && event.key.toLowerCase() === "b") {
-					event.preventDefault(); this.dialog.get_field("scan").set_focus();
+				const key = shortcutKey(event);
+				if (!key || !editable(this.frm) || frappe.ui.open_dialogs?.slice(-1)[0] !== this.dialog) return;
+				event.preventDefault();
+				event.stopImmediatePropagation();
+				if (key === "a") {
+					if (this.dialog.get_value("item")) this.dialog.get_field("add").$input.trigger("click");
+					else this.dialog.get_field("item").set_focus();
+				} else if (key !== "q") {
+					this.dialog.get_field({b: "scan", i: "item", s: "supplier", w: "set_warehouse"}[key]).set_focus();
 				}
 			});
 		}
@@ -183,6 +382,7 @@
 			// Read the actual input: scanners can send Enter before the change event.
 			const barcode = String(field.$input.val() || "").trim();
 			if (!barcode) return;
+			this.dialog.get_field("scan_feedback").$wrapper.empty();
 			// Clear synchronously so Enter followed by change cannot scan twice.
 			field.set_input("");
 			return this.enqueue(async () => {
@@ -192,7 +392,14 @@
 				}
 				try {
 					const {message} = await frappe.call({method: "retail.domains.item.packing_scan.scan_barcode", args: {search_value: barcode}});
-					if (!message?.item_code) frappe.throw(__("No item found for barcode {0}", [barcode]));
+					if (!message?.item_code) {
+						const text = __("Cannot find Item with barcode {0}", [barcode]);
+						this.dialog.get_field("status").$wrapper.text(text);
+						this.dialog.get_field("scan_feedback").$wrapper.html(
+							`<div class="alert alert-warning" role="alert" aria-live="assertive" style="margin-bottom:8px">${esc(text)}</div>`);
+						field.set_focus();
+						return;
+					}
 					if (message.scale_barcode_type) {
 						frappe.throw(__("Use the full {0} for this scale barcode.", [this.frm.doc.doctype]));
 					}
@@ -404,12 +611,16 @@
 			this.scheduleSync(scan.serial_no ? 3200 : 1000);
 			frm.refresh_field("items");
 			this.render();
-			this.dialog.set_value("item", "");
+			await this.dialog.set_value("item", "");
+			await this.dialog.set_value("find", "");
 			this.packingChoice = null;
+			// Link validation and native item callbacks can restore search focus.
+			// Apply the table focus only after those callbacks have completed.
+			await new Promise(resolve => frappe.after_ajax(resolve));
 			const element = this.rows.get(row.name)?.element;
 			element?.addClass("table-success");
 			element?.[0].scrollIntoView({block: "nearest"});
-			this.dialog.get_field("scan").set_focus();
+			focusFirstEditable(element?.[0]);
 		}
 
 		async loadItems() {

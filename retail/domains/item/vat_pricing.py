@@ -659,29 +659,17 @@ def update_item_vat_prices(doc, method=None):
 
 
 def sync_last_purchase_rate_from_item_master(doc, method=None):
-	"""Persist the Item Master purchase entry as the latest maintained purchase rate."""
-	if isinstance(doc, str):
-		doc = frappe.get_doc("Item", doc)
+	"""Compatibility entrypoint: refresh from actual purchases, never maintained prices."""
+	from retail.domains.item.average_purchase_rate import sync_average_purchase_rate_from_item
 
-	rate = _get_item_master_purchase_rate(doc)
-	if rate <= 0:
-		return
-
-	doc.set("last_purchase_rate", rate)
-	frappe.db.set_value("Item", doc.name, "last_purchase_rate", rate, update_modified=False)
+	sync_average_purchase_rate_from_item(doc)
 
 
 def backfill_item_master_last_purchase_rates():
-	"""Repair existing Items where purchase entry exists but last purchase rate is stale."""
-	if not frappe.db.has_column("Item", "custom_purchase_rate_entry"):
-		return
+	"""Repair both history fields for existing Items."""
+	from retail.domains.item.average_purchase_rate import backfill_average_purchase_rates
 
-	for item_code in frappe.get_all(
-		"Item",
-		filters={"custom_purchase_rate_entry": [">", 0]},
-		pluck="name",
-	):
-		sync_last_purchase_rate_from_item_master(item_code)
+	backfill_average_purchase_rates()
 
 
 def _apply_direction(doc, direction):
@@ -712,14 +700,15 @@ def _apply_direction(doc, direction):
 
 
 def _sync_last_purchase_rate_from_item_master(doc):
-	"""Use the Item Master purchase entry as this item's latest maintained buying rate."""
-	rate = _get_item_master_purchase_rate(doc)
-	if rate > 0:
-		doc.set("last_purchase_rate", rate)
-	else:
-		from retail.domains.item.item_price_sync import _previous_item, _purchase_cleared
-		if _purchase_cleared(_previous_item(doc), doc):
-			doc.set("last_purchase_rate", 0)
+	"""Restore derived history fields on save, including API/import saves."""
+	from retail.domains.item.average_purchase_rate import get_purchase_history_rates
+
+	rates = get_purchase_history_rates(doc.name) if not doc.is_new() else {
+		"last_purchase_rate": 0, "custom_average_purchase_rate": 0,
+	}
+	for field, value in rates.items():
+		if doc.meta.has_field(field):
+			doc.set(field, value)
 
 
 def _get_item_master_purchase_rate(doc):
@@ -748,15 +737,14 @@ def _set_missing_packing_purchase_rate_from_item(doc, row):
 		return
 	from retail.domains.item.item_price_sync import _previous_item
 	previous = _previous_item(doc)
-	# A positive saved row explicitly cleared by this edit is not an empty new
-	# packing. Do not refill it from the unit rate before its VAT is recalculated.
-	if previous and any(old.get("uom") == row.get("uom") and (
-		flt(old.get("purchase_rate")) > 0 or flt(old.get("purchase_net_rate")) > 0
-	) for old in previous.get("custom_retail_packing_detail") or []):
+	# A saved zero is deliberate, including on subsequent saves. Only new packing
+	# rows should receive a default from the maintained unit price.
+	if previous and any(old.get("uom") == row.get("uom")
+		for old in previous.get("custom_retail_packing_detail") or []):
 		return
 
 	factor = flt(row.get("conversion_factor") or 1) or 1
-	item_net = flt(doc.get("custom_purchase_net_rate") or doc.get("custom_default_purchase_rate") or doc.get("last_purchase_rate"))
+	item_net = flt(doc.get("custom_purchase_net_rate") or doc.get("custom_default_purchase_rate"))
 	item_gross = flt(doc.get("custom_purchase_gross_rate") or item_net)
 	if item_net <= 0 and item_gross <= 0:
 		return
@@ -768,6 +756,13 @@ def _set_missing_packing_purchase_rate_from_item(doc, row):
 
 def _set_missing_packing_selling_rate_from_item(doc, row):
 	"""Default empty or unscaled new rows from the stock-UOM selling rate."""
+
+	from retail.domains.item.item_price_sync import _previous_item
+	previous = _previous_item(doc)
+	if row.get("__retail_manual_selling_price") or (previous and any(
+		old.get("uom") == row.get("uom") for old in previous.get("custom_retail_packing_detail") or []
+	)):
+		return
 
 	factor = flt(row.get("conversion_factor") or 1) or 1
 	net = flt(doc.get("custom_sales_net_rate") or doc.get("standard_rate"))

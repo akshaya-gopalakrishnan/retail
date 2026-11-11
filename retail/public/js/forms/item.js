@@ -60,7 +60,6 @@
 			setupArabicItemNameField(frm);
 			addArabicTranslationButton(frm);
 			queueLastPurchaseRateLookup(frm);
-			setOpeningAveragePurchaseRate(frm, false);
 			refreshVatPrices(frm)
 				.then(() => refreshPackingFromItemRates(frm, "selling"))
 				.then(() => refreshPackingVatRows(frm));
@@ -84,14 +83,6 @@
 			const lastAutoValue = (frm._arabic_item_name_auto_value || "").trim();
 			if (frm._setting_arabic_item_name || currentArabic === lastAutoValue) return;
 			frm._arabic_item_name_touched = true;
-		},
-		last_purchase_rate(frm) {
-			if (frm._setting_fetched_item_prices) return;
-			setOpeningAveragePurchaseRate(frm, true);
-		},
-		custom_default_purchase_rate(frm) {
-			if (frm._setting_fetched_item_prices) return;
-			setOpeningAveragePurchaseRate(frm, true);
 		},
 		custom_tax(frm) {
 			return refreshVatPrices(frm, "sales").then(() => refreshPackingVatRows(frm, "selling"));
@@ -503,11 +494,6 @@
 		if (Object.keys(updates).length) frm.set_value(updates);
 	}
 
-	function setOpeningAveragePurchaseRate(frm, overwrite) {
-		if (!frm.is_new() || (!overwrite && frm.doc.custom_average_purchase_rate)) return;
-		frm.set_value("custom_average_purchase_rate", frm.doc.custom_default_purchase_rate || frm.doc.last_purchase_rate || 0);
-	}
-
 	function queueLastPurchaseRateLookup(frm) {
 		if (!frm.is_new()) return;
 
@@ -536,7 +522,6 @@
 				if (!frm.is_new() || (frm.doc.item_name || "").trim() !== requestedItemName) return;
 				const prices = message || {};
 				const buyingRate = flt(prices.buying_rate);
-				const averageRate = flt(prices.average_purchase_rate);
 				const sellingRate = flt(prices.selling_rate);
 				if (!buyingRate && !sellingRate) {
 					clearFetchedItemPrices(frm);
@@ -546,9 +531,7 @@
 				frm._last_purchase_rate_source = prices.source_item || prices.selling_source_item || null;
 				const updates = {};
 				if (buyingRate) {
-					updates.last_purchase_rate = buyingRate;
 					updates.custom_default_purchase_rate = buyingRate;
-					updates.custom_average_purchase_rate = averageRate || buyingRate;
 				}
 				if (sellingRate) {
 					updates.custom_sales_rate_entry = sellingRate;
@@ -567,9 +550,7 @@
 
 	function clearFetchedItemPrices(frm) {
 		frm._last_purchase_rate_source = null;
-		frm.set_value("last_purchase_rate", 0);
 		frm.set_value("custom_default_purchase_rate", 0);
-		frm.set_value("custom_average_purchase_rate", 0);
 	}
 
 	function refreshVatPrices(frm, direction) {
@@ -592,7 +573,6 @@
 				[fields.base]: flt(net, 2), [fields.net]: flt(net, 2),
 				[fields.vat]: flt(vat, 2), [fields.gross]: flt(gross, 2),
 			};
-			if (direction === "purchase") updates.last_purchase_rate = flt(net, 2);
 			return setValuesIfChanged(frm.doc, "Item", frm.doc.name, updates)
 				.then(() => refreshMargin(frm));
 		});
@@ -729,7 +709,8 @@
 				&& !row.__retail_manual_selling_price
 				&& flt(row[fields.entry], 2) === flt(unitEntry, 2);
 			// A newly seeded unit price still needs scaling; it is not a pack override.
-			if (side === "selling" && !overwriteSelling && flt(row[fields.entry]) && !unscaledNewRow) return;
+			if (side === "selling" && !overwriteSelling && !unscaledNewRow
+				&& (flt(row[fields.entry]) || !row.__islocal || row.__retail_manual_selling_price)) return;
 			const mode = getDefaultPackingVatMode(frm, side);
 			const net = state.net * factor;
 			const gross = state.gross * factor;
@@ -767,7 +748,6 @@
 				custom_purchase_vat_amount: flt(gross - net, 2),
 				custom_purchase_gross_rate: gross,
 				custom_default_purchase_rate: net,
-				last_purchase_rate: net,
 			}
 			: {
 				custom_sales_rate_entry: gross,
@@ -802,7 +782,7 @@
 	function getItemRateState(frm, direction) {
 		const prefix = direction === "purchase" ? "custom_purchase" : "custom_sales";
 		const fallbackNet = direction === "purchase"
-			? flt(frm.doc.custom_default_purchase_rate || frm.doc.last_purchase_rate)
+			? flt(frm.doc.custom_default_purchase_rate)
 			: flt(frm.doc.standard_rate);
 		const net = flt(frm.doc[`${prefix}_net_rate`] || fallbackNet);
 		const gross = flt(frm.doc[`${prefix}_gross_rate`] || net);

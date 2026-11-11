@@ -316,9 +316,18 @@ doc_events = {
 			"retail.domains.purchase.order.set_balance_qty",
 		],
 		"before_save": "retail.domains.transactions.vat.set_vat_rates",
-		"on_submit": "retail.domains.item.item_price_sync.sync_latest_transaction_item_prices",
-		"on_cancel": "retail.domains.item.item_price_sync.recalculate_transaction_item_prices",
-		"on_update_after_submit": "retail.domains.item.item_price_sync.sync_latest_transaction_item_prices",
+		"on_submit": [
+			"retail.domains.item.item_price_sync.sync_latest_transaction_item_prices",
+			"retail.domains.item.average_purchase_rate.sync_average_purchase_rates",
+		],
+		"on_cancel": [
+			"retail.domains.item.item_price_sync.recalculate_transaction_item_prices",
+			"retail.domains.item.average_purchase_rate.sync_average_purchase_rates",
+		],
+		"on_update_after_submit": [
+			"retail.domains.item.item_price_sync.sync_latest_transaction_item_prices",
+			"retail.domains.item.average_purchase_rate.sync_average_purchase_rates",
+		],
 	},
 	"Purchase Receipt": {
 		"before_naming": "retail.naming.set_transaction_naming_series",
@@ -535,7 +544,6 @@ after_migrate = [
 	"retail.retail_app.report.item_family_list.item_family_list.ensure_setup",
 	"retail.retail_app.report.near_expiry_report.near_expiry_report.ensure_report",
 	"retail.retail_app.report.negative_stock_report.negative_stock_report.ensure_report",
-	"retail.domains.item.average_purchase_rate.backfill_average_purchase_rates",
 	"retail.domains.item.average_purchase_rate.clear_average_purchase_rate_description",
 	"retail.domains.item.average_purchase_rate.ensure_item_price_list_field",
 	"retail.domains.item.naming.install_item_code_defaults",
@@ -551,7 +559,7 @@ after_migrate = [
 	"retail.grid_view_settings.install_default_grid_view_settings",
 	"retail.domains.item.vat_pricing.ensure_item_vat_pricing_fields",
 	"retail.domains.item.rate_audit.ensure_rate_audit_setup",
-	"retail.domains.item.vat_pricing.backfill_item_master_last_purchase_rates",
+	"retail.domains.item.average_purchase_rate.backfill_average_purchase_rates",
 	"retail.domains.sales.invoice_totals.ensure_all_transaction_totals_fields",
 	"retail.domains.purchase.selling_price.ensure_purchase_selling_price_fields",
 	"retail.van_sales_setup.ensure_van_sales_metadata",

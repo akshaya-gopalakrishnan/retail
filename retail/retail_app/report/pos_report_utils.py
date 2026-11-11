@@ -339,8 +339,36 @@ def pos_item_wise_sales(filters):
         value = str(filters.get(field) or "").strip().lower()
         if value:
             rows[:] = [row for row in rows if value in str(row.get(field) or "").lower()]
-    return report_result(rows, item_sales_columns(), ['item_code', 'item_name', 'item_group', 'brand', 'warehouse',
+    result = report_result(rows, item_sales_columns(), ['item_code', 'item_name', 'item_group', 'brand', 'warehouse',
                                                       'barcode', 'serial_no', 'batch_no', 'serial_and_batch_bundle'])
+    columns = result[0]
+    discount_index = next(i for i, column in enumerate(columns) if column['fieldname'] == 'discount')
+    columns.insert(discount_index + 1, {
+        'label': _('Promotion Discount'), 'fieldname': 'promotion_discount_amounts',
+        'fieldtype': 'Currency', 'width': 160,
+    })
+    columns.insert(discount_index + 2, {
+        'label': _('Total Discount'), 'fieldname': 'total_discount',
+        'fieldtype': 'Currency', 'width': 160,
+    })
+    # Sum saved promotion amounts for this report's display only.
+    # Leave revenue and profit unchanged.
+    promotion_discount_total = 0
+    for row in result[1]:
+        if not row.get('is_total_row'):
+            promotion_discount = sum(flt(value) for value in
+                str(row.get('promotion_discount_amounts') or '').split(','))
+            promotion_discount_total += promotion_discount
+            row.promotion_discount_amounts = promotion_discount
+            row.total_discount = (None if row.get('discount') is None
+                else flt(row.discount) + promotion_discount)
+    for row in result[1]:
+        if row.get('is_total_row'):
+            row.promotion_discount_amounts = promotion_discount_total
+            members = [member for member in result[1] if not member.get('is_total_row')]
+            row.total_discount = (None if any(member.total_discount is None for member in members)
+                else sum(member.total_discount for member in members))
+    return result
 
 
 def enrich_pos_item_identity(rows):
