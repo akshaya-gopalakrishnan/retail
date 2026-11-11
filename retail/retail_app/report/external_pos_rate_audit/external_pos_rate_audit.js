@@ -27,3 +27,12 @@ frappe.query_reports["External POS Rate Audit"] = {
 		});
 	},
 };
+
+{
+ const settings = frappe.query_reports["External POS Rate Audit"];
+ const previous = settings.onload;
+ settings.onload = async function(report) {
+  window.retail_setup_pos_printing(report);
+  if (previous) return previous.call(this, report);
+ };
+}

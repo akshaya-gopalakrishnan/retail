@@ -1,0 +1,31 @@
+{%
+ const settings = typeof print_settings === "undefined" ? {} : print_settings;
+ const escape = value => frappe.utils.escape_html(String(value == null ? "" : value));
+ const selected = columns.filter(col => col.fieldname && col.fieldname !== "_check");
+ const bands = [];
+ const anchor = selected[0];
+ for (let i = 1; i < selected.length; i += 7) bands.push([anchor, ...selected.slice(i, i + 7)]);
+ if (selected.length === 1) bands.push(selected);
+ const numeric = col => ["Currency", "Float", "Int", "Percent"].includes(col.fieldtype);
+%}
+<style>@page { size: A4 {%= settings.orientation === "Portrait" ? "portrait" : "landscape" %}; margin: 10mm; }</style>
+<h2 class="pos-report-title">{%= escape(__(report.report_name)) %}</h2>
+{% if (settings.include_filters !== false) { %}
+<div class="pos-report-filters">
+{% for (const [key, value] of Object.entries(report.get_filter_values())) { %}
+{% if (value !== null && value !== "" && value !== undefined) { %}
+{% const filter = report.get_filter(key); %}
+<span><strong>{%= escape(__(filter?.df?.label || key)) %}:</strong> {%= escape(Array.isArray(value) ? value.join(", ") : value) %}</span>
+{% } %}{% } %}
+</div>{% } %}
+{% for (const band of bands) { %}
+<table class="pos-report-table"><thead><tr>{% for (const col of band) { %}<th class="{%= numeric(col) ? 'number' : '' %}">{%= escape(__(col.label || col.name || col.fieldname)) %}</th>{% } %}</tr></thead>
+<tbody>{% for (const row of data) { %}<tr class="{%= row.is_total_row ? 'total' : '' %}">
+{% for (const col of band) { %}<td class="{%= numeric(col) ? 'number' : '' %}">
+{% const raw = row[col.fieldname]; %}
+{% if (raw == null) { %}—{% } else if (numeric(col)) { %}{%= escape(format_number(raw, null, col.fieldtype === "Int" ? 0 : (col.precision ?? 2))) %}{%= col.fieldtype === "Percent" ? "%" : "" %}
+{% } else if (col.fieldtype === "Date" && raw) { %}{%= escape(frappe.datetime.str_to_user(raw)) %}
+{% } else { %}{%= escape(raw) %}{% } %}</td>{% } %}</tr>{% } %}
+{% if (!data.length) { %}<tr><td colspan="{%= band.length %}">{%= __("No data for the selected filters.") %}</td></tr>{% } %}
+</tbody></table>{% } %}
+<div class="pos-report-footer">{%= __("Printed by") %}: {%= escape(frappe.session.user) %} · {%= escape(frappe.datetime.now_datetime()) %}</div>

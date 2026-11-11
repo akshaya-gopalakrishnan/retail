@@ -6,3 +6,12 @@ frappe.query_reports["POS Settlement Audit"] = {
         {fieldname: "customer", label: __("Customer"), fieldtype: "Link", options: "Customer"}
     ]
 };
+
+{
+ const settings = frappe.query_reports["POS Settlement Audit"];
+ const previous = settings.onload;
+ settings.onload = async function(report) {
+  window.retail_setup_pos_printing(report);
+  if (previous) return previous.call(this, report);
+ };
+}

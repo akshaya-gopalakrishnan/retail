@@ -1,0 +1,22 @@
+@page { size: A4 portrait; margin: 12mm; }
+.print-format { font-size: 10pt; padding: 0; }
+.pos-heading { color: #245a91; border-bottom: 2px solid #245a91; padding-bottom: 8px; }
+.pos-meta, .pos-table { width: 100%; border-collapse: collapse; margin: 12px 0; table-layout: fixed; }
+.pos-meta th { width: 38%; background: #f1f5f9; text-align: left; }
+.pos-meta th, .pos-meta td, .pos-table th, .pos-table td { border: 1px solid #d7dee7; padding: 6px; overflow-wrap: anywhere; }
+.pos-table th { background: #2d6dc4 !important; color: white !important; }
+.pos-table thead { display: table-header-group; }
+.pos-table tr, .pos-meta tr { page-break-inside: avoid; }
+.number { text-align: right; }
+.pos-signatures { margin-top: 25px; display: flex; justify-content: space-between; }
+
+.pos-details th { width: 20%; }
+.pos-details td { width: 30%; }
+.pos-totals { width: 55%; margin-left: auto; }
+
+.print-format .pos-meta th, .print-format .pos-meta td { padding: 4px !important; }
+
+/* Match the PDF page margins in Desk preview. */
+@media screen {
+ .print-format { padding: 12mm; box-sizing: border-box; }
+}

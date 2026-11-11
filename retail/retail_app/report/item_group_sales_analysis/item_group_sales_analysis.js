@@ -62,3 +62,12 @@ frappe.query_reports["Item Group Sales Analysis"] = {
 		},
 	],
 };
+
+{
+ const settings = frappe.query_reports["Item Group Sales Analysis"];
+ const previous = settings.onload;
+ settings.onload = async function(report) {
+  window.retail_setup_pos_printing(report);
+  if (previous) return previous.call(this, report);
+ };
+}
