@@ -65,7 +65,8 @@
 		clearTimeout(state.timer);
 		state.generation++;
 		render(frm);
-		state.timer = setTimeout(() => refresh(frm), 450);
+		const delay = ["Purchase Receipt", "Purchase Invoice"].includes(frm.doc.doctype) ? 1000 : 450;
+		state.timer = setTimeout(() => refresh(frm), delay);
 	}
 
 	async function refresh(frm) {
@@ -74,6 +75,14 @@
 		// Coalesce edits made while those requests are still completing.
 		if (["Purchase Receipt", "Purchase Invoice"].includes(frm.doc.doctype)) await frappe.after_ajax();
 		if (generation !== state.generation) return;
+		// after_ajax can release between two native field handlers. Require an
+		// idle interval before advisory reads join the global AJAX chain.
+		if (["Purchase Receipt", "Purchase Invoice"].includes(frm.doc.doctype) &&
+			(frappe.request?.ajax_count || (frm.doc.items || []).some(row =>
+				row.__retail_vat_syncing || row.__retail_sell_price_syncing) || frm.__quick_receipt?.pending)) {
+			state.timer = setTimeout(() => refresh(frm), 250);
+			return;
+		}
 		state.comparisons = {};
 		if (!frm.doc.company || !frm.doc.supplier) {
 			state.message = __("Select a company and supplier to compare purchase rates.");

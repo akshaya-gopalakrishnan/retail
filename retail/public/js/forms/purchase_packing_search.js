@@ -138,7 +138,18 @@
 					.find(field => field?.$input?.[0] === input && field.df.options === "Item");
 				window.retail.purchase_packing_search.bind(control, async choice => {
 					const row = gridRow.doc;
-					await control.set_value(choice.item_code);
+					// Match native barcode entry and Quick Entry: an empty row can
+					// supply its selected packing to the initial native item lookup.
+					// Existing rows keep their normal item/UOM transition behavior.
+					const seed = !row.item_code && choice.barcode && !frm.doc.is_internal_supplier;
+					const previous = {uom: row.uom, barcode: row.barcode};
+					if (seed) Object.assign(row, {uom: choice.uom, barcode: choice.barcode});
+					try {
+						await control.set_value(choice.item_code);
+					} catch (error) {
+						if (seed && !row.item_code) Object.assign(row, previous);
+						throw error;
+					}
 					while (row.__retail_vat_syncing || row.__retail_sell_price_syncing) await new Promise(resolve => setTimeout(resolve, 16));
 					await frappe.model.set_value(row.doctype, row.name, "uom", choice.uom);
 					row.barcode = choice.barcode || "";
