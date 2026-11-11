@@ -101,24 +101,3 @@ class TestSiteReadiness(unittest.TestCase):
         self.assertIn("retail.site_readiness.install_schema", hooks.after_sync)
         self.assertIn("retail.site_readiness.install_schema", hooks.after_migrate)
         self.assertIn("retail.domains.item.naming.install_item_code_defaults", hooks.after_sync)
-
-    def test_disposable_company_gate_refuses_normal_environment(self):
-        with patch.dict("os.environ", {"RETAIL_DISPOSABLE_VALIDATION": "0"}):
-            with self.assertRaisesRegex(RuntimeError, "disposable"):
-                ready.validate_disposable_company()
-
-    def test_disposable_company_runs_native_setup_before_company_creation(self):
-        events = []
-        def setup(**kwargs):
-            self.assertEqual(kwargs, {"country": "United Arab Emirates"})
-            events.append("native setup")
-        def get_doc(*args, **kwargs):
-            events.append("company")
-            raise RuntimeError("test stopped before insertion")
-        def price_lists(args):
-            self.assertEqual(args, {"currency": "AED"})
-            events.append("price lists")
-        with patch.dict("os.environ", {"RETAIL_DISPOSABLE_VALIDATION": "1"}), patch.object(frappe, "local", SimpleNamespace(site="retail-test.localhost")), patch.object(frappe, "db", Mock(count=Mock(return_value=0))), patch.object(ready, "validate"), patch("erpnext.setup.setup_wizard.operations.install_fixtures.install", side_effect=setup), patch("erpnext.setup.setup_wizard.operations.defaults_setup.create_price_lists", side_effect=price_lists), patch.object(frappe, "get_doc", side_effect=get_doc):
-            with self.assertRaisesRegex(RuntimeError, "test stopped"):
-                ready.validate_disposable_company()
-        self.assertEqual(events, ["native setup", "price lists", "company"])

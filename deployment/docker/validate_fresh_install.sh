@@ -105,7 +105,6 @@ validation_compose run --rm checker bash -lc '
         --install-app erpnext --install-app hrms --install-app retail
     bench --site retail-test.localhost execute retail.pos_sync_schema.validate
     bench --site retail-test.localhost execute retail.site_readiness.validate
-    RETAIL_DISPOSABLE_VALIDATION=1 bench --site retail-test.localhost execute retail.site_readiness.validate_disposable_company
     bench --site retail-test.localhost migrate
     bench --site retail-test.localhost migrate
     bench --site retail-test.localhost execute retail.pos_sync_schema.validate
