@@ -28,6 +28,11 @@ SOURCES = {
 	},
 }
 
+POS_DOCTYPES = (
+	"POS Invoice", "POS Profile", "POS Branch Counter", "POS Cashier Shift",
+	"POS Counter Session", "POS Opening Entry", "POS Closing Entry",
+)
+
 
 def editable_html(source):
 	"""Inline our shared layout and use the print renderer's letterhead context."""
@@ -173,8 +178,10 @@ def packaged_layout(doctype):
 def ensure_editable_print_formats():
 	if not frappe.db.table_exists("Print Format"):
 		return
-	for doctype, source_name in SOURCES.items():
-		if not frappe.db.exists("Print Format", source_name):
+	for doctype, source_name in {**SOURCES, **{dt: None for dt in POS_DOCTYPES}}.items():
+		if not source_name and not frappe.db.exists("DocType", doctype):
+			continue
+		if source_name and not frappe.db.exists("Print Format", source_name):
 			continue
 		name = f"{doctype} - A4"
 		previous_name = f"{doctype} - Editable"
@@ -182,8 +189,11 @@ def ensure_editable_print_formats():
 			frappe.rename_doc("Print Format", previous_name, name, force=True)
 
 		if not frappe.db.exists("Print Format", name):
-			source = frappe.get_doc("Print Format", source_name)
-			target = frappe.copy_doc(source)
+			source = frappe.get_doc("Print Format", source_name) if source_name else None
+			target = frappe.copy_doc(source) if source else frappe.get_doc({
+				"doctype": "Print Format", "doc_type": doctype, "module": "Retail-app",
+				"print_format_type": "Jinja",
+			})
 			# The exported source's identifier belongs to that record. Frappe
 			# may copy it from older fields that did not set no_copy.
 			target.custom_document_code = None

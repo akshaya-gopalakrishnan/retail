@@ -1,0 +1,12 @@
+.print-format { font-size: 9pt; padding: 0; }
+.pos-report-title { color: #245a91; border-bottom: 2px solid #245a91; padding-bottom: 8px; }
+.pos-report-filters { margin: 10px 0; }
+.pos-report-filters span { display: inline-block; margin-right: 18px; }
+.pos-report-table { width: 100%; border-collapse: collapse; table-layout: fixed; margin: 12px 0; }
+.pos-report-table th, .pos-report-table td { border: 1px solid #d7dee7; padding: 5px; overflow-wrap: anywhere; word-wrap: break-word; }
+.pos-report-table th { background: #2d6dc4 !important; color: #fff !important; }
+.pos-report-table thead { display: table-header-group; }
+.pos-report-table tr { page-break-inside: avoid; }
+.pos-report-table .total { font-weight: bold; background: #edf3fa; }
+.pos-report-table .number { text-align: right; }
+.pos-report-footer { margin-top: 12px; font-size: 8pt; color: #666; }

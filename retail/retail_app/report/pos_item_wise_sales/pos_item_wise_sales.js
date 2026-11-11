@@ -7,3 +7,12 @@ frappe.query_reports["POS Item-wise Sales"] = {
 		{ fieldname: "serial_and_batch_bundle", label: __("Serial and Batch Bundle"), fieldtype: "Link", options: "Serial and Batch Bundle" },
 	]),
 };
+
+{
+ const settings = frappe.query_reports["POS Item-wise Sales"];
+ const previous = settings.onload;
+ settings.onload = async function(report) {
+  window.retail_setup_pos_printing(report);
+  if (previous) return previous.call(this, report);
+ };
+}

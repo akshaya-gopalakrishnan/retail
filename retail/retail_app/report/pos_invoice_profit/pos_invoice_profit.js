@@ -16,3 +16,12 @@ frappe.query_reports["POS Invoice Profit"] = {
 		{ fieldname: "pos_invoice", label: __("POS Invoice"), fieldtype: "Link", options: "POS Invoice" },
 	],
 };
+
+{
+ const settings = frappe.query_reports["POS Invoice Profit"];
+ const previous = settings.onload;
+ settings.onload = async function(report) {
+  window.retail_setup_pos_printing(report);
+  if (previous) return previous.call(this, report);
+ };
+}

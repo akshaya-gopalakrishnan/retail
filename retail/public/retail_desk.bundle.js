@@ -31,3 +31,5 @@ window.retail = window.retail || {};
 window.retail.purchase_grid_defaults = Object.fromEntries(
 	["Purchase Order", "Purchase Invoice", "Purchase Receipt"].map(doctype => [doctype, gridDefaults[doctype]])
 );
+
+import "./js/reports/pos_printing.js";

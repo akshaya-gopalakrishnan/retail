@@ -11,3 +11,12 @@ frappe.query_reports["POS Payment Mode Summary"] = {
 		return filter;
 	}),
 };
+
+{
+ const settings = frappe.query_reports["POS Payment Mode Summary"];
+ const previous = settings.onload;
+ settings.onload = async function(report) {
+  window.retail_setup_pos_printing(report);
+  if (previous) return previous.call(this, report);
+ };
+}

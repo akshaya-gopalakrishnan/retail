@@ -5,12 +5,16 @@ from pathlib import Path
 import frappe
 from frappe import _
 from frappe.desk.query_report import get_report_doc
+from retail.retail_app.report.pos_report_utils import POS_REPORTS
+
+POS_PRINT_REPORTS = (*POS_REPORTS, "POS Invoice Profit", "POS Settlement Audit", "Counter Performance")
 
 
 REPORT_FORMATS = {
 	"Daily Sales Summary": "Daily Sales Summary - A4",
 	"Accounts Receivable": "Accounts Receivable - A4",
 	"Accounts Payable": "Accounts Payable - A4",
+	**{name: f"{name} - A4" for name in POS_PRINT_REPORTS},
 }
 
 
@@ -21,7 +25,7 @@ def ensure_report_print_formats():
 	for report_name, format_name in REPORT_FORMATS.items():
 		if not frappe.db.exists("Report", report_name) or frappe.db.exists("Print Format", format_name):
 			continue
-		slug = frappe.scrub(report_name)
+		slug = "pos_report" if report_name in POS_PRINT_REPORTS else frappe.scrub(report_name)
 		frappe.get_doc({
 			"doctype": "Print Format",
 			"name": format_name,
