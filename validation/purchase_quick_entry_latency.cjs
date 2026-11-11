@@ -56,7 +56,7 @@ let socket;
     await wait('window.cur_frm?.doc?.doctype === "Purchase Receipt" && window.retail?.purchase_packing_search');
 
     const results = [];
-    for (const latency of [0, 150]) for (const dt of ['Purchase Receipt', 'Purchase Invoice']) {
+    for (const latency of (process.env.RETAIL_LATENCIES || '0,150').split(',').map(Number)) for (const dt of ['Purchase Receipt', 'Purchase Invoice']) {
         await call('Network.emulateNetworkConditions', {offline:false,latency:0,downloadThroughput:-1,uploadThroughput:-1});
         await evaluate(`if(window.cur_frm)cur_frm.doc.__unsaved=0;frappe.new_doc(${JSON.stringify(dt)});true`);
         await wait(`window.cur_frm?.doc?.doctype === ${JSON.stringify(dt)} && cur_frm.is_new()`);
@@ -100,6 +100,25 @@ let socket;
             console.log(JSON.stringify(results[results.length-1]));
         }
         await evaluate('testEntry.dialog.hide();true');
+        const full = await evaluate(`(async()=>{
+            const header={supplier:cur_frm.doc.supplier,set_warehouse:cur_frm.doc.set_warehouse};
+            cur_frm.doc.__unsaved=0;
+            await frappe.new_doc(${JSON.stringify(dt)});
+            await cur_frm.set_value(header);
+            await new Promise(resolve=>frappe.after_ajax(resolve));
+            await new Promise(resolve=>setTimeout(resolve,1000));
+            performance.clearResourceTimings();
+            const start=performance.now();
+            const row=cur_frm.doc.items.find(r=>!r.item_code)||cur_frm.add_child('items');
+            await frappe.model.set_value(row.doctype,row.name,'item_code','I-54');
+            await new Promise(resolve=>frappe.after_ajax(resolve));
+            const ms=Math.round(performance.now()-start);
+            await new Promise(resolve=>setTimeout(resolve,1000));
+            await retail.transaction_items.flushVatTaxRows(cur_frm);
+            return {ms,rows:cur_frm.doc.items.map(r=>({item:r.item_code,uom:r.uom,factor:r.conversion_factor,qty:r.qty,rate:r.rate,amount:r.amount,net_amount:r.net_amount,cur_sell:r.custom_cur_sell_rate})),requests:performance.getEntriesByType('resource').filter(r=>r.name.includes('/api/')).map(r=>({url:r.name.replace(location.origin,''),ms:Math.round(r.duration)}))};
+        })()`);
+        results.push({doctype:dt,latency,label:'full-form',...full});
+        console.log(JSON.stringify(results[results.length-1]));
     }
     fs.writeFileSync(process.env.RETAIL_PROFILE_OUTPUT || '/tmp/purchase-quick-entry-latency.json',JSON.stringify({results,errors},null,2));
     assert.deepEqual(errors,[]);

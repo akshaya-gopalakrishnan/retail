@@ -330,6 +330,7 @@
 			await new Promise(resolve => setTimeout(resolve, 16));
 		}
 		clearTimeout(frm.__retail_vat_tax_rows_timer);
+		frm.__retail_vat_tax_rows_generation = (frm.__retail_vat_tax_rows_generation || 0) + 1;
 		await syncVatTaxRows(frm);
 	};
 
@@ -337,8 +338,16 @@
 		if (!canSyncVatTaxRows(frm)) return;
 
 		clearTimeout(frm.__retail_vat_tax_rows_timer);
-		frm.__retail_vat_tax_rows_timer = setTimeout(() => {
-			syncVatTaxRows(frm);
+		const generation = frm.__retail_vat_tax_rows_generation = (frm.__retail_vat_tax_rows_generation || 0) + 1;
+		frm.__retail_vat_tax_rows_timer = setTimeout(async () => {
+			if (["Purchase Receipt", "Purchase Invoice"].includes(frm.doc.doctype)) {
+				// Item/UOM/qty handlers make several native pricing requests. Wait
+				// for those callbacks before sending the entire document for VAT;
+				// intermediate VAT calls otherwise extend every after_ajax barrier.
+				await frappe.after_ajax();
+				if (generation !== frm.__retail_vat_tax_rows_generation) return;
+			}
+			await syncVatTaxRows(frm);
 		}, 200);
 	}
 
