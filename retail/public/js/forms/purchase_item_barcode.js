@@ -6,6 +6,14 @@
 		if (!codes.length) return;
 		const entry = frm.__quick_receipt;
 		const cached = entry?.dialog.$wrapper.is(":visible") ? entry.items : new Map();
+		if (frm.__retail_purchase_action && window.retail?.transaction_items?.preparedPurchaseItem) {
+			const prepared = await Promise.all(codes.filter(code => !cached.has(code)).map(code =>
+				window.retail.transaction_items.preparedPurchaseItem(frm, code)));
+			if (generation !== frm.__retail_barcode_generation) return;
+			for (const item of prepared) {
+				if (item && Object.hasOwn(item, "custom_barcode")) cached.set(item.name, item);
+			}
+		}
 		const missing = codes.filter(code => !cached.has(code));
 		const items = missing.length ? await frappe.db.get_list("Item", {
 			fields: ["name", "custom_barcode"], filters: { name: ["in", missing] }, limit: missing.length,

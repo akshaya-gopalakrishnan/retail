@@ -223,6 +223,10 @@
 	frappe.ui.form.on("Purchase Taxes and Charges", taxHandlers());
 
 	function scheduleVatTaxRowsSync(frm) {
+		if (["Purchase Receipt", "Purchase Invoice"].includes(frm.doc.doctype)) {
+			queueVatTaxRowsSync(frm);
+			return;
+		}
 		[250, 700].forEach((delay) => {
 			setTimeout(() => queueVatTaxRowsSync(frm), delay);
 		});
@@ -325,16 +329,81 @@
 	// Quick Entry waits for the same VAT/totals pipeline before displaying final totals or saving.
 	window.retail = window.retail || {};
 	window.retail.transaction_items = window.retail.transaction_items || {};
+	const purchaseForms = ["Purchase Receipt", "Purchase Invoice"];
+	const purchaseReadKey = request => JSON.stringify([request.method,
+		Object.keys(request.args || {}).sort().filter(key => request.args[key] != null)
+			.map(key => [key, request.args[key]])]);
+	// Keep read results for one native field-handler chain, including nested
+	// rate/UOM handlers. Release them when that chain finishes, never by TTL.
+	function installPurchaseActionReads(frm) {
+		const manager = frm.script_manager;
+		if (!manager || manager.__retail_purchase_actions) return;
+		manager.__retail_purchase_actions = true;
+		const trigger = manager.trigger;
+		manager.trigger = function (event, cdt, cdn, ...args) {
+			if (Number(frm.doc.docstatus || 0) !== 0 || frm.__quick_receipt?.dialog?.$wrapper.is(":visible") ||
+				cdt !== frm.doc.doctype + " Item" || !locals[cdt]?.[cdn]?.item_code ||
+				!["item_code", "uom", "qty", "rate", "price_list_rate", "conversion_factor",
+					"item_tax_template", "tax_rate", "net_rate", "amount",
+					"custom_rate_including_vat", "custom_amount_including_vat"].includes(event)) {
+				return trigger.call(this, event, cdt, cdn, ...args);
+			}
+			const action = frm.__retail_purchase_action ||= {reads: new Map(), bundles: new Map(), items: new Map(), active: 0};
+			action.active++;
+			if (event === "item_code") {
+				const row = locals[cdt][cdn];
+				const args = {item_code: row.item_code, parent_doctype: frm.doc.doctype,
+					uom: row.uom, transaction_type: frm.doc.transaction_type, item_tax_template: row.item_tax_template};
+				const key = purchaseReadKey({args});
+				if (!action.bundles.has(key)) {
+					// Use the existing permission-checked Quick Entry read bundle.
+					// Native handlers still own every field write and calculation.
+					action.bundles.set(key, Promise.resolve().then(() => frappe.call({
+						method: "retail.domains.purchase.quick_entry.item_data", args,
+					})).then(result => {
+						const item = result.message?.item;
+						if (item?.name === row.item_code) action.items.set(item.name, item);
+						return result.message?.lookups || [];
+					}, () => []));
+				}
+			}
+			let result;
+			try {
+				result = trigger.call(this, event, cdt, cdn, ...args);
+			} catch (error) {
+				finish();
+				throw error;
+			}
+			return Promise.resolve(result).finally(finish);
+			function finish() {
+				if (--action.active === 0 && frm.__retail_purchase_action === action) {
+					delete frm.__retail_purchase_action;
+				}
+			}
+		};
+	}
+	purchaseForms.forEach(doctype => frappe.ui.form.on(doctype, {refresh: installPurchaseActionReads}));
+	window.retail.transaction_items.preparedPurchaseItem = async (frm, itemCode) => {
+		const action = frm.__retail_purchase_action;
+		if (!action) return null;
+		await Promise.all(action.bundles.values());
+		return action.items.get(itemCode) || null;
+	};
 	// Share identical reads only while they are in flight. The next edit always
 	// reads fresh data; rejected requests must also be retried normally.
 	window.retail.transaction_items.purchaseRead = function (frm, request) {
 		if (!["Purchase Receipt", "Purchase Invoice"].includes(frm?.doc?.doctype)) return frappe.call(request);
-		const pending = frm.__retail_purchase_reads ||= new Map();
-		const args = request.args || {};
-		const key = JSON.stringify([request.method, Object.keys(args).sort()
-			.filter(key => args[key] != null).map(key => [key, args[key]])]);
+		const action = frm.__retail_purchase_action;
+		const pending = action?.reads || (frm.__retail_purchase_reads ||= new Map());
+		const key = purchaseReadKey(request);
 		if (!pending.has(key)) {
-			const read = Promise.resolve().then(() => frappe.call(request)).finally(() => pending.delete(key));
+			const read = Promise.all([...(action?.bundles?.values() || [])]).then(bundles => {
+				const prepared = bundles.flat().find(result => purchaseReadKey(result) === key);
+				return prepared ? {message: prepared.message} : frappe.call(request);
+			}).then(value => {
+				if (!action) pending.delete(key);
+				return value;
+			}, error => { pending.delete(key); throw error; });
 			pending.set(key, read);
 		}
 		return pending.get(key);
@@ -360,6 +429,10 @@
 				// intermediate VAT calls otherwise extend every after_ajax barrier.
 				await frappe.after_ajax();
 				if (generation !== frm.__retail_vat_tax_rows_generation) return;
+				if (frm.__retail_purchase_action?.active || frm.__quick_receipt?.pending) {
+					queueVatTaxRowsSync(frm);
+					return;
+				}
 			}
 			await syncVatTaxRows(frm);
 		}, 200);

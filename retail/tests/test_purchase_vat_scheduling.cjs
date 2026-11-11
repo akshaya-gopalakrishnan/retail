@@ -29,6 +29,55 @@ test('purchase reads share pending identical inputs, refresh after completion, a
 });
 
 for (const doctype of ['Purchase Receipt', 'Purchase Invoice']) {
+ test(doctype + ': VAT summary waits for native actions and Quick Entry, while explicit flush still works', async () => {
+  const handlers={}, timers=[], calls=[];
+  const frappe={ui:{form:{on(dt,events){handlers[dt]={...handlers[dt],...events};}}},after_ajax:async()=>{},
+   async call(request){calls.push(request);return {message:{tax_rows:[],item_tax_rates:{}}};}};
+  const window={frappe};
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../public/js/forms/transaction_items.js'),'utf8'),
+   {window,frappe,locals:{},cint:Number,flt:Number,setTimeout:fn=>{timers.push(fn);return fn;},clearTimeout(){},__:s=>s});
+  const frm={doc:{doctype,docstatus:0,items:[],taxes:[]},fields_dict:{taxes:{}},refresh_field(){},
+   cscript:{async calculate_taxes_and_totals(){}},__retail_purchase_action:{active:1}};
+  handlers[doctype+' Item'].rate(frm,doctype+' Item','missing');
+  await timers.pop()();assert.equal(calls.length,0,'No intermediate VAT request inside native handlers');
+  delete frm.__retail_purchase_action;frm.__quick_receipt={pending:1};
+  await timers.pop()();assert.equal(calls.length,0,'No intermediate VAT request inside Quick Entry queue');
+  await window.retail.transaction_items.flushVatTaxRows(frm);
+  assert.equal(calls.length,1,'Save/settle flush is allowed even while its queue action is pending');
+  frm.__quick_receipt.pending=0;
+  await timers.pop()();assert.equal(calls.length,1,'Flushing invalidates the deferred summary');
+ });
+ test(doctype + ': native action reuses bundled reads and releases them after nested handlers and errors', async () => {
+  const handlers={}, calls=[], row={item_code:'A',uom:'Box',item_tax_template:'VAT5'};
+  const request={method:'retail.domains.transactions.vat.get_transaction_item_vat_rate',
+   args:{item_code:'A',child_doctype:doctype+' Item',parent_doctype:doctype,item_tax_template:'VAT5'}};
+  const frappe={ui:{form:{on(dt,events){handlers[dt]={...handlers[dt],...events};}}},
+   async call(options){calls.push(options);return {message:{item:{name:'A',has_serial_no:1,has_batch_no:0},lookups:[{...request,message:5}]}};}};
+  const window={frappe}, locals={[doctype+' Item']:{row}};
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../public/js/forms/transaction_items.js'),'utf8'),
+   {window,frappe,locals,cint:Number,flt:Number,setTimeout,clearTimeout,__:s=>s});
+  let fail=false, reads=0;
+  const frm={doc:{doctype},script_manager:{async trigger(event,cdt,cdn){
+   assert.equal(this,frm.script_manager,'Preserve native receiver');
+   assert.equal((await window.retail.transaction_items.preparedPurchaseItem(frm,'A')).name,'A');
+   assert.equal((await window.retail.transaction_items.purchaseRead(frm,request)).message,5);reads++;
+   if(event==='item_code') await this.trigger('rate',cdt,cdn);
+   if(fail) throw new Error('native failure');
+   return 'native result';
+  }}};
+  handlers[doctype].refresh(frm);
+  const wrapped=frm.script_manager.trigger;handlers[doctype].refresh(frm);
+  assert.equal(frm.script_manager.trigger,wrapped,'Install once');
+  assert.equal(await wrapped.call(frm.script_manager,'item_code',doctype+' Item','row'),'native result');
+  assert.equal(reads,2);assert.equal(calls.length,1,'One bundle serves sequential and nested reads');
+  assert.equal(frm.__retail_purchase_action,undefined);
+  assert.equal(await window.retail.transaction_items.preparedPurchaseItem(frm,'A'),null,'No metadata survives the action');
+  await wrapped.call(frm.script_manager,'item_code',doctype+' Item','row');
+  assert.equal(calls.length,2,'Next action gets a fresh bundle');
+  fail=true;
+  await assert.rejects(wrapped.call(frm.script_manager,'item_code',doctype+' Item','row'),/native failure/);
+  assert.equal(frm.__retail_purchase_action,undefined,'Failure releases action state');
+ });
  test(doctype + ': coalesce VAT refreshes behind native requests and invalidate them on flush', async () => {
   const handlers = {}, timers = [], requests = [], waiting = [];
   let calculations = 0;

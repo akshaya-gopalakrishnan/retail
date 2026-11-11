@@ -7406,6 +7406,10 @@
       frappe.ui.form.on("Sales Taxes and Charges", taxHandlers());
       frappe.ui.form.on("Purchase Taxes and Charges", taxHandlers());
       function scheduleVatTaxRowsSync(frm) {
+        if (["Purchase Receipt", "Purchase Invoice"].includes(frm.doc.doctype)) {
+          queueVatTaxRowsSync(frm);
+          return;
+        }
         [250, 700].forEach((delay) => {
           setTimeout(() => queueVatTaxRowsSync(frm), delay);
         });
@@ -7501,15 +7505,102 @@
       }
       window.retail = window.retail || {};
       window.retail.transaction_items = window.retail.transaction_items || {};
+      const purchaseForms = ["Purchase Receipt", "Purchase Invoice"];
+      const purchaseReadKey = (request) => JSON.stringify([
+        request.method,
+        Object.keys(request.args || {}).sort().filter((key) => request.args[key] != null).map((key) => [key, request.args[key]])
+      ]);
+      function installPurchaseActionReads(frm) {
+        const manager = frm.script_manager;
+        if (!manager || manager.__retail_purchase_actions)
+          return;
+        manager.__retail_purchase_actions = true;
+        const trigger = manager.trigger;
+        manager.trigger = function(event, cdt, cdn, ...args) {
+          var _a, _b, _c, _d;
+          if (Number(frm.doc.docstatus || 0) !== 0 || ((_b = (_a = frm.__quick_receipt) == null ? void 0 : _a.dialog) == null ? void 0 : _b.$wrapper.is(":visible")) || cdt !== frm.doc.doctype + " Item" || !((_d = (_c = locals[cdt]) == null ? void 0 : _c[cdn]) == null ? void 0 : _d.item_code) || ![
+            "item_code",
+            "uom",
+            "qty",
+            "rate",
+            "price_list_rate",
+            "conversion_factor",
+            "item_tax_template",
+            "tax_rate",
+            "net_rate",
+            "amount",
+            "custom_rate_including_vat",
+            "custom_amount_including_vat"
+          ].includes(event)) {
+            return trigger.call(this, event, cdt, cdn, ...args);
+          }
+          const action = frm.__retail_purchase_action || (frm.__retail_purchase_action = { reads: /* @__PURE__ */ new Map(), bundles: /* @__PURE__ */ new Map(), items: /* @__PURE__ */ new Map(), active: 0 });
+          action.active++;
+          if (event === "item_code") {
+            const row = locals[cdt][cdn];
+            const args2 = {
+              item_code: row.item_code,
+              parent_doctype: frm.doc.doctype,
+              uom: row.uom,
+              transaction_type: frm.doc.transaction_type,
+              item_tax_template: row.item_tax_template
+            };
+            const key = purchaseReadKey({ args: args2 });
+            if (!action.bundles.has(key)) {
+              action.bundles.set(key, Promise.resolve().then(() => frappe.call({
+                method: "retail.domains.purchase.quick_entry.item_data",
+                args: args2
+              })).then((result2) => {
+                var _a2, _b2;
+                const item = (_a2 = result2.message) == null ? void 0 : _a2.item;
+                if ((item == null ? void 0 : item.name) === row.item_code)
+                  action.items.set(item.name, item);
+                return ((_b2 = result2.message) == null ? void 0 : _b2.lookups) || [];
+              }, () => []));
+            }
+          }
+          let result;
+          try {
+            result = trigger.call(this, event, cdt, cdn, ...args);
+          } catch (error) {
+            finish();
+            throw error;
+          }
+          return Promise.resolve(result).finally(finish);
+          function finish() {
+            if (--action.active === 0 && frm.__retail_purchase_action === action) {
+              delete frm.__retail_purchase_action;
+            }
+          }
+        };
+      }
+      purchaseForms.forEach((doctype) => frappe.ui.form.on(doctype, { refresh: installPurchaseActionReads }));
+      window.retail.transaction_items.preparedPurchaseItem = async (frm, itemCode) => {
+        const action = frm.__retail_purchase_action;
+        if (!action)
+          return null;
+        await Promise.all(action.bundles.values());
+        return action.items.get(itemCode) || null;
+      };
       window.retail.transaction_items.purchaseRead = function(frm, request) {
-        var _a;
+        var _a, _b;
         if (!["Purchase Receipt", "Purchase Invoice"].includes((_a = frm == null ? void 0 : frm.doc) == null ? void 0 : _a.doctype))
           return frappe.call(request);
-        const pending = frm.__retail_purchase_reads || (frm.__retail_purchase_reads = /* @__PURE__ */ new Map());
-        const args = request.args || {};
-        const key = JSON.stringify([request.method, Object.keys(args).sort().filter((key2) => args[key2] != null).map((key2) => [key2, args[key2]])]);
+        const action = frm.__retail_purchase_action;
+        const pending = (action == null ? void 0 : action.reads) || (frm.__retail_purchase_reads || (frm.__retail_purchase_reads = /* @__PURE__ */ new Map()));
+        const key = purchaseReadKey(request);
         if (!pending.has(key)) {
-          const read = Promise.resolve().then(() => frappe.call(request)).finally(() => pending.delete(key));
+          const read = Promise.all([...((_b = action == null ? void 0 : action.bundles) == null ? void 0 : _b.values()) || []]).then((bundles) => {
+            const prepared = bundles.flat().find((result) => purchaseReadKey(result) === key);
+            return prepared ? { message: prepared.message } : frappe.call(request);
+          }).then((value) => {
+            if (!action)
+              pending.delete(key);
+            return value;
+          }, (error) => {
+            pending.delete(key);
+            throw error;
+          });
           pending.set(key, read);
         }
         return pending.get(key);
@@ -7528,10 +7619,15 @@
         clearTimeout(frm.__retail_vat_tax_rows_timer);
         const generation = frm.__retail_vat_tax_rows_generation = (frm.__retail_vat_tax_rows_generation || 0) + 1;
         frm.__retail_vat_tax_rows_timer = setTimeout(async () => {
+          var _a, _b;
           if (["Purchase Receipt", "Purchase Invoice"].includes(frm.doc.doctype)) {
             await frappe.after_ajax();
             if (generation !== frm.__retail_vat_tax_rows_generation)
               return;
+            if (((_a = frm.__retail_purchase_action) == null ? void 0 : _a.active) || ((_b = frm.__quick_receipt) == null ? void 0 : _b.pending)) {
+              queueVatTaxRowsSync(frm);
+              return;
+            }
           }
           await syncVatTaxRows(frm);
         }, 200);
@@ -8835,4 +8931,4 @@
     ["Purchase Order", "Purchase Invoice", "Purchase Receipt"].map((doctype) => [doctype, user_grid_view_settings_default[doctype]])
   );
 })();
-//# sourceMappingURL=retail_desk.bundle.2YX5NJ6N.js.map
+//# sourceMappingURL=retail_desk.bundle.KUOUQD5J.js.map
