@@ -141,7 +141,9 @@
 		},
 	});
 	function focusPurchaseRow(frm, cdt, cdn) {
-		if (!editable(frm) || window.cur_frm !== frm || $(".modal:visible").length) return;
+		// A scanner wedge types into whichever input has focus. Leave the cursor
+		// on the barcode field until that scan has finished refreshing the row.
+		if (!editable(frm) || window.cur_frm !== frm || $(".modal:visible").length || frm.__retail_purchase_scan_active) return;
 		clearTimeout(frm.__retail_purchase_focus_timer);
 		// Item selection and barcode scans refresh the row after it is created.
 		// Wait for those callbacks before resolving the live grid row.
@@ -404,7 +406,17 @@
 			const element = this.rows.get(row.name)?.element;
 			element?.addClass("table-success");
 			element?.[0].scrollIntoView({block: "nearest"});
-			focusFirstEditable(element?.[0]);
+			// Searching by name can land on the quantity so it can be edited.
+			// A scan must stay in the barcode box: the next wedge would otherwise
+			// type the barcode into Accepted Qty, then Enter into FOC Qty.
+			if (scan.keepScan) this.focusScan();
+			else focusFirstEditable(element?.[0]);
+		}
+
+		focusScan() {
+			const field = this.dialog?.get_field("scan");
+			field?.set_focus?.();
+			setTimeout(() => field?.set_focus?.(), 0);
 		}
 
 		scan() {
@@ -416,6 +428,7 @@
 			this.dialog.get_field("scan_feedback").$wrapper.empty();
 			// Clear synchronously so Enter followed by change cannot scan twice.
 			field.set_input("");
+			this.focusScan();
 			return this.enqueue(async () => {
 				if (!this.required()) {
 					if (!field.$input.val()) field.set_input(barcode);
@@ -434,8 +447,9 @@
 						}
 						this.noteItem(result);
 						result.row.custom_item_barcode = this.barcode(result.row);
-						await this.present(result.row, {barcode, serial_no: result.row.serial_no});
+						await this.present(result.row, {barcode, serial_no: result.row.serial_no, keepScan: true});
 						this.dialog.get_field("status").$wrapper.text(__("Added barcode: {0}", [barcode]));
+						this.focusScan();
 						return;
 					}
 					const {message} = await frappe.call({method: "retail.domains.item.packing_scan.scan_barcode", args: {search_value: barcode}});
@@ -450,8 +464,9 @@
 					if (message.scale_barcode_type) {
 						frappe.throw(__("Use the full {0} for this scale barcode.", [this.frm.doc.doctype]));
 					}
-					await this.add(message);
+					await this.add(Object.assign({}, message, {keepScan: true}));
 					this.dialog.get_field("status").$wrapper.text(__("Added barcode: {0}", [barcode]));
+					this.focusScan();
 				} catch (error) {
 					if (!field.$input.val()) field.set_input(barcode);
 					throw error;
@@ -675,7 +690,8 @@
 			const element = this.rows.get(row.name)?.element;
 			element?.addClass("table-success");
 			element?.[0].scrollIntoView({block: "nearest"});
-			focusFirstEditable(element?.[0]);
+			if (scan.keepScan) this.focusScan();
+			else focusFirstEditable(element?.[0]);
 		}
 
 		async loadItems() {
