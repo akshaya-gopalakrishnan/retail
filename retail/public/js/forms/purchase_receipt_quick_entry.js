@@ -142,15 +142,12 @@
 	});
 	function focusPurchaseRow(frm, cdt, cdn) {
 		if (!editable(frm) || window.cur_frm !== frm || $(".modal:visible").length) return;
-		const scanning = () => frm.__retail_purchase_scan_active ||
-			document.activeElement === frm.fields_dict.scan_barcode?.$input?.[0];
-		if (scanning()) return;
 		clearTimeout(frm.__retail_purchase_focus_timer);
 		// Item selection and barcode scans refresh the row after it is created.
 		// Wait for those callbacks before resolving the live grid row.
 		frm.__retail_purchase_focus_timer = setTimeout(() => {
 			frappe.after_ajax(() => {
-				if (!editable(frm) || window.cur_frm !== frm || $(".modal:visible").length || scanning()) return;
+				if (!editable(frm) || window.cur_frm !== frm || $(".modal:visible").length) return;
 				const row = frm.fields_dict.items?.grid?.grid_rows_by_docname?.[cdn];
 				if (!row) return;
 				row.toggle_editable_row(true);
@@ -329,8 +326,10 @@
 			// FieldGroup binds Enter to Save on text inputs. This field must scan instead.
 			this.dialog.get_field("scan").$input.off("keypress").on("keydown.quickReceipt", event => {
 				if (!["Enter", "Tab"].includes(event.key)) return;
-				event.preventDefault();
-				event.stopImmediatePropagation();
+				if (event.key === "Enter") {
+					event.preventDefault();
+					event.stopImmediatePropagation();
+				}
 				this.scan();
 			});
 			this.dialog.$wrapper.on("keydown.quickReceipt", event => {
@@ -377,6 +376,37 @@
 			}
 		}
 
+		useFastFill() {
+			// The test harness has no visible dialog. Live Quick Entry does, and that
+			// is the path which used to wait on a chain of item, price and tax calls.
+			return Boolean(window.retail?.purchaseLine && this.lookups && this.dialog?.$wrapper?.is?.(":visible")
+				&& !this.frm.doc.is_internal_supplier && !this.frm.doc.is_return
+				&& Number(this.frm.doc.docstatus || 0) === 0);
+		}
+
+		noteItem(result) {
+			const item = result?.item;
+			if (!item?.name) return;
+			this.items.set(item.name, item);
+			const tracking = this.frm.__retail_purchase_tracking ||= {items: new Map(), generation: 0};
+			tracking.items.set(item.name, item);
+		}
+
+		async present(row, scan = {}) {
+			const frm = this.frm;
+			this.scheduleSync(scan.serial_no ? 3200 : 1000);
+			frm.refresh_field("items");
+			this.render();
+			await this.dialog.set_value("item", "");
+			await this.dialog.set_value("find", "");
+			this.packingChoice = null;
+			await new Promise(resolve => frappe.after_ajax(resolve));
+			const element = this.rows.get(row.name)?.element;
+			element?.addClass("table-success");
+			element?.[0].scrollIntoView({block: "nearest"});
+			focusFirstEditable(element?.[0]);
+		}
+
 		scan() {
 			if (!this.dialog || this.saving || this.submitting) return;
 			const field = this.dialog.get_field("scan");
@@ -392,6 +422,22 @@
 					return;
 				}
 				try {
+					if (this.useFastFill()) {
+						const result = await window.retail.purchaseLine.fill(this.frm, {search_value: barcode, barcode});
+						if (!result?.row) {
+							const text = __("Cannot find Item with barcode {0}", [barcode]);
+							this.dialog.get_field("status").$wrapper.text(text);
+							this.dialog.get_field("scan_feedback").$wrapper.html(
+								`<div class="alert alert-warning" role="alert" aria-live="assertive" style="margin-bottom:8px">${esc(text)}</div>`);
+							field.set_focus();
+							return;
+						}
+						this.noteItem(result);
+						result.row.custom_item_barcode = this.barcode(result.row);
+						await this.present(result.row, {barcode, serial_no: result.row.serial_no});
+						this.dialog.get_field("status").$wrapper.text(__("Added barcode: {0}", [barcode]));
+						return;
+					}
 					const {message} = await frappe.call({method: "retail.domains.item.packing_scan.scan_barcode", args: {search_value: barcode}});
 					if (!message?.item_code) {
 						const text = __("Cannot find Item with barcode {0}", [barcode]);
@@ -404,7 +450,7 @@
 					if (message.scale_barcode_type) {
 						frappe.throw(__("Use the full {0} for this scale barcode.", [this.frm.doc.doctype]));
 					}
-					await this.add(message, {fromScanner: true});
+					await this.add(message);
 					this.dialog.get_field("status").$wrapper.text(__("Added barcode: {0}", [barcode]));
 				} catch (error) {
 					if (!field.$input.val()) field.set_input(barcode);
@@ -558,8 +604,16 @@
 			await window.retail?.transaction_items?.flushVatTaxRows?.(this.frm);
 		}
 
-		async add(scan, {fromScanner = false} = {}) {
+		async add(scan) {
 			if (!this.required()) return;
+			if (this.useFastFill()) {
+				const result = await window.retail.purchaseLine.fill(this.frm, scan);
+				if (!result?.row) frappe.throw(__("Could not load the selected Item."));
+				this.noteItem(result);
+				result.row.custom_item_barcode = this.barcode(result.row);
+				await this.present(result.row, scan);
+				return;
+			}
 			const frm = this.frm;
 			const master = await this.readItem(scan);
 			this.items.set(scan.item_code, master);
@@ -621,8 +675,7 @@
 			const element = this.rows.get(row.name)?.element;
 			element?.addClass("table-success");
 			element?.[0].scrollIntoView({block: "nearest"});
-			if (fromScanner) this.dialog.get_field("scan").set_focus();
-			else focusFirstEditable(element?.[0]);
+			focusFirstEditable(element?.[0]);
 		}
 
 		async loadItems() {

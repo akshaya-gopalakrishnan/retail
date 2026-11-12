@@ -121,7 +121,7 @@
 		const update = scanner.update_table;
 		const setBarcode = scanner.set_barcode;
 		const enabled = () => frm.doc.docstatus === 0 && !frm.doc.is_return && !frm.doc.is_internal_supplier;
-		const applyScan = async function (data, ...args) {
+		scanner.update_table = async function (data, ...args) {
 			if (!enabled() || !data?.barcode || !data.item_code || !data.uom) return update.call(this, data, ...args);
 			const key = data.barcode;
 			let entry = pending.get(key);
@@ -132,26 +132,6 @@
 			} finally {
 				if (--entry.count === 0) pending.delete(key);
 			}
-		};
-		// Native scans mutate the same rows asynchronously. Process each result
-		// in order so a rapid second scan sees the first scan's completed quantity.
-		let queue = Promise.resolve();
-		scanner.update_table = function (data, ...args) {
-			if (!enabled()) return update.call(this, data, ...args);
-			const action = queue.then(async () => {
-				frm.__retail_purchase_scan_active = true;
-				clearTimeout(frm.__retail_purchase_focus_timer);
-				try {
-					return await applyScan.call(this, data, ...args);
-				} finally {
-					frm.__retail_purchase_scan_active = false;
-					if (window.cur_frm === frm && !$(".modal:visible").length) {
-						frm.fields_dict.scan_barcode?.set_focus();
-					}
-				}
-			});
-			queue = action.catch(() => {});
-			return action;
 		};
 		scanner.set_barcode = async function (row, barcode, ...args) {
 			const data = pending.get(barcode);
@@ -168,6 +148,289 @@
 	}
 	window.retail.purchase_packing_search = {bind, installScanner};
 
+	const purchaseParents = ["Purchase Receipt", "Purchase Invoice"];
+	const detailSkip = new Set(["name", "idx", "doctype", "parent", "parentfield", "parenttype", "owner", "creation", "modified", "docstatus"]);
+
+	function lineEligible(frm) {
+		return purchaseParents.includes(frm?.doc?.doctype) && Number(frm.doc.docstatus || 0) === 0
+			&& !frm.doc.is_return && !frm.doc.is_internal_supplier;
+	}
+
+	function lineCandidates(frm, scan) {
+		const uom = scan?.uom;
+		if (!scan?.item_code || !uom) return [];
+		return (frm.doc.items || []).filter(row => row.item_code === scan.item_code && row.uom === uom
+			&& !row.custom_foc_parent && !row.serial_and_batch_bundle && !flt(row.rejected_qty)
+			&& (row.warehouse || "") === (frm.doc.set_warehouse || "")
+			&& (!scan.batch_no || !row.batch_no || row.batch_no === scan.batch_no));
+	}
+
+	function lineMatch(frm, scan) {
+		const rows = lineCandidates(frm, scan);
+		return rows.length === 1 ? rows[0] : null;
+	}
+
+	function money(value) {
+		return flt(value, 2);
+	}
+
+	function applyVatDisplay(row, vatRate) {
+		if (!frappe.meta.has_field(row.doctype, "custom_rate_including_vat")) return;
+		const rate = flt(row.rate);
+		const qty = flt(row.qty);
+		const inclusive = money(rate * (1 + flt(vatRate) / 100));
+		row.custom_rate_including_vat = inclusive;
+		if (frappe.meta.has_field(row.doctype, "custom_amount_including_vat")) {
+			row.custom_amount_including_vat = money(qty * inclusive);
+		}
+		if (frappe.meta.has_field(row.doctype, "custom_vat_amount")) {
+			row.custom_vat_amount = money(qty * rate * flt(vatRate) / 100);
+		}
+	}
+
+	function applySelling(row, scan) {
+		if (!frappe.meta.has_field(row.doctype, "custom_cur_sell_rate")) return;
+		const current = flt(scan.selling_rate);
+		row.custom_cur_sell_rate = current;
+		if (row.custom_upd_sell_price && !flt(row.custom_new_sell_rate)) row.custom_new_sell_rate = current;
+		const exclusive = flt(row.custom_new_sell_rate || row.custom_cur_sell_rate);
+		if (frappe.meta.has_field(row.doctype, "custom_new_sell_incl")) {
+			row.custom_new_sell_incl = money(exclusive * (1 + flt(scan.selling_vat_rate) / 100));
+		}
+		if (!frappe.meta.has_field(row.doctype, "custom_sell_margin")) return;
+		const purchase = flt(row.rate || row.net_rate);
+		const selling = flt(row.custom_new_sell_rate || row.custom_cur_sell_rate);
+		const margin = selling ? selling - purchase : 0;
+		row.custom_sell_margin = money(margin);
+		row.custom_sell_margin_pct = selling ? flt(margin / selling * 100, 3) : 0;
+	}
+
+	function applyVatTax(frm, setup) {
+		if (!setup) return;
+		const managed = row => String(row?.description || "").trim().startsWith("Purchase Tax [");
+		(frm.doc.taxes || []).filter(managed).forEach(row => frappe.model.clear_doc(row.doctype, row.name));
+		frm.doc.taxes = (frm.doc.taxes || []).filter(row => !managed(row));
+		(setup.tax_rows || []).forEach(values => Object.assign(frm.add_child("taxes"), values));
+		Object.entries(setup.item_tax_rates || {}).forEach(([name, itemTaxRate]) => {
+			const item = (frm.doc.items || []).find(row => row.name === name);
+			if (item && item.item_tax_rate !== undefined) item.item_tax_rate = itemTaxRate || "{}";
+		});
+		frm.refresh_field("taxes");
+	}
+
+	function rememberItem(frm, item) {
+		if (!item?.name) return;
+		const state = frm.__retail_purchase_tracking ||= {items: new Map(), generation: 0};
+		state.items.set(item.name, item);
+	}
+
+	function rememberBarcode(frm, barcode, row) {
+		if (!barcode || !row?.name) return;
+		(frm.__retail_barcode_rows ||= new Map()).set(barcode, row.name);
+	}
+
+	function cachedRow(frm, barcode) {
+		const name = frm.__retail_barcode_rows?.get(barcode);
+		return (frm.doc.items || []).find(row => row.name === name && row.item_code) || null;
+	}
+
+	function finishLine(frm) {
+		try {
+			frm.cscript?.calculate_taxes_and_totals?.();
+		} catch (error) {
+			console.error(error);
+		}
+		frm.dirty?.();
+		frm.refresh_field("items");
+	}
+
+	function stockFields(row) {
+		row.stock_qty = flt(flt(row.qty) * flt(row.conversion_factor || 1));
+		if (frappe.meta.has_field(row.doctype, "custom_total_stock_qty")) {
+			row.custom_total_stock_qty = flt(row.qty) + flt(row.custom_foc_qty);
+		}
+	}
+
+	function bump(frm, row, scan = {}) {
+		if (scan.serial_no && String(row.serial_no || "").split(/\s*\n\s*/).includes(scan.serial_no)) {
+			frappe.throw(__("This serial number is already in the receipt."));
+		}
+		const previous = flt(row.qty);
+		row.qty = previous + (flt(scan.qty) || 1);
+		if (row.received_qty != null && flt(row.received_qty) === previous) row.received_qty = row.qty;
+		stockFields(row);
+		row.amount = money(flt(row.qty) * flt(row.rate));
+		if (row.custom_rate_including_vat != null && frappe.meta.has_field(row.doctype, "custom_amount_including_vat")) {
+			row.custom_amount_including_vat = money(flt(row.qty) * flt(row.custom_rate_including_vat));
+		}
+		if (previous && row.custom_vat_amount != null) {
+			row.custom_vat_amount = money(flt(row.custom_vat_amount) / previous * flt(row.qty));
+		}
+		if (scan.serial_no) {
+			row.serial_no = [...new Set(`${row.serial_no || ""}\n${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
+		}
+		if (scan.batch_no && !row.batch_no) row.batch_no = scan.batch_no;
+		const barcode = scan.barcode || scan.search_value;
+		if (barcode) {
+			row.barcode = barcode;
+			row.custom_item_barcode = barcode;
+			rememberBarcode(frm, barcode, row);
+		}
+		finishLine(frm);
+		return row;
+	}
+
+	function applyLine(frm, row, scan) {
+		const details = scan.details || {};
+		for (const [key, value] of Object.entries(details)) {
+			if (!detailSkip.has(key) && value != null) row[key] = value;
+		}
+		row.item_code = scan.item_code;
+		row.uom = details.uom || scan.uom || row.uom;
+		row.qty = flt(scan.qty || row.qty) || 1;
+		if (frm.doc.set_warehouse) row.warehouse = frm.doc.set_warehouse;
+		const barcode = scan.barcode || scan.search_value || details.barcode || "";
+		if (barcode) {
+			row.barcode = barcode;
+			row.custom_item_barcode = barcode;
+			rememberBarcode(frm, barcode, row);
+		}
+		if (scan.batch_no) row.batch_no = scan.batch_no;
+		if (scan.serial_no) row.serial_no = scan.serial_no;
+		const item = scan.item || {};
+		if (item.has_serial_no || item.has_batch_no) row.use_serial_batch_fields = 1;
+		rememberItem(frm, item);
+		stockFields(row);
+		if (row.rate != null) row.amount = money(flt(row.qty) * flt(row.rate));
+		applyVatDisplay(row, scan.purchase_vat_rate);
+		applySelling(row, scan);
+		try {
+			applyVatTax(frm, scan.vat_tax);
+		} catch (error) {
+			console.error(error);
+		}
+		if (row.item_name) frappe.utils.add_link_title?.("Item", row.item_code, row.item_name);
+		if (Array.isArray(row.free_item_data) && row.free_item_data.length) frm.cscript?.apply_product_discount?.(row);
+		finishLine(frm);
+		// Column visibility and the advisory rate check read the row after it is filled.
+		// They must not run the native item_code pricing chain.
+		frm.script_manager?.trigger?.("items_add", row.doctype, row.name);
+		return row;
+	}
+
+	function discardRow(frm, row) {
+		if (!row || row.item_code) return;
+		frappe.model.clear_doc(row.doctype, row.name);
+		frm.doc.items = (frm.doc.items || []).filter(item => item.name !== row.name);
+	}
+
+	async function fill(frm, scan, target) {
+		if (scan?.item_code && !scan.uom && !target?.item_code) {
+			const same = (frm.doc.items || []).filter(row => row.item_code === scan.item_code
+				&& !row.custom_foc_parent && !row.serial_and_batch_bundle && !flt(row.rejected_qty));
+			if (same.length === 1) scan = Object.assign({}, scan, {uom: same[0].uom});
+		}
+		const barcode = scan?.barcode || scan?.search_value;
+		if (!target?.item_code) {
+			const known = scan?.item_code && scan?.uom ? lineMatch(frm, scan) : null;
+			if (known) return {row: bump(frm, known, scan), bumped: true, item: scan.item};
+			if (!scan?.item_code && barcode) {
+				const cached = cachedRow(frm, barcode);
+				if (cached) return {row: bump(frm, cached, scan), bumped: true};
+			}
+		}
+		let row = target && (frm.doc.items || []).includes(target) ? target : null;
+		let created = false;
+		if (!row) {
+			row = frm.add_child("items");
+			created = true;
+		}
+		try {
+			const {message} = await frappe.call({
+				method: "retail.domains.purchase.line_fill.fill_line",
+				args: {
+					doc: frm.doc,
+					item_code: scan.item_code,
+					barcode: scan.barcode,
+					uom: scan.uom,
+					search_value: scan.search_value,
+					child_name: row.name,
+					qty: flt(row.qty) || flt(scan.qty) || 1,
+				},
+			});
+			if (message?.warehouse && !message.item_code) {
+				if (created) discardRow(frm, row);
+				return {warehouse: message.warehouse};
+			}
+			if (message?.scale_barcode_type) {
+				frappe.throw(__("Use the full {0} for this scale barcode.", [frm.doc.doctype]));
+			}
+			if (!message?.item_code) {
+				if (created) discardRow(frm, row);
+				return null;
+			}
+			const resolved = Object.assign({}, scan, message);
+			if (resolved.serial_no && (frm.doc.items || []).some(other => other !== row
+				&& String(other.serial_no || "").split(/\s*\n\s*/).includes(resolved.serial_no))) {
+				frappe.throw(__("This serial number is already in the receipt."));
+			}
+			const elsewhere = !row.item_code && lineMatch(frm, {
+				item_code: resolved.item_code,
+				uom: resolved.uom || message.details?.uom,
+				batch_no: resolved.batch_no,
+			});
+			if (elsewhere && elsewhere !== row) {
+				if (created) discardRow(frm, row);
+				return {row: bump(frm, elsewhere, resolved), bumped: true, item: message.item};
+			}
+			return {row: applyLine(frm, row, resolved), bumped: false, item: message.item};
+		} catch (error) {
+			if (created) discardRow(frm, row);
+			throw error;
+		}
+	}
+
+	function installFastScan() {
+		const proto = window.erpnext?.utils?.BarcodeScanner?.prototype;
+		if (!proto || proto.__retail_fast_scan) return;
+		proto.__retail_fast_scan = true;
+		const original = proto.process_scan;
+		proto.process_scan = function () {
+			const frm = this.frm;
+			const dialogOpen = frm.__quick_receipt?.dialog?.$wrapper?.is?.(":visible");
+			if (!lineEligible(frm) || dialogOpen) return original.call(this);
+			// set_value("") retriggers this handler. Ignore that re-entry so the
+			// native scanner does not price the same barcode a second time.
+			if (this.__retail_scan_lock) return Promise.resolve();
+			const input = String(this.scan_barcode_field?.value || "").trim();
+			if (!input) return original.call(this);
+			this.__retail_scan_lock = true;
+			this.scan_barcode_field.set_value("");
+			const scanner = this;
+			return fill(frm, {search_value: input, barcode: input}).then(result => {
+				if (result?.warehouse) {
+					scanner.handle_warehouse_scan({warehouse: result.warehouse});
+					scanner.play_success_sound();
+					return;
+				}
+				if (!result?.row) {
+					scanner.show_alert(__("Cannot find Item with this Barcode"), "red");
+					scanner.play_fail_sound();
+					return;
+				}
+				scanner.show_scan_message(result.row.idx, Boolean(result.bumped), 1);
+				scanner.play_success_sound();
+			}).catch(error => {
+				scanner.play_fail_sound();
+				throw error;
+			}).finally(() => {
+				scanner.__retail_scan_lock = false;
+			});
+		};
+	}
+
+	window.retail.purchaseLine = {fill, bump, cachedRow, lineMatch};
+
 	if (!document.getElementById("retail-packing-search-style")) {
 		$("<style id='retail-packing-search-style'>").text(`
 			.awesomplete > ul.retail-packing-results { width: min(560px, 90vw); min-width: min(560px, 90vw); max-width: 90vw; max-height: 360px; overflow: auto; }
@@ -178,10 +441,16 @@
 		`).appendTo(document.head);
 	}
 
+	installFastScan();
+
 	for (const doctype of ["Purchase Receipt", "Purchase Invoice"]) frappe.ui.form.on(doctype, {
-		scan_barcode: installScanner,
+		scan_barcode(frm) {
+			installScanner(frm);
+			installFastScan();
+		},
 		refresh(frm) {
 			installScanner(frm);
+			installFastScan();
 			if (frm.__retail_packing_focus) return;
 			frm.__retail_packing_focus = true;
 			frm.wrapper.addEventListener("focus", event => {
@@ -196,9 +465,16 @@
 					.find(field => field?.$input?.[0] === input && field.df.options === "Item");
 				window.retail.purchase_packing_search.bind(control, async choice => {
 					const row = gridRow.doc;
-					// Match native barcode entry and Quick Entry: an empty row can
-					// supply its selected packing to the initial native item lookup.
-					// Existing rows keep their normal item/UOM transition behavior.
+					if (lineEligible(frm)) {
+						const result = await window.retail.purchaseLine.fill(frm, {
+							item_code: choice.item_code,
+							uom: choice.uom,
+							barcode: choice.barcode,
+						}, row);
+						if (!result?.row) frappe.throw(__("Could not load the selected Item."));
+						return;
+					}
+					// Internal transfers keep the native item and UOM handlers.
 					const seed = !row.item_code && choice.barcode && !frm.doc.is_internal_supplier;
 					const previous = {uom: row.uom, barcode: row.barcode};
 					if (seed) Object.assign(row, {uom: choice.uom, barcode: choice.barcode});
