@@ -256,7 +256,12 @@
 			frappe.throw(__("This serial number is already in the receipt."));
 		}
 		const previous = flt(row.qty);
-		row.qty = previous + (flt(scan.qty) || 1);
+		// One scan is one unit. A quantity equal to the barcode is the wedge
+		// typing into the row, not a quantity to add.
+		const barcode = String(scan.barcode || scan.search_value || "").trim();
+		const requested = flt(scan.qty);
+		const increment = requested > 0 && String(Math.round(requested)) !== barcode ? requested : 1;
+		row.qty = previous + increment;
 		if (row.received_qty != null && flt(row.received_qty) === previous) row.received_qty = row.qty;
 		stockFields(row);
 		row.amount = money(flt(row.qty) * flt(row.rate));
@@ -270,7 +275,6 @@
 			row.serial_no = [...new Set(`${row.serial_no || ""}\n${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
 		}
 		if (scan.batch_no && !row.batch_no) row.batch_no = scan.batch_no;
-		const barcode = scan.barcode || scan.search_value;
 		if (barcode) {
 			row.barcode = barcode;
 			row.custom_item_barcode = barcode;
@@ -405,8 +409,12 @@
 			const input = String(this.scan_barcode_field?.value || "").trim();
 			if (!input) return original.call(this);
 			this.__retail_scan_lock = true;
+			frm.__retail_scan_token = (frm.__retail_scan_token || 0) + 1;
+			const token = frm.__retail_scan_token;
+			frm.__retail_purchase_scan_active = true;
 			this.scan_barcode_field.set_value("");
 			const scanner = this;
+			const restoreScan = () => frm.fields_dict?.scan_barcode?.set_focus?.();
 			return fill(frm, {search_value: input, barcode: input}).then(result => {
 				if (result?.warehouse) {
 					scanner.handle_warehouse_scan({warehouse: result.warehouse});
@@ -425,6 +433,14 @@
 				throw error;
 			}).finally(() => {
 				scanner.__retail_scan_lock = false;
+				restoreScan();
+				// items_add focuses the new row after 160ms. Put the cursor back
+				// on the barcode once that timer has run, unless a newer scan started.
+				setTimeout(() => {
+					if (frm.__retail_scan_token !== token) return;
+					restoreScan();
+					frm.__retail_purchase_scan_active = false;
+				}, 500);
 			});
 		};
 	}
