@@ -19,9 +19,9 @@ function fixture(doctype='Purchase Receipt', writer) {
  }};
  const window={retail:{}};
  vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../public/js/forms/purchase_packing_search.js'),'utf8'),
-  {window,frappe:{flags,ui:{form:{on(){}}}},document:{getElementById:()=>true},setTimeout,clearTimeout,console});
+  {window,$:()=>({length:0}),frappe:{flags,ui:{form:{on(){}}}},document:{getElementById:()=>true},setTimeout,clearTimeout,console});
  const install=window.retail.purchase_packing_search.installScanner;
- install(frm);return {frm,scanner,row,events,flags,install};
+ install(frm);return {frm,scanner,row,events,flags,install,window};
 }
 for(const dt of ['Purchase Receipt','Purchase Invoice']) test(dt+': resolved packing enters native item handlers once with the selected UOM',async()=>{
  const f=fixture(dt), data={item_code:'A',barcode:'PACK',uom:'Box',serial_no:'SERIAL',batch_no:'BATCH'};
@@ -43,12 +43,22 @@ test('returns, internal suppliers and submitted documents retain native scanner 
   assert.equal(f.events[1].guard,false);assert.equal(f.events[2].uom,'Nos');
  }
 });
-test('overlapping barcode writes preserve native scanner flags',async()=>{
+test('overlapping barcode writes run in order and preserve native scanner flags',async()=>{
  const finish=[], f=fixture('Purchase Receipt',()=>new Promise(resolve=>finish.push(resolve)));
  const a=f.scanner.update_table({item_code:'A',barcode:'ONE',uom:'Box'});
  const b=f.scanner.update_table({item_code:'A',barcode:'TWO',uom:'Box'});
- await Promise.resolve();finish[0]();await a;assert.equal(f.flags.trigger_from_barcode_scanner,false);
+ await Promise.resolve();assert.equal(finish.length,1,'Second scan waits for the first');
+ finish[0]();await a;assert.equal(f.flags.trigger_from_barcode_scanner,false);
  finish[1]();await b;assert.equal(f.flags.trigger_from_barcode_scanner,false);
+});
+for(const dt of ['Purchase Receipt','Purchase Invoice']) test(dt+': five rapid scans increment the same row and restore barcode focus',async()=>{
+ const f=fixture(dt,()=>new Promise(resolve=>setTimeout(resolve,2)));
+ let focused=0;
+ f.frm.fields_dict={scan_barcode:{set_focus(){focused++;}}};
+ f.window.cur_frm=f.frm;
+ const scans=Array.from({length:5},()=>f.scanner.update_table({item_code:'A',barcode:'PACK',uom:'Box'}));
+ await Promise.all(scans);
+ assert.equal(f.row.qty,5);assert.equal(f.frm.__retail_purchase_scan_active,false);assert.equal(focused,5);
 });
 test('barcode validation errors restore the input UOM and release scan state',async()=>{
  const f=fixture('Purchase Receipt',async()=>{throw new Error('invalid barcode');});
