@@ -7,6 +7,44 @@ from retail.domains.purchase import master_rates, selling_price
 from retail.domains.item import rate_audit, item_price_sync
 
 
+class TestStandardSellingRate(unittest.TestCase):
+    def _item(self, **overrides):
+        values = {"stock_uom": "Nos", "standard_rate": 4, "custom_sales_net_rate": 8}
+        values.update(overrides)
+        return frappe._dict(values)
+
+    def test_exact_price_list_rate_wins(self):
+        def get_value(doctype, filters, field, as_dict=False):
+            if doctype == "Item":
+                return self._item()
+            if doctype == "Item Price" and filters.get("uom") == "Nos":
+                return 9
+            return None
+
+        with patch.object(frappe, "db", Mock(get_value=get_value)):
+            self.assertEqual(selling_price.get_standard_selling_rate("ITEM", "Nos"), 9)
+
+    def test_stock_item_master_rate_is_used_when_the_price_list_is_empty(self):
+        def get_value(doctype, filters, field, as_dict=False):
+            if doctype == "Item":
+                return self._item()
+            return None
+
+        with patch.object(frappe, "db", Mock(get_value=get_value)):
+            self.assertEqual(selling_price.get_standard_selling_rate("ITEM"), 8)
+
+    def test_packing_selling_rate_is_used_when_the_price_list_is_empty(self):
+        def get_value(doctype, filters, field, as_dict=False):
+            if doctype == "Item":
+                return self._item()
+            if doctype == "Retail Packing Detail":
+                return frappe._dict(selling_net_rate=70, selling_rate=80, conversion_factor=10)
+            return None
+
+        with patch.object(frappe, "db", Mock(get_value=get_value)):
+            self.assertEqual(selling_price.get_standard_selling_rate("ITEM", "Box"), 70)
+
+
 class TestPurchaseMasterRates(unittest.TestCase):
     def setUp(self):
         rounding = patch.object(frappe, 'get_system_settings', return_value="Banker's Rounding")
