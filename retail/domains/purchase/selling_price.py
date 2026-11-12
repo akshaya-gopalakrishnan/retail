@@ -226,22 +226,51 @@ def get_packing_selling_prices(item_code):
 	return _packing_prices(item)
 
 
+def _selling_price_list_rate(item_code, uom):
+	filters = {"item_code": item_code, "price_list": SELLING_PRICE_LIST}
+	if uom:
+		exact = frappe.db.get_value("Item Price", {**filters, "uom": uom}, "price_list_rate")
+		if exact is not None:
+			return exact
+	# A blank UOM on Item Price applies to every UOM, matching ERPNext's price lookup.
+	return frappe.db.get_value("Item Price", {**filters, "uom": ""}, "price_list_rate")
+
+
 @frappe.whitelist()
 def get_standard_selling_rate(item_code, uom=None):
 	if not item_code:
 		return 0
 
-	uom = uom or frappe.db.get_value("Item", item_code, "stock_uom") or "Nos"
-	rate = frappe.db.get_value(
-		"Item Price",
-		{
-			"item_code": item_code,
-			"price_list": SELLING_PRICE_LIST,
-			"uom": uom,
-		},
-		"price_list_rate",
+	item = frappe.db.get_value(
+		"Item",
+		item_code,
+		["stock_uom", "standard_rate", "custom_sales_net_rate"],
+		as_dict=True,
 	)
-	return flt(rate)
+	if not item:
+		return 0
+	stock_uom = item.stock_uom or "Nos"
+	uom = uom or stock_uom
+	listed = _selling_price_list_rate(item_code, uom)
+	if listed is not None:
+		return flt(listed)
+	# Standard Selling can be empty while the Item Master still holds the rate.
+	if uom == stock_uom:
+		return flt(item.custom_sales_net_rate or item.standard_rate)
+	packing = frappe.db.get_value(
+		"Retail Packing Detail",
+		{"parent": item_code, "parenttype": "Item", "uom": uom, "disabled": 0},
+		["selling_net_rate", "selling_rate", "conversion_factor"],
+		as_dict=True,
+	)
+	if packing and flt(packing.selling_net_rate or packing.selling_rate):
+		return flt(packing.selling_net_rate or packing.selling_rate)
+	stock_listed = _selling_price_list_rate(item_code, stock_uom)
+	stock = flt(stock_listed) if stock_listed is not None else flt(item.custom_sales_net_rate or item.standard_rate)
+	factor = flt(packing.conversion_factor) if packing else 0
+	if stock and factor:
+		return flt(stock * factor, 2)
+	return 0
 
 
 @frappe.whitelist()

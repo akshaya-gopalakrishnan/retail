@@ -170,6 +170,12 @@
 		return rows.length === 1 ? rows[0] : null;
 	}
 
+	function blankRow(frm) {
+		// A new Purchase Receipt or Invoice already has one empty item row.
+		// Filling that row keeps the item on row 1.
+		return (frm.doc.items || []).find(row => !row.item_code && !row.custom_foc_parent) || null;
+	}
+
 	function money(value) {
 		return flt(value, 2);
 	}
@@ -292,6 +298,22 @@
 		row.item_code = scan.item_code;
 		row.uom = details.uom || scan.uom || row.uom;
 		row.qty = flt(scan.qty || row.qty) || 1;
+		// get_item_details leaves rate at 0 and puts the Item Master / price-list
+		// price in price_list_rate. The rate columns read rate, so copy it across
+		// before the VAT display is calculated.
+		if (!flt(row.rate) && flt(row.price_list_rate)) {
+			const list = flt(row.price_list_rate);
+			const margin = row.margin_type === "Percentage"
+				? list * flt(row.margin_rate_or_amount) / 100
+				: flt(row.margin_rate_or_amount);
+			const withMargin = list + margin;
+			const discounted = flt(row.discount_amount) > 0
+				? withMargin - flt(row.discount_amount)
+				: withMargin * (1 - flt(row.discount_percentage) / 100);
+			const digits = typeof precision === "function" ? precision("rate", row) : 2;
+			row.rate_with_margin = flt(withMargin, digits);
+			row.rate = flt(discounted, digits);
+		}
 		if (frm.doc.set_warehouse) row.warehouse = frm.doc.set_warehouse;
 		const barcode = scan.barcode || scan.search_value || details.barcode || "";
 		if (barcode) {
@@ -308,6 +330,10 @@
 		if (row.rate != null) row.amount = money(flt(row.qty) * flt(row.rate));
 		applyVatDisplay(row, scan.purchase_vat_rate);
 		applySelling(row, scan);
+		const gridRow = frm.fields_dict?.items?.grid?.grid_rows_by_docname?.[row.name];
+		for (const field of ["custom_cur_sell_rate", "custom_new_sell_rate", "custom_new_sell_incl", "custom_sell_margin", "custom_sell_margin_pct"]) {
+			gridRow?.refresh_field?.(field);
+		}
 		try {
 			applyVatTax(frm, scan.vat_tax);
 		} catch (error) {
@@ -345,6 +371,7 @@
 		}
 		let row = target && (frm.doc.items || []).includes(target) ? target : null;
 		let created = false;
+		if (!row?.item_code) row = row || blankRow(frm);
 		if (!row) {
 			row = frm.add_child("items");
 			created = true;
