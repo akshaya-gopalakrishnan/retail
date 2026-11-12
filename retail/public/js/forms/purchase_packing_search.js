@@ -121,7 +121,7 @@
 		const update = scanner.update_table;
 		const setBarcode = scanner.set_barcode;
 		const enabled = () => frm.doc.docstatus === 0 && !frm.doc.is_return && !frm.doc.is_internal_supplier;
-		scanner.update_table = async function (data, ...args) {
+		const applyScan = async function (data, ...args) {
 			if (!enabled() || !data?.barcode || !data.item_code || !data.uom) return update.call(this, data, ...args);
 			const key = data.barcode;
 			let entry = pending.get(key);
@@ -132,6 +132,26 @@
 			} finally {
 				if (--entry.count === 0) pending.delete(key);
 			}
+		};
+		// Native scans mutate the same rows asynchronously. Process each result
+		// in order so a rapid second scan sees the first scan's completed quantity.
+		let queue = Promise.resolve();
+		scanner.update_table = function (data, ...args) {
+			if (!enabled()) return update.call(this, data, ...args);
+			const action = queue.then(async () => {
+				frm.__retail_purchase_scan_active = true;
+				clearTimeout(frm.__retail_purchase_focus_timer);
+				try {
+					return await applyScan.call(this, data, ...args);
+				} finally {
+					frm.__retail_purchase_scan_active = false;
+					if (window.cur_frm === frm && !$(".modal:visible").length) {
+						frm.fields_dict.scan_barcode?.set_focus();
+					}
+				}
+			});
+			queue = action.catch(() => {});
+			return action;
 		};
 		scanner.set_barcode = async function (row, barcode, ...args) {
 			const data = pending.get(barcode);

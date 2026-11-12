@@ -142,12 +142,15 @@
 	});
 	function focusPurchaseRow(frm, cdt, cdn) {
 		if (!editable(frm) || window.cur_frm !== frm || $(".modal:visible").length) return;
+		const scanning = () => frm.__retail_purchase_scan_active ||
+			document.activeElement === frm.fields_dict.scan_barcode?.$input?.[0];
+		if (scanning()) return;
 		clearTimeout(frm.__retail_purchase_focus_timer);
 		// Item selection and barcode scans refresh the row after it is created.
 		// Wait for those callbacks before resolving the live grid row.
 		frm.__retail_purchase_focus_timer = setTimeout(() => {
 			frappe.after_ajax(() => {
-				if (!editable(frm) || window.cur_frm !== frm || $(".modal:visible").length) return;
+				if (!editable(frm) || window.cur_frm !== frm || $(".modal:visible").length || scanning()) return;
 				const row = frm.fields_dict.items?.grid?.grid_rows_by_docname?.[cdn];
 				if (!row) return;
 				row.toggle_editable_row(true);
@@ -326,10 +329,8 @@
 			// FieldGroup binds Enter to Save on text inputs. This field must scan instead.
 			this.dialog.get_field("scan").$input.off("keypress").on("keydown.quickReceipt", event => {
 				if (!["Enter", "Tab"].includes(event.key)) return;
-				if (event.key === "Enter") {
-					event.preventDefault();
-					event.stopImmediatePropagation();
-				}
+				event.preventDefault();
+				event.stopImmediatePropagation();
 				this.scan();
 			});
 			this.dialog.$wrapper.on("keydown.quickReceipt", event => {
@@ -403,7 +404,7 @@
 					if (message.scale_barcode_type) {
 						frappe.throw(__("Use the full {0} for this scale barcode.", [this.frm.doc.doctype]));
 					}
-					await this.add(message);
+					await this.add(message, {fromScanner: true});
 					this.dialog.get_field("status").$wrapper.text(__("Added barcode: {0}", [barcode]));
 				} catch (error) {
 					if (!field.$input.val()) field.set_input(barcode);
@@ -557,7 +558,7 @@
 			await window.retail?.transaction_items?.flushVatTaxRows?.(this.frm);
 		}
 
-		async add(scan) {
+		async add(scan, {fromScanner = false} = {}) {
 			if (!this.required()) return;
 			const frm = this.frm;
 			const master = await this.readItem(scan);
@@ -620,7 +621,8 @@
 			const element = this.rows.get(row.name)?.element;
 			element?.addClass("table-success");
 			element?.[0].scrollIntoView({block: "nearest"});
-			focusFirstEditable(element?.[0]);
+			if (fromScanner) this.dialog.get_field("scan").set_focus();
+			else focusFirstEditable(element?.[0]);
 		}
 
 		async loadItems() {

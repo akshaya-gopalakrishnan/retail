@@ -82,6 +82,18 @@ test('packing aliases increment one item/UOM while other UOMs remain separate',a
  await entry.add({item_code:'A',uom:'Nos'});
  assert.equal(frm.doc.items.length,2);assert.equal(frm.doc.items[0].qty,2);assert.equal(frm.doc.items[1].qty,1);
 });
+for(const dt of ['Purchase Receipt','Purchase Invoice']) test(dt+': rapid barcode scans increment quantity and leave focus ready for the next scan',async()=>{
+ const {entry,frm,frappe}=fixture(dt);
+ let focused=0;
+ const field=entry.dialog.get_field('scan');field.set_focus=()=>focused++;
+ frappe.call=async()=>({message:{item_code:'A',uom:'Box-10',barcode:'PACK'}});
+ for(let i=0;i<5;i++){field.$input.val('PACK');entry.scan();}
+ await entry.queue;
+ assert.equal(frm.doc.items.length,1);
+ assert.equal(frm.doc.items[0].qty,5);
+ assert.equal(frm.doc.items[0].uom,'Box-10');
+ assert.equal(field.$input.val(),'');assert.equal(focused,5);
+});
 test('100 distinct items stay in one receipt and scanning does not increment generated FOC rows',async()=>{
  const {entry,frm}=fixture();
  for(let i=0;i<105;i++)await entry.add({item_code:'Item-'+i,uom:'Nos'});
@@ -172,7 +184,9 @@ test('Tab-suffix and camera/change scans use the same lookup path',async()=>{
  const {entry,frm,frappe}=fixture();let calls=0;
  frappe.call=async()=>{calls++;return {message:{item_code:'A',uom:'Nos'}};};
  const field=entry.dialog.get_field('scan');
- field.$input.val('123');field.events['keydown.quickReceipt']({key:'Tab'});await entry.queue;
+ const tab={key:'Tab',preventDefault(){this.prevented=true;},stopImmediatePropagation(){this.stopped=true;}};
+ field.$input.val('123');field.events['keydown.quickReceipt'](tab);await entry.queue;
+ assert.equal(tab.prevented,true);assert.equal(tab.stopped,true);
  field.$input.val('123');field.df.onchange();await entry.queue;
  assert.equal(calls,2);assert.equal(frm.doc.items[0].qty,2);assert.equal(field.df.options,'Barcode');
 });
