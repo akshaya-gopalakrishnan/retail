@@ -508,8 +508,10 @@ def ensure_company_item_vat_defaults():
 	"""Introduce company defaults once, retaining intentional blanks thereafter."""
 	patch = "retail.company_item_vat_defaults.v1"
 	seed = not frappe.db.exists("Patch Log", {"patch": patch})
-	legacy = {field: frappe.get_meta("Item").get_field(field).default for field in COMPANY_VAT_FIELDS}
 	create_custom_fields({"Company": [
+		{"fieldname": "custom_item_vat_defaults_initialized", "label": "Item VAT Defaults Initialized",
+		 "fieldtype": "Check", "default": "0", "hidden": 1, "read_only": 1, "no_copy": 1,
+		 "insert_after": "buying_and_selling_tab"},
 		{"fieldname": "custom_item_vat_defaults", "label": "Item VAT Defaults",
 		 "fieldtype": "Section Break", "insert_after": "buying_and_selling_tab"},
 		{"fieldname": COMPANY_VAT_FIELDS["custom_purchase_tax_template"],
@@ -529,12 +531,16 @@ def ensure_company_item_vat_defaults():
 		 "label": "Selling Rate Includes VAT", "fieldtype": "Check", "default": "1",
 		 "insert_after": COMPANY_VAT_FIELDS["custom_tax"]},
 	]}, ignore_validate=True)
-	if seed:
+	adoption_patch = "retail.company_item_vat_defaults.company_initialization.v2"
+	if not seed and not frappe.db.exists("Patch Log", {"patch": adoption_patch}):
+		# Existing users may already have deliberately cleared these settings.
 		for company in frappe.get_all("Company", pluck="name"):
-			for item_field, company_field in COMPANY_VAT_FIELDS.items():
-				template = legacy[item_field]
-				if template and frappe.db.get_value("Item Tax Template", template, "company") == company:
-					frappe.db.set_value("Company", company, company_field, template, update_modified=False)
+			frappe.db.set_value("Company", company, "custom_item_vat_defaults_initialized", 1, update_modified=False)
+	if not frappe.db.exists("Patch Log", {"patch": adoption_patch}):
+		frappe.get_doc({"doctype": "Patch Log", "patch": adoption_patch}).insert(ignore_permissions=True)
+	for company in frappe.get_all("Company", pluck="name"):
+		initialize_company_item_vat_defaults(company=company)
+	if seed:
 		frappe.get_doc({"doctype": "Patch Log", "patch": patch}).insert(ignore_permissions=True)
 	# Company settings own creation defaults. Clear legacy metadata every time this
 	# installer runs, including standalone Company layout/description updates.
@@ -545,6 +551,29 @@ def ensure_company_item_vat_defaults():
 	for field in COMPANY_VAT_INCLUSIVE_FIELDS:
 		_set_field_property(field, "default", "0", "Check")
 	frappe.clear_cache(doctype="Item")
+
+
+def initialize_company_item_vat_defaults(doc=None, method=None, *, company=None):
+	"""Seed company-owned 5% templates once; never refill a user's cleared setting."""
+	company = company or (doc.name if doc and doc.doctype == "Company" else doc.get("company") if doc else None)
+	if not company or not frappe.get_meta("Company").has_field("custom_item_vat_defaults_initialized"):
+		return
+	company_doc = frappe.get_doc("Company", company)
+	if company_doc.get("custom_item_vat_defaults_initialized"):
+		return
+	template_name = None
+	for name in frappe.get_all("Item Tax Template", filters={"company": company, "disabled": 0}, pluck="name", order_by="name"):
+		template = frappe.get_doc("Item Tax Template", name)
+		if template.taxes and sum(flt(row.tax_rate) for row in template.taxes) == DEFAULT_VAT_RATE:
+			template_name = name
+			break
+	if not template_name:
+		return  # Company setup can create the tax template later.
+	values = {field: template_name for field in COMPANY_VAT_FIELDS.values() if not company_doc.get(field)}
+	values["custom_item_vat_defaults_initialized"] = 1
+	frappe.db.set_value("Company", company, values, update_modified=False)
+	if doc and doc.doctype == "Company":
+		doc.update(values)
 
 
 @frappe.whitelist()

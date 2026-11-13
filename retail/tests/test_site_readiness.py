@@ -63,9 +63,10 @@ class TestSiteReadiness(unittest.TestCase):
                     ready.apply("ALY", "old")
                 install.assert_not_called()
 
-    def test_global_vat_defaults_not_guessed_for_multiple_companies(self):
-        with patch.object(frappe, "get_all", return_value=["ALY", "OTHER"]), patch("frappe.custom.doctype.property_setter.property_setter.make_property_setter") as setter:
+    def test_vat_defaults_initialize_each_company_without_global_item_defaults(self):
+        with patch.object(frappe, "get_all", return_value=["ALY", "OTHER"]), patch("retail.domains.item.vat_pricing.initialize_company_item_vat_defaults") as initialize, patch("frappe.custom.doctype.property_setter.property_setter.make_property_setter") as setter:
             ready.initialize_item_defaults()
+            self.assertEqual([call.kwargs for call in initialize.call_args_list], [{"company": "ALY"}, {"company": "OTHER"}])
             setter.assert_not_called()
 
     def test_recovery_plan_fills_blanks_but_preserves_company_choices(self):
