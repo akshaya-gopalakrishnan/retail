@@ -1162,3 +1162,8 @@ override_whitelisted_methods.update({
 	"frappe.desk.reportview.get": "retail.domains.item.desk_search.get",
 	"frappe.desk.reportview.get_count": "retail.domains.item.desk_search.get_count",
 })
+
+# A company's tax template may be created after the Company itself.
+doc_events.setdefault("Item Tax Template", {}).setdefault("on_update", []).append(
+    "retail.domains.item.vat_pricing.initialize_company_item_vat_defaults"
+)

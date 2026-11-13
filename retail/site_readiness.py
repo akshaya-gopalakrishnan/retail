@@ -166,20 +166,11 @@ def plan(company):
     meta = frappe.get_meta("Item", cached=False)
     if meta.get_field("item_code").reqd:
         changes.append({"doctype": "Item setting", "name": "item_code", "field": "reqd", "value": "0"})
-    templates = []
-    for name in frappe.get_all("Item Tax Template", filters={"company": company, "disabled": 0}, pluck="name"):
-        template = frappe.get_doc("Item Tax Template", name)
-        if template.taxes and sum(float(t.tax_rate or 0) for t in template.taxes) == 5:
-            templates.append(name)
-    for field in ("custom_tax", "custom_purchase_tax_template"):
-        current = meta.get_field(field).default
-        if current:
-            if not frappe.db.exists("Item Tax Template", current):
-                result["blockers"].append(f"Invalid existing Item default: {field}")
-        elif len(templates) == 1 and frappe.db.count("Company") == 1:
-            changes.append({"doctype": "Item setting", "name": field, "field": "default", "value": templates[0]})
-        else:
-            result["blockers"].append(f"Cannot choose unambiguous Item VAT default: {field}")
+    from retail.domains.item.vat_pricing import COMPANY_VAT_FIELDS
+    for field in COMPANY_VAT_FIELDS.values():
+        current = doc.get(field)
+        if current and not frappe.db.exists("Item Tax Template", {"name": current, "company": company, "disabled": 0}):
+            result["blockers"].append(f"Invalid Company Item VAT default: {field}")
     # Include financial state so a stale review cannot approve a changed target.
     state = {"result": result, "accounts": accounts, "company": doc.as_dict(),
              "payments": frappe.get_all("Mode of Payment Account", filters={"company": company}, fields=["parent", "default_account"], order_by="parent"),
@@ -226,23 +217,13 @@ def apply(company, review_token):
 
 
 def initialize_item_defaults(doc=None, method=None):
-    """Fill blank global defaults only for an unambiguous single-company site."""
-    from frappe.custom.doctype.property_setter.property_setter import make_property_setter
-    companies = frappe.get_all("Company", pluck="name")
-    if len(companies) != 1:
-        return
-    templates = []
-    for name in frappe.get_all("Item Tax Template", filters={"company": companies[0], "disabled": 0}, pluck="name"):
-        template = frappe.get_doc("Item Tax Template", name)
-        if template.taxes and sum(float(t.tax_rate or 0) for t in template.taxes) == 5:
-            templates.append(name)
-    if len(templates) != 1:
-        return
-    meta = frappe.get_meta("Item", cached=False)
-    for field in ("custom_tax", "custom_purchase_tax_template"):
-        current = meta.get_field(field)
-        if current and not current.default:
-            make_property_setter("Item", field, "default", templates[0], "Data", validate_fields_for_doctype=False)
+    """Initialize Company VAT choices without restoring global Item defaults."""
+    from retail.domains.item.vat_pricing import initialize_company_item_vat_defaults
+    if doc:
+        initialize_company_item_vat_defaults(doc, method)
+    else:
+        for company in frappe.get_all("Company", pluck="name"):
+            initialize_company_item_vat_defaults(company=company)
 
 
 def validate():
