@@ -11,6 +11,8 @@ app_logo_url = "/assets/retail/images/business-suite-app-icon.svg"
 
 required_apps = ["erpnext", "hrms"]
 
+setup_wizard_success = "retail.domains.item.naming.after_setup_wizard"
+
 # Each item in the list will be shown as an app in the apps page
 # add_to_apps_screen = [
 # 	{

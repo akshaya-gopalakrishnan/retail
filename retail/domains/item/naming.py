@@ -12,6 +12,8 @@ ITEM_NAMING_SERIES = "I-.#"
 def install_item_code_defaults():
 	"""Configure Item forms so users enter a name, not a technical code."""
 	frappe.db.set_single_value("Stock Settings", "item_naming_by", "Naming Series")
+	# Item.autoname reads the global default, not the Stock Settings singleton.
+	frappe.db.set_default("item_naming_by", "Naming Series")
 	_set_doctype_property("title_field", "item_name", "Data")
 	_set_doctype_property("show_title_field_in_link", "1", "Check")
 	_set_doctype_property("search_fields", "item_name,description,item_group,customer_code", "Data")
@@ -21,6 +23,11 @@ def install_item_code_defaults():
 	_set_field_property("item_code", "read_only", "1", "Check")
 	_set_field_property("item_name", "reqd", "1", "Check")
 	frappe.clear_cache(doctype="Item")
+
+
+def after_setup_wizard(args=None):
+	"""Restore Retail naming after ERPNext's wizard saves manual-code defaults."""
+	install_item_code_defaults()
 
 
 def set_automatic_item_code(doc, method=None):

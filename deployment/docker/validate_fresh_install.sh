@@ -84,9 +84,16 @@ validation_failed() {
 }
 trap validation_failed ERR
 
+# Provisioners start as root before the installer switches to frappe. Exercise
+# that entrypoint first so root-owned shared asset files cannot evade the gate.
+validation_compose run --rm --user root checker true
+
 validation_compose run --rm checker bash -lc '
     set -e
+    ./env/bin/python -c "import os; from pathlib import Path; paths = [Path(\"sites/.retail-manifest.lock\"), Path(\"sites/assets/assets.json\"), Path(\"sites/assets/assets-rtl.json\")]; assert all(p.stat().st_uid == os.geteuid() and os.access(p, os.W_OK) for p in paths), \"Root startup left shared assets unwritable\""
     ./env/bin/python -m unittest retail.tests.test_install_portability \
+        retail.tests.test_runtime_asset_user \
+        retail.tests.test_item_naming_setup \
         retail.tests.test_deployment_setup retail.tests.test_recovered_pos_display \
         retail.tests.test_editable_print_portability retail.tests.test_core_compat \
         retail.tests.test_site_readiness retail.tests.test_item_buying_price_clear \

@@ -8204,7 +8204,7 @@
         return this.save_and_new(true);
       }
       async save_and_new(close_after_save = false) {
-        var _a, _b, _c;
+        var _a, _b, _c, _d;
         const dialog = this.dialog;
         if (dialog.working || !dialog.get_values())
           return;
@@ -8254,7 +8254,8 @@
           }
           this.resetting = false;
           dialog.refresh_dependency();
-          await ((_c = this.generate_barcode) == null ? void 0 : _c.call(this));
+          await ((_c = this.apply_company_vat_defaults) == null ? void 0 : _c.call(this));
+          await ((_d = this.generate_barcode) == null ? void 0 : _d.call(this));
           this.empty_values = this.entry_values();
           ready_for_next = true;
           frappe.show_alert({ message: __("{0} saved", [saved.name]), indicator: "green" });
@@ -8294,6 +8295,7 @@
           width: "960px",
           "max-width": "calc(100vw - 32px)"
         });
+        this.align_rate_checkboxes();
         const scale = this.dialog.fields_dict.custom_scale_item;
         if (scale) {
           const onchange = scale.df.onchange;
@@ -8304,7 +8306,50 @@
             return this.generate_barcode(true);
           };
         }
+        this.vat_defaults_ready = this.apply_company_vat_defaults();
         this.generate_barcode();
+      }
+      align_rate_checkboxes() {
+        for (const [rateName, checkName] of [
+          ["custom_purchase_rate_entry", "custom_purchase_rate_includes_vat"],
+          ["custom_sales_rate_entry", "custom_sales_rate_includes_vat"]
+        ]) {
+          const rate = this.dialog.fields_dict[rateName];
+          const check = this.dialog.fields_dict[checkName];
+          if (!rate || !check)
+            continue;
+          const heading = rate.$wrapper.find(".clearfix").first();
+          if (!heading.length)
+            continue;
+          heading.css({ display: "flex", "align-items": "center", "justify-content": "space-between", gap: "8px", "flex-wrap": "wrap" });
+          check.$wrapper.appendTo(heading).css({ "margin-bottom": 0 });
+          check.$wrapper.find(".checkbox, label").css({ "margin-top": 0, "margin-bottom": 0 });
+        }
+      }
+      async insert() {
+        await this.vat_defaults_ready;
+        return super.insert();
+      }
+      async save_and_new(close_after_save = false) {
+        await this.vat_defaults_ready;
+        return super.save_and_new(close_after_save);
+      }
+      async apply_company_vat_defaults() {
+        const dialog = this.dialog;
+        if (!dialog.doc.__islocal || dialog.doc.__retail_vat_defaults_applied)
+          return;
+        dialog.doc.__retail_vat_defaults_applied = true;
+        const before = Object.fromEntries(["custom_tax", "custom_purchase_tax_template", "custom_purchase_rate_includes_vat", "custom_sales_rate_includes_vat"].map((field) => [field, dialog.fields_dict[field] ? dialog.get_value(field) : dialog.doc[field]]));
+        const { message } = await frappe.call({ method: "retail.domains.item.vat_pricing.get_company_item_vat_defaults" });
+        for (const [field, value] of Object.entries(message || {})) {
+          const current = dialog.fields_dict[field] ? dialog.get_value(field) : dialog.doc[field];
+          if ((field.endsWith("_includes_vat") || !before[field]) && current === before[field]) {
+            if (dialog.fields_dict[field])
+              await dialog.set_value(field, value);
+            else
+              dialog.doc[field] = value;
+          }
+        }
       }
       async generate_barcode(force = false) {
         const dialog = this.dialog;
@@ -8934,4 +8979,4 @@
     ["Purchase Order", "Purchase Invoice", "Purchase Receipt"].map((doctype) => [doctype, user_grid_view_settings_default[doctype]])
   );
 })();
-//# sourceMappingURL=retail_desk.bundle.Q7D236JR.js.map
+//# sourceMappingURL=retail_desk.bundle.LTYOU3CD.js.map

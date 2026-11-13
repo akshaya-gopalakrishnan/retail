@@ -248,6 +248,7 @@
 				}
 				this.resetting = false;
 				dialog.refresh_dependency();
+				await this.apply_company_vat_defaults?.();
 				await this.generate_barcode?.();
 				this.empty_values = this.entry_values();
 				ready_for_next = true;
