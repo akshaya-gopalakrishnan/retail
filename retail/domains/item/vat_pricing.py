@@ -298,16 +298,8 @@ def ensure_item_vat_pricing_fields():
 		ignore_validate=True,
 	)
 	frappe.db.updatedb("Item")
-	default_vat_template = get_default_vat_template()
+	ensure_company_item_vat_defaults()
 	_set_field_property("custom_tax", "label", "Sales VAT Template", "Data")
-	_set_field_property("custom_tax", "reqd", "1", "Check")
-	_set_field_property("custom_purchase_tax_template", "reqd", "1", "Check")
-	_set_field_property("custom_purchase_rate_includes_vat", "default", "1", "Check")
-	_set_field_property("custom_sales_rate_includes_vat", "default", "1", "Check")
-	if default_vat_template:
-		_set_field_property("custom_tax", "default", default_vat_template, "Data")
-		_set_field_property("custom_purchase_tax_template", "default", default_vat_template, "Data")
-		_set_empty_item_vat_templates(default_vat_template)
 	_set_field_property("custom_pricing_summary_section", "label", "Pricing Summary", "Data")
 	_set_field_property("custom_vat_pricing_section", "label", "Purchase & Sales VAT Pricing", "Data")
 	_set_field_property("custom_vat_pricing_section", "hidden", "1", "Check")
@@ -500,16 +492,73 @@ def _get_current_default_vat_template():
 	return None
 
 
-def _set_empty_item_vat_templates(default_vat_template):
-	for fieldname in ("custom_tax", "custom_purchase_tax_template"):
-		frappe.db.sql(
-			f"""
-			update `tabItem`
-			set `{fieldname}` = %s
-			where coalesce(`{fieldname}`, '') = ''
-			""",
-			default_vat_template,
-		)
+COMPANY_VAT_FIELDS = {
+	"custom_purchase_tax_template": "custom_default_purchase_vat_template",
+	"custom_tax": "custom_default_sales_vat_template",
+}
+
+
+COMPANY_VAT_INCLUSIVE_FIELDS = {
+	"custom_purchase_rate_includes_vat": "custom_default_purchase_rate_includes_vat",
+	"custom_sales_rate_includes_vat": "custom_default_sales_rate_includes_vat",
+}
+
+
+def ensure_company_item_vat_defaults():
+	"""Introduce company defaults once, retaining intentional blanks thereafter."""
+	patch = "retail.company_item_vat_defaults.v1"
+	seed = not frappe.db.exists("Patch Log", {"patch": patch})
+	legacy = {field: frappe.get_meta("Item").get_field(field).default for field in COMPANY_VAT_FIELDS}
+	create_custom_fields({"Company": [
+		{"fieldname": "custom_item_vat_defaults", "label": "Item VAT Defaults",
+		 "fieldtype": "Section Break", "insert_after": "buying_and_selling_tab"},
+		{"fieldname": COMPANY_VAT_FIELDS["custom_purchase_tax_template"],
+		 "label": "Default Purchase VAT Template", "fieldtype": "Link",
+		 "options": "Item Tax Template", "insert_after": "custom_item_vat_defaults",
+		 "description": ""},
+		{"fieldname": COMPANY_VAT_INCLUSIVE_FIELDS["custom_purchase_rate_includes_vat"],
+		 "label": "Purchase Rate Includes VAT", "fieldtype": "Check", "default": "1",
+		 "insert_after": COMPANY_VAT_FIELDS["custom_purchase_tax_template"]},
+		{"fieldname": "custom_item_vat_defaults_column", "fieldtype": "Column Break",
+		 "insert_after": COMPANY_VAT_INCLUSIVE_FIELDS["custom_purchase_rate_includes_vat"]},
+		{"fieldname": COMPANY_VAT_FIELDS["custom_tax"],
+		 "label": "Default Sales VAT Template", "fieldtype": "Link",
+		 "options": "Item Tax Template", "insert_after": "custom_item_vat_defaults_column",
+		 "description": ""},
+		{"fieldname": COMPANY_VAT_INCLUSIVE_FIELDS["custom_sales_rate_includes_vat"],
+		 "label": "Selling Rate Includes VAT", "fieldtype": "Check", "default": "1",
+		 "insert_after": COMPANY_VAT_FIELDS["custom_tax"]},
+	]}, ignore_validate=True)
+	if seed:
+		for company in frappe.get_all("Company", pluck="name"):
+			for item_field, company_field in COMPANY_VAT_FIELDS.items():
+				template = legacy[item_field]
+				if template and frappe.db.get_value("Item Tax Template", template, "company") == company:
+					frappe.db.set_value("Company", company, company_field, template, update_modified=False)
+		frappe.get_doc({"doctype": "Patch Log", "patch": patch}).insert(ignore_permissions=True)
+	# Company settings own creation defaults. Clear legacy metadata every time this
+	# installer runs, including standalone Company layout/description updates.
+	for field in COMPANY_VAT_FIELDS:
+		_set_field_property(field, "reqd", "0", "Check")
+		_set_field_property(field, "default", "", "Data")
+		_set_custom_field_value("Item", field, "default", "")
+	for field in COMPANY_VAT_INCLUSIVE_FIELDS:
+		_set_field_property(field, "default", "0", "Check")
+	frappe.clear_cache(doctype="Item")
+
+
+@frappe.whitelist()
+def get_company_item_vat_defaults():
+	"""Items are shared; creation uses the user's default company."""
+	frappe.has_permission("Item", "create", throw=True)
+	company = frappe.defaults.get_user_default("Company") or frappe.db.get_single_value("Global Defaults", "default_company")
+	if not company:
+		return {}
+	company_doc = frappe.get_doc("Company", company)
+	company_doc.check_permission("read")
+	values = {item_field: company_doc.get(company_field) or "" for item_field, company_field in COMPANY_VAT_FIELDS.items()}
+	values.update({item_field: int(bool(company_doc.get(company_field))) for item_field, company_field in COMPANY_VAT_INCLUSIVE_FIELDS.items()})
+	return values
 
 
 def arrange_item_vat_pricing_layout():

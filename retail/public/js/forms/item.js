@@ -50,11 +50,19 @@
 	const packingGridCheckboxFields = ["is_fast_plu_item", "disabled"];
 
 	frappe.ui.form.on("Item", {
+		async onload(frm) {
+			if (!frm.is_new() || frm.doc.__retail_vat_defaults_applied) return;
+			frm.doc.__retail_vat_defaults_applied = true;
+			const before = Object.fromEntries(["custom_tax", "custom_purchase_tax_template", "custom_purchase_rate_includes_vat", "custom_sales_rate_includes_vat"].map(field => [field, frm.doc[field]]));
+			const {message} = await frappe.call({method: "retail.domains.item.vat_pricing.get_company_item_vat_defaults"});
+			for (const [field, value] of Object.entries(message || {})) {
+				if ((field.endsWith("_includes_vat") || !before[field]) && frm.doc[field] === before[field]) await frm.set_value(field, value);
+			}
+		},
 		refresh(frm) {
 			setupSaveAndNew(frm);
 			setupLinkedMasterKeyboard(frm);
 			loadStockMarginCost(frm);
-			setDefaultVatIncludes(frm);
 			frm.set_df_property("custom_barcode", "reqd", true);
 			ensureItemBarcode(frm);
 			setupArabicItemNameField(frm);
@@ -483,15 +491,6 @@
 
 	function formatPackingFactor(value) {
 		return Number.isInteger(value) ? String(value) : String(value);
-	}
-
-	function setDefaultVatIncludes(frm) {
-		if (!frm.is_new() || frm._retail_vat_defaults_applied) return;
-		frm._retail_vat_defaults_applied = true;
-		const updates = {};
-		if (!cint(frm.doc.custom_purchase_rate_includes_vat)) updates.custom_purchase_rate_includes_vat = 1;
-		if (!cint(frm.doc.custom_sales_rate_includes_vat)) updates.custom_sales_rate_includes_vat = 1;
-		if (Object.keys(updates).length) frm.set_value(updates);
 	}
 
 	function queueLastPurchaseRateLookup(frm) {

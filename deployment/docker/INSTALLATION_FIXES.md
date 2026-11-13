@@ -19,6 +19,7 @@ HRMS 15.60.3. All fixes belong to Retail; no core application files are changed.
 | Old styling returned after rebuilding or mounting site volumes | Keep esbuild's chosen hash; reject ambiguous fallback; clean copied build output; restore image snapshots after install/migrate and runtime startup; serialize manifest writes | Old-hash/RTL/persisted-volume tests; frontend HTTP checks |
 | Correct asset files still produce old styling after restart | Invalidate shared Redis `assets_json` after restoring image mappings, including startup without an active site | Startup cache regressions; installation gate seeds stale mappings, restarts services and checks authenticated Desk asset URLs |
 | Central URL/public keys missing at activation | Deployment preflight requires validated HTTPS origin and public keys; per-site trust/state configuration is written during creation | Trust-validation tests |
+| Root provisioner created an asset lock unreadable by the installer after switching to frappe | Runtime asset setup switches to the numeric frappe UID/GID in the entrypoint child process before writing shared files; the provisioner command retains its required root privileges | Privilege-order regressions; fresh-install gate starts a root container first and checks shared asset ownership and writability as frappe |
 
 `validate_fresh_install.sh` uses its own randomly named Compose project,
 database, Redis, site and log volumes. It publishes no ports. It creates

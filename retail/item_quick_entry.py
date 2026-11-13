@@ -28,6 +28,10 @@ def install():
         "use_batchwise_valuation": 0,
     }, doctype="Batch")
     _seed_defaults(PATCH, DEFAULT_FIELDS)
+    _seed_defaults("retail.patches.item_quick_entry_vat_inclusive", {
+        "custom_purchase_rate_includes_vat": 1,
+        "custom_sales_rate_includes_vat": 1,
+    })
     _seed_defaults("retail.patches.item_quick_entry_brand", {"brand": 1})
     _seed_defaults("retail.patches.item_quick_entry_scale", {
         "custom_scale_item": 1,

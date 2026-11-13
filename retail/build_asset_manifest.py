@@ -3,6 +3,7 @@
 import fcntl
 import json
 import os
+import pwd
 import re
 import shutil
 import tempfile
@@ -172,6 +173,17 @@ def _install_image_assets(bench, source, assets):
 	return True
 
 
+def install_runtime(bench):
+	"""Create shared assets as the service user, including root provisioner startup."""
+	if os.geteuid() == 0:
+		user = pwd.getpwnam("frappe")
+		os.setgroups([user.pw_gid])
+		os.setgid(user.pw_gid)
+		os.setuid(user.pw_uid)
+	if not install(bench):
+		raise RuntimeError("Retail image asset snapshot missing; rebuild with the tracked Containerfile")
+
+
 if __name__ == "__main__":
 	import argparse
 
@@ -180,8 +192,7 @@ if __name__ == "__main__":
 	args = parser.parse_args()
 	bench = Path.cwd()
 	if args.install_runtime:
-		if not install(bench):
-			raise RuntimeError("Retail image asset snapshot missing; rebuild with the tracked Containerfile")
+		install_runtime(bench)
 	else:
 		repair(bench / "sites/assets")
 		validate_desk_bundles(bench / "sites/assets")
