@@ -396,10 +396,22 @@ class TestAccessControl(unittest.TestCase):
 					frappe.local, "form_dict", frappe._dict(doctype="POS Operator Privilege"), create=True
 				),
 			):
-				with self.assertRaises(frappe.PermissionError):
-					access.guard_request()
-		self.assertFalse(frappe.has_permission("POS Operator Privilege", "create"))
-		self.assertFalse(frappe.has_permission("POS Operator Privilege", "write"))
+				access.guard_request()
+		self.assertTrue(frappe.has_permission("POS Operator Privilege", "create"))
+		self.assertTrue(frappe.has_permission("POS Operator Privilege", "write"))
+		created = frappe.get_doc({
+			"doctype": "POS Operator Privilege",
+			"profile_name": "Customer Test " + frappe.generate_hash(length=8),
+			"change_qty": 1,
+		}).insert()
+		created.change_price = 1
+		created.save()
+		self.assertEqual(frappe.get_doc(created.doctype, created.name).change_price, 1)
+		self.assertIn(created.name, frappe.get_list(created.doctype, pluck="name"))
+		frappe.set_user(self.users["staff"])
+		self.assertFalse(frappe.has_permission(created.doctype, "create"))
+		with self.assertRaises(frappe.PermissionError):
+			created.save()
 
 	def test_customer_employee_automatic_permissions_are_scoped(self):
 		customer = frappe.get_doc("User", self.users["customer"])

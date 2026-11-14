@@ -99,3 +99,6 @@ retail.patches.show_item_default_supplier
 retail.patches.remove_counter_performance_from_sales
 retail.patches.make_item_shelf_life_optional
 retail.patches.show_supplier_tax_id
+retail.patches.customer_admin_pos_privileges
+
+retail.patches.remove_purchase_rate_with_margin_column

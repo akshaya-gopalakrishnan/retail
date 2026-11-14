@@ -361,6 +361,12 @@
    "print": 1,
    "report": 1,
    "share": 1
+  },
+  {
+   "role": "Customer Administrator",
+   "read": 1,
+   "write": 1,
+   "create": 1
   }
  ],
  "sort_field": "modified",
