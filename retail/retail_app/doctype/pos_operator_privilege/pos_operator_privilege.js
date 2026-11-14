@@ -1,6 +1,7 @@
 frappe.ui.form.on("POS Operator Privilege", {
 	refresh(frm) {
 		apply_privilege_grid(frm);
+		add_privilege_buttons(frm);
 		// Retail-app contains several workspaces; this is an employee setting.
 		frappe.breadcrumbs.add({
 			doctype: frm.doctype,
@@ -12,6 +13,22 @@ frappe.ui.form.on("POS Operator Privilege", {
 		}
 	},
 });
+
+function add_privilege_buttons(frm) {
+	const wrapper = frm.fields_dict.disabled.$wrapper;
+	wrapper.find(".pos-privilege-actions").remove();
+	if (!frm.perm?.some((permission) => permission.write)) return;
+
+	const actions = $('<span class="pos-privilege-actions"></span>')
+		.css({ display: "inline-flex", gap: "8px", marginLeft: "16px" });
+	for (const [label, value] of [[__("Select All"), 1], [__("Unselect All"), 0]]) {
+		$('<button type="button" class="btn btn-default btn-xs"></button>')
+			.text(label)
+			.on("click", () => set_all_privileges(frm, value))
+			.appendTo(actions);
+	}
+	wrapper.find(".checkbox > label").after(actions);
+}
 
 function apply_privilege_grid(frm) {
 	// Each native form column is a category, with its own vertical checklist.
@@ -60,4 +77,15 @@ function apply_privilege_grid(frm) {
 		}
 	`;
 	document.head.appendChild(style);
+}
+
+function set_all_privileges(frm, value) {
+	const values = {};
+	for (const field of frm.meta.fields) {
+		if (field.fieldtype === "Check" && field.fieldname !== "disabled"
+			&& !field.read_only && !frm.fields_dict[field.fieldname]?.df.read_only) {
+			values[field.fieldname] = value;
+		}
+	}
+	return frm.set_value(values);
 }

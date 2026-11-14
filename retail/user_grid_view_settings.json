@@ -209,10 +209,6 @@
       },
       {
         "columns": 1,
-        "fieldname": "rate_with_margin"
-      },
-      {
-        "columns": 1,
         "fieldname": "custom_sell_margin_pct"
       }
     ]
@@ -343,10 +339,6 @@
       {
         "columns": 1,
         "fieldname": "custom_new_sell_incl"
-      },
-      {
-        "columns": 1,
-        "fieldname": "rate_with_margin"
       },
       {
         "columns": 1,

@@ -243,10 +243,6 @@
         },
         {
           columns: 1,
-          fieldname: "rate_with_margin"
-        },
-        {
-          columns: 1,
           fieldname: "custom_sell_margin_pct"
         }
       ]
@@ -377,10 +373,6 @@
         {
           columns: 1,
           fieldname: "custom_new_sell_incl"
-        },
-        {
-          columns: 1,
-          fieldname: "rate_with_margin"
         },
         {
           columns: 1,
@@ -8979,4 +8971,4 @@
     ["Purchase Order", "Purchase Invoice", "Purchase Receipt"].map((doctype) => [doctype, user_grid_view_settings_default[doctype]])
   );
 })();
-//# sourceMappingURL=retail_desk.bundle.LTYOU3CD.js.map
+//# sourceMappingURL=retail_desk.bundle.XANUJW5H.js.map

@@ -43,6 +43,14 @@ def is_super_admin(user=None):
     return user == "Administrator" or (user != "Guest" and SUPER_ADMIN in frappe.get_roles(user))
 
 
+def is_protected_doctype(doctype, user=None):
+    if doctype == "POS Operator Privilege":
+        from retail.delegated_access import is_customer_admin
+        if is_customer_admin(user):
+            return False
+    return doctype in PROTECTED_DOCTYPES
+
+
 def deny_technical_access():
     # Do not disclose internal roles or whether a protected account exists.
     frappe.flags.retail_technical_permission_denied = True
@@ -75,7 +83,7 @@ def has_permission(doc, ptype=None, user=None, **kwargs):
         # Controller hooks may grant only permissions already present in DocPerm.
         # The seed supplies full native DocPerms for this role, at every field level.
         return True
-    if doc.doctype in PROTECTED_DOCTYPES:
+    if is_protected_doctype(doc.doctype, user):
         return False
     if doc.doctype == "User":
         from retail.delegated_access import is_customer_admin, user_visible
@@ -87,7 +95,7 @@ def has_permission(doc, ptype=None, user=None, **kwargs):
 def query_conditions(user=None, doctype=None):
     if is_super_admin(user):
         return ""
-    if doctype in PROTECTED_DOCTYPES:
+    if is_protected_doctype(doctype, user):
         return "1=0"
     if doctype == "User":
         from retail.delegated_access import is_customer_admin, MANAGER_FIELD
@@ -113,7 +121,7 @@ def validate_document(doc, method=None, *args, **kwargs):
         return
     if is_super_admin():
         return
-    if doc.doctype in PROTECTED_DOCTYPES:
+    if is_protected_doctype(doc.doctype):
         require_super_admin()
     previous = doc.get_doc_before_save()
     if method == "before_rename":
@@ -190,7 +198,7 @@ def guard_request():
         documents = payload if isinstance(payload, list) else [payload]
         for document in documents:
             if isinstance(document, dict):
-                if document.get("doctype") in PROTECTED_DOCTYPES:
+                if is_protected_doctype(document.get("doctype")):
                     require_super_admin()
                 if document.get("doctype") == "User" and is_protected_user(document.get("name")):
                     deny_technical_access()
@@ -199,7 +207,7 @@ def guard_request():
          and form.get("query") == "retail.pos_privileges.available_profiles")
         or (command == "frappe.client.validate_link" and not frappe.parse_json(form.get("fields") or "[]"))
     )
-    if dt in PROTECTED_DOCTYPES and not profile_picker:
+    if is_protected_doctype(dt) and not profile_picker:
         require_super_admin()
     if dt == "User" and isinstance(name, str):
         from retail.delegated_access import is_customer_admin, user_visible
