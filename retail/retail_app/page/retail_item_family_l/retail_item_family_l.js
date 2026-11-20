@@ -3,7 +3,7 @@ frappe.pages["retail-item-family-l"].on_page_load = function(wrapper) {
 	const page = frappe.ui.make_app_page({
 		parent: wrapper,
 		title: __("Item Family List"),
-		single_column: true,
+		single_column: false,
 	});
 
 	wrapper.item_family_list = new retail.ItemFamilyList(page);
@@ -502,9 +502,9 @@ retail.ItemFamilyList = class ItemFamilyList {
 			brand: escape_html(family.brand),
 			item_group: escape_html(family.item_group),
 			conversion: is_packing ? flt(row.conversion_factor) : escape_html(family.stock_uom || ""),
-			real_stock: qty(is_packing ? converted_qty(family.real_stock_qty, row.conversion_factor) : family.real_stock_qty),
-			in_qty: qty(is_packing ? converted_qty(family.in_qty, row.conversion_factor) : family.in_qty),
-			out_qty: qty(is_packing ? converted_qty(family.out_qty, row.conversion_factor) : family.out_qty),
+			real_stock: is_packing ? packing_stock_cell(row) : qty(family.real_stock_qty),
+			in_qty: is_packing ? packing_movement_cell(row.packing_in_qty) : qty(family.in_qty),
+			out_qty: is_packing ? packing_movement_cell(row.packing_out_qty) : qty(family.out_qty),
 			purchase_net: money(is_packing ? row.purchase_net_rate : family.purchase_net_rate),
 			purchase_vat: money(is_packing ? row.purchase_vat_amount : family.purchase_vat_amount),
 			purchase_gross: money(is_packing ? row.purchase_gross_rate : family.purchase_gross_rate),
@@ -558,9 +558,16 @@ function qty(value) {
 	return format_number(flt(value), null, 3);
 }
 
-function converted_qty(value, conversion_factor) {
-	const factor = flt(conversion_factor);
-	return factor ? flt(value) / factor : flt(value);
+function packing_stock_cell(row) {
+	if (row.packing_balance_known) {
+		return `<span title="${escape_html(__("Balance from recorded packing movements"))}">${qty(row.packing_stock_qty)}</span>`;
+	}
+	return `<span class="text-muted" title="${escape_html(__("Packing availability is unknown: loose-unit movements, stock adjustments or missing packing details prevent an exact count. Recorded packing balance: {0}", [qty(row.packing_recorded_balance)]))}">${__("Unknown")}</span>`;
+}
+
+function packing_movement_cell(value) {
+	return value == null ? __("Unknown")
+		: `<span title="${escape_html(__("Recorded stock movements in this packing UOM and conversion"))}">${qty(value)}</span>`;
 }
 
 function make_packing_display_name(family, row) {

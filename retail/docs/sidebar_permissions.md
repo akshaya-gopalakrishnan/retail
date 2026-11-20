@@ -29,7 +29,14 @@ adding access does not automatically add it to existing staff.
 
 The Retail install/migrate hook creates three User Custom Fields: a section, HTML
 editor and hidden `retail_sidebar_permissions` Long Text field at permission level 1.
-No core source is changed and no roles are automatically assigned. Delegation adds
+No core source is changed. When an authorized administrator changes a System User's
+access, enabling the native Manufacturing module and selecting a Manufacturing
+sidebar child also assigns the native Manufacturing User role. This preserves
+operational access when Super Admin is removed. Delegated administrators must
+already possess this role; their existing assignment ceiling still applies.
+Ordinary profile saves and empty legacy sidebar selections do not assign roles.
+Disabling a menu does not remove manually assigned roles; sidebar and module
+restrictions continue to deny access independently. Delegation adds
 the Managed By field and native Customer Administrator User read/write permission
 at level 1, guarded by the ownership and assignment checks.
 

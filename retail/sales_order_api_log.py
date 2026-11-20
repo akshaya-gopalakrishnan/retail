@@ -1,4 +1,4 @@
-"""Secret-free request diagnostics, including authentication failures before dispatch."""
+"""Sanitized API payloads, including authentication failures before dispatch."""
 import json
 
 import frappe
@@ -9,6 +9,30 @@ METHODS = {
     "retail.api.pos_sync.get_sales_order_data",
     "retail.api.pos_sync.save_sales_order",
 }
+
+
+def sanitize_payload(value):
+    """Keep business data while excluding credentials and server tracebacks."""
+    if isinstance(value, dict):
+        result = {}
+        for key, item in value.items():
+            normalized = str(key).lower().replace("-", "_")
+            sensitive = any(part in normalized for part in (
+                "password", "passwd", "secret", "token", "authorization", "cookie",
+            )) or normalized in {"pwd", "sid", "api_key", "exc", "exception", "traceback"}
+            result[key] = "[REDACTED]" if sensitive else sanitize_payload(item)
+        return result
+    if isinstance(value, (list, tuple)):
+        return [sanitize_payload(item) for item in value]
+    if isinstance(value, str):
+        # Frappe clients commonly send `data` as an encoded JSON string.
+        try:
+            decoded = json.loads(value)
+        except (ValueError, TypeError):
+            return value
+        if isinstance(decoded, (dict, list)):
+            return sanitize_payload(decoded)
+    return value
 
 
 def has_permission(doc, ptype=None, user=None, **kwargs):
@@ -40,9 +64,10 @@ def after_request(request, response):
     # pretending failed authentication can identify the calling application.
     payload = response.get_json(silent=True) if response.is_json else {}
     payload = payload if isinstance(payload, dict) else {}
-    summary = {"http_status": response.status_code, "error_type": payload.get("exc_type")}
-    # Never persist bodies, headers, cookies, tokens, passwords or tracebacks.
     try:
+        incoming = request.get_json(silent=True) if request.is_json else None
+        if incoming is None:
+            incoming = dict(form)
         frappe.get_doc({
             "doctype": "Sales Order API Log",
             "operation": "Login (shared)" if login else method.rsplit(".", 1)[-1],
@@ -51,8 +76,11 @@ def after_request(request, response):
             "http_status": response.status_code,
             "endpoint": method[:140],
             "error_type": str(payload.get("exc_type") or "")[:140],
-            "request_json": json.dumps({"method": request.method, "endpoint": method}),
-            "response_json": json.dumps(summary, indent=2),
+            "request_json": json.dumps(sanitize_payload(incoming), indent=2, default=str),
+            "response_json": json.dumps(sanitize_payload(response.get_json(silent=True) if response.is_json else {
+                "http_status": response.status_code,
+                "content_type": response.content_type,
+            }), indent=2, default=str),
         }).insert(ignore_permissions=True)
         # Frappe already committed/rolled back the business request before this hook.
         frappe.db.commit()

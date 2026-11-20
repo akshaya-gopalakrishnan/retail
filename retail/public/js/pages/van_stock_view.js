@@ -20,7 +20,7 @@
 		const page = frappe.ui.make_app_page({
 			parent: wrapper,
 			title: __("Van Stock View"),
-			single_column: true,
+			single_column: false,
 		});
 
 		try {

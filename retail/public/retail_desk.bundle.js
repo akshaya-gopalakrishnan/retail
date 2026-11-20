@@ -1,3 +1,5 @@
+import "./js/forms/purchase_item_barcode.js";
+import "./js/forms/purchase_packing_search.js";
 import gridDefaults from "../user_grid_view_settings.json";
 import "./js/cdn_loader.js";
 import "./js/workspace_boot_sidebar.js";
@@ -19,6 +21,7 @@ import "./js/forms/transaction_items.js";
 import "./js/forms/batch_quick_entry.js";
 import "./js/forms/retail_quick_entry.js";
 import "./js/forms/item_quick_entry.js";
+import "./js/form_shortcuts.js";
 import "./js/scale_sales.js";
 import "./js/zebra_label_loader.js";
 import "./js/brand_theme_switcher.js";
@@ -33,3 +36,7 @@ window.retail.purchase_grid_defaults = Object.fromEntries(
 );
 
 import "./js/reports/pos_printing.js";
+
+import "./js/forms/restaurant_table.js";
+
+import "./js/forms/whole_bill_promotions.js";

@@ -99,7 +99,20 @@ def validate_packing_uoms(doc, method=None):
 	"""Reject conflicts introduced by ERPNext's global UOM conversion defaults."""
 	conversions = {row.uom: row.conversion_factor for row in doc.get("uoms") or []}
 	for row in doc.get("custom_retail_packing_detail") or []:
-		if Decimal(str(conversions.get(row.uom))) != Decimal(str(row.conversion_factor)):
+		if row.uom not in conversions:
+			frappe.throw(
+				f"Item UOM {row.uom} is missing from the conversion table. "
+				"If you changed Stock UOM, remove the packing rows, save the new Stock UOM, "
+				"then add the packing rows again with conversion factors measured in the new Stock UOM."
+			)
+		try:
+			conversion = Decimal(str(conversions[row.uom]))
+			packing_factor = Decimal(str(row.conversion_factor))
+		except (InvalidOperation, ValueError):
+			frappe.throw(f"Item UOM {row.uom} and its packing row require positive numeric conversion factors.")
+		if not conversion.is_finite() or not packing_factor.is_finite() or conversion <= 0 or packing_factor <= 0:
+			frappe.throw(f"Item UOM {row.uom} and its packing row require positive numeric conversion factors.")
+		if conversion != packing_factor:
 			frappe.throw(f"ERPNext conversion for {row.uom} differs from its packing factor.")
 
 

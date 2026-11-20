@@ -80,11 +80,24 @@
 		const gutter = pixels(header_style.marginLeft) + pixels(header_style.marginRight);
 		const available_width = Math.max(0, root.clientWidth - pixels(root_style.paddingLeft) - pixels(root_style.paddingRight) - gutter);
 		root.style.setProperty("--retail-list-gutter", `${gutter}px`);
-		// Reclaim spare space for unsized text fields; explicit widths remain exact.
-		const spare = Math.max(0, available_width - 170 - visible.reduce((sum, {index}) => sum + widths[index] + 15, 0));
+		const activity_width = view.retail_list_activity_width || 130;
+        const reserved_width = activity_width + 40;
+        root.style.setProperty("--retail-list-activity-width", `${activity_width}px`);
+        if (view.retail_fit_columns) {
+            // Shrink only default widths; keep personal resizing intact.
+            let excess = visible.reduce((sum, {index}) => sum + widths[index] + 15, 0) + reserved_width - available_width;
+            const adjustable = visible.filter(({index}) => !saved[column_key(view.columns[index])]);
+            const capacity = adjustable.reduce((sum, {index}) => sum + Math.max(0, widths[index] - (view.columns[index].retail_min_width || 70)), 0);
+            for (const {index} of adjustable) {
+                const room = Math.max(0, widths[index] - (view.columns[index].retail_min_width || 70));
+                if (excess > 0 && capacity > 0) widths[index] -= Math.min(excess, capacity) * room / capacity;
+            }
+        }
+        // Reclaim spare space for unsized text fields; explicit widths remain exact.
+		const spare = Math.max(0, available_width - reserved_width - visible.reduce((sum, {index}) => sum + widths[index] + 15, 0));
 		const flexible = visible.filter(({index}) => !view.columns[index].retail_compact_width && !saved[column_key(view.columns[index])] && !frappe.model.is_numeric_field(view.columns[index].df || {}) && view.columns[index].type !== "Status" && !["name", "item_code", "custom_document_code"].includes(view.columns[index].df?.fieldname));
 		for (const {index} of flexible) widths[index] += spare / flexible.length;
-		root.style.setProperty("--retail-list-width", `${Math.floor(170 + visible.reduce((sum, {index}) => sum + widths[index] + 15, 0))}px`);
+		root.style.setProperty("--retail-list-width", `${Math.floor(reserved_width + visible.reduce((sum, {index}) => sum + widths[index] + 15, 0))}px`);
 		for (const row of root.querySelectorAll(".list-row > .level-left, .list-row-head > .level-left:not(.checkbox-actions)")) {
 			const cells = Array.from(row.children).filter(el => el.classList.contains("list-row-col"));
 			cells.forEach((cell, index) => {

@@ -11,8 +11,11 @@ import frappe
 
 def install(*args, **kwargs):
     from erpnext.stock import get_item_details as core
+    from retail.promotions.whole_bill import install as install_whole_bill
 
+    install_whole_bill()
     _install_purchase_master_fallback(core)
+    _install_sales_master_fallback(core)
     if getattr(core.insert_item_price, "_retail_invoice_guard", False) is True:
         return
     original = core.insert_item_price
@@ -37,7 +40,7 @@ def _install_purchase_master_fallback(core):
     def get_price_list_rate_for(args, item_code):
         rate = original(args, item_code)
         if (rate is not None
-            or (args.get("parenttype") or args.get("doctype")) not in {"Purchase Receipt", "Purchase Invoice"}
+            or (args.get("parenttype") or args.get("doctype")) not in core.purchase_doctypes
             or args.get("price_list") != "Standard Buying"
             or "retail" not in frappe.get_installed_apps()):
             return rate
@@ -45,6 +48,26 @@ def _install_purchase_master_fallback(core):
         return get_purchase_master_lookup_rate(args, item_code)
 
     get_price_list_rate_for._retail_purchase_master_fallback = True
+    core.get_price_list_rate_for = get_price_list_rate_for
+
+
+def _install_sales_master_fallback(core):
+    if getattr(core.get_price_list_rate_for, "_retail_sales_master_fallback", False) is True:
+        return
+    original = core.get_price_list_rate_for
+
+    @wraps(original)
+    def get_price_list_rate_for(args, item_code):
+        rate = original(args, item_code)
+        if (rate is not None
+            or (args.get("parenttype") or args.get("doctype")) not in {"Quotation", "Sales Order", "Delivery Note", "Sales Invoice"}
+            or args.get("price_list") != "Standard Selling"
+            or "retail" not in frappe.get_installed_apps()):
+            return rate
+        from retail.domains.item.item_price_sync import get_sales_master_lookup_rate
+        return get_sales_master_lookup_rate(args, item_code)
+
+    get_price_list_rate_for._retail_sales_master_fallback = True
     core.get_price_list_rate_for = get_price_list_rate_for
 
 

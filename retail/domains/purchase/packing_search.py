@@ -1,4 +1,4 @@
-"""Permission-aware packing choices for purchase item controls."""
+"""Permission-aware packing choices for site-wide Item controls."""
 
 import frappe
 from frappe.desk.reportview import get_match_cond
@@ -12,10 +12,13 @@ SEARCH_BATCH_SIZE = 200
 
 
 @frappe.whitelist()
-def search(txt="", start=0, filters=None, query=None, reference_doctype=None, page_length=20):
+def search(txt="", start=0, filters=None, query=None, reference_doctype=None, page_length=20,
+           transaction_type="buying"):
 	frappe.has_permission("Item", "read", throw=True)
 	# Apply Item user permissions to both branches, including child packing matches.
 	match = get_match_cond("Item")
+	item_flag = {"selling": "is_sales_item", "buying": "is_purchase_item"}.get(transaction_type)
+	eligibility = f"and `tabItem`.{item_flag} = 1" if item_flag else ""
 	filters = frappe.parse_json(filters) if isinstance(filters, str) else filters
 	txt = str(txt or "").strip()[:140]
 	values = {}
@@ -30,7 +33,7 @@ def search(txt="", start=0, filters=None, query=None, reference_doctype=None, pa
 				`tabItem`.stock_uom as uom, `tabItem`.stock_uom as packing_uom,
 				1 as conversion_factor, '' as packing_id
 			from `tabItem`
-			where `tabItem`.disabled = 0 and `tabItem`.is_purchase_item = 1
+			where `tabItem`.disabled = 0 {eligibility}
 				and `tabItem`.has_variants = 0 {match}
 				and (`tabItem`.name like %(txt)s or {name_match}
 					or `tabItem`.custom_barcode like %(txt)s)
@@ -40,7 +43,7 @@ def search(txt="", start=0, filters=None, query=None, reference_doctype=None, pa
 				p.conversion_factor, p.name
 			from `tabItem` inner join `tabRetail Packing Detail` p
 				on p.parent = `tabItem`.name and p.parenttype = 'Item'
-			where `tabItem`.disabled = 0 and `tabItem`.is_purchase_item = 1
+			where `tabItem`.disabled = 0 {eligibility}
 				and `tabItem`.has_variants = 0 and coalesce(p.disabled, 0) = 0
 				and p.conversion_factor > 0 and coalesce(p.uom, '') != '' {match}
 				and (`tabItem`.name like %(txt)s or {name_match}
@@ -66,7 +69,7 @@ def search(txt="", start=0, filters=None, query=None, reference_doctype=None, pa
 				`tabItem`.stock_uom as uom, `tabItem`.stock_uom as packing_uom,
 				1 as conversion_factor, '' as packing_id
 			from `tabItem`
-			where `tabItem`.disabled = 0 and `tabItem`.is_purchase_item = 1
+			where `tabItem`.disabled = 0 {eligibility}
 				and `tabItem`.has_variants = 0 {match}
 			order by `tabItem`.modified desc, `tabItem`.name desc
 			limit %(batch_size)s offset %(start)s

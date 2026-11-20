@@ -508,3 +508,10 @@ function addScannedItem(frm, barcode) {
 	}
 
 })();
+
+// Priority ranks used by sales invoice and delivery note promotions.
+frappe.ui.form.on("Promo Price", {
+    refresh(frm) {
+        frm.set_df_property("priority", "description", __("For Sales Invoice and Delivery Note: 1 is highest priority; lower numbers win."));
+    },
+});

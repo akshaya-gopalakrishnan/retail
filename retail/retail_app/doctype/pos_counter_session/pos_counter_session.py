@@ -18,6 +18,11 @@ class POSCounterSession(Document):
 		if not self.started_at:
 			frappe.throw(_("Started At is required."))
 
+		if not self.business_date:
+			shift = frappe.db.get_value("POS Cashier Shift", self.cashier_shift,
+				["business_date", "opening_time"], as_dict=True)
+			self.business_date = shift.business_date or frappe.utils.getdate(shift.opening_time)
+
 		if not self.counter_code:
 			self.counter_code = frappe.db.get_value("POS Branch Counter", self.counter, "counter_code")
 

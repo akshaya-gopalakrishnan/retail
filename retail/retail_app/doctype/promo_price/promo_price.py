@@ -60,6 +60,7 @@ class PromoPrice(Document):
 			scheme = build_new_scheme(self, apply_on)
 			scheme.name = f"{self.name}-{row.idx}-{frappe.generate_hash(length=6)}"
 			if self.promotion_scope == "WHOLE BILL":
+				scheme.mixed_conditions = 1
 				for group in frappe.get_all("Item Group", fields=["name", "parent_item_group"]):
 					if not group.parent_item_group:
 						scheme.append("item_groups", {"item_group": group.name})

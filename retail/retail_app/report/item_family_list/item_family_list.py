@@ -162,8 +162,8 @@ def get_data(filters, item_codes=None):
 			item.custom_sales_gross_rate as item_selling_gross_rate,
 				item.custom_margin as item_margin,
 				coalesce(stock_balance.real_stock_qty, 0) as real_stock_qty,
-				coalesce(stock_movement.in_qty, 0) as in_qty,
-				coalesce(stock_movement.out_qty, 0) as out_qty,
+				0 as in_qty,
+				0 as out_qty,
 				packing.idx,
 				packing.packing_code,
 				packing.packing_name,
@@ -190,16 +190,6 @@ def get_data(filters, item_codes=None):
 			{stock_condition}
 			group by item_code
 		) stock_balance on stock_balance.item_code = item.name
-		left join (
-			select
-				item_code,
-				sum(case when actual_qty > 0 then actual_qty else 0 end) as in_qty,
-				sum(case when actual_qty < 0 then abs(actual_qty) else 0 end) as out_qty
-			from `tabStock Ledger Entry`
-			where is_cancelled = 0
-				{stock_condition.replace(' where ', ' and ')}
-			group by item_code
-		) stock_movement on stock_movement.item_code = item.name
 		where item.name is not null
 			{conditions}
 		order by item.item_name, item.name, ifnull(packing.idx, 0)
@@ -210,6 +200,10 @@ def get_data(filters, item_codes=None):
 
 	for row in rows:
 		normalize_rates(row)
+	if rows:
+		from retail.packing_stock import apply_packing_stock, get_packing_movements
+
+		apply_packing_stock(rows, get_packing_movements([row.item_code for row in rows]))
 	return rows
 
 
@@ -297,9 +291,9 @@ def get_columns():
 		{"label": _("Barcode"), "fieldname": "barcode", "fieldtype": "Data", "width": 140},
 		{"label": _("UOM"), "fieldname": "uom", "fieldtype": "Link", "options": "UOM", "width": 90},
 		{"label": _("Conversion"), "fieldname": "conversion_factor", "fieldtype": "Float", "width": 100},
-		{"label": _("Real Stock"), "fieldname": "real_stock_qty", "fieldtype": "Float", "width": 100},
-		{"label": _("In Qty"), "fieldname": "in_qty", "fieldtype": "Float", "width": 90},
-		{"label": _("Out Qty"), "fieldname": "out_qty", "fieldtype": "Float", "width": 90},
+		{"label": _("Real Stock"), "fieldname": "packing_stock_qty", "fieldtype": "Float", "width": 100},
+		{"label": _("In Qty"), "fieldname": "packing_in_qty", "fieldtype": "Float", "width": 90},
+		{"label": _("Out Qty"), "fieldname": "packing_out_qty", "fieldtype": "Float", "width": 90},
 		{"label": _("Purchase Excl. VAT"), "fieldname": "purchase_net_rate", "fieldtype": "Currency", "width": 135},
 		{"label": _("Purchase VAT"), "fieldname": "purchase_vat_amount", "fieldtype": "Currency", "width": 115},
 		{"label": _("Purchase Incl. VAT"), "fieldname": "purchase_gross_rate", "fieldtype": "Currency", "width": 135},

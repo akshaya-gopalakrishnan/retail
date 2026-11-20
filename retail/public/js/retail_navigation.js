@@ -12,6 +12,9 @@
     const OPEN_SIDEBAR_STORAGE_KEY = 'retail_open_sidebar_groups_v1';
     const OPEN_WORK_TTL_MS = 12 * 60 * 60 * 1000;
     const ICON_MAP = {
+        'restaurant': { icon: 'fa fa-cutlery', cls: 'color-sales' },
+        'table location': { icon: 'fa fa-map-marker', cls: 'color-sales' },
+        'tables': { icon: 'fa fa-table', cls: 'color-sales' },
         'loyalty program list': { icon: 'fa fa-list', cls: 'color-sales' },
         'loyalty program': { icon: 'fa fa-star', cls: 'color-sales' },
         'loyalty program report': { icon: 'fa fa-bar-chart', cls: 'color-sales' },
@@ -127,6 +130,8 @@
         'item groups': { icon: 'fa fa-th-large', cls: 'color-items' },
         'price lists': { icon: 'fa fa-tags', cls: 'color-items' },
         'brands': { icon: 'fa fa-bookmark', cls: 'color-items' },
+        'product conversion': { icon: 'fa fa-exchange', cls: 'color-items' },
+        'product conversion link': { icon: 'fa fa-exchange', cls: 'color-items' },
         'customers': { icon: 'fa fa-users', cls: 'color-sales' },
         'quotation': { icon: 'fa fa-file-text-o', cls: 'color-sales' },
         'quotations': { icon: 'fa fa-file-text-o', cls: 'color-sales' },
@@ -239,10 +244,13 @@
         'Price List': 'Items',
         'Item Price': 'Items',
         'Brand': 'Items',
+        'Product Conversion': 'Stocks',
         'Customer': 'Sales',
         'Quotation': 'Sales',
         'Sales Order': 'Sales',
         'Sales Invoice': 'Sales',
+        'Table Location': 'Restaurant',
+        'Restaurant Table': 'Restaurant',
         'POS Invoice': 'POS',
         'POS Profile': 'POS',
         'POS Cashier Shift': 'POS',
@@ -299,6 +307,7 @@
         'Price List': 'Price Lists',
         'Item Price': 'Price Lists',
         'Brand': 'Brands',
+        'Product Conversion': 'Product Conversion Link',
         'Customer': 'Customers',
         'Quotation': 'Quotations',
         'Sales Order': 'Sales Orders',
@@ -350,6 +359,8 @@
         'Van Session': 'Van Sessions'
     };
     const CHILD_TO_PARENT = Object.freeze({
+        'Restaurant Table Locations Link': 'Restaurant',
+        'Restaurant Tables Link': 'Restaurant',
         'Promotions Loyalty Program Link': 'Promotions',
         'Promotions Loyalty Program List Link': 'Promotions Loyalty Program Link',
         'Promotions Loyalty Program Report Link': 'Promotions Loyalty Program Link',
@@ -369,6 +380,7 @@
         'Item Groups': 'Items',
         'Price Lists': 'Items',
         'Brands': 'Items',
+        'Product Conversion Link': 'Stocks',
         'Customers': 'Sales',
         'Quotation': 'Sales',
         'Quotations': 'Sales',
@@ -547,7 +559,7 @@
         'Accounts User': ['Accounts'],
         'Accounts Manager': ['Accounts'],
         'POS User': ['POS'],
-        'POS Manager': ['POS'],
+        'POS Manager': ['POS', 'Restaurant'],
         'POS Integration User': ['POS'],
         'Manufacturing User': ['Manufacturing'],
         'Manufacturing Manager': ['Manufacturing'],
@@ -556,6 +568,7 @@
         'Fleet Manager': ['Van Sales']
     });
     const TOP_LEVEL_WORKSPACES = new Set([
+        'Restaurant',
         'Promotions',
         'Business Home',
         'Items',
@@ -575,6 +588,9 @@
         'Stock View'
     ]);
     const WORKSPACE_TO_MODULE = Object.freeze({
+        'Restaurant': 'Restaurant',
+        'Restaurant Table Locations Link': 'Restaurant',
+        'Restaurant Tables Link': 'Restaurant',
         'Business Home': '',
         'Items': 'Stock',
         'Items List': 'Stock',
@@ -582,6 +598,7 @@
         'Item Groups': 'Stock',
         'Price Lists': 'Stock',
         'Brands': 'Stock',
+        'Product Conversion Link': 'Stock',
         'Stocks': 'Stock',
         'Warehouses': 'Stock',
         'Stock Adjustments': 'Stock',
@@ -767,6 +784,7 @@
     ]);
     let sidebarItemsPromise = null;
     let sidebarItemsCache = null;
+    let persistentSidebar = null;
     let observerRefreshTimer = null;
     let routeRefreshTimer = null;
     let sidebarRenderRetryCount = 0;
@@ -2813,13 +2831,15 @@
         const host = getRetailSidebarHost(section);
         const sideSection = section.closest('.layout-side-section') || section;
         const sidebars = Array.from(sideSection.querySelectorAll('.retail-persistent-sidebar'));
-        const sidebar = sidebars.shift();
+        let sidebar = sidebars.shift() || persistentSidebar;
         sidebars.forEach(duplicate => duplicate.remove());
         if (sidebar) {
             if (sidebar.parentElement !== host) host.prepend(sidebar);
         } else {
-            host.prepend(buildPersistentSidebar(items));
+            sidebar = buildPersistentSidebar(items);
+            host.prepend(sidebar);
         }
+        persistentSidebar = sidebar;
         const route = frappe.get_route();
         if (isDesktop() && route?.[0] !== 'Form' && route?.[1] === 'POS Operator Privilege') {
             sideSection.classList.remove('hide-sidebar');
@@ -3152,7 +3172,8 @@
 
     function getSidebarItems() {
         if (sidebarItemsCache) return Promise.resolve(sidebarItemsCache);
-        // Only Retail-filtered boot data is eligible, and only on initial mounting.
+        // Reuse this session's Retail-filtered menu across page changes.
+        // Permission changes reload Desk through retail_sidebar_permissions_changed.
         if (useBootSidebarItems && frappe.boot?.retail_workspace_sidebar_groups &&
             Array.isArray(frappe.boot?.allowed_workspaces)) {
             useBootSidebarItems = false;
@@ -3333,6 +3354,9 @@
             if (posDoctypes.has(entry.doctype)) {
                 entry = { ...entry, workspace: 'POS' };
             }
+            if (entry.doctype === 'Product Conversion') {
+                entry = { ...entry, workspace: 'Items' };
+            }
             return original.call(this, entry);
         };
         breadcrumbs.__retail_pos_installed = true;
@@ -3367,10 +3391,7 @@
 
         if (window.frappe?.router?.on) {
             frappe.router.on('change', () => {
-                sidebarItemsGeneration += 1;
-                sidebarItemsCache = null;
-                sidebarItemsPromise = null;
-                useBootSidebarItems = false;
+                // Changing the active page does not change the user's menu.
                 if (redirectStandardHomeToBusinessHome()) return;
                 if (enforceAllowedRoute()) return;
                 redirectItemFamilyListRoute();

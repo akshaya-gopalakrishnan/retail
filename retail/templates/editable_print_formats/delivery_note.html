@@ -200,7 +200,7 @@
                     <td class="col-description">
 
                         <div class="item-name">
-                            {{ _(item.item_name) if item.item_name else item.item_code }}
+                            {{ _(item.item_name) if item.item_name else item.item_code }}{% set retail_barcode = item_barcode_for_print(item) %}{% if retail_barcode %}<br><small class="retail-item-barcode" style="font-weight: normal; overflow-wrap: anywhere;">{{ _("Barcode") }}: {{ retail_barcode | e }}</small>{% endif %}
                         </div>
 
 

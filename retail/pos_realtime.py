@@ -139,7 +139,7 @@ def refresh_closed_reconciliation(invoice):
                 "variance", flt(shift.closing_amount) - totals.expected_cash)
         from retail.pos_day_corrections import recalculate
         for day_name in frappe.get_all("POS Branch Day Closing", filters={
-                "branch": shift.branch, "business_date": get_datetime(shift.opening_time).date(),
+                "branch": shift.branch, "business_date": get_datetime(shift.get("business_date") or shift.opening_time).date(),
                 "docstatus": ["in", [0, 1]]}, pluck="name"):
             day = frappe.get_doc("POS Branch Day Closing", day_name, for_update=True)
             day.flags.ignore_validate_update_after_submit = True
@@ -265,7 +265,8 @@ def make_closing_entry_from_opening(opening):
     closing = frappe.new_doc("POS Closing Entry")
     closing.update({"pos_opening_entry": opening.name, "period_start_date": opening.period_start_date,
         "period_end_date": frappe.utils.now_datetime(), "pos_profile": opening.pos_profile,
-        "user": opening.user, "company": opening.company})
+        "user": opening.user, "company": opening.company,
+        "custom_pos_business_date": opening.get("custom_pos_business_date")})
     populate_closing(closing, closing_invoices(closing.period_start_date, closing.period_end_date,
         closing.pos_profile, closing.user))
     return closing

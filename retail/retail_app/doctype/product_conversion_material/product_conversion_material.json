@@ -1,0 +1,151 @@
+{
+ "doctype": "DocType",
+ "name": "Product Conversion Material",
+ "module": "Retail-app",
+ "engine": "InnoDB",
+ "field_order": [
+  "row_key",
+  "conversion_row",
+  "item_code",
+  "item_name",
+  "barcode",
+  "stock_uom",
+  "qty_per_unit",
+  "qty",
+  "current_stock",
+  "stock_cost",
+  "unit_cost",
+  "amount",
+  "warehouse",
+  "batch_no",
+  "serial_no",
+  "is_main_item"
+ ],
+ "fields": [
+  {
+   "fieldname": "row_key",
+   "label": "Product Row Key",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "conversion_row",
+   "label": "Product Row",
+   "fieldtype": "Int",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "item_code",
+   "label": "Material / Main Item",
+   "fieldtype": "Link",
+   "options": "Item",
+   "reqd": 1,
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "item_name",
+   "label": "Product Name",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "barcode",
+   "label": "Barcode",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "stock_uom",
+   "label": "Stock Unit",
+   "fieldtype": "Link",
+   "options": "UOM",
+   "read_only": 1
+  },
+  {
+   "fieldname": "qty_per_unit",
+   "label": "Consumption per Finished Unit",
+   "fieldtype": "Float",
+   "reqd": 1,
+   "precision": "9"
+  },
+  {
+   "fieldname": "qty",
+   "label": "Quantity to Consume",
+   "fieldtype": "Float",
+   "reqd": 1,
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "current_stock",
+   "label": "Current Stock",
+   "fieldtype": "Float",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "stock_cost",
+   "label": "Current Stock Cost / Unit",
+   "fieldtype": "Currency",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "unit_cost",
+   "label": "Consumption Cost / Unit",
+   "fieldtype": "Currency",
+   "options": "currency",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "amount",
+   "label": "Material Cost",
+   "fieldtype": "Currency",
+   "options": "currency",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "warehouse",
+   "label": "Source Warehouse",
+   "fieldtype": "Link",
+   "options": "Warehouse",
+   "reqd": 1
+  },
+  {
+   "fieldname": "batch_no",
+   "label": "Batch",
+   "fieldtype": "Link",
+   "options": "Batch",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "serial_no",
+   "label": "Serial Numbers",
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "is_main_item",
+   "label": "Main Item Consumption",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "read_only": 1
+  }
+ ],
+ "permissions": [],
+ "actions": [],
+ "links": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "istable": 1,
+ "editable_grid": 1
+}

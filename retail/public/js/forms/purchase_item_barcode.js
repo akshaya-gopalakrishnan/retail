@@ -1,35 +1,56 @@
-// Display the row's scanned/selected barcode; use the Item master only as a fallback.
+// Keep selected/scanned packing barcodes in transaction item tables.
 (() => {
-	async function refreshBarcodes(frm) {
-		const generation = frm.__retail_barcode_generation = (frm.__retail_barcode_generation || 0) + 1;
-		const codes = [...new Set((frm.doc.items || []).map(row => row.item_code).filter(Boolean))];
-		if (!codes.length) return;
-		const entry = frm.__quick_receipt;
-		const cached = entry?.dialog.$wrapper.is(":visible") ? entry.items : new Map();
-		if (frm.__retail_purchase_action && window.retail?.transaction_items?.preparedPurchaseItem) {
-			const prepared = await Promise.all(codes.filter(code => !cached.has(code)).map(code =>
-				window.retail.transaction_items.preparedPurchaseItem(frm, code)));
-			if (generation !== frm.__retail_barcode_generation) return;
-			for (const item of prepared) {
-				if (item && Object.hasOwn(item, "custom_barcode")) cached.set(item.name, item);
-			}
-		}
-		const missing = codes.filter(code => !cached.has(code));
-		const items = missing.length ? await frappe.db.get_list("Item", {
-			fields: ["name", "custom_barcode"], filters: { name: ["in", missing] }, limit: missing.length,
-		}) : [];
-		if (generation !== frm.__retail_barcode_generation) return;
-		const barcodes = new Map(items.map(item => [item.name, item.custom_barcode || ""]));
-		for (const code of codes) if (cached.has(code)) barcodes.set(code, cached.get(code).custom_barcode || "");
-		for (const row of frm.doc.items || []) {
-			if (row.barcode || barcodes.has(row.item_code)) {
-				row.custom_item_barcode = row.barcode || barcodes.get(row.item_code);
-			}
-		}
-		frm.refresh_field("items");
-	}
-	for (const parent of ["Purchase Invoice", "Purchase Receipt"]) {
-		frappe.ui.form.on(parent, { refresh: refreshBarcodes });
-		frappe.ui.form.on(`${parent} Item`, { item_code: refreshBarcodes, barcode: refreshBarcodes });
-	}
+    window.retail = window.retail || {};
+    if (window.retail.transaction_barcodes) return;
+    window.retail.transaction_barcodes = true;
+    const parents = ["Quotation", "Sales Order", "Sales Invoice", "POS Invoice", "Delivery Note",
+        "Purchase Order", "Purchase Receipt", "Purchase Invoice", "Material Request",
+        "Stock Entry", "Stock Reconciliation", "Supplier Quotation", "Request for Quotation"];
+    const signature = row => JSON.stringify([row.item_code, row.uom, row.barcode, row.custom_packing_detail, row.custom_item_barcode]);
+    async function refresh(frm) {
+        if (frm.doc.docstatus !== 0) return;
+        const generation = frm.__retail_barcode_generation = (frm.__retail_barcode_generation || 0) + 1;
+        const rows = (frm.doc.items || []).filter(row => row.item_code &&
+            frappe.meta.has_field(row.doctype, "custom_item_barcode"));
+        if (!rows.length) return;
+        const snapshots = new Map(rows.map(row => [row.name, signature(row)]));
+        const {message} = await frappe.call({method: "retail.transaction_barcodes.get_barcodes",
+            args: {rows: rows.map(row => ({name: row.name, item_code: row.item_code, uom: row.uom,
+                barcode: row.barcode, custom_packing_detail: row.custom_packing_detail,
+                custom_item_barcode: row.custom_item_barcode}))}, no_spinner: true});
+        if (generation !== frm.__retail_barcode_generation) return;
+        let changed = false;
+        for (const row of rows) {
+            if (snapshots.get(row.name) !== signature(row) || !(row.name in (message || {}))) continue;
+            if (row.custom_item_barcode !== message[row.name]) {
+                row.custom_item_barcode = message[row.name];
+                changed = true;
+            }
+        }
+        if (changed) frm.refresh_field("items");
+    }
+    function schedule(frm) {
+        clearTimeout(frm.__retail_barcode_timer);
+        frm.__retail_barcode_timer = setTimeout(() => refresh(frm), 100);
+    }
+    for (const parent of parents) {
+        frappe.ui.form.on(parent, {refresh: schedule});
+        // Stock tables use Detail/Item names; attach once metadata is available.
+        frappe.ui.form.on(parent, {setup(frm) {
+            for (const table of frm.meta.fields.filter(df => df.fieldtype === "Table")) {
+                const child = table.options;
+                const key = "__retail_barcode_" + child;
+                if (window.retail[key] || !frappe.meta.has_field(child, "custom_item_barcode")) continue;
+                window.retail[key] = true;
+                frappe.ui.form.on(child, {
+                    item_code(frm, cdt, cdn) {
+                        const row = locals[cdt]?.[cdn];
+                        if (row) { row.custom_packing_detail = ""; row.custom_item_barcode = ""; }
+                        schedule(frm);
+                    },
+                    uom: schedule, barcode: schedule,
+                });
+            }
+        }});
+    }
 })();

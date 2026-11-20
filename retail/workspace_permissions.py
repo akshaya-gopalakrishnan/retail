@@ -7,7 +7,15 @@ from frappe.desk.desktop import get_workspace_sidebar_items as get_standard_work
 SYSTEM_MANAGER_ROLE = "System Manager"
 ALWAYS_VISIBLE_WORKSPACES = {"Business Home"}
 HIDDEN_SIDEBAR_WORKSPACES = {"Sales Stock View", "Stock View"}
+MANUFACTURING_WORKSPACE_ALIASES = {
+	"Manufacturing BOM": "BOM",
+	"Manufacturing Production Plan": "Production Plan",
+	"Manufacturing Quality Inspection": "Quality Inspection",
+}
 SIDEBAR_DISPLAY_LABELS = {
+	"Product Conversion Link": "Product Conversion",
+	"Restaurant Table Locations Link": "Table Location",
+	"Restaurant Tables Link": "Tables",
 	"Van Sales Fleet Link": "Fleet",
 	"Van Sales Driver Link": "Driver",
 	"Van Sales Sessions Link": "Van Sessions",
@@ -43,7 +51,7 @@ ROLE_SIDEBAR_WORKSPACES = {
 	"Accounts User": {"Accounts"},
 	"Accounts Manager": {"Accounts"},
 	"POS User": {"POS"},
-	"POS Manager": {"POS"},
+	"POS Manager": {"POS", "Restaurant"},
 	"POS Integration User": {"POS"},
 	"Manufacturing User": {"Manufacturing"},
 	"Manufacturing Manager": {"Manufacturing"},
@@ -52,11 +60,14 @@ ROLE_SIDEBAR_WORKSPACES = {
 	"Fleet Manager": {"Van Sales"},
 }
 WORKSPACE_ROUTE_PERMISSIONS = {
+	"Restaurant Table Locations Link": (("doctype", "Table Location"),),
+	"Restaurant Tables Link": (("doctype", "Restaurant Table"),),
 	"Items List": (("doctype", "Item"),),
 	"Item Family List": (("page", "retail-item-family-l"), ("doctype", "Item")),
 	"Item Groups": (("doctype", "Item Group"),),
 	"Price Lists": (("doctype", "Item Price"),),
 	"Brands": (("doctype", "Brand"),),
+	"Product Conversion Link": (("doctype", "Product Conversion"),),
 	"Customers": (("doctype", "Customer"),),
 	"Quotations": (("doctype", "Quotation"),),
 	"Sales Orders": (("doctype", "Sales Order"),),
@@ -120,6 +131,9 @@ WORKSPACE_ROUTE_PERMISSIONS = {
 }
 
 WORKSPACE_MODULES = {
+	"Restaurant": "Restaurant",
+	"Restaurant Table Locations Link": "Restaurant",
+	"Restaurant Tables Link": "Restaurant",
 	"Sales Return": "Accounts",
 	"Promotions": "Selling",
 	"Promo Price": "Selling",
@@ -134,6 +148,7 @@ WORKSPACE_MODULES = {
 	"Item Groups": "Stock",
 	"Price Lists": "Stock",
 	"Brands": "Stock",
+	"Product Conversion Link": "Stock",
 	"Stocks": "Stock",
 	"Warehouses": "Stock",
 	"Stock Adjustments": "Stock",
@@ -207,12 +222,16 @@ WORKSPACE_MODULES = {
 }
 
 WORKSPACE_SIDEBAR_GROUPS = {
+	"Restaurant": "Restaurant",
+	"Restaurant Table Locations Link": "Restaurant",
+	"Restaurant Tables Link": "Restaurant",
 	"Items": "Items",
 	"Items List": "Items",
 	"Item Family List": "Items",
 	"Item Groups": "Items",
 	"Price Lists": "Items",
 	"Brands": "Items",
+	"Product Conversion Link": "Stocks",
 	"Sales": "Sales",
 	"Customers": "Sales",
 	"Quotations": "Sales",
@@ -461,6 +480,7 @@ def _get_role_allowed_sidebar_workspaces():
 
 def _workspace_sidebar_is_allowed(page, blocked_modules, allowed_workspaces):
 	title = page.get("title")
+	title = MANUFACTURING_WORKSPACE_ALIASES.get(title, title)
 	if title in ALWAYS_VISIBLE_WORKSPACES:
 		return True
 
@@ -680,7 +700,8 @@ def _has_route_permission(permission_type, target):
 
 
 def _workspace_has_route_permission(page):
-	permissions = WORKSPACE_ROUTE_PERMISSIONS.get(page.get("title"))
+	title = page.get("title")
+	permissions = WORKSPACE_ROUTE_PERMISSIONS.get(MANUFACTURING_WORKSPACE_ALIASES.get(title, title))
 	if not permissions:
 		return False
 
@@ -688,7 +709,9 @@ def _workspace_has_route_permission(page):
 
 
 def _normalize_sidebar_display(page):
-	display_label = SIDEBAR_DISPLAY_LABELS.get(page.get("name")) or SIDEBAR_DISPLAY_LABELS.get(page.get("title"))
+	display_label = (MANUFACTURING_WORKSPACE_ALIASES.get(page.get("name"))
+		or MANUFACTURING_WORKSPACE_ALIASES.get(page.get("title"))
+		or SIDEBAR_DISPLAY_LABELS.get(page.get("name")) or SIDEBAR_DISPLAY_LABELS.get(page.get("title")))
 	if display_label:
 		page = page.copy()
 		page["label"] = display_label

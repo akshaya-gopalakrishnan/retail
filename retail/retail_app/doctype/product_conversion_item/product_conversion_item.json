@@ -1,0 +1,246 @@
+{
+ "doctype": "DocType",
+ "name": "Product Conversion Item",
+ "module": "Retail-app",
+ "engine": "InnoDB",
+ "field_order": [
+  "source_type",
+  "main_item",
+  "item_code",
+  "qty",
+  "main_qty",
+  "main_stock_qty",
+  "labour_cost",
+  "packing_cost",
+  "total_cost",
+  "unit_cost",
+  "update_item_master",
+  "consumption_details",
+  "row_key",
+  "item_name",
+  "barcode",
+  "stock_uom",
+  "main_unit_cost",
+  "main_stock_uom",
+  "product_cost",
+  "master_cost_updated",
+  "batch_no",
+  "serial_no",
+  "use_multi_level_bom",
+  "main_qty_per_unit",
+  "bom_no"
+ ],
+ "fields": [
+  {
+   "fieldname": "row_key",
+   "label": "Row Key",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "read_only": 1,
+   "in_list_view": 0
+  },
+  {
+   "fieldname": "source_type",
+   "label": "Source",
+   "fieldtype": "Select",
+   "options": "BOM\nMain Item",
+   "read_only": 1,
+   "in_list_view": 0
+  },
+  {
+   "fieldname": "bom_no",
+   "label": "BOM",
+   "fieldtype": "Link",
+   "options": "BOM",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "item_code",
+   "label": "Packing Item",
+   "fieldtype": "Link",
+   "options": "Item",
+   "reqd": 1,
+   "read_only": 0,
+   "in_list_view": 1,
+   "columns": 2,
+   "read_only_depends_on": "eval:doc.source_type === 'BOM'"
+  },
+  {
+   "fieldname": "item_name",
+   "label": "Product Name",
+   "fieldtype": "Data",
+   "read_only": 1,
+   "in_list_view": 0
+  },
+  {
+   "fieldname": "barcode",
+   "label": "Barcode",
+   "fieldtype": "Data",
+   "read_only": 1,
+   "in_list_view": 0
+  },
+  {
+   "fieldname": "stock_uom",
+   "label": "Unit",
+   "fieldtype": "Link",
+   "options": "UOM",
+   "read_only": 1,
+   "in_list_view": 0
+  },
+  {
+   "fieldname": "qty",
+   "label": "Qty to Generate",
+   "fieldtype": "Float",
+   "reqd": 1,
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "main_item",
+   "label": "Main Item",
+   "fieldtype": "Link",
+   "options": "Item",
+   "read_only": 0,
+   "in_list_view": 1,
+   "columns": 1,
+   "read_only_depends_on": "eval:doc.source_type === 'BOM'"
+  },
+  {
+   "fieldname": "main_stock_qty",
+   "label": "Current Main Stock",
+   "fieldtype": "Float",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "main_unit_cost",
+   "label": "Main Item Stock Cost / Unit",
+   "fieldtype": "Currency",
+   "options": "currency",
+   "read_only": 1,
+   "in_list_view": 0
+  },
+  {
+   "fieldname": "main_stock_uom",
+   "label": "Main Item Stock UOM",
+   "fieldtype": "Link",
+   "options": "UOM",
+   "read_only": 1,
+   "in_list_view": 0
+  },
+  {
+   "fieldname": "product_cost",
+   "label": "Product Cost",
+   "fieldtype": "Currency",
+   "options": "currency",
+   "read_only": 1,
+   "in_list_view": 0,
+   "columns": 1
+  },
+  {
+   "fieldname": "labour_cost",
+   "label": "Labour Cost (Total)",
+   "fieldtype": "Currency",
+   "options": "currency",
+   "default": "0",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "packing_cost",
+   "label": "Packing Cost (Total)",
+   "fieldtype": "Currency",
+   "options": "currency",
+   "default": "0",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "total_cost",
+   "label": "Total Cost",
+   "fieldtype": "Currency",
+   "options": "currency",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "unit_cost",
+   "label": "Cost per Pack",
+   "fieldtype": "Currency",
+   "options": "currency",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "update_item_master",
+   "label": "Update Item Master Cost",
+   "fieldtype": "Check",
+   "default": "0",
+   "in_list_view": 0,
+   "columns": 1
+  },
+  {
+   "fieldname": "master_cost_updated",
+   "label": "Master Cost Updated",
+   "fieldtype": "Check",
+   "read_only": 1,
+   "no_copy": 1,
+   "in_list_view": 0
+  },
+  {
+   "fieldname": "batch_no",
+   "label": "Finished Batch",
+   "fieldtype": "Link",
+   "options": "Batch",
+   "in_list_view": 0
+  },
+  {
+   "fieldname": "serial_no",
+   "label": "Finished Serial Numbers",
+   "fieldtype": "Small Text",
+   "in_list_view": 0
+  },
+  {
+   "fieldname": "use_multi_level_bom",
+   "label": "Use Multi-Level BOM",
+   "fieldtype": "Check",
+   "read_only": 1,
+   "in_list_view": 0
+  },
+  {
+   "fieldname": "main_qty_per_unit",
+   "label": "Main Quantity per Finished Unit",
+   "fieldtype": "Float",
+   "precision": "9",
+   "read_only_depends_on": "eval:doc.source_type === 'BOM'",
+   "in_list_view": 0
+  },
+  {
+   "fieldname": "main_qty",
+   "label": "Qty to Consume",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "columns": 1,
+   "read_only_depends_on": "eval:doc.source_type === 'BOM'"
+  },
+  {
+   "fieldname": "consumption_details",
+   "label": "Consumption Details",
+   "fieldtype": "Button",
+   "print_hide": 1,
+   "in_list_view": 0
+  }
+ ],
+ "permissions": [],
+ "actions": [],
+ "links": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "istable": 1,
+ "editable_grid": 1
+}

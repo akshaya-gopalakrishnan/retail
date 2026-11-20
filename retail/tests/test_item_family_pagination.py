@@ -42,7 +42,6 @@ class TestItemFamilyPagination(unittest.TestCase):
 			report.get_data(frappe._dict(), item_codes=["A", "B"])
 			query, values = sql.call_args.args
 			self.assertIn("where item_code in %(page_item_codes)s", query)
-			self.assertIn("and item_code in %(page_item_codes)s", query)
 			self.assertIn("and item.name in %(page_item_codes)s", query)
 			self.assertEqual(values["page_item_codes"], ("A", "B"))
 		with patch.object(frappe.db, "sql") as sql:

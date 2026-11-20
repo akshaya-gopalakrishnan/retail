@@ -24,6 +24,21 @@ class TestWorkspaceReportSidebar(unittest.TestCase):
 		self.addCleanup(patcher.stop)
 		return patcher.start()
 
+	def test_renamed_manufacturing_workspaces_keep_permissions(self):
+		for name, target in workspace_permissions.MANUFACTURING_WORKSPACE_ALIASES.items():
+			page = frappe._dict(name=name, title=name, module="Retail-app", parent_page="Manufacturing")
+			with self.subTest(workspace=name):
+				self.assertTrue(workspace_permissions._workspace_sidebar_is_allowed(page, set(), {"Manufacturing"}))
+				self.assertFalse(workspace_permissions._workspace_sidebar_is_allowed(page, {"Manufacturing"}, {"Manufacturing"}))
+				self.assertFalse(workspace_permissions._workspace_sidebar_is_allowed(page, set(), {"Sales"}))
+				self.has_permission.return_value = True
+				self.assertTrue(workspace_permissions._workspace_has_route_permission(page))
+				self.has_permission.assert_called_with(target, "read")
+				self.has_permission.return_value = False
+				self.assertFalse(workspace_permissions._workspace_has_route_permission(page))
+				self.assertEqual(workspace_permissions._normalize_sidebar_display(page).label, target)
+				self.assertEqual(page.name, name)
+
 	def allow_report(self, name, **fields):
 		self.reports[name] = frappe._dict(
 			name=name, disabled=0, module="Accounts", ref_doctype="Sales Invoice"

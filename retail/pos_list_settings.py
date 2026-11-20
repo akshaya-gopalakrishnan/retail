@@ -11,10 +11,12 @@ FILTERS = {
     "POS Closing Entry": ["posting_date", "pos_profile", "pos_branch_counter", "status"],
 }
 COLUMNS = {
+    "POS Counter Session": ["branch", "counter_code", "cashier_shift", "status", "business_date", "started_at", "ended_at"],
+    "POS Cashier Shift": ["branch", "cashier_name", "status", "business_date", "opening_time", "closing_time"],
     "POS Profile": ["company", "warehouse", "status_field"],
     "POS Branch Counter": ["counter_code", "counter_name", "branch", "pos_profile", "status_field"],
-    "POS Opening Entry": ["pos_profile", "period_start_date", "period_end_date", "custom_opening_cash", "status_field"],
-    "POS Closing Entry": ["pos_profile", "period_end_date", "custom_closing_amount", "status_field"],
+    "POS Opening Entry": ["pos_profile", "custom_pos_business_date", "period_start_date", "period_end_date", "custom_opening_cash", "status_field"],
+    "POS Closing Entry": ["pos_profile", "custom_pos_business_date", "period_end_date", "custom_closing_amount", "status_field"],
 }
 
 
@@ -60,6 +62,8 @@ def update_opening_end_date(doc, method=None):
 
 
 def configure():
+    from retail.pos_entry_business_dates import configure as configure_business_dates
+    configure_business_dates()
     from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
     from frappe.custom.doctype.property_setter.property_setter import make_property_setter
     create_custom_fields({
@@ -82,16 +86,23 @@ def configure():
             if bool(df.in_standard_filter) != bool(enabled):
                 make_property_setter(doctype, df.fieldname, "in_standard_filter", str(enabled), "Check")
     for doctype, fields in COLUMNS.items():
-        for field in fields:
-            if field != "status_field":
-                make_property_setter(doctype, field, "in_list_view", "1", "Check")
-        settings = (frappe.get_doc("List View Settings", doctype)
-            if frappe.db.exists("List View Settings", doctype) else frappe.new_doc("List View Settings"))
-        settings.name = doctype
-        settings.fields = frappe.as_json([{"fieldname": field} for field in fields])
-        settings.total_fields = str(len(fields) + 1)
-        settings.save(ignore_permissions=True)
+        configure_columns(doctype, fields)
     frappe.clear_cache()
+
+
+def configure_columns(doctype, fields):
+    from frappe.custom.doctype.property_setter.property_setter import make_property_setter
+    for field in fields:
+        if field != "status_field":
+            make_property_setter(doctype, field, "in_list_view", "1", "Check")
+    settings = (frappe.get_doc("List View Settings", doctype)
+        if frappe.db.exists("List View Settings", doctype) else frappe.new_doc("List View Settings"))
+    settings.name = doctype
+    settings.fields = frappe.as_json([{"fieldname": field} for field in fields])
+    # Frappe counts its fixed Subject and hidden Tags columns in the limit.
+    fixed_columns = 2 if doctype in ("POS Cashier Shift", "POS Counter Session", "POS Opening Entry", "POS Closing Entry") else 1
+    settings.total_fields = str(len(fields) + fixed_columns)
+    settings.save(ignore_permissions=True)
 
 
 def execute():

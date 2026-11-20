@@ -239,7 +239,7 @@ def adjust_day_closing_payments(data=None, **kwargs):
                 frappe.throw(_("A cashier shift cannot be adjusted twice in one request."))
             seen.add(name)
             shift = frappe.get_doc("POS Cashier Shift", name, for_update=True)
-            if shift.branch != closing.branch or getdate(shift.opening_time) != getdate(closing.business_date) or shift.status != "Closed":
+            if shift.branch != closing.branch or getdate(shift.get("business_date") or shift.opening_time) != getdate(closing.business_date) or shift.status != "Closed":
                 frappe.throw(_("The shift must be closed and belong to this branch and business day."))
             amount = money(row.get("closing_amount"))
             if money(row.get("expected_amount")) != money(shift.closing_amount):
@@ -271,7 +271,7 @@ def check_bank_settlement(accounting_invoice, pos_invoice):
 
 def validate_invoice(invoice, closing):
     shift = frappe.get_doc("POS Cashier Shift", invoice.pos_cashier_shift)
-    if shift.branch != closing.branch or getdate(shift.opening_time) != getdate(closing.business_date):
+    if shift.branch != closing.branch or getdate(shift.get("business_date") or shift.opening_time) != getdate(closing.business_date):
         frappe.throw(_("The bill does not belong to this business day."))
     if invoice.company != company_for(closing.branch):
         frappe.throw(_("The bill belongs to another company."))
@@ -422,7 +422,8 @@ def guard_sale_day(doc, method=None):
     frappe.db.get_value("Branch", branch, "name", for_update=True)
     date = doc.posting_date
     if doc.get("pos_cashier_shift"):
-        date = getdate(frappe.db.get_value("POS Cashier Shift", doc.pos_cashier_shift, "opening_time"))
+        shift = frappe.db.get_value("POS Cashier Shift", doc.pos_cashier_shift, ["business_date", "opening_time"], as_dict=True)
+        date = getdate(shift.business_date or shift.opening_time)
     from retail.api.pos_sync import _assert_day_not_closed
     from retail.pos_completed_sale import audit_validation
     audit_validation(doc, "Late transaction after day close", lambda: _assert_day_not_closed(branch, date))
@@ -444,7 +445,7 @@ def guard_closed_shift(doc, method=None):
         return
     old = doc.get_doc_before_save()
     if old and old.status == "Closed" and any(doc.get(f) != old.get(f) for f in
-        ("branch", "opening_time", "cashier_employee", "closing_amount", "expected_cash", "variance")):
+        ("branch", "business_date", "opening_time", "cashier_employee", "closing_amount", "expected_cash", "variance")):
         frappe.throw(_("Use the authorized day correction API to adjust a closed shift."))
 
 

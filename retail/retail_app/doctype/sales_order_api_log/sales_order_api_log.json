@@ -57,14 +57,14 @@
   },
   {
    "fieldname": "request_json",
-   "label": "Request Summary",
+   "label": "Request Payload",
    "fieldtype": "Code",
    "read_only": 1,
    "options": "JSON"
   },
   {
    "fieldname": "response_json",
-   "label": "Response Summary",
+   "label": "API Response",
    "fieldtype": "Code",
    "read_only": 1,
    "options": "JSON"

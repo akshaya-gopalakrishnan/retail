@@ -1,6 +1,7 @@
-/* Purchase-only packing grid, using the Link control's keyboard navigation. */
+/* Shared packing search, using the Link control's keyboard navigation. */
 (() => {
 	window.retail = window.retail || {};
+	if (window.retail.purchase_packing_search) return;
 	const esc = value => frappe.utils.escape_html(String(value ?? ""));
 	const columns = values => `<span class="retail-packing-cells">${values.map(value => `<span>${esc(value)}</span>`).join("")}</span>`;
 	function standardOptions(control, args) {
@@ -19,7 +20,7 @@
 		return options;
 	}
 
-	function bind(control, select) {
+	function bind(control, select, selling = false) {
 		if (!control?.awesomplete || control.__retail_packing_search) return;
 		control.__retail_packing_search = true;
 		const awesome = control.awesomplete;
@@ -46,7 +47,7 @@
 					method: "retail.domains.purchase.packing_search.search", args: {
 						txt, start: existing.length, page_length: pageSize + 1,
 						filters: args.filters, query: args.query,
-						reference_doctype: control.get_reference_doctype(),
+						reference_doctype: control.get_reference_doctype(), transaction_type: selling === null ? "all" : selling ? "selling" : "buying",
 					}, no_spinner: true,
 				});
 				if (version !== request || !control.$input.is(":focus")) return;
@@ -147,6 +148,77 @@
 		};
 	}
 	window.retail.purchase_packing_search = {bind, installScanner};
+
+	// Item Name is a Data field in native child-row forms. Use an Item Link
+	// control for that search surface, writing item_code through native handlers
+	// while leaving the saved item_name and schema as ordinary text.
+	const makeControl = frappe.ui.form.make_control;
+	if (makeControl) frappe.ui.form.make_control = function (options) {
+		const grid = options.grid || options.layout?.grid;
+		const code = grid?.fields_map?.item_code;
+		if (options.df.fieldname !== "item_name" || options.df.fieldtype !== "Data"
+			|| options.df.read_only || code?.options !== "Item" || code.fieldtype !== "Link") {
+			return makeControl.call(this, options);
+		}
+		const field = makeControl.call(this, {...options,
+			df: {...code, label: options.df.label, formatter: undefined},
+			value: options.doc?.item_code,
+		});
+		field.get_query = (...args) => {
+			const query = grid.get_field("item_code").get_query;
+			return typeof query === "function" ? query(...args) : query;
+		};
+		field.is_title_link = () => true;
+		return field;
+	};
+
+	// Cover dynamically created Item Links in forms, grids, filters and dialogs.
+	// Transaction-specific binders run before focus and retain their behavior.
+	const link = frappe.ui.form.ControlLink?.prototype;
+	if (link) {
+		const setup = link.setup_awesomeplete;
+		link.setup_awesomeplete = function (...args) {
+			const result = setup.apply(this, args);
+			// Dynamic Link targets depend on their surrounding form/list, which
+			// is not ready during construction. Only static Item Links opt in.
+			if (this.df.fieldtype !== "Link" || this.df.options !== "Item") return result;
+			// Native focus triggers input before the lazy packing binder runs.
+			// Remove its debounced search now: removing it on focus cannot cancel
+			// the already queued callback, which would overwrite packing results.
+			this.$input.off("input");
+			this.$input.on("focus.retailSitePacking", () => {
+				if (this.get_options() !== "Item" || this.__retail_packing_search) return;
+				const control = this;
+				const row = control.doc || (control.doctype && control.docname
+					? locals[control.doctype]?.[control.docname] : null);
+				const parent = control.frm?.doc?.doctype || control.get_reference_doctype() || "";
+				const mode = /^(Sales|Delivery|Quotation|POS)/.test(parent) ? true
+					: /^(Purchase|Supplier)/.test(parent) ? false : null;
+				bind(control, async choice => {
+					const has = field => row && frappe.meta.has_field(row.doctype, field);
+					const previous = row && {uom: row.uom};
+					const seed = has("uom") && !row[control.df.fieldname];
+					if (seed) row.uom = choice.uom;
+					try {
+						await control.set_value(choice.item_code);
+					} catch (error) {
+						if (seed && !row[control.df.fieldname]) Object.assign(row, previous);
+						throw error;
+					}
+					for (const [field, value] of Object.entries({uom: choice.uom,
+						barcode: choice.barcode || "", custom_item_barcode: choice.barcode || "",
+						custom_packing_detail: choice.packing_id || ""})) {
+						if (has(field) && field !== control.df.fieldname) {
+							await frappe.model.set_value(row.doctype, row.name, field, value);
+						}
+					}
+				}, mode);
+				this.$input.trigger("input");
+			});
+			return result;
+		};
+	}
+
 
 	const purchaseParents = ["Purchase Receipt", "Purchase Invoice"];
 	const detailSkip = new Set(["name", "idx", "doctype", "parent", "parentfield", "parenttype", "owner", "creation", "modified", "docstatus"]);
@@ -486,14 +558,18 @@
 
 	installFastScan();
 
-	for (const doctype of ["Purchase Receipt", "Purchase Invoice"]) frappe.ui.form.on(doctype, {
+	for (const doctype of ["Purchase Receipt", "Purchase Invoice", "Sales Order", "Sales Invoice"]) frappe.ui.form.on(doctype, {
 		scan_barcode(frm) {
-			installScanner(frm);
-			installFastScan();
+			if (purchaseParents.includes(doctype)) {
+				installScanner(frm);
+				installFastScan();
+			}
 		},
 		refresh(frm) {
-			installScanner(frm);
-			installFastScan();
+			if (purchaseParents.includes(doctype)) {
+				installScanner(frm);
+				installFastScan();
+			}
 			if (frm.__retail_packing_focus) return;
 			frm.__retail_packing_focus = true;
 			frm.wrapper.addEventListener("focus", event => {
@@ -504,7 +580,7 @@
 				const rowName = $(input).closest(".grid-row").attr("data-name");
 				const gridRow = grid?.grid_rows_by_docname?.[rowName];
 				const control = [gridRow?.on_grid_fields_dict?.item_code, gridRow?.on_grid_fields_dict?.item_name,
-					gridRow?.grid_form?.fields_dict?.item_code]
+					gridRow?.grid_form?.fields_dict?.item_code, gridRow?.grid_form?.fields_dict?.item_name]
 					.find(field => field?.$input?.[0] === input && field.df.options === "Item");
 				window.retail.purchase_packing_search.bind(control, async choice => {
 					const row = gridRow.doc;
@@ -515,10 +591,13 @@
 							barcode: choice.barcode,
 						}, row);
 						if (!result?.row) frappe.throw(__("Could not load the selected Item."));
+						result.row.custom_packing_detail = choice.packing_id || "";
+						result.row.custom_item_barcode = choice.barcode || "";
+						frm.refresh_field("items");
 						return;
 					}
 					// Internal transfers keep the native item and UOM handlers.
-					const seed = !row.item_code && choice.barcode && !frm.doc.is_internal_supplier;
+					const seed = !row.item_code && choice.barcode && !frm.doc.is_internal_supplier && !frm.doc.is_internal_customer;
 					const previous = {uom: row.uom, barcode: row.barcode};
 					if (seed) Object.assign(row, {uom: choice.uom, barcode: choice.barcode});
 					try {
@@ -531,9 +610,14 @@
 					await frappe.model.set_value(row.doctype, row.name, "uom", choice.uom);
 					row.barcode = choice.barcode || "";
 					row.custom_item_barcode = choice.barcode || "";
+					row.custom_packing_detail = choice.packing_id || "";
+					if (doctype === "Sales Order") {
+						row.custom_packing_detail = choice.packing_id || "";
+						row.item_name = choice.packing_name || choice.item_name;
+					}
 					frm.dirty();
 					frm.refresh_field("items");
-				});
+				}, ["Sales Order", "Sales Invoice"].includes(doctype));
 			}, true);
 		},
 	});

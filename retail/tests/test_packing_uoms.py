@@ -100,3 +100,26 @@ class TestPackingUoms(unittest.TestCase):
 		next(row for row in doc.uoms if row.uom == "Box-21").conversion_factor = 99
 		with self.assertRaises(ValueError):
 			packing_sync.validate_packing_uoms(doc)
+
+	def test_stock_uom_change_reset_reports_missing_packing_conversion(self):
+		doc = self.item()
+		packing_sync.sync_uoms_and_barcodes(doc)
+		# ERPNext discards old conversions when an existing Item changes Stock UOM.
+		doc.stock_uom = "Kg"
+		doc.uoms = [frappe._dict(uom="Kg", conversion_factor=1)]
+		with self.assertRaises(ValueError):
+			packing_sync.validate_packing_uoms(doc)
+		self.assertIn("measured in the new Stock UOM", frappe.throw.call_args.args[0])
+		self.assertEqual([row.uom for row in doc.uoms], ["Kg"])
+
+	def test_invalid_conversion_values_report_validation_error(self):
+		for field in ["item", "packing"]:
+			for factor in [None, "", "invalid", "NaN", "Infinity", 0, -1]:
+				with self.subTest(field=field, factor=factor):
+					doc = self.item()
+					packing_sync.sync_uoms_and_barcodes(doc)
+					row = doc.uoms[-1] if field == "item" else doc.custom_retail_packing_detail[-1]
+					row.conversion_factor = factor
+					with self.assertRaises(ValueError):
+						packing_sync.validate_packing_uoms(doc)
+					self.assertIn("positive numeric conversion factors", frappe.throw.call_args.args[0])

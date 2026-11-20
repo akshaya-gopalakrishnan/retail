@@ -104,3 +104,15 @@ test('Ctrl+Enter commits the active value and saves/closes instead of saving/new
  form.handle_key(key);await new Promise(setImmediate);
  assert.ok(key.prevented && key.stopped);assert.deepEqual(order,['commit','close']);
 });
+
+test('Down from a checkbox follows its form column instead of skipping to a later checkbox', async () => {
+ const form=fixture();
+ const check=field(0,0), next=field(0,60), later=field(0,240);
+ check.$input[0].getBoundingClientRect=()=>({left:0,top:0,width:14,height:14});
+ later.$input[0].getBoundingClientRect=()=>({left:0,top:240,width:14,height:14});
+ for(const control of [check,next,later]) control.$wrapper=[{getBoundingClientRect:()=>({left:0,width:400})}];
+ form.keyboard_fields=()=>[check,next,later];
+ await form.move_field(check,'ArrowDown');
+ assert.ok(next.$input[0].focused);
+ assert.ok(!later.$input[0].focused);
+});

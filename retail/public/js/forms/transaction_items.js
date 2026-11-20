@@ -299,7 +299,12 @@
 				inclusiveRate = flt(exclusiveRate * factor, precision);
 				values.custom_rate_including_vat = inclusiveRate;
 				if (amountField) {
-					values.amount = flt(qty * exclusiveRate, amountPrecision);
+					const amount = flt(qty * exclusiveRate, amountPrecision);
+					if (["Sales Invoice", "Delivery Note"].includes(frm.doc.doctype)) {
+						// A display refresh must not fire the amount-edit handler,
+						// which derives a rounded rate and changes the discount.
+						row.amount = amount;
+					} else values.amount = amount;
 				}
 			}
 
@@ -329,6 +334,25 @@
 	// Quick Entry waits for the same VAT/totals pipeline before displaying final totals or saving.
 	window.retail = window.retail || {};
 	window.retail.transaction_items = window.retail.transaction_items || {};
+	window.retail.transaction_items.refreshVatDisplays = async frm => {
+		for (const row of frm.doc.items || []) {
+			if (!row.item_code) continue;
+			while (row.__retail_vat_syncing) await new Promise(resolve => setTimeout(resolve, 16));
+			const vat = await getVatRate(frm, row, row.doctype);
+			const rate = flt(row.rate);
+			const precision = cint(frappe.meta.get_docfield(row.doctype, "rate", row.name)?.precision) || 2;
+			const amountPrecision = cint(frappe.meta.get_docfield(row.doctype, "amount", row.name)?.precision) || precision;
+			const inclusive = flt(rate * (1 + flt(vat) / 100), precision);
+			const values = {custom_rate_including_vat: inclusive,
+				custom_amount_including_vat: flt(flt(row.qty) * inclusive, amountPrecision),
+				custom_vat_amount: flt(flt(row.qty) * rate * flt(vat) / 100, amountPrecision)};
+			for (const [field, value] of Object.entries(values)) {
+				if (!frappe.meta.has_field(row.doctype, field)) continue;
+				row[field] = value;
+				frm.fields_dict.items?.grid?.grid_rows_by_docname?.[row.name]?.refresh_field?.(field);
+			}
+		}
+	};
 	const purchaseForms = ["Purchase Receipt", "Purchase Invoice"];
 	const purchaseReadKey = request => JSON.stringify([request.method,
 		Object.keys(request.args || {}).sort().filter(key => request.args[key] != null)

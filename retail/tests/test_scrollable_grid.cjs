@@ -149,6 +149,34 @@ function names(grid) {
   return Array.from(grid.visible_columns, ([df]) => df.fieldname);
 }
 
+test("native search cells inherit their field column widths instead of the control width", () => {
+  const f = fixture();
+  const values = {};
+  const classes = new Set();
+  const cell = {
+    dataset: {},
+    style: { setProperty: (key, value) => { values[key] = value; } },
+    classList: {
+      contains: (name) => classes.has(name),
+      toggle: (name, enabled) => enabled ? classes.add(name) : classes.delete(name),
+    },
+  };
+  f.grid.header_search = {
+    search_columns: { field_0: { 0: cell } },
+    row: {
+      children: () => ({
+        each: (callback) => callback.call(cell),
+        off() {},
+      }),
+    },
+  };
+  f.handlers["Purchase Invoice"].refresh(f.frm);
+  assert.equal(cell.dataset.fieldname, "field_0");
+  assert.equal(values["--retail-column-width"], `${f.grid.__retail_content_widths.field_0}px`);
+  assert.notEqual(values["--retail-column-width"], "40px");
+  assert.ok(classes.has("retail-grid-data-column"));
+});
+
 test("registered transaction grids remove the native width budget without a prototype patch", () => {
   const f = fixture();
   const native = f.context.NativeGrid.prototype.setup_visible_columns;
@@ -156,7 +184,8 @@ test("registered transaction grids remove the native width budget without a prot
   assert.equal(f.grid.visible_columns.length, 10);
   assert.deepEqual(Object.keys(f.handlers), [
     "Purchase Order", "Purchase Invoice", "Purchase Receipt", "Material Request",
-    "Stock Reconciliation", "Stock Entry", "Delivery Note", "Sales Order",
+    "Stock Reconciliation", "Stock Entry", "Delivery Note", "Quotation",
+    "Supplier Quotation", "Request for Quotation", "Sales Order",
     "Sales Invoice", "POS Invoice", "Promo Price", "Item",
   ]);
   f.handlers["Purchase Invoice"].refresh(f.frm);
@@ -298,7 +327,8 @@ test("noneditable template-rendered grids are still left to the native renderer"
 });
 
 for (const doctype of ["Purchase Order", "Purchase Receipt", "Material Request",
-  "Stock Reconciliation", "Stock Entry", "Delivery Note", "Sales Order", "Sales Invoice", "POS Invoice"]) {
+  "Stock Reconciliation", "Stock Entry", "Delivery Note", "Quotation",
+    "Supplier Quotation", "Request for Quotation", "Sales Order", "Sales Invoice", "POS Invoice"]) {
   test(`${doctype} registration enables the items grid`, () => {
     const f = fixture();
     f.frm.doctype = doctype;
@@ -488,4 +518,33 @@ test('omitted tracking columns appear after UOM while saved purchase widths rema
  assert.equal(JSON.stringify(settings),before);
  f.frm.doc.items=[];await f.handlers['Purchase Invoice Item'].items_remove(f.frm);
  assert.deepEqual(names(f.grid),['item_code','item_name','uom','qty']);
+});
+
+
+test('Barcode follows Item Name even when an existing layout omits both columns', () => {
+  const selected = [{fieldname:'item_code',columns:3,width_px:210},{fieldname:'field_2',columns:1}];
+  const f = fixture({RetailScrollableGrid:{items:selected}});
+  Object.assign(f.grid.fields_map, {
+    item_code:{fieldname:'item_code',fieldtype:'Link',options:'Item',in_list_view:1},
+    item_name:{fieldname:'item_name',fieldtype:'Data'},
+    custom_item_barcode:{fieldname:'custom_item_barcode',fieldtype:'Data',read_only:1},
+  });
+  f.handlers['Purchase Invoice'].refresh(f.frm);
+  assert.deepEqual(names(f.grid), ['item_code','item_name','custom_item_barcode','field_2']);
+  assert.equal(f.grid.visible_columns[0][0].width_px,210);
+  assert.equal(f.grid.visible_columns[2][0].read_only,1);
+});
+
+
+test('native Item Name metadata without in_list_view remains visible before Barcode', () => {
+  const f = fixture();
+  f.grid.docfields = [
+    {fieldname:'item_code',fieldtype:'Link',options:'Item',in_list_view:1},
+    {fieldname:'item_name',fieldtype:'Data',in_list_view:0},
+    {fieldname:'custom_item_barcode',fieldtype:'Data',in_list_view:1,read_only:1},
+  ];
+  f.grid.fields_map = Object.fromEntries(f.grid.docfields.map(df => [df.fieldname,df]));
+  f.handlers['Purchase Invoice'].refresh(f.frm);
+  assert.deepEqual(names(f.grid),['item_code','item_name','custom_item_barcode']);
+  assert.equal(f.grid.fields_map.item_name.in_list_view,0);
 });

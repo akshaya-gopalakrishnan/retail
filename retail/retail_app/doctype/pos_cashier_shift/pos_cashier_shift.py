@@ -14,6 +14,9 @@ class POSCashierShift(Document):
 		if not self.opening_time:
 			frappe.throw(_("Opening Time is required."))
 
+		if not self.business_date:
+			self.business_date = frappe.utils.getdate(self.opening_time)
+
 		if not self.cashier_name:
 			self.cashier_name = frappe.db.get_value("Employee", self.cashier_employee, "employee_name")
 

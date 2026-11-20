@@ -46,8 +46,20 @@
 			}
 			listview.page.fields_dict[fieldname].$wrapper.addClass("retail-pos-date-filter");
 		}
+		const selection = frappe.boot?.retail_sidebar_selection;
+		const restaurant_enabled = Array.isArray(selection)
+			? selection.includes("workspace:restaurant")
+			: (frappe.boot?.allowed_workspaces || []).some(page => page.name === "Restaurant");
+		if (restaurant_enabled && !listview.page.fields_dict.custom_is_dine_in) {
+			listview.page.add_field({
+				fieldname: "custom_is_dine_in", label: __("Dine In"), fieldtype: "Select",
+				options: [{ label: "", value: "" }, { label: __("Yes"), value: "1" },
+					{ label: __("No"), value: "0" }], condition: "=",
+				onchange: () => listview.filter_area.debounced_refresh_list_view(),
+			}, wrapper);
+		}
 		for (const [index, fieldname] of ["name", "custom_pos_business_date", "posting_date",
-			"customer", "custom_pos_transaction_type", "status", "pos_cashier_employee",
+			"customer", "custom_pos_transaction_type", "custom_is_dine_in", "status", "pos_cashier_employee",
 			"pos_cashier_shift", "pos_counter_session"].entries()) {
 			listview.page.fields_dict[fieldname]?.$wrapper.css("order", index);
 		}

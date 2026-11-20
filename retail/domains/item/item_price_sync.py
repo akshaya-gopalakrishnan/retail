@@ -28,6 +28,26 @@ LEGACY_ITEM_RATE_CLIENT_SCRIPTS = (
 )
 
 
+def get_sales_master_lookup_rate(args, item_code):
+	"""Read maintained selling prices when a sales document has no price-list match."""
+	item = frappe.get_cached_doc("Item", item_code)
+	uom = args.get("uom") or item.stock_uom
+	if uom == item.stock_uom:
+		if _explicit_selling_zero(item):
+			return None
+		rate = flt(_get_item_master_selling_rate(item))
+	else:
+		packing = next((row for row in item.get("custom_retail_packing_detail") or []
+			if row.get("uom") == uom and not row.get("disabled")), None)
+		if not packing:
+			return None
+		rate = flt(packing.get("selling_net_rate"))
+	plc_factor = flt(args.get("plc_conversion_rate"))
+	if rate <= 0 or plc_factor <= 0:
+		return None
+	return rate / plc_factor
+
+
 def get_purchase_master_lookup_rate(args, item_code):
 	"""Missing Standard Buying price fallback, before ERPNext applies pricing rules."""
 	item = frappe.get_cached_doc("Item", item_code)
