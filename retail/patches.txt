@@ -126,4 +126,4 @@ retail.patches.pos_dine_in
 retail.patches.sales_order_item_columns
 
 retail.patches.print_item_barcodes
-retail.bom_item_identity.install
+retail.patches.bom_item_identity
