@@ -1173,7 +1173,7 @@ doc_events.setdefault("Item Tax Template", {}).setdefault("on_update", []).appen
 )
 
 # POS entry business dates are descriptive; retain native posting dates.
-after_install.append("retail.pos_entry_business_dates.configure")
+after_sync.append("retail.pos_entry_business_dates.configure")
 after_migrate.append("retail.pos_entry_business_dates.configure")
 for _entry_date_dt in ("POS Opening Entry", "POS Closing Entry"):
     _entry_date_handlers = doc_events.setdefault(_entry_date_dt, {}).get("before_validate", [])
