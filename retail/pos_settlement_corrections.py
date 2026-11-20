@@ -110,7 +110,7 @@ def check_bank(payment):
 def collection_context(closing, shift_name, session_name):
     shift = frappe.get_doc("POS Cashier Shift", shift_name, for_update=True)
     session = frappe.get_doc("POS Counter Session", session_name, for_update=True)
-    if (shift.branch != closing.branch or getdate(shift.opening_time) != getdate(closing.business_date)
+    if (shift.branch != closing.branch or getdate(shift.get("business_date") or shift.opening_time) != getdate(closing.business_date)
             or session.branch != closing.branch or session.cashier_shift != shift.name
             or session.cashier_employee != shift.cashier_employee):
         frappe.throw(_("Collection shift and session must belong to this business day and branch."))
@@ -202,7 +202,7 @@ def correct_bill_settlement(data=None, **kwargs):
             frappe.throw(_("Settlement correction cannot change the invoice customer. Please contact the accounts team."))
         result = {}
         if data.action == "SetCredit":
-            if getdate(sale_shift.opening_time) != getdate(closing.business_date):
+            if getdate(sale_shift.get("business_date") or sale_shift.opening_time) != getdate(closing.business_date):
                 frappe.throw(_("Reopen the sale's original business day to remove its initial payment."))
             if before["collections"] or flt(si.outstanding_amount) or flt(si.paid_amount) <= 0:
                 frappe.throw(_("SetCredit requires an initially fully paid bill without later collections."))
@@ -273,7 +273,7 @@ def guard_payment(doc, method=None):
         shift = frappe.get_doc("POS Cashier Shift", doc.pos_cashier_shift)
         frappe.db.get_value("Branch", shift.branch, "name", for_update=True)
         from retail.api.pos_sync import _assert_day_not_closed
-        _assert_day_not_closed(shift.branch, getdate(shift.opening_time))
+        _assert_day_not_closed(shift.branch, getdate(shift.get("business_date") or shift.opening_time))
     old = doc.get_doc_before_save()
     if doc.get("custom_settlement_operation") and not old:
         frappe.throw(_("Settlement correction references are assigned by the authorized API."))

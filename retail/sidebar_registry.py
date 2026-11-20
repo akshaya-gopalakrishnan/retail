@@ -39,7 +39,7 @@ def registry():
 
     groups = []
     for root in ("Business Home", "Items", "Sales", "Purchases", "Stocks", "Accounts",
-                 "Manufacturing", "POS", "Van Sales", "Reports", "Promotions", "Settings"):
+                 "Manufacturing", "POS", "Restaurant", "Van Sales", "Reports", "Promotions", "Settings"):
         group = entry(root)
         children = [name for name, parent in WORKSPACE_SIDEBAR_GROUPS.items()
                     if parent == root and name != root and name != "Van Stock View"]

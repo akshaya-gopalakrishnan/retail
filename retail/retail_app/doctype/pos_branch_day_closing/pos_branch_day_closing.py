@@ -105,8 +105,8 @@ class POSBranchDayClosing(Document):
 		self.closed_shift_count = len(shifts) - open_shift_count
 		self.active_counter_session_count = frappe.db.count(
 			"POS Counter Session",
-			{"branch": self.branch, "status": "Active"},
-		)
+			{"branch": self.branch, "status": "Active", "cashier_shift": ["in", [row.name for row in shifts]]},
+		) if shifts else 0
 		self.total_invoice_count = total_invoices
 		self.total_sales = total_sales
 		self.total_cash_in = total_cash_in
@@ -117,12 +117,8 @@ class POSBranchDayClosing(Document):
 
 
 def _get_cashier_shifts(branch, business_date):
-	return frappe.db.get_values(
-		"POS Cashier Shift",
-		filters={
-			"branch": branch,
-			"opening_time": ["between", [f"{getdate(business_date)} 00:00:00", f"{getdate(business_date)} 23:59:59"]],
-		},
+	date = getdate(business_date)
+	options = dict(
 		fieldname=[
 			"name",
 			"cashier_employee",
@@ -141,6 +137,18 @@ def _get_cashier_shifts(branch, business_date):
 		for_update=True,
 		order_by="opening_time asc",
 	)
+	shifts = frappe.db.get_values(
+		"POS Cashier Shift", filters={"branch": branch, "business_date": date}, **options
+	)
+	# Legacy shifts may predate the descriptive business-date field. Only those
+	# rows fall back to their opening date; an explicit selected date always wins.
+	legacy = frappe.db.get_values(
+		"POS Cashier Shift",
+		filters={"branch": branch, "business_date": ["is", "not set"],
+			"opening_time": ["between", [f"{date} 00:00:00", f"{date} 23:59:59.999999"]]},
+		**options,
+	)
+	return sorted(shifts + legacy, key=lambda row: str(row.opening_time))
 
 
 def _get_sales_by_shift(cashier_shifts):

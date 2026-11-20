@@ -187,9 +187,10 @@ def get_matching_inclusive_promo_row(doc, item, promotions):
 	if item.get("custom_foc_parent"):
 		return None  # The linked free goods retain their zero commercial price.
 	matches = []
+	native_priority = doc.get("doctype") == "Sales Invoice"
 	for promotion in promotions:
 		for row in promotion.get("products") or []:
-			if not flt(row.promo_price_including_tax):
+			if not flt(row.promo_price_including_tax) and not (native_priority and flt(row.get("discount_percent"))):
 				continue
 			if promotion.get("promotion_scope") != "WHOLE BILL" and not row_matches_item(row, item):
 				continue
@@ -197,12 +198,20 @@ def get_matching_inclusive_promo_row(doc, item, promotions):
 				continue
 			if promotion.warehouse and item.get("warehouse") and promotion.warehouse != item.warehouse:
 				continue
-			if flt(promotion.min_qty) and flt(item.qty) < flt(promotion.min_qty):
+			quantity, amount = flt(item.qty), (0 if native_priority else get_doc_gross_total(doc))
+			if native_priority:
+				if promotion.get("promotion_scope") == "WHOLE BILL":
+					from retail.promotions.whole_bill import bill_totals
+					quantity, amount = bill_totals(doc, {})
+				else:
+					price = item.get("price_list_rate")
+					amount = quantity * flt(price if price is not None else item.get("rate"))
+			if flt(promotion.min_qty) and quantity < flt(promotion.min_qty):
 				continue
 			max_qty = flt(row.max_qty) or flt(promotion.max_qty)
-			if max_qty and flt(item.qty) > max_qty:
+			if max_qty and quantity > max_qty:
 				continue
-			if flt(promotion.min_sales_value) and get_doc_gross_total(doc) < flt(promotion.min_sales_value):
+			if flt(promotion.min_sales_value) and amount < flt(promotion.min_sales_value):
 				continue
 
 			matches.append((flt(promotion.priority), promotion.modified, row))
@@ -210,8 +219,15 @@ def get_matching_inclusive_promo_row(doc, item, promotions):
 	if not matches:
 		return None
 
-	matches.sort(key=lambda match: (match[0], match[1]), reverse=True)
-	return matches[0][2]
+	if native_priority:
+		matches.sort(key=lambda match: match[1], reverse=True)
+		matches.sort(key=lambda match: match[0] if match[0] > 0 else 9999)
+	else:
+		matches.sort(key=lambda match: (match[0], match[1]), reverse=True)
+	winner = matches[0][2]
+	# Percentage winners remain owned by native pricing. A lower-priority fixed
+	# inclusive price must not overwrite them later during document validation.
+	return winner if flt(winner.promo_price_including_tax) else None
 
 
 def row_matches_item(row, item):

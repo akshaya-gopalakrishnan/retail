@@ -410,11 +410,11 @@
       },
       {
         "columns": 2,
-        "fieldname": "custom_vat_amount"
+        "fieldname": "custom_amount_including_vat"
       },
       {
         "columns": 2,
-        "fieldname": "custom_amount_including_vat"
+        "fieldname": "custom_vat_amount"
       }
     ]
   },
@@ -427,6 +427,10 @@
       {
         "columns": 1,
         "fieldname": "item_name"
+      },
+      {
+        "columns": 2,
+        "fieldname": "custom_item_barcode"
       },
       {
         "columns": 1,

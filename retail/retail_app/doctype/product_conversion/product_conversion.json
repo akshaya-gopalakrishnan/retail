@@ -1,0 +1,304 @@
+{
+ "doctype": "DocType",
+ "name": "Product Conversion",
+ "module": "Retail-app",
+ "engine": "InnoDB",
+ "field_order": [
+  "company",
+  "posting_date",
+  "posting_time",
+  "header_column",
+  "source_warehouse",
+  "target_warehouse",
+  "currency",
+  "staff_section",
+  "in_charge",
+  "packed_by",
+  "status",
+  "stock_entry",
+  "products_section",
+  "get_items_from_bom",
+  "get_items_from_main_item",
+  "items",
+  "materials_section",
+  "materials",
+  "costs_section",
+  "labour_account",
+  "packing_account",
+  "cost_center",
+  "totals_column",
+  "product_cost",
+  "labour_cost",
+  "packing_cost",
+  "total_cost",
+  "remarks_section",
+  "remarks",
+  "master_cost_updates",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "company",
+   "label": "Company",
+   "fieldtype": "Link",
+   "options": "Company",
+   "reqd": 1,
+   "in_list_view": 1,
+   "read_only_depends_on": "eval:doc.items && doc.items.some(r => r.item_code)"
+  },
+  {
+   "fieldname": "posting_date",
+   "label": "Posting Date",
+   "fieldtype": "Date",
+   "reqd": 1,
+   "default": "Today",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "posting_time",
+   "label": "Posting Time",
+   "fieldtype": "Time",
+   "reqd": 1,
+   "default": "Now"
+  },
+  {
+   "fieldname": "header_column",
+   "label": "",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "source_warehouse",
+   "label": "Source Warehouse",
+   "fieldtype": "Link",
+   "options": "Warehouse",
+   "reqd": 1
+  },
+  {
+   "fieldname": "target_warehouse",
+   "label": "Target Warehouse",
+   "fieldtype": "Link",
+   "options": "Warehouse",
+   "reqd": 1
+  },
+  {
+   "fieldname": "currency",
+   "label": "Currency",
+   "fieldtype": "Link",
+   "options": "Currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "staff_section",
+   "label": "Responsibility",
+   "fieldtype": "Section Break",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "in_charge",
+   "label": "In Charge",
+   "fieldtype": "Link",
+   "options": "User",
+   "default": "__user"
+  },
+  {
+   "fieldname": "packed_by",
+   "label": "Packed By",
+   "fieldtype": "Link",
+   "options": "User",
+   "default": "__user"
+  },
+  {
+   "fieldname": "status",
+   "label": "Status",
+   "fieldtype": "Select",
+   "options": "Draft\nPosted\nCancelled",
+   "default": "Draft",
+   "read_only": 1,
+   "in_list_view": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "stock_entry",
+   "label": "Stock Entry",
+   "fieldtype": "Link",
+   "options": "Stock Entry",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "products_section",
+   "label": "Conversion Items",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "get_items_from_bom",
+   "label": "Get Items from BOM",
+   "fieldtype": "Button",
+   "depends_on": "eval:doc.docstatus === 0",
+   "print_hide": 1
+  },
+  {
+   "fieldname": "get_items_from_main_item",
+   "label": "Get Items from Main Item",
+   "fieldtype": "Button",
+   "depends_on": "eval:doc.docstatus === 0",
+   "print_hide": 1
+  },
+  {
+   "fieldname": "items",
+   "label": "Items",
+   "fieldtype": "Table",
+   "options": "Product Conversion Item",
+   "reqd": 1
+  },
+  {
+   "fieldname": "materials_section",
+   "label": "Consumption Details",
+   "fieldtype": "Section Break",
+   "hidden": 1,
+   "print_hide": 1
+  },
+  {
+   "fieldname": "materials",
+   "label": "Consumption Items",
+   "fieldtype": "Table",
+   "options": "Product Conversion Material",
+   "reqd": 0,
+   "hidden": 1,
+   "print_hide": 1
+  },
+  {
+   "fieldname": "costs_section",
+   "label": "Costs",
+   "fieldtype": "Section Break",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "labour_account",
+   "label": "Labour Cost Account",
+   "fieldtype": "Link",
+   "options": "Account"
+  },
+  {
+   "fieldname": "packing_account",
+   "label": "Packing Cost Account",
+   "fieldtype": "Link",
+   "options": "Account"
+  },
+  {
+   "fieldname": "cost_center",
+   "label": "Cost Center",
+   "fieldtype": "Link",
+   "options": "Cost Center"
+  },
+  {
+   "fieldname": "totals_column",
+   "label": "",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "product_cost",
+   "label": "Total Product Cost",
+   "fieldtype": "Currency",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "labour_cost",
+   "label": "Total Labour Cost",
+   "fieldtype": "Currency",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "packing_cost",
+   "label": "Total Packing Cost",
+   "fieldtype": "Currency",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_cost",
+   "label": "Total Conversion Cost",
+   "fieldtype": "Currency",
+   "options": "currency",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "remarks_section",
+   "label": "",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "remarks",
+   "label": "Remarks",
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "master_cost_updates",
+   "label": "Master Cost Update Audit",
+   "fieldtype": "Long Text",
+   "hidden": 1,
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "label": "Amended From",
+   "fieldtype": "Link",
+   "options": "Product Conversion",
+   "read_only": 1,
+   "no_copy": 1,
+   "print_hide": 1
+  }
+ ],
+ "permissions": [
+  {
+   "role": "Stock User",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1,
+   "print": 1,
+   "email": 1,
+   "export": 1,
+   "report": 1
+  },
+  {
+   "role": "Stock Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1,
+   "print": 1,
+   "email": 1,
+   "export": 1,
+   "report": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1,
+   "print": 1,
+   "email": 1,
+   "export": 1,
+   "report": 1
+  }
+ ],
+ "actions": [],
+ "links": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "is_submittable": 1,
+ "autoname": "PC-.#",
+ "track_changes": 1
+}

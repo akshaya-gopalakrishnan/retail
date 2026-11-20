@@ -8,6 +8,16 @@ from retail.api import pos_sync
 
 
 class TestPOSListSettings(unittest.TestCase):
+    def test_cashier_shift_limit_includes_hidden_tags_column(self):
+        doc = MagicMock()
+        fields = settings.COLUMNS["POS Cashier Shift"]
+        with patch.object(frappe, "db", MagicMock()), \
+                patch.object(frappe, "get_doc", return_value=doc), \
+                patch("frappe.custom.doctype.property_setter.property_setter.make_property_setter"):
+            settings.configure_columns("POS Cashier Shift", fields)
+        self.assertEqual(int(doc.total_fields), len(fields) + 2)
+        self.assertEqual(frappe.parse_json(doc.fields)[-1]["fieldname"], "closing_time")
+
     def test_opening_cash_excludes_cards(self):
         doc = frappe._dict(balance_details=[
             frappe._dict(mode_of_payment="Cash", opening_amount=100),

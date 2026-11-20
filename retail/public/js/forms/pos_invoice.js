@@ -5,6 +5,17 @@ frappe.ui.form.on("POS Invoice", {
 			frm.fields_dict.items?.grid?.update_docfield_property("discount_amount", "label", __("Discount"));
 		}
 		if (frm.is_new()) return;
+		const selection = frappe.boot?.retail_sidebar_selection;
+		const can_view_logs = (frappe.boot?.user?.can_read || []).includes("POS Sync Log")
+			&& (!Array.isArray(selection) || selection.includes("workspace:pos_sync_logs"))
+			&& frappe.boot?.retail_module_access?.POS !== false;
+		if (frm.doc.external_pos_reference && can_view_logs) {
+			frm.add_custom_button(__("POS Sync Log"), () => {
+				frappe.set_route("List", "POS Sync Log", {
+					external_reference: frm.doc.external_pos_reference,
+				});
+			}, __("View"));
+		}
 		const name = frm.doc.name;
 		const { message: posting } = await frappe.call({
 			method: "retail.pos_ledger.get_ledger_context",

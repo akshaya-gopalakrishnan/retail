@@ -5,7 +5,7 @@ import frappe
 
 TRANSACTIONS = ("Sales Invoice", "POS Invoice", "Sales Order", "Quotation", "Delivery Note",
                 "Purchase Order", "Purchase Receipt", "Purchase Invoice", "Supplier Quotation",
-                "Stock Entry", "Stock Reconciliation", "Payment Entry", "Material Request")
+                "Stock Entry", "Stock Reconciliation", "Payment Entry", "Material Request", "Product Conversion")
 LINK_HELPERS = {
     "retail.domains.item.vat_pricing.get_item_tax_rate": "Item",
     "retail.domains.transactions.vat.get_transaction_item_vat_rate": "Item",
@@ -133,6 +133,7 @@ def authorize_link_service(command, form):
 POS_SERVICES = {
     "health_check": ("POS Invoices", "POS Invoice", ("read",)),
     "get_pos_master_data": ("POS Invoices", "POS Invoice", ("read",)),
+    "get_pos_tables": ("POS Invoices", "POS Invoice", ("read",)),
     "get_pos_promo_prices": ("POS Invoices", "POS Invoice", ("read",)),
     "get_pos_buy_x_get_y_promotions": ("POS Invoices", "POS Invoice", ("read",)),
     "get_pos_loyalty_programs": ("POS Invoices", "POS Invoice", ("read",)),
@@ -228,6 +229,11 @@ def authorize_service(command, form):
         if doctype and any(not frappe.has_permission(doctype, action) for action in actions):
             deny()
         return True
+
+    if command == "retail.product_conversion.get_defaults":
+        return capability("Product Conversion Link", "Product Conversion", ("read", "create"))
+    if command == "retail.product_conversion.get_stock_details":
+        return capability("Product Conversion Link", "Product Conversion")
 
     if command == "retail.document_codes.ensure_codes":
         # Lists initialize their existing public codes through this helper.

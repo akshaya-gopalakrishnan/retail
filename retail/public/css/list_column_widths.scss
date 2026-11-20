@@ -16,8 +16,8 @@
 			overflow: visible;
 		}
 		.list-row > .level-right, .list-row-head > .level-right {
-			flex: 0 0 130px;
-			min-width: 130px;
+			flex: 0 0 var(--retail-list-activity-width, 130px);
+			min-width: var(--retail-list-activity-width, 130px);
 		}
 		.list-row-col {
 			order: var(--retail-list-column-order, 0);

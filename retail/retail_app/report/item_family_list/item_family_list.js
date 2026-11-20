@@ -22,6 +22,9 @@ frappe.query_reports["Item Family List"] = {
 		},
 	],
 	formatter(value, row, column, data, default_formatter) {
+		if (column.fieldname === "packing_stock_qty" && data?.packing_balance_known === false) {
+			return __("Unknown");
+		}
 		value = default_formatter(value, row, column, data);
 		if (column.fieldname === "item_code" && data?.idx === 1) {
 			return `<strong>${value}</strong>`;

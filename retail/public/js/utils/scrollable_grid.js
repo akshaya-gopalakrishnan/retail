@@ -29,6 +29,34 @@
 		let fields = this.user_defined_columns.length
 			? this.user_defined_columns
 			: this.editable_fields || this.docfields;
+		if (this.fields_map.item_code?.options === "Item" && this.fields_map.custom_item_barcode) {
+			// Apply the requested identity columns to existing saved layouts too.
+			// Keep all other columns, widths and ordering intact.
+			fields = fields.map(field => typeof field === "string" ? this.fields_map[field] : field).filter(Boolean);
+			const existingName = fields.find(field => field.fieldname === "item_name") || this.fields_map.item_name;
+			const name = existingName && {...existingName, in_list_view: 1, columns: existingName.columns || 2};
+			const existingBarcode = fields.find(field => field.fieldname === "custom_item_barcode") || this.fields_map.custom_item_barcode;
+			const barcode = {...existingBarcode, in_list_view: 1, columns: existingBarcode.columns || 2};
+			fields = fields.filter(field => field.fieldname !== "custom_item_barcode");
+			let index = fields.findIndex(field => field.fieldname === "item_name");
+			if (name && index < 0) {
+				index = fields.findIndex(field => field.fieldname === "item_code") + 1;
+				fields.splice(index, 0, name);
+			} else if (name) fields[index] = name;
+			if (index >= 0) fields.splice(index + 1, 0, barcode);
+			if (this.user_defined_columns.length) this.user_defined_columns = fields;
+		}
+		if (this.frm.doctype === "Sales Invoice" && this.df.fieldname === "items"
+			&& this.fields_map.custom_amount_including_vat) {
+			fields = fields.map(field => typeof field === "string" ? this.fields_map[field] : field).filter(Boolean);
+			const existing = fields.find(field => field.fieldname === "custom_amount_including_vat") ||
+				this.fields_map.custom_amount_including_vat;
+			const inclusive = {...existing, in_list_view: 1, columns: existing.columns || 2};
+			fields = fields.filter(field => field.fieldname !== "custom_amount_including_vat");
+			const index = fields.findIndex(field => field.fieldname === "amount");
+			if (index >= 0) fields.splice(index + 1, 0, inclusive);
+			if (this.user_defined_columns.length) this.user_defined_columns = fields;
+		}
 		if (this.retail_purchase_tracking) {
 			// Tracking follows the selected Item even when a personal layout omits
 			// these fields. Work on copies; retain saved widths and preferences.
@@ -48,6 +76,21 @@
 		if (target && this.fields_map[target]) {
 			fields = [this.fields_map[target], ...fields.filter(field =>
 				(typeof field === "string" ? field : field.fieldname) !== target)];
+			if (this.user_defined_columns.length) this.user_defined_columns = fields;
+		}
+		if (this.frm.doctype === "Product Conversion" && this.df.fieldname === "items" && this.fields_map.bom_no) {
+			// Keep the source BOM visible after existing personal columns.
+			const bom = fields.find(field => field.fieldname === "bom_no") || this.fields_map.bom_no;
+			fields = fields.filter(field => (typeof field === "string" ? field : field.fieldname) !== "bom_no");
+			fields.push({...bom, in_list_view: 1, columns: bom.columns || 2});
+			if (this.user_defined_columns.length) this.user_defined_columns = fields;
+		}
+		if (this.frm.doctype === "BOM" && this.df.fieldname === "items" && this.fields_map.custom_item_barcode) {
+			const names = ["item_name", "custom_item_barcode"];
+			const identity = names.map(name => ({...(fields.find(field => field.fieldname === name) || this.fields_map[name]), in_list_view: 1, columns: 2}));
+			fields = fields.filter(field => !names.includes(typeof field === "string" ? field : field.fieldname));
+			const index = fields.findIndex(field => (typeof field === "string" ? field : field.fieldname) === "item_code");
+			fields.splice(index + 1, 0, ...identity);
 			if (this.user_defined_columns.length) this.user_defined_columns = fields;
 		}
 		this.visible_columns = [];
@@ -74,8 +117,10 @@
 			// Item identity and Item Name are separate columns. Keep the native link
 			// destination while displaying its stored code instead of the title.
 			if (df.fieldname === "item_code" && df.fieldtype === "Link" && df.options === "Item") {
+				const title = this.__retail_scroll_options?.item_code_as_title;
 				df.formatter = (value, field, options, doc) =>
-					frappe.form.formatters.Link(value, field, { ...options, label: value }, doc);
+					frappe.form.formatters.Link(value, field, { ...options,
+						label: title ? doc?.item_name || frappe.utils.get_link_title("Item", value) || value : value }, doc);
 			}
 			this.visible_columns.push([df, df.colsize]);
 		}
@@ -233,6 +278,11 @@
 				itemColumn[0].formatter(row.doc.item_code, itemColumn[0], {}, row.doc));
 		}
 		const options = grid.__retail_scroll_options;
+		// Native search cells omit data-fieldname; use their field map so they
+		// receive the same sizing and pinned position as headings and item cells.
+		for (const [fieldname, cell] of Object.entries(row.search_columns || {})) {
+			if (cell?.[0]) cell[0].dataset.fieldname = fieldname;
+		}
 		row.row.children(".col").each(function () {
 			const fieldname = this.dataset.fieldname;
 			const column = grid.visible_columns.find(([df]) => df.fieldname === fieldname);
@@ -524,6 +574,9 @@
 		register("Stock Reconciliation", "items");
 		register("Stock Entry", "items");
 		register("Delivery Note", "items");
+		register("Quotation", "items");
+		register("Supplier Quotation", "items");
+		register("Request for Quotation", "items");
 		register("Sales Order", "items");
 		register("Sales Invoice", "items");
 		register("POS Invoice", "items");

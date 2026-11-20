@@ -170,6 +170,8 @@ def prepare_super_user(doc, method=None):
             require_super_admin()
         doc.append_roles("System Manager")
         doc.allowed_in_mentions = 0
+    from retail.manufacturing_access import prepare_user
+    prepare_user(doc)
 
 
 def guard_request():

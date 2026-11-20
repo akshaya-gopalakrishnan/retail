@@ -1,0 +1,66 @@
+{% set info = print_context(doc) %}
+<style>
+@page { size: A4 portrait; margin: 12mm; }
+.print-format { font-family: Arial, sans-serif; font-size: 10px; color: #111; }
+.pc-header { text-align: center; line-height: 1.5; margin-bottom: 12px; }
+.pc-header h2 { font-size: 18px; margin: 0; font-weight: bold; }
+.pc-letterhead { margin-bottom: 12px; }
+.pc-letterhead img { max-width: 100%; }
+.pc-title { text-align: center; color: #2f70c5; border-top: 1px solid #c5c5c5; border-bottom: 1px solid #c5c5c5; font-size: 14px; font-weight: bold; padding: 5px; margin-bottom: 10px; }
+.pc-meta { font-size: 11px; width: 100%; margin-bottom: 14px; }
+.pc-meta td { border: 0 !important; padding: 2px 4px !important; }
+.pc-products { font-size: 11px; width: 100%; border-collapse: collapse; }
+.print-format .pc-products th, .print-format .pc-products td { padding: 7px 5px !important; vertical-align: top; text-align: left !important; border: 0 !important; }
+.print-format .pc-products th { background-color: #2f70c5 !important; color: #fff !important; font-size: 9px; font-weight: bold; }
+.print-format .pc-meta td { background-color: #909090 !important; color: #fff !important; border: 0 !important; }
+.print-format .pc-products, .print-format .pc-materials, .print-format .pc-meta, .print-format .pc-products tr { border: 0 !important; }
+.pc-products { table-layout: fixed; }
+.pc-products, .pc-meta { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.print-format .pc-products .pc-number { text-align: right !important; white-space: nowrap; }
+.print-format .pc-products th.pc-number { white-space: normal; }
+.print-format .pc-products td { overflow-wrap: anywhere; }
+.pc-products td.pc-consumption { padding: 2px 10px 16px 30px !important; }
+.pc-consumption h4 { color: #2f70c5; font-size: 11px; text-decoration: underline; margin: 6px 0; }
+.pc-materials { width: 100%; font-size: 10px; border-collapse: collapse; table-layout: fixed; }
+.pc-materials th { font-size: 9px; }
+.pc-totals { background-color: #f0f0f0; font-weight: bold; }
+.pc-note { margin-top: 10px; font-size: 9px; }
+.pc-signatures { margin-top: 35px; width: 100%; }
+</style>
+{% if letter_head and not no_letterhead %}
+<div class="letter-head pc-letterhead">{{ letter_head }}</div>
+{% else %}
+<div class="pc-header">
+  <h2>{{ info.company | e }}</h2>
+  {% if info.address %}<div>{{ info.address | e }}</div>{% endif %}
+  {% if info.phone %}<div>Tel: {{ info.phone | e }}</div>{% endif %}
+  {% if info.tax_id %}<div>TRN: {{ info.tax_id | e }}</div>{% endif %}
+</div>
+{% endif %}
+<div class="pc-title">PRODUCT CONVERSION DETAILS</div>
+<table class="pc-meta"><tbody>
+<tr><td>Source: {{ doc.source_warehouse | e }}</td><td>Ref No: {{ doc.name | e }}</td></tr>
+<tr><td>Target: {{ doc.target_warehouse | e }}</td><td>Date: {{ doc.get_formatted('posting_date') }}</td></tr>
+<tr><td>In Charge: {{ info.in_charge | e }}</td><td>Status: {{ doc.status | e }}</td></tr>
+<tr><td>Packed By: {{ info.packed_by | e }}</td><td>{% if doc.stock_entry %}Stock Entry: {{ doc.stock_entry | e }}{% endif %}</td></tr>
+</tbody></table>
+<table class="pc-products"><colgroup><col style="width:4%"><col style="width:17%"><col style="width:16%"><col style="width:5%"><col style="width:8%"><col style="width:11%"><col style="width:8%"><col style="width:8%"><col style="width:11%"><col style="width:12%"></colgroup><thead><tr>
+<th>No.</th><th>Barcode</th><th>Product</th><th>Unit</th><th class="pc-number">Quantity</th><th class="pc-number">Product Cost</th><th class="pc-number">Labour</th><th class="pc-number">Packing</th><th class="pc-number">Total Cost</th><th class="pc-number">Cost / Pack</th>
+</tr></thead><tbody>
+{% for product in doc.items %}
+<tr class="pc-product"><td>{{ loop.index }}</td><td>{{ product.barcode | e }}</td><td>{{ product.item_name | e }}{% if product.batch_no %}<br>Batch: {{ product.batch_no | e }}{% endif %}</td><td>{{ product.stock_uom | e }}</td><td class="pc-number">{{ product.get_formatted('qty') }}</td>
+{% for field in ['product_cost', 'labour_cost', 'packing_cost', 'total_cost', 'unit_cost'] %}<td class="pc-number">{{ frappe.utils.fmt_money(product.get(field), precision=2) }}</td>{% endfor %}</tr>
+<tr><td colspan="10" class="pc-consumption"><h4>Consumption Details</h4>
+<table class="pc-materials"><colgroup><col style="width:19%"><col style="width:23%"><col style="width:23%"><col style="width:7%"><col style="width:10%"><col style="width:9%"><col style="width:9%"></colgroup><thead><tr><th>Barcode</th><th>Product</th><th>Warehouse / Batch</th><th>Unit</th><th class="pc-number">Quantity</th><th class="pc-number">Cost</th><th class="pc-number">Amount</th></tr></thead><tbody>
+{% for material in doc.materials if material.row_key == product.row_key %}
+<tr><td>{{ material.barcode | e }}</td><td>{{ material.item_name | e }}</td><td>{{ material.warehouse | e }}{% if material.batch_no %}<br>{{ material.batch_no | e }}{% endif %}</td><td>{{ material.stock_uom | e }}</td><td class="pc-number">{{ material.get_formatted('qty') }}</td><td class="pc-number">{{ frappe.utils.fmt_money(material.unit_cost, precision=4) }}</td><td class="pc-number">{{ frappe.utils.fmt_money(material.amount, precision=2) }}</td></tr>
+{% endfor %}
+<tr><td colspan="6" class="pc-number"><b>Material Total</b></td><td class="pc-number"><b>{{ frappe.utils.fmt_money(product.product_cost, precision=2) }}</b></td></tr>
+</tbody></table></td></tr>
+{% endfor %}
+<tr class="pc-totals"><td colspan="5">Totals ({{ doc.currency | e }})</td>{% for field in ['product_cost', 'labour_cost', 'packing_cost', 'total_cost'] %}<td class="pc-number">{{ frappe.utils.fmt_money(doc.get(field), precision=2) }}</td>{% endfor %}<td></td></tr>
+</tbody></table>
+<div class="pc-note">Labour and packing amounts are total charges. {% if doc.docstatus == 0 %}<b>DRAFT — costs are a preview; stock has not been posted.</b>{% endif %}{% if doc.docstatus == 2 %}<b>CANCELLED</b>{% endif %}</div>
+{% if doc.remarks %}<p>{{ doc.remarks | e }}</p>{% endif %}
+<table class="pc-signatures"><tr><td>Prepared By: ____________________</td><td>Checked By: ____________________</td></tr></table>
+{% if footer and not no_letterhead %}<div class="letter-head-footer">{{ footer }}</div>{% endif %}

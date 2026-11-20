@@ -9,7 +9,9 @@ window.retail_setup_pos_printing = function (report) {
 		const layout = await frappe.xcall("retail.report_print_formats.get_report_format", {
 			report_name: this.report_name,
 			format_name: settings.print_format || `${this.report_name} - A4`,
+			item_rows: this.data.filter(row => row.item_code).map(row => ({ item_code: row.item_code, uom: row.uom })),
 		});
+		this._retail_print_barcodes = layout.barcodes || {};
 		const bytes = new TextEncoder().encode(layout.css || "");
 		const css = btoa(Array.from(bytes, byte => String.fromCharCode(byte)).join(""));
 		return `<style>{%= new TextDecoder().decode(Uint8Array.from(atob("${css}"), byte => byte.charCodeAt(0))) %}</style>${layout.html}`;

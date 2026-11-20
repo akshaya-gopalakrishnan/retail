@@ -717,5 +717,17 @@
   "Voucher Card Batch": [
     "List",
     "Voucher Card Batch"
+  ],
+  "Restaurant Table Locations Link": [
+    "List",
+    "Table Location"
+  ],
+  "Restaurant Tables Link": [
+    "List",
+    "Restaurant Table"
+  ],
+  "Product Conversion Link": [
+    "List",
+    "Product Conversion"
   ]
 }

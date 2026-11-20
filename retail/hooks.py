@@ -90,8 +90,8 @@ doctype_list_js = {
 	"POS Invoice": "public/js/pos_creation_controls.js",
 	"POS Opening Entry": "public/js/pos_creation_controls.js",
 	"POS Closing Entry": "public/js/pos_creation_controls.js",
-	"POS Cashier Shift": "public/js/pos_creation_controls.js",
-	"POS Counter Session": "public/js/pos_creation_controls.js",
+	"POS Cashier Shift": ["public/js/pos_creation_controls.js", "public/js/list/pos_cashier_shift.js"],
+	"POS Counter Session": ["public/js/pos_creation_controls.js", "public/js/list/pos_counter_session.js"],
 	"POS Sync Log": "public/js/pos_creation_controls.js",
 	"Journal Entry": "public/js/hide_transaction_id_list.js",
 	"Payment Entry": "public/js/hide_transaction_id_list.js",
@@ -154,14 +154,15 @@ doctype_js = {
 		"public/js/forms/purchase_history.js",
 		"public/js/forms/purchase_receipt_quick_entry.js",
 	],
-	"Sales Order": "public/js/forms/foc_qty.js",
+	"Sales Order": ["public/js/forms/purchase_packing_search.js", "public/js/forms/foc_qty.js"],
 	"Delivery Note": "public/js/forms/foc_qty.js",
-	"Sales Invoice": ["public/js/forms/sales_invoice.js", "public/js/forms/sales_invoice_loyalty.js"],
+	"Sales Invoice": ["public/js/forms/purchase_packing_search.js", "public/js/forms/sales_invoice.js", "public/js/forms/sales_invoice_loyalty.js"],
 	"Payment Entry": "public/js/forms/payment_entry.js",
 	"POS Invoice": ["public/js/forms/foc_qty.js", "public/js/forms/pos_invoice.js"],
 	"Stock Entry": [
 		"public/js/forms/foc_qty.js",
 		"public/js/forms/van_stock_entry.js",
+		"public/js/forms/repack.js",
 	],
 	"Material Request": "public/js/forms/material_request.js",
 	"Van Session": "public/js/forms/van_session.js",
@@ -602,6 +603,7 @@ after_migrate = [
 # 	"frappe.desk.doctype.event.event.get_events": "retail.event.get_events"
 # }
 override_whitelisted_methods = {
+	"erpnext.selling.doctype.sales_order.sales_order.make_purchase_order": "retail.domains.purchase.sales_order_mapping.make_purchase_order",
 	"erpnext.stock.get_item_details.get_item_details": "retail.domains.item.packing_scan.get_item_details",
 	"erpnext.accounts.doctype.pos_closing_entry.pos_closing_entry.get_pos_invoices": "retail.pos_realtime.get_pos_invoices",
 	"frappe.desk.query_report.run": "retail.retail_app.report.stock_movement_utils.run_query_report",
@@ -769,6 +771,7 @@ scheduler_events["hourly"].append("retail.domains.item.arabic_name.warm_pos_pack
 # Frappe v15 has no extend_doctype_class. Keep these existing scoped subclasses
 # for receipt immutability/loyalty/posting; replacing them changes business logic.
 override_doctype_class = {  # nosemgrep: frappe-semgrep-rules.rules.override-doctype-class
+	"Stock Entry": "retail.repack.RetailStockEntry",
 	"Batch": "retail.batch.RetailBatch",
 	"Serial and Batch Bundle": "retail.serial_batch_bundle.RetailSerialAndBatchBundle",
 	"Sales Invoice": "retail.loyalty_sales_invoice.RetailSalesInvoice",
@@ -853,6 +856,7 @@ _existing_user_validate = doc_events["User"]["validate"]
 if isinstance(_existing_user_validate, str):
 	_existing_user_validate = [_existing_user_validate]
 doc_events["User"]["validate"] = ["retail.access_control.prepare_super_user", *_existing_user_validate]
+doc_events["User"]["before_validate"] = "retail.manufacturing_access.prepare_user"
 override_whitelisted_methods.update(
 	{
 		"frappe.desk.search.get_names_for_mentions": "retail.access_control.get_names_for_mentions",
@@ -1167,3 +1171,59 @@ override_whitelisted_methods.update({
 doc_events.setdefault("Item Tax Template", {}).setdefault("on_update", []).append(
     "retail.domains.item.vat_pricing.initialize_company_item_vat_defaults"
 )
+
+# POS entry business dates are descriptive; retain native posting dates.
+after_install.append("retail.pos_entry_business_dates.configure")
+after_migrate.append("retail.pos_entry_business_dates.configure")
+for _entry_date_dt in ("POS Opening Entry", "POS Closing Entry"):
+    _entry_date_handlers = doc_events.setdefault(_entry_date_dt, {}).get("before_validate", [])
+    if isinstance(_entry_date_handlers, str):
+        _entry_date_handlers = [_entry_date_handlers]
+    doc_events[_entry_date_dt]["before_validate"] = [*_entry_date_handlers, "retail.pos_entry_business_dates.set_business_date"]
+
+# Default the restaurant table branch only when the site has exactly one.
+boot_session.append("retail.restaurant.defaults.boot")
+
+# Optional .NET dining type on new POS invoices; preserve existing invoice history.
+after_sync.append("retail.pos_dine_in.install")
+
+# Sales Order uses the same read-only Item barcode display as purchase grids.
+doctype_js.setdefault("Sales Order", []).append("public/js/forms/purchase_item_barcode.js")
+after_migrate.append("retail.patches.sales_order_item_columns.install")
+after_sync.append("retail.patches.sales_order_item_columns.install")
+
+doc_events["Sales Order"]["validate"].append("retail.sales_order_packing.apply_packing_identity")
+
+# All transaction item tables retain the selected packing barcode.
+after_sync.append("retail.transaction_barcodes.install")
+after_migrate.append("retail.transaction_barcodes.install")
+for _barcode_parent in ("Quotation", "Sales Order", "Sales Invoice", "POS Invoice", "Delivery Note",
+    "Purchase Order", "Purchase Receipt", "Purchase Invoice", "Material Request", "Stock Entry",
+    "Stock Reconciliation", "Supplier Quotation", "Request for Quotation"):
+    _barcode_handlers = doc_events.setdefault(_barcode_parent, {}).get("validate", [])
+    if isinstance(_barcode_handlers, str):
+        _barcode_handlers = [_barcode_handlers]
+    doc_events[_barcode_parent]["validate"] = [*_barcode_handlers, "retail.transaction_barcodes.validate"]
+
+boot_session.append("retail.promotions.whole_bill.boot")
+after_sync.append("retail.promotions.whole_bill.configure")
+after_migrate.append("retail.promotions.whole_bill.configure")
+
+# Show saved transaction/packing barcodes in item print rows.
+jinja["methods"].append("retail.print_barcodes.item_barcode_for_print")
+
+# Multi-BOM Repack fields are Retail-owned; standard Stock Entries retain core behavior.
+after_sync.append("retail.repack.install")
+after_migrate.append("retail.repack.install")
+
+after_sync.append("retail.product_conversion.install")
+after_migrate.append("retail.product_conversion.install")
+doc_events["Stock Entry"].setdefault("before_cancel", []).append("retail.product_conversion.guard_stock_entry_cancel")
+doc_events["Stock Entry"]["validate"].append("retail.product_conversion.finalize_stock_entry")
+doc_events["Stock Entry"].setdefault("on_cancel", []).append("retail.product_conversion.allow_own_conversion_backlink")
+jinja["methods"].append("retail.product_conversion.print_context")
+
+# Item identities are display-only additions to native BOM behavior.
+doctype_js.setdefault("BOM", []).append("public/js/forms/bom_item_identity.js")
+after_sync.append("retail.bom_item_identity.install")
+after_migrate.append("retail.bom_item_identity.install")

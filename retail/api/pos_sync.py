@@ -573,6 +573,7 @@ def _make_pos_opening_entry(payload, counter_doc, cashier_employee=None, cashier
 	entry.user = frappe.session.user
 	entry.period_start_date = payload.get("opened_at") or payload.get("resumed_at") or payload.get("started_at") or (str(_business_date(payload)) + " 00:00:00")
 	entry.posting_date = _business_date(payload)
+	entry.custom_pos_business_date = _business_date(payload)
 	_mark_offline_fields(entry, counter_doc, cashier_employee, cashier_shift, counter_session)
 
 	balances = payload.get("opening_balances") or []
@@ -764,7 +765,9 @@ def _base_invoice(payload, counter_doc, is_return=False):
 	if not customer:
 		frappe.throw(_("Customer is required or default_customer must be set on the POS Branch Counter."))
 
+	from retail.pos_dine_in import from_payload as dine_in_from_payload
 	doc = frappe.new_doc("POS Invoice")
+	doc.custom_is_dine_in = dine_in_from_payload(payload)
 	doc.flags.from_completed_pos_sync = True
 	doc.custom_pos_completed_payload = _json(payload)
 	from retail.pos_external_refs import resolve_completed
@@ -1402,6 +1405,48 @@ def get_pos_loyalty_programs(branch=None, counter_code=None, modified_after=None
 		"counter_code": counter_doc.counter_code,
 		"loyalty_programs": programs,
 	}
+
+
+def _restaurant_table_rows():
+	"""Complete table snapshot; disabled rows must reach offline clients too."""
+	locations = {
+		row.name: row.location_name
+		for row in frappe.get_all(
+			"Table Location", fields=["name", "location_name"], limit_page_length=0
+		)
+	}
+	rows = frappe.get_all(
+		"Restaurant Table",
+		fields=["name", "table_name", "branch", "table_location", "seating_capacity", "enabled",
+			"owner", "creation", "modified_by", "modified"],
+		order_by="creation asc, name asc",
+		limit_page_length=0,
+	)
+	return [
+		{
+			"table_id": row.name,
+			"table_name": row.table_name,
+			"branch": row.branch or None,
+			"table_location": locations.get(row.table_location, row.table_location),
+			"seating_capacity": cint(row.seating_capacity),
+			"is_active": bool(cint(row.enabled)),
+			"is_deleted": False,
+			"created_by": row.owner,
+			"created_on": row.creation,
+			"modified_by": row.modified_by,
+			"modified_on": row.modified,
+		}
+		for row in rows
+	]
+
+
+@frappe.whitelist()
+def get_pos_tables(branch=None, counter_code=None):
+	"""Download a complete site-wide table master with existing POS credentials."""
+	_assert_pos_user()
+	payload = _as_dict(None, branch=branch, counter_code=counter_code)
+	_counter(payload.get("branch"), payload.get("counter_code"))
+	return {"status": "Success", "server_time": now_datetime(), "tables": _restaurant_table_rows()}
 
 
 @frappe.whitelist()
@@ -2322,6 +2367,7 @@ def open_cashier_shift(data=None, **kwargs):
 				"cashier_employee": cashier_employee,
 				"cashier_name": _cashier_name(cashier_employee),
 				"status": "Open",
+				"business_date": _business_date(payload),
 				"opening_time": payload.get("opened_at") or (str(_business_date(payload)) + " 00:00:00"),
 				"opening_amount": _cash_amount(payload.get("opening_balances"), "opening_amount"),
 				"device_api_user": frappe.session.user,
@@ -2629,7 +2675,7 @@ def reopen_cashier_shift(data=None, **kwargs):
 				return response
 		resolved = resolve(payload, shift_only=True)
 		shift = _cashier_shift_doc(resolved.get("cashier_shift") or resolved.get("cashier_shift_id"), for_update=True)
-		business_date = str(shift.opening_time)[:10] if shift.opening_time else frappe.utils.today()
+		business_date = shift.get("business_date") or (str(shift.opening_time)[:10] if shift.opening_time else frappe.utils.today())
 		if payload.get("business_date") and getdate(payload.business_date) != getdate(business_date):
 			frappe.throw(_("Business date does not match the cashier shift."))
 		closed_day = _submitted_day_closing(shift.branch, business_date)
@@ -2748,6 +2794,7 @@ def open_pos_shift(data=None, **kwargs):
 		entry.user = frappe.session.user
 		entry.period_start_date = payload.get("opened_at") or (str(_business_date(payload)) + " 00:00:00")
 		entry.posting_date = payload.get("posting_date") or frappe.utils.today()
+		entry.custom_pos_business_date = _business_date(payload)
 		balances = payload.get("opening_balances") or []
 		if not balances:
 			balances = [
@@ -2794,6 +2841,7 @@ def close_pos_shift(data=None, **kwargs):
 		from retail.pos_realtime import make_closing_entry_from_opening
 
 		closing = make_closing_entry_from_opening(frappe.get_doc("POS Opening Entry", opening_name))
+		closing.custom_pos_business_date = closing.get("custom_pos_business_date") or _business_date(payload)
 		actuals = {str(row.get("mode_of_payment") or "").strip().casefold(): flt(row.get("closing_amount")) for row in payload.get("closing_balances", [])}
 		for row in closing.payment_reconciliation:
 			row.closing_amount = actuals.get(row.mode_of_payment.strip().casefold(), row.expected_amount)
@@ -3187,6 +3235,11 @@ def get_sales_order_data(data=None, **kwargs):
 		start = max(cint(query.get("start")), 0)
 		page_length = min(max(cint(query.get("page_length") or 1000), 1), 5000)
 		fields = query.get("fields") or ["name", "modified"]
+		if doctype == "Sales Order":
+			fields = list(fields)
+			for field in ("sales_person_id", "sales_person_name"):
+				if field not in fields:
+					fields.append(field)
 		if query.get("include_details") and "name" not in fields:
 			fields = ["name", *fields]
 		rows = frappe.get_list(

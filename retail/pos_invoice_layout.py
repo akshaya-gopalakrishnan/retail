@@ -5,7 +5,7 @@ HEADER = [
     'customer_section', 'title', 'naming_series', 'customer', 'customer_name',
     'customer_name_in_arabic', 'tax_id', 'pos_profile', 'cost_center', 'custom_pos_business_date',
     'column_break1', 'company', 'set_warehouse', 'posting_date', 'posting_time', 'set_posting_time',
-    'custom_pos_header_column', 'custom_pos_transaction_type', 'status', 'is_pos', 'is_return',
+    'custom_pos_header_column', 'custom_pos_transaction_type', 'custom_is_dine_in', 'status', 'is_pos', 'is_return',
     'return_against', 'due_date', 'amended_from', 'consolidated_invoice',
     'update_billed_amount_in_sales_order', 'update_billed_amount_in_delivery_note',
 ]

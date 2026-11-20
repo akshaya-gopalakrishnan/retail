@@ -1,0 +1,98 @@
+{
+ "doctype": "DocType",
+ "name": "Restaurant Table",
+ "module": "Restaurant",
+ "autoname": "",
+ "allow_rename": 0,
+ "allow_import": 1,
+ "document_type": "Setup",
+ "engine": "InnoDB",
+ "field_order": [
+  "table_name",
+  "branch",
+  "table_location",
+  "seating_capacity",
+  "enabled",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "table_name",
+   "label": "Table Number / Name",
+   "fieldtype": "Data",
+   "reqd": 1,
+   "in_list_view": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "branch",
+   "label": "Branch",
+   "fieldtype": "Link",
+   "options": "Branch",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "table_location",
+   "label": "Table Location",
+   "fieldtype": "Link",
+   "options": "Table Location",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "seating_capacity",
+   "label": "Seating Capacity",
+   "fieldtype": "Int",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "enabled",
+   "label": "Enabled",
+   "fieldtype": "Check",
+   "default": "1",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "notes",
+   "label": "Notes",
+   "fieldtype": "Small Text"
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "share": 1
+  },
+  {
+   "role": "POS Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "share": 1
+  }
+ ],
+ "title_field": "table_name",
+ "search_fields": "table_name,table_location,branch",
+ "sort_field": "table_name",
+ "sort_order": "ASC",
+ "track_changes": 1,
+ "quick_entry": 1,
+ "actions": [],
+ "links": [],
+ "states": [],
+ "show_title_field_in_link": 1
+}

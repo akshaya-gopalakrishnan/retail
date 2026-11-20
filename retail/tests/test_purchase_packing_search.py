@@ -41,6 +41,11 @@ class TestPackingSearchPagination(unittest.TestCase):
             p.start()
             self.addCleanup(p.stop)
 
+    def test_stock_context_includes_items_that_are_not_purchase_items(self):
+        self.db.execute("update tabItem set is_purchase_item = 0 where name = 'SKU000'")
+        self.assertEqual(search.search('SKU000', transaction_type='all')[0].item_code, 'SKU000')
+        self.assertEqual(search.search('SKU000', transaction_type='buying'), [])
+
     def test_broad_search_stops_after_first_batch_and_all_pages_remain_reachable(self):
         first = search.search('Search', page_length=21)
         self.assertEqual([r.item_code for r in first], [f'SKU{i:03}' for i in range(21)])
@@ -72,6 +77,17 @@ class TestPackingSearchPagination(unittest.TestCase):
             with self.assertRaises(PermissionError):
                 search.search('Search')
         self.assertFalse(self.calls)
+
+    def test_sales_search_includes_sales_only_items_and_excludes_purchase_only(self):
+        self.db.execute('alter table tabItem add column is_sales_item int default 1')
+        self.db.execute("update tabItem set is_sales_item=0 where name='SKU001'")
+        self.db.execute("update tabItem set is_purchase_item=0 where name='SKU000'")
+        sales = search.search('Search', transaction_type='selling')
+        self.assertIn('SKU000', [row.item_code for row in sales])
+        self.assertNotIn('SKU001', [row.item_code for row in sales])
+        purchase = search.search('Search')
+        self.assertNotIn('SKU000', [row.item_code for row in purchase])
+        self.assertIn('SKU001', [row.item_code for row in purchase])
 
     def add_names(self):
         self.db.executemany('insert into tabItem values (?,?,?,?,0,1,0,?)', [

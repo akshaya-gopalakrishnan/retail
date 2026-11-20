@@ -2,6 +2,7 @@
  const settings = typeof print_settings === "undefined" ? {} : print_settings;
  const escape = value => frappe.utils.escape_html(String(value == null ? "" : value));
  const selected = columns.filter(col => col.fieldname && col.fieldname !== "_check");
+ const barcodeColumn = selected.find(col => ["item_code", "item_name"].includes(col.fieldname));
  const bands = [];
  const anchor = selected[0];
  for (let i = 1; i < selected.length; i += 7) bands.push([anchor, ...selected.slice(i, i + 7)]);
@@ -25,7 +26,11 @@
 {% const raw = row[col.fieldname]; %}
 {% if (raw == null) { %}—{% } else if (numeric(col)) { %}{%= escape(format_number(raw, null, col.fieldtype === "Int" ? 0 : (col.precision ?? 2))) %}{%= col.fieldtype === "Percent" ? "%" : "" %}
 {% } else if (col.fieldtype === "Date" && raw) { %}{%= escape(frappe.datetime.str_to_user(raw)) %}
-{% } else { %}{%= escape(raw) %}{% } %}</td>{% } %}</tr>{% } %}
+{% } else { %}{%= escape(raw) %}{% } %}
+{% if (col === barcodeColumn && !row.is_total_row && row.item_code) { %}
+{% const barcode = row.barcode || row.custom_item_barcode || (report._retail_print_barcodes || {})[JSON.stringify([row.item_code, row.uom || ""])]; %}
+{% if (barcode) { %}<br><small class="retail-item-barcode">{%= __("Barcode") %}: {%= escape(barcode) %}</small>{% } %}
+{% } %}</td>{% } %}</tr>{% } %}
 {% if (!data.length) { %}<tr><td colspan="{%= band.length %}">{%= __("No data for the selected filters.") %}</td></tr>{% } %}
 </tbody></table>{% } %}
 <div class="pos-report-footer">{%= __("Printed by") %}: {%= escape(frappe.session.user) %} · {%= escape(frappe.datetime.now_datetime()) %}</div>

@@ -76,13 +76,13 @@
                 <tr>
                     <td class="col-number">{{ loop.index }}</td>
                     <td class="col-description">
-                        <div class="item-name">{{ _(item.item_name) if item.item_name else item.item_code }}</div>
+                        <div class="item-name">{{ _(item.item_name) if item.item_name else item.item_code }}{% set retail_barcode = item_barcode_for_print(item) %}{% if retail_barcode %}<br><small class="retail-item-barcode" style="font-weight: normal; overflow-wrap: anywhere;">{{ _("Barcode") }}: {{ retail_barcode | e }}</small>{% endif %}</div>
                         {% if item.item_code %}<div class="item-code">{{ item.item_code }}</div>{% endif %}
                         {% if item.description %}<div class="item-description">{{ _(item.description) }}</div>{% endif %}
                         {% if item.serial_no %}<div class="item-reference">{{ _("Serial No") }}#: {{ item.serial_no | replace("\n", ", ") }}</div>{% endif %}
                         {% if item.batch_no %}<div class="item-reference">{{ _("Batch") }}#: {{ item.batch_no }}</div>{% endif %}
                     </td>
-                    <td class="col-date">{{ frappe.utils.formatdate(item.schedule_date or item.required_by or doc.schedule_date, "dd MMM yyyy") if (item.schedule_date or item.required_by or doc.schedule_date) else "" }}</td>
+                    <td class="col-date">{{ frappe.utils.formatdate(item.delivery_date or doc.delivery_date or item.schedule_date or item.required_by or doc.schedule_date, "dd MMM yyyy") if (item.delivery_date or doc.delivery_date or item.schedule_date or item.required_by or doc.schedule_date) else "" }}</td>
                     <td class="col-qty">
                         {{ frappe.utils.fmt_money(item.qty, precision=2) }}
                         {% if item.uom %}<span class="quantity-uom">{{ _(item.uom) }}</span>{% endif %}

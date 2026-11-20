@@ -1,0 +1,37 @@
+{
+ "charts": [],
+ "content": "[{\"id\": \"restaurant_header\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Table Location</span>\", \"col\": 12}}, {\"id\": \"restaurant_shortcut_0\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Table Location\", \"col\": 4}}]",
+ "creation": "2026-11-17 11:20:12.072131",
+ "custom_blocks": [],
+ "custom_document_code": "W4-2112",
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "hide_custom": 0,
+ "icon": "list",
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "Restaurant Table Locations Link",
+ "links": [],
+ "modified": "2026-11-17 11:21:42.577972",
+ "modified_by": "Administrator",
+ "module": "Retail-app",
+ "name": "Restaurant Table Locations Link",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "Restaurant",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 1.0,
+ "shortcuts": [
+  {
+   "color": "Green",
+   "doc_view": "List",
+   "label": "Table Location",
+   "link_to": "Table Location",
+   "type": "DocType"
+  }
+ ],
+ "title": "Restaurant Table Locations Link"
+}

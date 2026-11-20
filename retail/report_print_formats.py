@@ -1,5 +1,6 @@
 """Create site-owned report layouts once and read them under report print access."""
 
+import json
 from pathlib import Path
 
 import frappe
@@ -41,7 +42,7 @@ def ensure_report_print_formats():
 
 
 @frappe.whitelist()
-def get_report_format(report_name, format_name=None):
+def get_report_format(report_name, format_name=None, item_rows=None):
 	if report_name not in REPORT_FORMATS:
 		frappe.throw(_("Report print format is not configured."), frappe.PermissionError)
 	report = get_report_doc(report_name)
@@ -55,4 +56,15 @@ def get_report_format(report_name, format_name=None):
 	if (layout.disabled or layout.print_format_for != "Report" or layout.report != report_name
 		or layout.print_format_type != "JS" or layout.raw_printing):
 		frappe.throw(_("Please select an enabled print format for this report."), frappe.ValidationError)
-	return {"name": layout.name, "html": layout.html, "css": layout.css}
+	barcodes = {}
+	if item_rows:
+		from retail.transaction_barcodes import get_barcodes
+
+		rows = frappe.parse_json(item_rows) if isinstance(item_rows, str) else item_rows
+		# Use the permission-aware batch resolver and keep report values untouched.
+		rows = [dict(item_code=row.get("item_code"), uom=row.get("uom"),
+			name=str(index)) for index, row in enumerate(rows) if row.get("item_code")]
+		values = get_barcodes(rows)
+		for row in rows:
+			barcodes[json.dumps([row["item_code"], row.get("uom") or ""], ensure_ascii=False, separators=(",", ":"))] = values.get(row["name"], "")
+	return {"name": layout.name, "html": layout.html, "css": layout.css, "barcodes": barcodes}

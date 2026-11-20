@@ -49,6 +49,59 @@ Response example:
 }
 ```
 
+### Download restaurant tables
+
+`GET /api/method/retail.api.pos_sync.get_pos_tables?branch=Karama&counter_code=C001`
+
+Use the same token credentials, POS authorization and assigned-counter checks as the other POS APIs. Request body: none.
+This endpoint is read-only and independent of `get_pos_master_data`; existing master payloads are unchanged.
+
+Response example (sample table and location):
+
+```json
+{
+  "message": {
+    "status": "Success",
+    "server_time": "2026-11-17 14:30:00.000000",
+    "tables": [
+      {
+        "table_id": "1",
+        "table_name": "T01",
+        "branch": "Karama",
+        "table_location": "Ground Floor",
+        "seating_capacity": 4,
+        "is_active": true,
+        "is_deleted": false,
+        "created_by": "Administrator",
+        "created_on": "2026-11-17 14:00:00.000000",
+        "modified_by": "Administrator",
+        "modified_on": "2026-11-17 14:20:00.000000"
+      }
+    ]
+  }
+}
+```
+
+| JSON field | .NET / SQL meaning |
+| --- | --- |
+| `table_id` | Automatically generated ERP table ID. Keep this stable key for upserts; do not match by table name. Returned as a numeric string. |
+| `table_name` | Table Number / Name entered in ERP. |
+| `branch` | The Branch selected on the table, independent of the requesting counter. Required on new/edited tables; `null` on legacy tables awaiting assignment. |
+| `table_location` | Location name, such as Ground Floor; not the location ID. |
+| `seating_capacity` | Integer seating capacity. |
+| `is_active` | `IS_ACTIVE` (`bit`), from the table's Enabled checkbox. Disabled tables are included. |
+| `is_deleted` | `IS_DELETED` (`bit`). Returned ERP rows are existing records, so this is `false`; handle removed rows using the snapshot rule below. |
+| `created_by` | `CREATED_BY`, ERP creator's User ID (same identity convention as item masters). |
+| `created_on` | `CREATED_ON`, ERP creation timestamp. |
+| `modified_by` | `MODIFIED_BY`, ERP last editor's User ID. |
+| `modified_on` | `MODIFIED_ON`, ERP last modification timestamp. |
+
+**Snapshot and deletion rule:** Every successful response contains all tables on this ERP site, including disabled tables. Each row includes its own `branch`. The request branch identifies and authorizes the POS counter; it does not filter table rows. Different authorized counters receive the same complete site-wide table master. The .NET app can filter by each row's `branch` after saving the complete snapshot. The Tables form defaults Branch when the site has exactly one; otherwise the user must choose it. No `modified_after` cursor is used. Download this endpoint alongside normal master synchronization. Location renames are reflected on the next download even when the table itself was not edited.
+
+Save the entire reply in one local transaction: upsert by `table_id`, then set `IS_DELETED = 1` and `IS_ACTIVE = 0` for previously downloaded ERP table IDs absent from this snapshot. Scope that reconciliation to the same ERP site/connection, not local-only tables or another ERP site. An empty `tables: []` in a successful reply means there are no tables. On authentication, transport, parsing or database-save failure, retain the previous snapshot and do not mark anything deleted. Returned IDs always have `is_deleted: false`, which also clears a prior local deletion marker if a record reappears. Removed rows have no ERP modification timestamp in this endpoint; do not invent one.
+
+Audit timestamps use the ERP site's configured timezone, as with the other POS APIs. Preserve the original values in the DTO; conversion to SQL `smalldatetime` loses seconds and subsecond precision. ERP User IDs may exceed `nvarchar(50)`; use a sufficiently wide audit column (up to 140 characters) instead of silently truncating identities.
+
 ### Download masters
 
 `GET /api/method/retail.api.pos_sync.get_pos_master_data?branch=Karama&counter_code=C001`
@@ -522,6 +575,8 @@ Response example:
 
 `POST /api/method/retail.api.pos_sync.open_cashier_shift`
 
+The selected `business_date` (or legacy `posting_date`, defaulting to today) is stored on the cashier shift and determines its day closing, reopen and correction membership. `opened_at` and `closed_at` remain actual timestamps and may fall on a different calendar date.
+
 Request JSON:
 
 ```json
@@ -738,6 +793,22 @@ ERP receives a sale POS Invoice, one return POS Invoice per original sale, and a
 The response retains `invoice_name`, `pos_invoice_name`, `doctype`, and `docstatus`, and adds `is_exchange: true`, `sale_invoice`, `return_invoices`, `accounting_invoices`, and signed `net_payments`. Response `grand_total` is the **net receipt total**, which differs from the primary component invoice total. Use the component arrays to display every ERP document. For return-only receipts, `sale_invoice` is null and the primary invoice is a return.
 
 All components, stock/accounting effects and the success receipt commit together. Identical retries return the stored result with `duplicate: true`; changed retries fail. A failure rolls back the whole exchange. Do not call the return API separately for negative lines already included in this receipt. A previously synced receipt cannot be converted into an exchange by resending changed data; reconcile it separately.
+
+### Dine In indicator on POS invoices
+
+The existing sale, credit-sale, return and exchange payloads accept optional `is_dine_in`:
+
+```json
+"is_dine_in": true
+```
+
+| Payload | New ERP POS Invoice |
+| --- | --- |
+| Omitted | Dine In |
+| `true` or `1` | Dine In |
+| `false`, `0`, `null`, or an empty/whitespace string | No dining label |
+
+Use JSON booleans (preferred) or integers `0` / `1`. Explicit `null` or an empty/whitespace string also means no dining label; other values are rejected. The POS Invoice form displays a read-only **Dine In** checkbox only when true. False invoices have no "Normal Invoice" label. This field is display metadata and does not change pricing, VAT, stock or accounting. Existing invoices are not reclassified. Keep this value in the saved payload on retries, using the existing external-reference/idempotency rules. An exchange applies the same flag to its generated sale and return invoices. This does not add table assignment or change print templates.
 
 ### Send a completed sale
 
@@ -5713,8 +5784,9 @@ these from the creating user's linked active Employee / enabled Sales Person.
 Unmapped or ambiguous creators receive null values. The ID can be changed while
 the order is a draft; the name follows that ID. Both are locked after submission.
 Existing orders are not backfilled. Full-document reads and save responses include
-these fields; request both explicitly in order-list `fields` to display or filter
-by the login's Sales Person ID. This does not add backend access restrictions.
+these fields. Order lists automatically include both fields, even when omitted
+from the requested `fields`. Orders without an assigned salesperson return null
+values. This does not add backend access restrictions.
 
 ```json
 {"queries":[{"doctype":"Sales Order","fields":["name","customer","customer_name","sales_person_id","sales_person_name","transaction_date","delivery_date","grand_total","currency","status","docstatus","modified"],"page_length":1000}]}
@@ -5914,3 +5986,5 @@ rollback-only integration verification were performed on retail-test.localhost.
 Loyalty active snapshot: both customer and promotion downloads replace cached point entries on every sync, including incremental requests. Do not merge with old expired cached entries. Historical JSON examples above may contain expired rows; those rows are no longer returned.
 
 For `payments[]` with `mode_of_payment: "Loyalty"`, an empty or omitted `reference_no` resolves the customer's assigned Loyalty Program only when its company matches the invoice and its dates include the invoice posting date. An explicit reference is preserved and never replaced by this fallback. Numeric `points` is the quantity redeemed; `amount` is its monetary value. This applies to newly processed operations; previously completed promotion-redemption operations are not replayed automatically.
+
+POS Opening Entry and POS Closing Entry expose read-only `custom_pos_business_date`. Opening sync stores payload `business_date` (legacy `posting_date`, otherwise today); closing inherits the opening business date. This descriptive field does not change posting dates or session timestamps.

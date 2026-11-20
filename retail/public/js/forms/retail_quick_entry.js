@@ -92,7 +92,11 @@
 				const sign = ["ArrowLeft", "ArrowUp"].includes(key) ? -1 : 1;
 				const center = (f) => {
 					const r = f.$input[0].getBoundingClientRect();
-					return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+					// Checkboxes are narrow inputs inside the same form column.
+					// Use the control's column position so Down does not skip to
+					// a distant checkbox instead of the next text/number field.
+					const column = f.$wrapper?.[0]?.getBoundingClientRect() || r;
+					return { x: column.left + column.width / 2, y: r.top + r.height / 2 };
 				};
 				const from = center(field);
 				const axis = horizontal ? "x" : "y",
@@ -130,7 +134,8 @@
 				if (this.dialog.working || this.keyboard_busy) return;
 				this.keyboard_busy = true;
 				this.commit_field(field)
-					.then(() => this.save_and_close())
+					.then(() => event.shiftKey && event.key.toLowerCase() === "s"
+						? this.save_and_new() : this.save_and_close())
 					.finally(() => {
 						this.keyboard_busy = false;
 					});
