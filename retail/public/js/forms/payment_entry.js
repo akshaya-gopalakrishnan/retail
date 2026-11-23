@@ -168,7 +168,7 @@
 
 		frm.add_custom_button(label, () => {
 			const toDate = frappe.datetime.get_today();
-			frappe.set_route("query-report", "Slow Moving Items", {
+			frappe.set_route("query-report", "Supplier Stock", {
 				company: frm.doc.company,
 				supplier: frm.doc.party,
 				from_date: frappe.datetime.add_days(toDate, -90),
@@ -177,9 +177,9 @@
 				item_group: "",
 				brand: "",
 				only_with_stock: 1,
-				only_no_sales: 1,
+				only_no_sales: 0,
 				max_net_qty: 0,
-				limit: 100,
+				limit: 0,
 			});
 		});
 	}

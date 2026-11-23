@@ -70,13 +70,7 @@
    "options": "JSON"
   }
  ],
- "permissions": [
-  {
-   "role": "Super Admin",
-   "read": 1,
-   "report": 1
-  }
- ],
+ "permissions": [],
  "sort_field": "creation",
  "sort_order": "DESC"
 }

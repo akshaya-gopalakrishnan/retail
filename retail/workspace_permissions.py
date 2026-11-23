@@ -405,6 +405,57 @@ POS_REPORT_SIDEBAR_GROUPS = (
 REPORT_SIDEBAR_GROUPS = REPORT_SIDEBAR_GROUPS + POS_REPORT_SIDEBAR_GROUPS
 
 
+# Business navigation ownership is independent of DocType/Report storage modules.
+SIDEBAR_GROUP_MODULES = {
+	"Business Home": "", "Items": "Stock", "Sales": "Selling",
+	"Purchases": "Buying", "Stocks": "Stock", "Accounts": "Accounts",
+	"Manufacturing": "Manufacturing", "POS": "POS", "Restaurant": "Restaurant",
+	"Van Sales": "Van Sales", "Reports": "", "Promotions": "Selling", "Settings": "Setup",
+}
+WORKSPACE_MODULES.update({
+	name: SIDEBAR_GROUP_MODULES[group]
+	for name, group in WORKSPACE_SIDEBAR_GROUPS.items()
+	if group in SIDEBAR_GROUP_MODULES
+})
+WORKSPACE_MODULES.update(SIDEBAR_GROUP_MODULES)
+
+
+def _restore_business_workspace_candidates(pages):
+	"""Recover mapped pages omitted by Frappe's storage-module SQL filter.
+
+	Only public, visible, domain-compatible Retail navigation is recovered.
+	Workspace roles and native target permissions remain enforced.
+	"""
+	blocked = _get_blocked_modules()
+	if not blocked:
+		return pages
+	from frappe.core.doctype.custom_role.custom_role import get_custom_allowed_roles
+	from retail.sidebar_registry import entries
+	known = {entry["workspace"] for entry in entries()}
+	known.update(MANUFACTURING_WORKSPACE_ALIASES)
+	existing = {page.get("name") for page in pages}
+	candidates = frappe.get_all(
+		"Workspace",
+		filters={"module": ["in", list(blocked)], "public": 1, "is_hidden": 0,
+			"restrict_to_domain": ["in", [None, *frappe.get_active_domains()]]},
+		fields=["name", "title", "for_user", "parent_page", "content", "public",
+			"module", "icon", "indicator_color", "is_hidden", "sequence_id"],
+		order_by="sequence_id asc",
+	)
+	result = list(pages)
+	roles = set(frappe.get_roles())
+	for page in candidates:
+		if page.name in existing or page.title not in known:
+			continue
+		doc = frappe.get_cached_doc("Workspace", page.name)
+		required = {row.role for row in doc.roles} | set(get_custom_allowed_roles("page", page.name))
+		if required and not roles.intersection(required):
+			continue
+		page.label = frappe._(page.name)
+		result.append(page)
+	return result
+
+
 def _get_blocked_modules():
 	blocked_modules = frappe.get_cached_doc("User", frappe.session.user).get_blocked_modules()
 	return set(blocked_modules or [])
@@ -435,7 +486,7 @@ def extend_bootinfo(bootinfo):
 			# requests or users, and keep the unfiltered report-access list intact.
 			report_pages = get_permitted_report_sidebar_items()
 		bootinfo.allowed_workspaces = _filter_workspace_sidebar_items(
-			{"pages": bootinfo.allowed_workspaces}, report_pages=report_pages
+			{"pages": _restore_business_workspace_candidates(bootinfo.allowed_workspaces)}, report_pages=report_pages
 		).get("pages", [])
 	else:
 		bootinfo.allowed_workspaces = get_workspace_sidebar_items().get("pages", [])
@@ -491,6 +542,13 @@ def _workspace_sidebar_is_allowed(page, blocked_modules, allowed_workspaces):
 	if allowed_workspaces is not None and sidebar_group not in allowed_workspaces:
 		return False
 
+	from retail.sidebar_permissions import selection
+	if sidebar_group in SIDEBAR_GROUP_MODULES and selection() is not None:
+		# An explicit business-area selection supersedes legacy module visibility.
+		return True
+	if sidebar_group == "Reports":
+		return True
+
 	module = (
 		page.get("module")
 		if page.get("is_report_link")
@@ -503,7 +561,6 @@ def get_permitted_report_sidebar_items():
 	"""Build report navigation with distinct identities for repeated report labels."""
 	from retail.module_access import target_module, allowed
 	allowed_reports = get_allowed_reports(cache=True)
-	blocked_modules = _get_blocked_modules()
 	group_parents = {
 		group: parent[0] if parent else "Reports"
 		for group, _reports, *parent in REPORT_SIDEBAR_GROUPS
@@ -518,7 +575,7 @@ def get_permitted_report_sidebar_items():
 			if report_name not in allowed_reports:
 				continue
 			report = frappe.get_cached_doc("Report", report_name)
-			if report.disabled or report.module in blocked_modules:
+			if report.disabled:
 				continue
 			if report.ref_doctype and not frappe.has_permission(report.ref_doctype, "read"):
 				continue
@@ -720,7 +777,9 @@ def _normalize_sidebar_display(page):
 
 @frappe.whitelist()
 def get_workspace_sidebar_items():
-	return _filter_workspace_sidebar_items(get_standard_workspace_sidebar_items())
+	sidebar = get_standard_workspace_sidebar_items()
+	sidebar["pages"] = _restore_business_workspace_candidates(sidebar.get("pages") or [])
+	return _filter_workspace_sidebar_items(sidebar)
 
 
 def _filter_workspace_sidebar_items(sidebar, report_pages=None):

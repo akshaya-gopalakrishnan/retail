@@ -130,7 +130,7 @@
 		return frm?.doc?.doctype === "POS Invoice" && !!frm.doc.custom_pos_completed_payload;
 	}
 
-	async function refreshRowVatAmounts(frm) {
+	async function refreshOtherVatAmounts(frm) {
 		if (isCompletedPos(frm)) return;
 		const grid = frm.fields_dict.items?.grid;
 		grid?.update_docfield_property?.("custom_vat_amount", "read_only", 1);
@@ -145,6 +145,42 @@
 			row.custom_vat_amount = flt(amount * rate / 100, precision);
 			grid?.grid_rows_by_docname?.[row.name]?.refresh_field?.("custom_vat_amount");
 		}
+	}
+
+	function refreshRowVatAmounts(frm) {
+		if (frm.doc.doctype !== "Sales Invoice") return refreshOtherVatAmounts(frm);
+		if (isCompletedPos(frm)) return;
+		// Totals emit one event per row. Coalesce display work for the invoice;
+		// never rebuild the whole grid just to repeat a read-only property.
+		clearTimeout(frm.__retail_vat_display_timer);
+		frm.__retail_vat_display_timer = setTimeout(() => {
+			if (frm.__retail_vat_display_running) {
+				refreshRowVatAmounts(frm);
+				return;
+			}
+			frm.__retail_vat_display_running = true;
+			refreshVatAmounts(frm).finally(() => { frm.__retail_vat_display_running = false; });
+		}, 80);
+	}
+
+	async function refreshVatAmounts(frm) {
+		const grid = frm.fields_dict.items?.grid;
+		if (grid?.docfields?.find(df => df.fieldname === "custom_vat_amount")?.read_only !== 1) {
+			grid?.update_docfield_property?.("custom_vat_amount", "read_only", 1);
+		}
+		await Promise.all((frm.doc.items || []).map(async row => {
+			const field = frappe.meta.get_docfield(row.doctype, "custom_vat_amount", row.name);
+			if (!field) return;
+			field.read_only = 1;
+			const code = row.item_code;
+			const rate = code ? await getVatRate(frm, row, row.doctype) : 0;
+			if (row.item_code !== code || !(frm.doc.items || []).includes(row)) return;
+			const amount = flt(row.qty) * flt(row.rate);
+			const value = flt(amount * rate / 100, cint(field.precision) || 2);
+			if (row.custom_vat_amount === value) return;
+			row.custom_vat_amount = value;
+			grid?.grid_rows_by_docname?.[row.name]?.refresh_field?.("custom_vat_amount");
+		}));
 	}
 
 	Object.keys(liveVatFormDoctypes).forEach((doctype) => {
@@ -223,7 +259,7 @@
 	frappe.ui.form.on("Purchase Taxes and Charges", taxHandlers());
 
 	function scheduleVatTaxRowsSync(frm) {
-		if (["Purchase Receipt", "Purchase Invoice"].includes(frm.doc.doctype)) {
+		if (["Purchase Receipt", "Purchase Invoice", "Sales Invoice"].includes(frm.doc.doctype)) {
 			queueVatTaxRowsSync(frm);
 			return;
 		}
@@ -416,7 +452,7 @@
 	// Share identical reads only while they are in flight. The next edit always
 	// reads fresh data; rejected requests must also be retried normally.
 	window.retail.transaction_items.purchaseRead = function (frm, request) {
-		if (!["Purchase Receipt", "Purchase Invoice"].includes(frm?.doc?.doctype)) return frappe.call(request);
+		if (!["Purchase Receipt", "Purchase Invoice", "Sales Invoice"].includes(frm?.doc?.doctype)) return frappe.call(request);
 		const action = frm.__retail_purchase_action;
 		const pending = action?.reads || (frm.__retail_purchase_reads ||= new Map());
 		const key = purchaseReadKey(request);
@@ -447,7 +483,7 @@
 		clearTimeout(frm.__retail_vat_tax_rows_timer);
 		const generation = frm.__retail_vat_tax_rows_generation = (frm.__retail_vat_tax_rows_generation || 0) + 1;
 		frm.__retail_vat_tax_rows_timer = setTimeout(async () => {
-			if (["Purchase Receipt", "Purchase Invoice"].includes(frm.doc.doctype)) {
+			if (["Purchase Receipt", "Purchase Invoice", "Sales Invoice"].includes(frm.doc.doctype)) {
 				// Item/UOM/qty handlers make several native pricing requests. Wait
 				// for those callbacks before sending the entire document for VAT;
 				// intermediate VAT calls otherwise extend every after_ajax barrier.

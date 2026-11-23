@@ -23,8 +23,23 @@ POS_EXTRA_REPORTS = {"Cashier Wise Sales", "Counter Wise Sales", "Shift Closing 
 
 def allowed(module, user=None):
 	user = user or frappe.session.user
-	if user == "Administrator" or "Super Admin" in frappe.get_roles(user):
+	if user == "Administrator":
 		return True
+	from retail.sidebar_permissions import selection
+	selected = selection(user)
+	if selected is not None:
+		from retail.sidebar_registry import registry
+		for group in registry():
+			if group["workspace"] == module and group["id"] in selected:
+				return True
+			# A selected report area is independent of the operational menu.
+			for child in group["children"]:
+				if child["id"] in selected and any(
+					kind == "report" and target_module(report=target) == module
+					for kind, target in child["targets"]
+				):
+					return True
+		return False
 	if not MODULE_ROLES[module].intersection(frappe.get_roles(user)):
 		return False
 	return module not in frappe.get_cached_doc("User", user).get_blocked_modules()

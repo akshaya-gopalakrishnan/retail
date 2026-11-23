@@ -33,6 +33,7 @@
         clearTimeout(frm.__retail_barcode_timer);
         frm.__retail_barcode_timer = setTimeout(() => refresh(frm), 100);
     }
+    window.retail.refresh_transaction_barcodes = schedule;
     for (const parent of parents) {
         frappe.ui.form.on(parent, {refresh: schedule});
         // Stock tables use Detail/Item names; attach once metadata is available.

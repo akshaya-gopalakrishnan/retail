@@ -861,12 +861,15 @@
 
     function moduleIsAllowed(moduleName) {
         if (frappe.boot?.retail_module_access?.[moduleName] === false) return false;
+        if (Array.isArray(frappe.boot?.retail_sidebar_selection)) return true;
         return !moduleName || !getBlockedModules().has(moduleName);
     }
 
     function getWorkspaceModule(workspaceName) {
         if (!workspaceName) return '';
-        return WORKSPACE_TO_MODULE[workspaceName] || frappe.boot?.retail_workspace_modules?.[workspaceName] || '';
+        const modules = frappe.boot?.retail_workspace_modules || {};
+        if (Object.prototype.hasOwnProperty.call(modules, workspaceName)) return modules[workspaceName];
+        return WORKSPACE_TO_MODULE[workspaceName] || '';
     }
 
     function getCurrentUserRoles() {
@@ -930,7 +933,9 @@
 
         while (current && !seen.has(current)) {
             seen.add(current);
-            if (!moduleIsAllowed(getWorkspaceModule(current))) return false;
+            // Explicit Retail choices own business navigation. Native action
+            // permissions are still checked by each target's server endpoint.
+            if (!Array.isArray(selection) && !moduleIsAllowed(getWorkspaceModule(current))) return false;
             current = CHILD_TO_PARENT[current];
         }
 
@@ -1000,6 +1005,11 @@
         }
         if (view === 'List' || view === 'Form' || view === 'Tree') {
             return doctypeIsAllowed(route[1]);
+        }
+        if (view === 'dashboard-view') {
+            const access = frappe.boot?.retail_sidebar_dashboard_access || {};
+            if (Object.prototype.hasOwnProperty.call(access, route[1])) return access[route[1]];
+            return checklistTargetIsAllowed('dashboard', route[1]);
         }
         if (view === 'query-report') {
             return reportIsAllowed(route[1], frappe.boot?.user?.all_reports?.[route[1]]);
@@ -1084,7 +1094,10 @@
     function optionIsAllowed(option) {
         if (!option) return true;
         if (option.match && typeof option.match === 'string') {
-            if (DOCTYPE_TO_CHILD[option.match] || DOCTYPE_TO_WORKSPACE[option.match]) {
+            const entries = (frappe.boot?.retail_sidebar_registry || []).flatMap(group => [group, ...group.children]);
+            const registeredDoctype = entries.some(entry => (entry.targets || []).some(
+                pair => pair[0] === 'doctype' && pair[1] === option.match));
+            if (registeredDoctype || DOCTYPE_TO_CHILD[option.match] || DOCTYPE_TO_WORKSPACE[option.match]) {
                 return doctypeIsAllowed(option.match);
             }
             if (WORKSPACE_TO_MODULE[option.match]) {
@@ -3257,6 +3270,7 @@
     let sidebarObserver;
 
     function refreshSidebarEnhancements() {
+        applyAwesomeBarPermission();
         hideStandardHomeSidebarItems();
         applyDisplayLabels();
         applyDirectLinks();
@@ -3362,7 +3376,25 @@
         breadcrumbs.__retail_pos_installed = true;
     }
 
+    function applyAwesomeBarPermission() {
+        if (frappe.boot?.retail_awesome_bar_allowed !== false) return;
+        // Keep the native control and shortcut from reopening hidden search.
+        if (!document.getElementById('retail-hide-awesome-bar')) {
+            const style = document.createElement('style');
+            style.id = 'retail-hide-awesome-bar';
+            style.textContent = '.navbar .search-bar { display: none !important; }';
+            document.head.appendChild(style);
+        }
+        const input = document.getElementById('navbar-search');
+        if (input) {
+            input.disabled = true;
+            input.setAttribute('aria-hidden', 'true');
+        }
+    }
+
     function init() {
+        $(document).on('toolbar_setup.retailAwesomeBar app_ready.retailAwesomeBar', applyAwesomeBarPermission);
+        applyAwesomeBarPermission();
         installPOSBreadcrumbs();
         registerSidebarItems(frappe.boot?.allowed_workspaces || []);
         injectRetailInlineCss();

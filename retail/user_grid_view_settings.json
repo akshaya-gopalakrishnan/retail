@@ -389,6 +389,14 @@
         "fieldname": "item_name"
       },
       {
+        "columns": 2,
+        "fieldname": "custom_item_barcode"
+      },
+      {
+        "columns": 1,
+        "fieldname": "uom"
+      },
+      {
         "columns": 1,
         "fieldname": "qty"
       },

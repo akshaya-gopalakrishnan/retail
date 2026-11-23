@@ -1,0 +1,41 @@
+{
+  "identity": "cashier@gmail.com",
+  "mode": "existing local user; in-memory sidebar overlay; saved roles/settings unchanged",
+  "accounting_suggestions": "hidden, including New",
+  "accounting_dashboard": {
+    "filteredNames": [
+      "Human Resource",
+      "Expense Claims",
+      "Recruitment",
+      "Payroll",
+      "Employee Lifecycle",
+      "Attendance",
+      "Project",
+      "Selling",
+      "Stock",
+      "Buying",
+      "CRM",
+      "Asset",
+      "Manufacturing"
+    ],
+    "suggestions": []
+  },
+  "sales_and_pos_suggestions": "present",
+  "denied_requests": {
+    "/app/dashboard-view/Accounts": 403,
+    "/api/method/frappe.desk.form.load.getdoc?doctype=Dashboard&name=Accounts": 403,
+    "/api/method/frappe.desk.doctype.dashboard.dashboard.get_permitted_charts?dashboard_name=Accounts": 403,
+    "/api/method/frappe.client.get_list?doctype=Account": 403,
+    "/app/account": 403,
+    "/app/cost-center": 403,
+    "/api/method/frappe.desk.treeview.get_children?doctype=Account&parent=All%20Accounts&is_root=true": 403,
+    "/api/method/frappe.desk.query_report.get_script?report_name=General%20Ledger": 403
+  },
+  "permitted_invoice_lists": {
+    "Sales Invoice": 200,
+    "Purchase Invoice": 200,
+    "POS Invoice": 200
+  },
+  "global_search": "no denied accounting records",
+  "runtime_errors": []
+}

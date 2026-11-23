@@ -43,10 +43,17 @@ class TestDayCorrectionPermissions(unittest.TestCase):
         with self.assertRaises(frappe.PermissionError):
             service.authorize(self.closing,service.REOPEN)
 
-    def test_super_admin_can_support_without_employee_identity(self):
-        self.super_admin.return_value=True
+    def test_administrator_can_support_without_employee_identity(self):
+        frappe.session.user="Administrator"
         service.authorize(self.closing,service.REOPEN)
         self.employees.assert_not_called()
+
+    def test_super_admin_still_needs_operational_privileges(self):
+        self.super_admin.return_value=True
+        self.roles.return_value=["Super Admin", "POS Manager"]
+        self.privileges.return_value={}
+        with self.assertRaises(frappe.PermissionError):
+            service.authorize(self.closing,service.REOPEN)
 
     def test_privilege_is_checked_before_replaying_any_operation(self):
         self.patch(frappe,"get_doc",return_value=self.closing)

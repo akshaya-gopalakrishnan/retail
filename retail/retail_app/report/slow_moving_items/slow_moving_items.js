@@ -71,6 +71,11 @@ frappe.query_reports["Slow Moving Items"] = {
 		},
 	],
 	formatter: function (value, row, column, data, default_formatter) {
+		if (column.fieldname === "profit_percent") {
+			if (!data || data.is_total_row || !(Number(data.net_sales) > 0)) {
+				return __("N/A");
+			}
+		}
 		value = default_formatter(value, row, column, data);
 
 		if (column.fieldname !== "movement_status" || !data) {
@@ -79,6 +84,8 @@ frappe.query_reports["Slow Moving Items"] = {
 
 		const color_by_status = {
 			"No Sales": "red",
+			"Fully Returned": "orange",
+			"Net Returns": "red",
 			"Very Slow": "orange",
 			"Slow Moving": "yellow",
 		};

@@ -74,26 +74,29 @@ class TestSidebarPermissions(unittest.TestCase):
             "Items": ["Items List", "Item Family List", "Item Groups", "Price Lists", "Brands"],
             "Sales": ["Customers", "Quotations", "Sales Orders", "Sales Invoices", "Sales Returns", "Delivery Notes"],
             "Purchases": ["Suppliers", "Request for Quotations", "Supplier Quotations", "Purchase Orders", "Purchase Receipts", "Purchase Invoices", "Purchase Returns", "Material Requests"],
-            "Stocks": ["Warehouses", "Stock Adjustments", "Stock Take", "Serials & Batches", "Stock Status"],
+            "Stocks": ["Warehouses", "Stock Adjustments", "Stock Take", "Serials & Batches", "Stock Status", "Product Conversion"],
             "Accounts": ["Bank Accounts", "Payments", "Taxes", "Journal Entries", "Accounts Receivable", "Accounts Payable"],
             "Manufacturing": ["BOM", "Production Plan", "Work Orders", "Job Cards", "Stock Entries", "Quality Inspection", "Reports", "Setup"],
             "POS": ["POS Invoices", "POS Profiles", "POS Counters", "POS Cashier Shifts", "POS Counter Sessions", "POS Opening Entries", "POS Closing Entries", "POS Branch Day Closings", "POS Sync Logs", "POS Reports"],
+            "Restaurant": ["Table Location", "Tables"],
             "Van Sales": ["Fleet", "Driver", "Van Sessions", "Van Stock View", "Stock Request", "Van Stock Entries", "Van Sales Invoice", "Van Payments", "Van Customers", "Items", "Warehouses", "Van Sales Reports"],
             "Reports": ["Sales Reports", "Purchase Reports", "Stock Reports", "Accounts Reports", "POS Sales Reports", "Manufacturing Module"],
             "Promotions": ["Promo Price", "Buy X Get Y Promotion", "Gift Voucher Promotion", "Gift Voucher Ledger", "Voucher Cards", "Loyalty Program"],
             "Settings": ["Business Profile", "Branding", "System Rules", "User List", "Employee List"],
+            "Awesome Bar": [],
         }
         self.assertEqual([(group["label"], [child["label"] for child in group["children"]]) for group in registry()], list(expected.items()))
         ids = [entry["id"] for entry in entries()]
         self.assertEqual(len(ids), len(set(ids)))
 
-    def test_migration_legacy_and_protected_exemption(self):
+    def test_software_admin_follows_saved_business_permissions(self):
         self.assertIsNone(access.selection())
         self.select()
         self.assertEqual(access.selection(), set())
         self.patch(access, "is_super_admin", return_value=True)
-        self.assertIsNone(access.selection())
-        self.assertTrue(access.target_allowed("doctype", "Customer"))
+        self.assertEqual(access.selection(), set())
+        self.assertFalse(access.target_allowed("doctype", "Customer"))
+        self.assertTrue(access.target_allowed("doctype", "User"))
 
     def test_invoice_only_customer_only_multiple_and_user_isolation(self):
         self.select("Sales Invoices")
@@ -136,11 +139,11 @@ class TestSidebarPermissions(unittest.TestCase):
             with patch.object(access, "is_super_admin", return_value=True):
                 self.select("Promotions Promo Price Link")
                 self.assertFalse(any(page.name == name for page in access.filter_sidebar(pages)))
-                self.assertTrue(access.target_allowed("doctype", "Voucher Card Batch"))
+                self.assertEqual(access.target_allowed("doctype", "Voucher Card Batch"), user == "Administrator")
                 boot = frappe._dict()
                 access.boot(boot)
                 self.assertNotIn("workspace:promotions_voucher_card_batch_link", boot.retail_sidebar_selection)
-                self.assertTrue(boot.retail_sidebar_unrestricted_targets)
+                self.assertEqual(boot.retail_sidebar_unrestricted_targets, user == "Administrator")
                 self.assertTrue(any(child["workspace"] == name for group in boot.retail_sidebar_editor_registry for child in group["children"]))
                 self.select(name)
                 self.assertTrue(any(page.name == name for page in access.filter_sidebar(pages)))
@@ -368,3 +371,129 @@ class TestSidebarPermissions(unittest.TestCase):
                 frappe.local.form_dict = frappe._dict(params)
                 with self.assertRaises(frappe.PermissionError):
                     access.guard_request()
+
+
+    def test_unmapped_accounting_documents_follow_accounts_area(self):
+        self.select("Sales Invoices", "Purchase Invoices", "POS Invoices", "Sales Reports")
+        for doctype in ("Account", "GL Entry", "Cost Center", "Budget", "Journal Entry"):
+            with self.subTest(doctype=doctype):
+                self.assertFalse(access.target_allowed("doctype", doctype))
+                with self.assertRaises(frappe.PermissionError):
+                    access.require_document(frappe._dict(doctype=doctype))
+        for doctype in ("Sales Invoice", "Purchase Invoice", "POS Invoice"):
+            self.assertTrue(access.target_allowed("doctype", doctype))
+        self.assertFalse(access.target_allowed("report", "General Ledger"))
+        self.assertTrue(access.target_allowed("report", "Gross Profit"))
+        self.select("Bank Accounts", "Accounts Reports")
+        self.assertTrue(access.target_allowed("doctype", "Account"))
+        self.assertTrue(access.target_allowed("report", "General Ledger"))
+
+    def test_accounting_direct_urls_lists_rest_and_tree_are_denied(self):
+        self.select("Sales Invoices")
+        for path, params in (
+            ("/app/account", {}), ("/app/cost-center", {}),
+            ("/api/resource/Account/Cash", {}), ("/api/v2/document/GL%20Entry/GL-1", {}),
+            ("/api/method/frappe.client.get_list", {"doctype": "Account"}),
+            ("/api/method/frappe.desk.treeview.get_children", {"doctype": "Account"}),
+        ):
+            with self.subTest(path=path):
+                frappe.request.path = path
+                frappe.local.form_dict = frappe._dict(params)
+                with self.assertRaises(frappe.PermissionError):
+                    access.guard_request()
+
+    def test_link_facts_and_internal_ledger_processing_are_preserved(self):
+        self.select("Sales Invoices")
+        frappe.request.path = "/api/method/frappe.client.get_value"
+        frappe.local.form_dict = frappe._dict(doctype="Account", fieldname='["account_currency"]', filters='{"name":"Cash"}')
+        access.guard_request()  # Narrow named link lookup used by invoice calculation.
+        frappe.form_dict.fieldname = '["account_name","balance"]'
+        with self.assertRaises(frappe.PermissionError):
+            access.guard_request()
+        ledger = Mock(doctype="GL Entry")
+        ledger.get.side_effect = {"name": "INTERNAL-GL"}.get
+        ledger.is_new.return_value = True
+        access.validate_document(ledger)
+        self.assertIsNone(access.has_permission(ledger, "create"))
+
+    def test_global_search_filters_denied_records_on_server(self):
+        self.select("Sales Invoices")
+        cached = frappe.get_cached_doc
+        self.patch(frappe, "get_cached_doc", side_effect=lambda dt, name:
+                   frappe._dict(doctype=dt, name=name, is_return=int(name == "RETURN-1")) if dt == "Sales Invoice" else cached(dt, name))
+        with patch("frappe.utils.global_search.search", return_value=[
+            {"doctype": "Account", "name": "Cash"},
+            {"doctype": "Sales Invoice", "name": "SI-1"},
+            {"doctype": "Sales Invoice", "name": "RETURN-1"},
+            {"doctype": "UOM", "name": "Unit"},
+        ]) as native:
+            self.assertEqual([row["doctype"] for row in access.global_search("Cash")], ["Sales Invoice", "UOM"])
+            native.reset_mock()
+            self.assertEqual(access.global_search("Cash", doctype="Account"), [])
+            native.assert_not_called()
+
+    def test_accounting_dashboard_routes_and_data_are_denied(self):
+        self.select("Sales Invoices", "POS Invoices")
+        for path, params in (
+            ("/app/dashboard-view/Accounts", {}),
+            ("/app/dashboard-view/Accounting", {}),
+            ("/api/resource/Dashboard/Accounts", {}),
+            ("/api/method/frappe.desk.form.load.getdoc", {"doctype": "Dashboard", "name": "Accounts"}),
+            ("/api/method/frappe.desk.doctype.dashboard.dashboard.get_permitted_charts", {"dashboard_name": "Accounts"}),
+            ("/api/method/frappe.desk.doctype.dashboard.dashboard.get_permitted_cards", {"dashboard_name": "Accounts"}),
+        ):
+            with self.subTest(path=path):
+                frappe.request.path = path
+                frappe.local.form_dict = frappe._dict(params)
+                with self.assertRaises(frappe.PermissionError):
+                    access.guard_request()
+        self.assertIn("tabDashboard", access.dashboard_query_conditions())
+        self.select("Bank Accounts")
+        self.assertTrue(access.target_allowed("dashboard", "Accounts"))
+        self.assertEqual(access.dashboard_query_conditions(), "")
+
+    def test_dashboard_boot_filters_custom_accounting_but_preserves_sales(self):
+        self.select("Sales Invoices")
+        frappe.db.get_value.side_effect = lambda dt, name, field: {"Finance Custom": "Accounts", "Selling": "Selling"}.get(name)
+        info = frappe._dict(dashboards=[{"name": name} for name in ("Accounts", "Finance Custom", "Selling")])
+        access.boot(info)
+        self.assertEqual(info.dashboards, [{"name": "Selling"}])
+        self.assertEqual(info.retail_sidebar_dashboard_access, {"Accounts": False, "Finance Custom": False, "Selling": True})
+
+
+    def test_awesome_bar_checkbox_controls_boot_including_protected_users(self):
+        for actor in ("sidebar-a@example.test", "Administrator", "software@example.test"):
+            frappe.session.user = actor
+            with self.subTest(user=actor):
+                self.select("Sales Invoices")
+                info = frappe._dict(desk_settings={"search_bar": 1})
+                access.boot(info)
+                self.assertFalse(info.retail_awesome_bar_allowed)
+                self.assertEqual(info.desk_settings["search_bar"], 0)
+                self.select("Sales Invoices", "Awesome Bar")
+                info = frappe._dict(desk_settings={"search_bar": 1})
+                access.boot(info)
+                self.assertTrue(info.retail_awesome_bar_allowed)
+                self.assertEqual(info.desk_settings["search_bar"], 1)
+
+    def test_legacy_users_keep_native_awesome_bar_setting(self):
+        info = frappe._dict(desk_settings={"search_bar": 1})
+        access.boot(info)
+        self.assertTrue(info.retail_awesome_bar_allowed)
+        info = frappe._dict(desk_settings={"search_bar": 0})
+        access.boot(info)
+        self.assertEqual(info.desk_settings["search_bar"], 0)
+
+    def test_awesome_bar_selection_saves_without_granting_business_access(self):
+        value = json.dumps({"version": 1, "allowed": [access.AWESOME_BAR]})
+        doc = Mock()
+        doc.get.side_effect = lambda field: value if field == access.FIELD else None
+        doc.get_doc_before_save.return_value = None
+        with patch.object(access, "is_super_admin", return_value=True):
+            access.validate_user(doc)
+        field, saved = doc.set.call_args.args
+        self.assertEqual(field, access.FIELD)
+        self.assertEqual(json.loads(saved)["allowed"], [access.AWESOME_BAR])
+        self.select("Awesome Bar")
+        self.assertFalse(access.target_allowed("doctype", "Account"))
+        self.assertFalse(access.target_allowed("doctype", "Sales Invoice"))

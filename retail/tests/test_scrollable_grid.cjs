@@ -548,3 +548,30 @@ test('native Item Name metadata without in_list_view remains visible before Barc
   assert.deepEqual(names(f.grid),['item_code','item_name','custom_item_barcode']);
   assert.equal(f.grid.fields_map.item_name.in_list_view,0);
 });
+
+test('Sales Invoice restores UOM directly after barcode in a saved layout',()=>{
+ const f=fixture();f.frm.doctype='Sales Invoice';f.grid.doctype='Sales Invoice Item';
+ const fields=[{fieldname:'item_code',fieldtype:'Link',options:'Item'},{fieldname:'item_name',fieldtype:'Data'},{fieldname:'custom_item_barcode',fieldtype:'Data'},{fieldname:'uom',fieldtype:'Link',options:'UOM',hidden:1},{fieldname:'qty',fieldtype:'Float'}].map(df=>({...df,in_list_view:1,columns:1}));
+ f.grid.docfields=fields;f.grid.fields_map=Object.fromEntries(fields.map(df=>[df.fieldname,df]));
+ f.frappe.model.user_settings['Sales Invoice']={RetailScrollableGrid:{items:[{fieldname:'item_code',columns:2},{fieldname:'qty',columns:3}]}};
+ f.handlers['Sales Invoice'].refresh(f.frm);
+ assert.deepEqual(names(f.grid),['item_code','item_name','custom_item_barcode','uom','qty']);
+ assert.equal(f.grid.visible_columns.find(([df])=>df.fieldname==='qty')[0].columns,3);
+});
+
+test('Stock Reconciliation exposes native tracking controls while preserving saved columns',()=>{
+ const settings={RetailScrollableGrid:{items:[{fieldname:'item_code',columns:2,width_px:101},{fieldname:'item_name',columns:2},{fieldname:'stock_uom',columns:1},{fieldname:'qty',columns:1,width_px:142}]}};
+ const f=fixture(settings);const before=JSON.stringify(settings);
+ const meta=JSON.parse(fs.readFileSync(path.join(__dirname,'../../../erpnext/erpnext/stock/doctype/stock_reconciliation_item/stock_reconciliation_item.json')));
+ f.frm.doctype='Stock Reconciliation';
+ f.frappe.model.user_settings['Stock Reconciliation']=settings;
+ f.grid.docfields=meta.fields.map(df=>({...df}));
+ f.grid.fields_map=Object.fromEntries(f.grid.docfields.map(df=>[df.fieldname,df]));
+ f.grid.fields_map.custom_item_barcode={fieldname:'custom_item_barcode',fieldtype:'Data',in_list_view:1,columns:2};
+ f.handlers['Stock Reconciliation'].refresh(f.frm);
+ const columns=names(f.grid);
+ assert.equal(columns[columns.indexOf('item_name')+1],'custom_item_barcode');
+ for(const field of ['use_serial_batch_fields','serial_no','batch_no','add_serial_batch_bundle','serial_and_batch_bundle'])assert.ok(columns.includes(field),field);
+ assert.equal(f.grid.visible_columns[0][0].width_px,101);
+ assert.equal(JSON.stringify(settings),before);
+});

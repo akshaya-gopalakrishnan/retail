@@ -404,3 +404,37 @@
 .print-format .retail-document-number { text-align: right; font-size: 10px; margin: 4px 0 12px; }
 .print-format .title-row { margin: 12px 0; }
 .print-format .invoice-title { color: #2d6dc4; font-size: 18px; font-weight: normal; text-transform: uppercase; }
+
+/* Compact Sales Invoice: keep header, 30 item rows and totals readable on A4. */
+.print-format { padding: 0 !important; font-size: 10px; }
+.print-format .hardcoded-letterhead { margin-bottom: 4px; }
+.print-format .title-row { display: block; text-align: center; margin: 4px 0 7px; }
+.print-format .title-line { display: none; }
+.print-format .invoice-title { font-size: 16px; }
+.print-format .information-table { margin-bottom: 8px; }
+.print-format .customer-section { padding-top: 0 !important; padding-right: 10px !important; }
+.print-format .invoice-details td { padding: 2px 5px !important; height: auto; }
+.print-format .invoice-details .detail-label { width: 42%; }
+.print-format .item-table { margin-bottom: 8px; }
+.print-format .item-table th { padding: 4px 3px !important; font-size: 9px; line-height: 1.2; }
+.print-format .item-table td { padding: 2px 3px !important; font-size: 9px; line-height: 1.2; }
+.print-format .item-table .col-number { width: 4%; text-align: center; }
+.print-format .item-table .col-description { width: 33%; text-align: left; }
+.print-format .item-table .col-qty { width: 12%; text-align: right; white-space: nowrap; }
+.print-format .item-table .col-rate { width: 10%; text-align: right; }
+.print-format .item-table .col-tax-rate { width: 6%; text-align: right; }
+.print-format .item-table .col-tax { width: 10%; text-align: right; }
+.print-format .item-table .col-rate-incl { width: 11%; text-align: right; }
+.print-format .item-table .col-amount { width: 14%; text-align: right; }
+.print-format .item-name { margin: 0; overflow-wrap: break-word; }
+.print-format .retail-item-barcode { font-size: 8px; }
+.print-format .qty-uom { font-size: 8px; }
+.print-format .amount-words-section { width: 60%; padding-right: 12px !important; }
+.print-format .totals-section { width: 40%; }
+.print-format .totals-table td { padding: 3px 4px !important; }
+.print-format .grand-total-amount { font-size: 11px; }
+.print-format .terms-section { margin-top: 8px; }
+.print-format .terms-title { font-size: 10px; margin-bottom: 3px; }
+.print-format .thank-you, .print-format .signature { margin-top: 5px; }
+.print-format .item-table thead { display: table-header-group; }
+.print-format .item-table tbody { page-break-inside: auto; }

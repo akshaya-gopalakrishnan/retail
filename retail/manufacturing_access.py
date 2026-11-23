@@ -22,8 +22,6 @@ def prepare_user(doc, method=None):
         for field, key in (("roles", "role"), ("block_modules", "module"))
     ):
         return
-    if "Manufacturing" in doc.get_blocked_modules():
-        return
     try:
         selected = json.loads(doc.get("retail_sidebar_permissions") or "{}")
     except (ValueError, TypeError):

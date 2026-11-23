@@ -127,12 +127,13 @@
         <thead>
             <tr>
                 <th class="col-number">{{ _("Sr No") }}</th>
-                <th class="col-description">{{ _("Item Description") }}</th>
-                <th class="col-qty">{{ _("Qty") }}</th>
-                <th class="col-rate">{{ _("Rate") }}</th>
-                <th class="col-tax-rate">{{ _("Tax") }}%</th>
-                <th class="col-tax">{{ _("Tax") }}</th>
-                <th class="col-amount">{{ _("Amount") }}</th>
+                <th class="col-description">{{ _("Item") }}</th>
+                <th class="col-qty">{{ _("Qty / UOM") }}</th>
+                <th class="col-rate">{{ _("Rate Excl. VAT") }}</th>
+                <th class="col-tax-rate">{{ _("VAT") }}%</th>
+                <th class="col-tax">{{ _("VAT") }}</th>
+                <th class="col-rate-incl">{{ _("Rate Incl. VAT") }}</th>
+                <th class="col-amount">{{ _("Total Incl. VAT") }}</th>
             </tr>
         </thead>
 
@@ -150,14 +151,16 @@
 
                     <td class="col-description">
                         <div class="item-name">
-                            {{ _(item.item_name) if item.item_name else item.item_code }}{% set retail_barcode = item_barcode_for_print(item) %}{% if retail_barcode %}<br><small class="retail-item-barcode" style="font-weight: normal; overflow-wrap: anywhere;">{{ _("Barcode") }}: {{ retail_barcode | e }}</small>{% endif %}
+                            {{ _(item.item_name) if item.item_name else item.item_code }}{% set retail_barcode = item_barcode_for_print(item) %}{% if retail_barcode %} <small class="retail-item-barcode" style="font-weight: normal; overflow-wrap: anywhere;">{{ _("Barcode") }}: {{ retail_barcode | e }}</small>{% endif %}
                         </div>
+                        {# Extra item description hidden for compact invoice rows.
 
                         {% if item.description %}
                             <div class="item-description">
                                 {{ _(item.description) }}
                             </div>
                         {% endif %}
+                        #}
 
                         {% if item.serial_no %}
                             <div class="item-description">
@@ -175,8 +178,7 @@
                     <td class="col-qty">
                         {{ frappe.utils.fmt_money(item.qty, precision=2) }}
                         {% if item.uom %}
-                            <br>
-                            <span style="font-size: 8px;">{{ _(item.uom) }}</span>
+                            <span class="qty-uom">{{ _(item.uom) }}</span>
                         {% endif %}
                     </td>
 
@@ -192,6 +194,7 @@
                         {{ frappe.utils.fmt_money(line_tax, precision=2) }}
                     </td>
 
+                    <td class="col-rate-incl">{{ frappe.utils.fmt_money(item.net_rate * (1 + vat_rate / 100), precision=2) }}</td>
                     <td class="col-amount">
                         {{ frappe.utils.fmt_money(amount_with_tax, precision=2) }}
                     </td>

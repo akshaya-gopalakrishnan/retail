@@ -109,7 +109,38 @@ def registry():
                     child["workspace"] == "Item Family List" and target[0] == "doctype"
                 ):
                     child["targets"].append(list(target))
+    groups.append({"id": "control:awesome_bar", "workspace": "Awesome Bar", "label": "Awesome Bar",
+                   "parent": None, "route": None, "targets": [], "children": []})
+    _add_accounting_targets(groups)
     return groups
+
+
+def _add_accounting_targets(groups):
+    """Own unmapped accounting tools without reclassifying invoice/POS menus.
+
+    Read shipped definitions, never a site's database while hooks are importing.
+    Existing explicit targets always win, including shared reports and invoices.
+    """
+    import erpnext
+    root = Path(erpnext.__file__).parent / "accounts"
+    accounts = next(group for group in groups if group["workspace"] == "Accounts")
+    reports = next(child for group in groups if group["workspace"] == "Reports"
+                   for child in group["children"] if child["workspace"] == "Accounts Reports")
+    mapped = {tuple(target) for group in groups for entry in [group, *group["children"]]
+              for target in entry["targets"]}
+    for folder, kind in (("doctype", "doctype"), ("report", "report"), ("page", "page"), ("accounts_dashboard", "dashboard")):
+        for path in sorted((root / folder).glob("*/*.json")):
+            if path.stem != path.parent.name:
+                continue
+            doc = json.loads(path.read_text())
+            if not isinstance(doc, dict) or doc.get("module") != "Accounts" or doc.get("istable"):
+                continue
+            name = doc.get("name") or doc.get("report_name") or path.parent.name
+            target = (kind, name)
+            if target not in mapped:
+                owner = reports if kind == "report" else accounts
+                owner["targets"].append(list(target))
+                mapped.add(target)
 
 
 def entries():

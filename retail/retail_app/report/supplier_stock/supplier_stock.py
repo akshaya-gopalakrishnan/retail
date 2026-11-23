@@ -1,0 +1,1 @@
+from retail.retail_app.report.slow_moving_items.slow_moving_items import execute

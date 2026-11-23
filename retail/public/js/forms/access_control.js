@@ -1,7 +1,19 @@
 // Keep native User editors, filtered by the server to the actor's assigned access.
 frappe.ui.form.on("User", {
     refresh(frm) {
-        if (frappe.boot.can_manage_access) return;
+        if (frappe.boot.can_manage_access) {
+            // The software team's editor authority does not require adding the
+            // broader System Manager role to the user.
+            frm.can_edit_roles = true;
+            frm.toggle_enable(["roles", "block_modules", "user_emails", "role_profile_name", "module_profile"], true);
+            for (const editor of [frm.roles_editor, frm.module_editor]) {
+                if (editor) {
+                    editor.disable = false;
+                    editor.show();
+                }
+            }
+            return;
+        }
         const canManage = Boolean(frappe.boot.can_delegate_access && frm.doc.name !== frappe.session.user &&
             (frm.is_new() || frm.doc.retail_access_manager === frappe.session.user ||
                 (!frm.doc.retail_access_manager && frm.doc.owner === frappe.session.user)));
@@ -9,7 +21,7 @@ frappe.ui.form.on("User", {
         // Presets define security rules; staff assignment uses the filtered checkboxes.
         frm.toggle_display(["role_profile_name", "module_profile", "retail_access_manager", "sb_allow_modules", "modules_html"], false);
         // The Retail checklist is the staff-facing module/menu editor. Native
-        // framework module blocks are inherited and remain enforced underneath.
+        // framework module choices are retained for legacy navigation.
         frm.set_df_property("retail_sidebar_permissions_section", "label", __("Allow Modules"));
         frm.toggle_enable(["roles", "block_modules", "user_emails"], canManage);
         if (!frm.is_new()) frm.toggle_enable("user_type", canManage);

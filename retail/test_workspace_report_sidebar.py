@@ -24,6 +24,44 @@ class TestWorkspaceReportSidebar(unittest.TestCase):
 		self.addCleanup(patcher.stop)
 		return patcher.start()
 
+	def test_accounts_storage_does_not_hide_other_business_areas(self):
+		for title, group in (("POS", "POS"), ("POS Invoices", "POS"),
+			("Reports", "Reports"), ("Sales Invoices", "Sales"),
+			("Purchase Invoices", "Purchases")):
+			with self.subTest(title=title):
+				self.assertTrue(workspace_permissions._workspace_sidebar_is_allowed(
+					{"title": title, "module": "Accounts"}, {"Accounts"}, {group}))
+		self.assertFalse(workspace_permissions._workspace_sidebar_is_allowed(
+			{"title": "Accounts"}, {"Accounts"}, {"Accounts"}))
+
+	def test_explicit_sidebar_is_independent_of_all_legacy_module_blocks(self):
+		from retail.sidebar_permissions import selection
+		selection.return_value = {"workspace:items"}
+		blocked = set(workspace_permissions.SIDEBAR_GROUP_MODULES.values())
+		for title, group in workspace_permissions.WORKSPACE_SIDEBAR_GROUPS.items():
+			if group not in workspace_permissions.SIDEBAR_GROUP_MODULES:
+				continue
+			with self.subTest(title=title):
+				self.assertTrue(workspace_permissions._workspace_sidebar_is_allowed(
+					{"title": title}, blocked, {group}))
+		self.assertFalse(workspace_permissions._workspace_sidebar_is_allowed(
+			{"title": "POS"}, blocked, {"Sales"}))
+
+	def test_native_storage_filter_candidates_preserve_workspace_roles(self):
+		workspace_permissions._get_blocked_modules.return_value = {"Accounts"}
+		candidates = [frappe._dict(name=name, title=name) for name in
+			("POS", "Reports", "Private Unmapped", "Accounts")]
+		self.patch(frappe, "get_all", return_value=candidates)
+		self.patch(frappe, "get_active_domains", return_value=[])
+		self.patch(frappe, "_", side_effect=lambda text: text)
+		self.patch(__import__("frappe.core.doctype.custom_role.custom_role", fromlist=["get_custom_allowed_roles"]),
+			"get_custom_allowed_roles", return_value=[])
+		self.reports.update({name: frappe._dict(roles=[]) for name in ("POS", "Reports")})
+		self.reports["Accounts"] = frappe._dict(roles=[frappe._dict(role="Accounts Manager")])
+		pages = workspace_permissions._restore_business_workspace_candidates([])
+		self.assertEqual([page.name for page in pages], ["POS", "Reports"])
+		# The ordinary Retail filter then checks selected areas and native targets.
+
 	def test_renamed_manufacturing_workspaces_keep_permissions(self):
 		for name, target in workspace_permissions.MANUFACTURING_WORKSPACE_ALIASES.items():
 			page = frappe._dict(name=name, title=name, module="Retail-app", parent_page="Manufacturing")
@@ -58,7 +96,7 @@ class TestWorkspaceReportSidebar(unittest.TestCase):
 		self.assertEqual(pages[2].route, ["query-report", "Tax Report"])
 		self.assertNotEqual(pages[2].name, pages[2].title)
 
-	def test_disabled_blocked_and_unreadable_reports_are_omitted(self):
+	def test_storage_module_does_not_hide_readable_reports(self):
 		self.allow_report("Daily Sales Summary", disabled=1)
 		self.allow_report("Gross Profit", module="Blocked Module")
 		self.allow_report("Stock Balance", ref_doctype="Unreadable DocType")
@@ -68,7 +106,7 @@ class TestWorkspaceReportSidebar(unittest.TestCase):
 
 		pages = workspace_permissions.get_permitted_report_sidebar_items()
 
-		self.assertEqual([page.title for page in pages if page.is_report_link], ["Tax Report"])
+		self.assertEqual([page.title for page in pages if page.is_report_link], ["Gross Profit", "Tax Report"])
 		self.assertEqual(self.get_cached_doc.call_count, 4)
 
 	def test_reports_workspace_keeps_categories_and_permitted_report_links(self):

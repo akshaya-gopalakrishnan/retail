@@ -35,13 +35,39 @@ def ensure_item_barcode(doc, method=None):
 			barcode = ""
 
 	if barcode:
-		existing = frappe.db.exists("Item", {"custom_barcode": barcode, "name": ["!=", doc.get("name") or ""]})
-		if existing:
-			frappe.throw(_("Barcode {0} is already used by item {1}.").format(barcode, existing))
+		if is_scale_item(doc) and not re.fullmatch(r"[0-9]{7}", barcode):
+			frappe.throw(_("Scale Item Barcode must contain exactly 7 digits."))
+		validate_unique_item_barcodes(doc, barcode)
 		doc.custom_barcode = barcode
 		return
 
 	doc.custom_barcode = get_unique_item_barcode(doc.get("name"), scale_item=is_scale_item(doc))
+	validate_unique_item_barcodes(doc, doc.custom_barcode)
+
+
+def validate_unique_item_barcodes(doc, barcode):
+	"""One barcode belongs to one Item, including its packing aliases."""
+	# Use the allocation lock for manual entries too. Current reads below see
+	# the preceding save even when this transaction already has a snapshot.
+	frappe.db.sql("select name from `tabDocType` where name = 'Item' for update")
+	barcodes = {barcode}
+	for row in doc.get("custom_retail_packing_detail") or []:
+		value = (row.get("barcode") or "").strip()
+		if value:
+			barcodes.add(value)
+	for value in sorted(barcodes):
+		for table, field, owner in (
+			("tabItem", "custom_barcode", "name"),
+			("tabItem Barcode", "barcode", "parent"),
+			("tabRetail Packing Detail", "barcode", "parent"),
+		):
+			existing = frappe.db.sql(
+				f"select `{owner}` from `{table}` where `{field}` = %s "
+				f"and `{owner}` != %s limit 1 for update",
+				(value, doc.get("name") or ""),
+			)
+			if existing:
+				frappe.throw(_("Barcode {0} is already used by item {1}.").format(value, existing[0][0]))
 
 
 def get_unique_item_barcode(exclude_name=None, scale_item=False):

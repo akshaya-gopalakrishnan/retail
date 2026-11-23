@@ -1,9 +1,13 @@
 """Native, editable role presets installed once per site."""
 
 import frappe
-from frappe.permissions import AUTOMATIC_ROLES, rights, setup_custom_perms
+from frappe.permissions import rights, setup_custom_perms
 
-from retail.access_control import CUSTOMER_ADMIN, PROTECTED_DOCTYPES, SUPER_ADMIN, TECHNICAL_MODULES
+from retail.access_control import ACCESS_ADMIN_DOCTYPES, CUSTOMER_ADMIN, SUPER_ADMIN
+
+# Existing staff POS-profile selection and license-repair settings retain their
+# separate authorization. Neither grants business document permissions.
+CUSTOMER_ADMIN_SETUP_DOCTYPES = {"User", "POS Operator Privilege", "Celesta License Settings"}
 
 BUSINESS_MANAGERS = (
     "Accounts Manager", "Sales Manager", "Purchase Manager", "Stock Manager",
@@ -12,7 +16,7 @@ BUSINESS_MANAGERS = (
     "POS Manager", "Van Sales Manager",
 )
 PROFILES = {
-    "Super Admin": (SUPER_ADMIN, "System Manager", *BUSINESS_MANAGERS),
+    "Super Admin": (SUPER_ADMIN,),
     "Administrator": (CUSTOMER_ADMIN, *BUSINESS_MANAGERS),
     "Store Manager": ("Sales Manager", "Purchase Manager", "Stock Manager", "POS Manager"),
     # Choose the department's functional roles after installation.
@@ -45,8 +49,6 @@ def install_defaults():
             frappe.get_doc({"doctype": "Role", "role_name": role, "desk_access": 1}).insert(ignore_permissions=True)
     existing_roles = set(frappe.get_all("Role", pluck="name"))
     for name, roles in PROFILES.items():
-        if name == "Super Admin":
-            roles = sorted(set(frappe.get_all("Role", filters={"disabled": 0}, pluck="name")) - set(AUTOMATIC_ROLES))
         if not frappe.db.exists("Role Profile", name):
             frappe.get_doc({
                 "doctype": "Role Profile", "role_profile": name,
@@ -56,14 +58,12 @@ def install_defaults():
         values = dict.fromkeys(rights, 1)
         values.update(submit=int(bool(row.is_submittable)), cancel=int(bool(row.is_submittable)),
                       amend=int(bool(row.is_submittable)), **{"import": int(bool(row.allow_import))})
-        grant(row.name, SUPER_ADMIN, {**values, "ignore_user_permissions": 1})
+        if row.name in ACCESS_ADMIN_DOCTYPES:
+            grant(row.name, SUPER_ADMIN, values)
         levels = {int(field.permlevel or 0) for field in frappe.get_meta(row.name).fields} - {0}
-        for level in levels:
-            grant(row.name, SUPER_ADMIN, {"read": 1, "write": 1}, level)
-        if row.module not in TECHNICAL_MODULES and row.name not in PROTECTED_DOCTYPES:
-            grant(row.name, CUSTOMER_ADMIN, values)
+        if row.name in ACCESS_ADMIN_DOCTYPES:
             for level in levels:
-                grant(row.name, CUSTOMER_ADMIN, {"read": 1, "write": 1}, level)
+                grant(row.name, SUPER_ADMIN, {"read": 1, "write": 1}, level)
     # Customer administration uses the ordinary User form, without security fields
     # at permlevel 1 and without System Manager's technical authority.
     grant("User", CUSTOMER_ADMIN, {"read": 1, "write": 1, "create": 1, "delete": 1})
@@ -75,3 +75,53 @@ def install_defaults():
         if frappe.db.exists("DocType", dt):
             meta = frappe.get_meta(dt)
             grant(dt, "POS Manager", {"read": 1, "write": 1, "create": 1, "report": 1, "print": 1, "submit": int(bool(meta.is_submittable))})
+
+
+def restrict_super_admin_to_access_settings():
+    """Remove historical blanket grants without changing users or other roles."""
+    if not frappe.db.exists("Role", SUPER_ADMIN):
+        return
+    from frappe.utils import cint
+    # Both tables are needed: older Retail fixtures also granted this role POS
+    # permissions. No historical transaction or individual role assignment changes.
+    changed = set()
+    for table in ("Custom DocPerm", "DocPerm"):
+        has_ignore_flag = frappe.db.has_column(table, "ignore_user_permissions")
+        fields = ["name", "parent"] + (["ignore_user_permissions"] if has_ignore_flag else [])
+        for row in frappe.get_all(table, filters={"role": SUPER_ADMIN}, fields=fields):
+            if row.parent not in ACCESS_ADMIN_DOCTYPES:
+                frappe.db.delete(table, {"name": row.name, "role": SUPER_ADMIN})
+                changed.add(row.parent)
+            elif has_ignore_flag and cint(row.ignore_user_permissions):
+                frappe.db.set_value(table, row.name, "ignore_user_permissions", 0, update_modified=False)
+                changed.add(row.parent)
+    # Install only native permissions needed by the protected permission editor.
+    for name in sorted(ACCESS_ADMIN_DOCTYPES):
+        if not frappe.db.exists("DocType", name) or frappe.get_meta(name).istable:
+            continue
+        grant(name, SUPER_ADMIN, {"read": 1, "write": 1, "create": 1, "delete": 1,
+                                 "report": 1, "export": 1})
+        for level in {int(field.permlevel or 0) for field in frappe.get_meta(name).fields} - {0}:
+            grant(name, SUPER_ADMIN, {"read": 1, "write": 1}, level)
+        changed.add(name)
+    for name in changed:
+        frappe.clear_cache(doctype=name)
+
+
+def restrict_customer_admin_to_staff_management():
+    """Delegation authority must not silently grant accounting/business rights."""
+    if not frappe.db.exists("Role", CUSTOMER_ADMIN):
+        return
+    changed = set()
+    for table in ("Custom DocPerm", "DocPerm"):
+        for row in frappe.get_all(table, filters={"role": CUSTOMER_ADMIN}, fields=["name", "parent"]):
+            if row.parent not in CUSTOMER_ADMIN_SETUP_DOCTYPES:
+                frappe.db.delete(table, {"name": row.name, "role": CUSTOMER_ADMIN})
+                changed.add(row.parent)
+    grant("User", CUSTOMER_ADMIN, {"read": 1, "write": 1, "create": 1, "delete": 1})
+    grant("User", CUSTOMER_ADMIN, {"read": 1, "write": 1}, permlevel=1)
+    for name in changed | {"User"}:
+        frappe.clear_cache(doctype=name)
+    # Cached can_read lists and Awesome Bar boot data otherwise retain old grants.
+    for user in frappe.get_all("Has Role", filters={"role": CUSTOMER_ADMIN, "parenttype": "User"}, pluck="parent"):
+        frappe.clear_cache(user=user)

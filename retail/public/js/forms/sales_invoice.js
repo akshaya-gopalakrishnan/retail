@@ -8,6 +8,27 @@
 				populateSalesPersonField(frm);
 			},
 			refresh(frm) {
+				installItemRefreshBatching(frm);
+				const grid = frm.fields_dict.items?.grid;
+				if (grid && !grid.__retail_id_order) {
+					grid.__retail_id_order = true;
+					const query = grid.set_custom_query;
+					grid.set_custom_query = function (args) {
+						query?.call(this, args);
+						const endpoint = "retail.domains.item.desk_search.item_query_by_id";
+						args.query = endpoint;
+						// LinkSelector reads the field query immediately after this hook.
+						// Override that one read, retaining normal ranked Link searches.
+						const info = this.fieldinfo.item_code;
+						const native = info?.get_query;
+						if (typeof native === "function") {
+							info.get_query = function (...values) {
+								info.get_query = native;
+								return {...native.apply(this, values), query: endpoint};
+							};
+						}
+					};
+				}
 				keepCompanyVisible(frm);
 				applyVanSalesInvoiceState(frm);
 				populateSalesPersonField(frm);
@@ -32,6 +53,39 @@
 				restoreStandardDraftAction(frm, true);
 			},
 		});
+
+	function installItemRefreshBatching(frm) {
+		if (frm.__retail_item_refresh_batching) return;
+		frm.__retail_item_refresh_batching = true;
+		const refresh = frm.refresh_fields;
+		let depth = 0, frame = null;
+		const flush = () => {
+			if (frame === null) return;
+			cancelAnimationFrame(frame);
+			frame = null;
+			refresh.call(frm);
+		};
+		frm.refresh_fields = function (...args) {
+			if (!depth || args.length || Number(frm.doc.docstatus || 0) !== 0) {
+				if (frame !== null) { cancelAnimationFrame(frame); frame = null; }
+				return refresh.apply(this, args);
+			}
+			// ERPNext still calculates every intermediate value. Paint once per
+			// frame instead of rebuilding every control for each rate/discount event.
+			if (frame === null) frame = requestAnimationFrame(flush);
+		};
+		const manager = frm.script_manager, trigger = manager.trigger;
+		manager.trigger = function (event, cdt, cdn, ...args) {
+			if (cdt !== "Sales Invoice Item" || Number(frm.doc.docstatus || 0) !== 0) {
+				return trigger.call(this, event, cdt, cdn, ...args);
+			}
+			depth++;
+			let result;
+			try { result = trigger.call(this, event, cdt, cdn, ...args); }
+			catch (error) { depth--; flush(); throw error; }
+			return Promise.resolve(result).finally(() => { if (--depth === 0) flush(); });
+		};
+	}
 
 	function keepCompanyVisible(frm) {
 		if (!frm?.fields_dict?.company) return;

@@ -11,6 +11,8 @@ from retail.domains.item import desk_search
 class TestDeskSearch(unittest.TestCase):
     def setUp(self):
         self.db = sqlite3.connect(':memory:')
+        self.db.create_function('regexp_replace', 3, lambda value, pattern, replacement: re.sub(pattern, replacement, value))
+        self.db.create_function('regexp_substr', 2, lambda value, pattern: (re.search(pattern, value).group(0) if re.search(pattern, value) else ''))
         self.addCleanup(self.db.close)
         self.db.executescript('''create table tabItem(name text,item_name text,custom_barcode text);
             create table `tabItem Barcode`(parent text, barcode text);
@@ -45,6 +47,18 @@ class TestDeskSearch(unittest.TestCase):
             self.assertNotIn(('X',), rows)
         self.assertEqual(method('Item', 'drive pen', 'name', 0, 1, {}), [('D',)])
         self.assertEqual(method('Item', 'drive pen', 'name', 1, 1, {}), [('P',)])
+
+    def test_id_browse_is_natural_paginated_and_retains_native_eligibility(self):
+        self.db.executemany('insert into tabItem values (?,?,?)',
+            [('I-10','Ten',''),('I-2','Two',''),('I-1','One','')])
+        method = desk_search.item_query
+        while hasattr(method, '__wrapped__'):
+            method = method.__wrapped__
+        rows = method('Item', '', 'name', 0, 20, {}, order_by_id=True)
+        self.assertEqual([r[0] for r in rows if r[0].startswith('I-')], ['I-1','I-2','I-10'])
+        self.assertNotIn(('X',), rows)
+        self.assertEqual(method('Item', '', 'name', 0, 2, {}, order_by_id=True), rows[:2])
+        self.assertEqual(method('Item', '', 'name', 2, 2, {}, order_by_id=True), rows[2:4])
 
     def test_list_matches_count_and_pagination(self):
         args = frappe._dict(doctype='Item',fields=['name','item_name'],

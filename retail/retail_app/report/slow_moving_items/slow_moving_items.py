@@ -41,7 +41,7 @@ def get_data(filters=None):
 		row.net_qty = flt(sale.get("net_qty"))
 		row.net_sales = flt(sale.get("net_sales"))
 		row.gross_profit = row.net_sales - flt(sale.get("cost_amount"))
-		row.profit_percent = (row.gross_profit / row.net_sales * 100) if row.net_sales else 0
+		row.profit_percent = (row.gross_profit / row.net_sales * 100) if row.net_sales > 0 else None
 		row.avg_daily_qty = row.net_qty / days
 		row.last_sold_date = sale.get("last_sold_date") or last_sold_dates.get(row.item_code)
 		row.days_since_sold = date_diff(getdate(filters.to_date), getdate(row.last_sold_date)) if row.last_sold_date else None
@@ -52,7 +52,7 @@ def get_data(filters=None):
 			continue
 		if cint(filters.get("only_with_stock")) and row.current_stock <= 0:
 			continue
-		if cint(filters.get("only_no_sales")) and row.net_qty != 0:
+		if cint(filters.get("only_no_sales")) and (row.sold_qty or row.return_qty):
 			continue
 		if not cint(filters.get("only_no_sales")) and max_net_qty > 0 and row.net_qty > max_net_qty:
 			continue
@@ -154,7 +154,7 @@ def get_sales_map(filters, item_codes):
 					else abs(sii.stock_qty) * coalesce(sii.incoming_rate, 0)
 				end
 			) as cost_amount,
-			max(si.posting_date) as last_sold_date
+			max(case when si.is_return = 0 then si.posting_date end) as last_sold_date
 		from `tabSales Invoice Item` sii
 		inner join `tabSales Invoice` si on si.name = sii.parent
 		where {" and ".join(conditions)}
@@ -192,6 +192,10 @@ def get_last_sold_dates(item_codes, filters):
 
 
 def get_movement_status(row):
+	if row.return_qty and row.net_qty == 0:
+		return _("Fully Returned")
+	if row.net_qty < 0:
+		return _("Net Returns")
 	if row.net_qty == 0:
 		return _("No Sales")
 	if row.avg_daily_qty <= 0.1:

@@ -1,11 +1,17 @@
-"""Administrator/Super Admin corrections without changing terminal receipts."""
+"""Emergency Administrator corrections without changing terminal receipts."""
 import json
 
 import frappe
 from frappe.utils import now_datetime
 
-from retail.access_control import is_super_admin, require_super_admin
 from retail.pos_operations import canonical
+
+
+def require_recovery_administrator():
+    if frappe.session.user != "Administrator":
+        from retail.access_control import deny_technical_access
+        deny_technical_access()
+
 
 DOCTYPES = ("POS Sync Log", "POS Accepted Transaction", "POS Settlement Allocation", "POS Settlement Exception")
 SALE_TYPES = {"POS Sale", "Sales Invoice", "Credit Sales Invoice", "POS Return", "Return"}
@@ -26,7 +32,7 @@ def transaction_name(doc):
 
 
 def load_correction(doc):
-    if not is_super_admin() or doc.is_new():
+    if frappe.session.user != "Administrator" or doc.is_new():
         return
     if doc.doctype == "POS Sync Log":
         if doc.sync_type in SALE_TYPES:
@@ -132,7 +138,7 @@ def apply_correction(transaction, payload, reason, expected=None):
 
 
 def validate_save(doc):
-    require_super_admin()
+    require_recovery_administrator()
     previous = doc.get_doc_before_save()
     if not previous:
         frappe.throw("POS records can only be created by the POS service.")
@@ -178,7 +184,7 @@ def validate_save(doc):
 
 @frappe.whitelist(methods=["POST"])
 def retry_posting(doctype, name):
-    require_super_admin()
+    require_recovery_administrator()
     if doctype not in DOCTYPES:
         frappe.throw("Unsupported POS document.")
     doc = frappe.get_doc(doctype, name)
