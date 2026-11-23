@@ -386,6 +386,7 @@ doc_events = {
 		],
 	},
 	"Item": {
+		"before_insert": "retail.domains.item.vat_pricing.apply_new_item_vat_defaults",
 		"before_naming": "retail.domains.item.naming.set_automatic_item_code",
 		"before_validate": [
 			"retail.domains.item.scale_item_validation.ensure_item_barcode",
@@ -866,6 +867,10 @@ override_whitelisted_methods.update(
 boot_session.append("retail.access_control.boot_session")
 after_install.append("retail.access_control.install")
 after_migrate.append("retail.access_control.install")
+after_install.append("retail.access_defaults.restrict_super_admin_to_access_settings")
+after_migrate.append("retail.access_defaults.restrict_super_admin_to_access_settings")
+after_install.append("retail.access_defaults.restrict_customer_admin_to_staff_management")
+after_migrate.append("retail.access_defaults.restrict_customer_admin_to_staff_management")
 for _access_doctype in ("User", "Employee"):
 	_scripts = doctype_js.get(_access_doctype, [])
 	if isinstance(_scripts, str):
@@ -947,6 +952,7 @@ for _sidebar_event in (
 	"before_update_after_submit",
 ):
 	doc_events["*"].setdefault(_sidebar_event, []).append("retail.sidebar_permissions.validate_document")
+override_whitelisted_methods["frappe.utils.global_search.search"] = "retail.sidebar_permissions.global_search"
 from retail.sidebar_registry import entries
 
 _sidebar_doctypes = {
@@ -1069,13 +1075,20 @@ jinja["methods"].append("retail.voucher_cards.voucher_card_print_data")
 
 # Series selection is internal for documents numbered by Retail.
 after_migrate.append("retail.short_codes.hide_naming_series")
+after_sync.append("retail.patches.employee_designation_required.install")
+after_migrate.append("retail.patches.employee_designation_required.install")
 
 # Native serial/batch fields directly in purchase item grids.
-for _warehouse_dt in ("Sales Order", "Delivery Note", "Purchase Order", "Purchase Receipt", "Purchase Invoice", "Sales Invoice"):
-	_scripts = doctype_js[_warehouse_dt]
+for _warehouse_dt in ("Sales Order", "Delivery Note", "Purchase Order", "Purchase Receipt", "Purchase Invoice", "Sales Invoice", "Stock Reconciliation"):
+	_scripts = doctype_js.get(_warehouse_dt, [])
 	if isinstance(_scripts, str):
 		_scripts = [_scripts]
 	doctype_js[_warehouse_dt] = [*_scripts, "public/js/forms/default_warehouse.js"]
+
+doctype_js["Stock Reconciliation"] += [
+	"public/js/forms/purchase_item_barcode.js",
+	"public/js/forms/stock_reconciliation.js",
+]
 
 for _purchase_identity_dt in ("Purchase Invoice", "Purchase Receipt"):
 	doctype_js[_purchase_identity_dt].append("public/js/forms/purchase_stock_identity.js")
@@ -1115,7 +1128,7 @@ for _item_filter_dt in (
 		_conditions = [_conditions]
 	permission_query_conditions[_item_filter_dt] = [*_conditions, "retail.document_item_filters.query_conditions"]
 
-# Native Administrator and existing Super Admin can save audited POS corrections.
+# Native Administrator retains audited emergency POS corrections.
 for _recovery_dt in ("POS Sync Log", "POS Accepted Transaction", "POS Settlement Allocation", "POS Settlement Exception"):
 	_scripts = doctype_js.get(_recovery_dt, [])
 	if isinstance(_scripts, str):
@@ -1227,3 +1240,11 @@ jinja["methods"].append("retail.product_conversion.print_context")
 doctype_js.setdefault("BOM", []).append("public/js/forms/bom_item_identity.js")
 after_sync.append("retail.bom_item_identity.install")
 after_migrate.append("retail.bom_item_identity.install")
+after_sync.append("retail.patches.supplier_incoterm.execute")
+after_migrate.append("retail.patches.supplier_incoterm.execute")
+
+# Dashboard is a named target, not a Page named dashboard-view.
+_dashboard_conditions = permission_query_conditions.get("Dashboard", [])
+if isinstance(_dashboard_conditions, str):
+    _dashboard_conditions = [_dashboard_conditions]
+permission_query_conditions["Dashboard"] = [*_dashboard_conditions, "retail.sidebar_permissions.dashboard_query_conditions"]

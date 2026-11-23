@@ -19,6 +19,7 @@ PROTECTED_DOCTYPES = frozenset({
     "User Permission", "Custom DocPerm", "DocPerm", "Has Role", "Block Module",
     "Role Permission for Page and Report", "Custom Role", "POS Operator Privilege",
 })
+ACCESS_ADMIN_DOCTYPES = PROTECTED_DOCTYPES | {"User", "Celesta License Settings"}
 TECHNICAL_MODULES = frozenset({"Core", "Custom", "Integrations", "Automation", "Website", "Workflow"})
 ASSIGNMENT_FIELDS = ("role_profile_name", "module_profile", "user_type")
 ASSIGNMENT_TABLES = {"roles": "role", "block_modules": "module", "user_emails": "email_account"}
@@ -80,9 +81,8 @@ def is_protected_user(user):
 
 def has_permission(doc, ptype=None, user=None, **kwargs):
     if is_super_admin(user):
-        # Controller hooks may grant only permissions already present in DocPerm.
-        # The seed supplies full native DocPerms for this role, at every field level.
-        return True
+        # This identity administers access settings, not business operations.
+        return True if doc.doctype in ACCESS_ADMIN_DOCTYPES else None
     if is_protected_doctype(doc.doctype, user):
         return False
     if doc.doctype == "User":
@@ -168,7 +168,6 @@ def prepare_super_user(doc, method=None):
     if SUPER_ADMIN in roles:
         if not is_super_admin():
             require_super_admin()
-        doc.append_roles("System Manager")
         doc.allowed_in_mentions = 0
     from retail.manufacturing_access import prepare_user
     prepare_user(doc)

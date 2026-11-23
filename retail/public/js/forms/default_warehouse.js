@@ -46,7 +46,7 @@
 		}
 	}
 
-	for (const doctype of ["Sales Order", "Delivery Note", "Purchase Order", "Purchase Receipt", "Purchase Invoice", "Sales Invoice"]) {
+	for (const doctype of ["Sales Order", "Delivery Note", "Purchase Order", "Purchase Receipt", "Purchase Invoice", "Sales Invoice", "Stock Reconciliation"]) {
 		frappe.ui.form.on(doctype, {
 			onload(frm) { if (frm.is_new()) return apply_default(frm); },
 			refresh(frm) {

@@ -46,6 +46,14 @@
 			if (index >= 0) fields.splice(index + 1, 0, barcode);
 			if (this.user_defined_columns.length) this.user_defined_columns = fields;
 		}
+		if (this.frm.doctype === "Sales Invoice" && this.df.fieldname === "items" && this.fields_map.uom) {
+			const existing = fields.find(field => field.fieldname === "uom") || this.fields_map.uom;
+			const uom = {...existing, hidden: 0, in_list_view: 1, columns: existing.columns || 1};
+			fields = fields.filter(field => field.fieldname !== "uom");
+			const index = fields.findIndex(field => field.fieldname === "custom_item_barcode");
+			fields.splice(index + 1, 0, uom);
+			if (this.user_defined_columns.length) this.user_defined_columns = fields;
+		}
 		if (this.frm.doctype === "Sales Invoice" && this.df.fieldname === "items"
 			&& this.fields_map.custom_amount_including_vat) {
 			fields = fields.map(field => typeof field === "string" ? this.fields_map[field] : field).filter(Boolean);
@@ -57,15 +65,18 @@
 			if (index >= 0) fields.splice(index + 1, 0, inclusive);
 			if (this.user_defined_columns.length) this.user_defined_columns = fields;
 		}
-		if (this.retail_purchase_tracking) {
+		if (this.retail_purchase_tracking || this.frm.doctype === "Stock Reconciliation") {
 			// Tracking follows the selected Item even when a personal layout omits
 			// these fields. Work on copies; retain saved widths and preferences.
-			const names = ["serial_no", "batch_no"];
+			const names = this.frm.doctype === "Stock Reconciliation"
+				? ["use_serial_batch_fields", "serial_no", "batch_no", "add_serial_batch_bundle", "serial_and_batch_bundle"]
+				: ["serial_no", "batch_no"];
 			const identity = names.map(name => fields.find(field => field.fieldname === name) ||
 				(this.fields_map[name] && { ...this.fields_map[name], columns: 2, in_list_view: 1 }))
-				.filter(Boolean);
+				.filter(Boolean).map(field => ({...field, in_list_view: 1, columns: field.columns || 2}));
 			fields = fields.filter(field => !names.includes(field.fieldname));
 			let anchor = fields.findIndex(field => field.fieldname === "uom");
+			if (this.frm.doctype === "Stock Reconciliation") anchor = fields.findIndex(field => field.fieldname === "stock_uom");
 			if (anchor < 0) anchor = fields.findIndex(field => field.fieldname === "item_name");
 			if (anchor < 0) anchor = fields.findIndex(field => field.fieldname === "item_code");
 			fields.splice(anchor + 1, 0, ...identity);

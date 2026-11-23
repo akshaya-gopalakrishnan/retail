@@ -27,12 +27,11 @@ def deny():
 
 def authorize(closing, privilege):
     """A named manager authenticates as themselves; never trust a supplied operator ID."""
-    from retail.access_control import is_super_admin
     from retail.module_access import require
     from retail.pos_privileges import profile_privileges
     require("POS")
     closing.check_permission("read")
-    if is_super_admin():
+    if frappe.session.user == "Administrator":
         return
     roles = frappe.get_roles()
     if "POS Integration User" in roles:
@@ -452,14 +451,13 @@ def guard_closed_shift(doc, method=None):
 @frappe.whitelist(methods=["GET"])
 def get_day_correction_actions(day_closing):
     """Native form visibility; mutations always authorize independently."""
-    from retail.access_control import is_super_admin
     from retail.module_access import require
     from retail.pos_privileges import profile_privileges
     require("POS")
     closing = frappe.get_doc(DAY, day_closing)
     closing.check_permission("read")
     privileges = set()
-    if is_super_admin():
+    if frappe.session.user == "Administrator":
         privileges = {REOPEN, ADJUST, CHANGE_MOP, "DAY_CLOSING"}
     elif "POS Integration User" not in frappe.get_roles():
         for employee in frappe.get_all("Employee", filters={"user_id": frappe.session.user,

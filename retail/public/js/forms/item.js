@@ -106,6 +106,7 @@
 		custom_b2b(frm) { refreshMargin(frm); },
 		is_scale_item(frm) { return setScaleItemDefaults(frm); },
 		async custom_scale_item(frm) {
+			setScaleBarcodeInputLimit(frm);
 			if (cint(frm.doc.custom_scale_item)) await previewScaleItemBarcode(frm);
 			else {
 				frm.doc.__retail_scale_barcode_preview = null;
@@ -215,6 +216,7 @@
 	}
 
 	async function setScaleItemDefaults(frm) {
+		setScaleBarcodeInputLimit(frm);
 		if (!cint(frm.doc.custom_scale_item)) {
 			const updates = {};
 			if (cint(frm.doc.is_scale_item)) updates.is_scale_item = 0;
@@ -233,6 +235,21 @@
 			updates.custom_scale_barcode_type || frm.doc.custom_scale_barcode_type
 		);
 		if (Object.keys(updates).length) return frm.set_value(updates);
+	}
+
+	function setScaleBarcodeInputLimit(frm) {
+		const input = frm.fields_dict.custom_barcode?.$input;
+		if (!input) return;
+		input.off("input.retailScaleBarcode");
+		if (cint(frm.doc.custom_scale_item)) {
+			input.attr({ maxlength: 7, inputmode: "numeric" });
+			input.on("input.retailScaleBarcode", function () {
+				const value = this.value.replace(/[^0-9]/g, "").slice(0, 7);
+				if (this.value !== value) this.value = value;
+			});
+		} else {
+			input.removeAttr("maxlength inputmode");
+		}
 	}
 
 	function syncInternalScaleType(frm) {
@@ -1007,7 +1024,6 @@
 			callback: ({ message }) => {
 				if (!message || frm._arabic_item_name_source !== getArabicTranslationSource(frm)) return;
 				if (message.configured === false) {
-					showArabicTranslationConfigOnce(frm);
 					return;
 				}
 				if (message.error) {
@@ -1030,12 +1046,6 @@
 
 	function getArabicTranslationSource(frm) {
 		return (frm.doc.item_name || frm.doc.item_code || "").trim();
-	}
-
-	function showArabicTranslationConfigOnce(frm) {
-		if (frm._arabic_item_name_config_shown) return;
-		frm._arabic_item_name_config_shown = true;
-		frappe.show_alert({ message: __("Arabic translation service not configured"), indicator: "orange" });
 	}
 
 	function showArabicTranslationErrorOnce(frm) {

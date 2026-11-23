@@ -102,8 +102,11 @@ test('failed requests expose a retry message and preserve the payment', async ()
 test('supplier stock routing remains intact after adding the customer review', () => {
 	const f = fixture(); Object.assign(f.frm.doc,{payment_type:'Pay',party_type:'Supplier',party:'S-2'});
 	f.handlers.refresh(f.frm); f.buttons.get('View Supplier Stock')();
-	assert.equal(f.routes[0][1],'Slow Moving Items');
+	assert.equal(f.routes[0][1],'Supplier Stock');
 	assert.equal(f.routes[0][2].supplier,'S-2');
 	assert.equal(f.routes[0][2].company,'nesto');
+	assert.equal(f.routes[0][2].only_no_sales,0);
+	assert.equal(f.routes[0][2].max_net_qty,0);
+	assert.equal(f.routes[0][2].limit,0);
 	assert.equal(f.requests.length,0);
 });

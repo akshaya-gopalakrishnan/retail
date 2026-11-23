@@ -1,5 +1,5 @@
 (() => {
-	const admin = () => frappe.session.user === "Administrator" || frappe.user.has_role("Super Admin");
+	const admin = () => frappe.session.user === "Administrator";
 	for (const doctype of ["POS Sync Log", "POS Accepted Transaction", "POS Settlement Allocation", "POS Settlement Exception"]) {
 		frappe.ui.form.on(doctype, {
 			refresh(frm) {

@@ -9,7 +9,7 @@
 			fields[fieldname]?.$wrapper.remove();
 			delete fields[fieldname];
 		}
-		if (frappe.session.user === "Administrator" || frappe.user.has_role("Super Admin")) {
+		if (frappe.session.user === "Administrator" || frappe.model.can_read("Sales Order API Log")) {
 			listview.retail_api_logs_button = listview.page.add_inner_button(__("API Logs"), () => {
 				frappe.set_route("List", "Sales Order API Log");
 			});

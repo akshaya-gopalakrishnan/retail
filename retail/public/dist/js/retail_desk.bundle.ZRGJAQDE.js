@@ -91,6 +91,7 @@
       clearTimeout(frm.__retail_barcode_timer);
       frm.__retail_barcode_timer = setTimeout(() => refresh(frm), 100);
     }
+    window.retail.refresh_transaction_barcodes = schedule;
     for (const parent of parents) {
       frappe.ui.form.on(parent, { refresh: schedule });
       frappe.ui.form.on(parent, { setup(frm) {
@@ -1195,6 +1196,14 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
           fieldname: "item_name"
         },
         {
+          columns: 2,
+          fieldname: "custom_item_barcode"
+        },
+        {
+          columns: 1,
+          fieldname: "uom"
+        },
+        {
           columns: 1,
           fieldname: "qty"
         },
@@ -1840,6 +1849,15 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
         if (this.user_defined_columns.length)
           this.user_defined_columns = fields;
       }
+      if (this.frm.doctype === "Sales Invoice" && this.df.fieldname === "items" && this.fields_map.uom) {
+        const existing = fields.find((field) => field.fieldname === "uom") || this.fields_map.uom;
+        const uom = __spreadProps(__spreadValues({}, existing), { hidden: 0, in_list_view: 1, columns: existing.columns || 1 });
+        fields = fields.filter((field) => field.fieldname !== "uom");
+        const index = fields.findIndex((field) => field.fieldname === "custom_item_barcode");
+        fields.splice(index + 1, 0, uom);
+        if (this.user_defined_columns.length)
+          this.user_defined_columns = fields;
+      }
       if (this.frm.doctype === "Sales Invoice" && this.df.fieldname === "items" && this.fields_map.custom_amount_including_vat) {
         fields = fields.map((field) => typeof field === "string" ? this.fields_map[field] : field).filter(Boolean);
         const existing = fields.find((field) => field.fieldname === "custom_amount_including_vat") || this.fields_map.custom_amount_including_vat;
@@ -1851,11 +1869,13 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
         if (this.user_defined_columns.length)
           this.user_defined_columns = fields;
       }
-      if (this.retail_purchase_tracking) {
-        const names = ["serial_no", "batch_no"];
-        const identity = names.map((name) => fields.find((field) => field.fieldname === name) || this.fields_map[name] && __spreadProps(__spreadValues({}, this.fields_map[name]), { columns: 2, in_list_view: 1 })).filter(Boolean);
+      if (this.retail_purchase_tracking || this.frm.doctype === "Stock Reconciliation") {
+        const names = this.frm.doctype === "Stock Reconciliation" ? ["use_serial_batch_fields", "serial_no", "batch_no", "add_serial_batch_bundle", "serial_and_batch_bundle"] : ["serial_no", "batch_no"];
+        const identity = names.map((name) => fields.find((field) => field.fieldname === name) || this.fields_map[name] && __spreadProps(__spreadValues({}, this.fields_map[name]), { columns: 2, in_list_view: 1 })).filter(Boolean).map((field) => __spreadProps(__spreadValues({}, field), { in_list_view: 1, columns: field.columns || 2 }));
         fields = fields.filter((field) => !names.includes(field.fieldname));
         let anchor = fields.findIndex((field) => field.fieldname === "uom");
+        if (this.frm.doctype === "Stock Reconciliation")
+          anchor = fields.findIndex((field) => field.fieldname === "stock_uom");
         if (anchor < 0)
           anchor = fields.findIndex((field) => field.fieldname === "item_name");
         if (anchor < 0)
@@ -4199,16 +4219,21 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
       return new Set(((_a2 = frappe.boot) == null ? void 0 : _a2.retail_blocked_modules) || []);
     }
     function moduleIsAllowed(moduleName) {
-      var _a2, _b2;
+      var _a2, _b2, _c2;
       if (((_b2 = (_a2 = frappe.boot) == null ? void 0 : _a2.retail_module_access) == null ? void 0 : _b2[moduleName]) === false)
         return false;
+      if (Array.isArray((_c2 = frappe.boot) == null ? void 0 : _c2.retail_sidebar_selection))
+        return true;
       return !moduleName || !getBlockedModules().has(moduleName);
     }
     function getWorkspaceModule(workspaceName) {
-      var _a2, _b2;
+      var _a2;
       if (!workspaceName)
         return "";
-      return WORKSPACE_TO_MODULE[workspaceName] || ((_b2 = (_a2 = frappe.boot) == null ? void 0 : _a2.retail_workspace_modules) == null ? void 0 : _b2[workspaceName]) || "";
+      const modules = ((_a2 = frappe.boot) == null ? void 0 : _a2.retail_workspace_modules) || {};
+      if (Object.prototype.hasOwnProperty.call(modules, workspaceName))
+        return modules[workspaceName];
+      return WORKSPACE_TO_MODULE[workspaceName] || "";
     }
     function getCurrentUserRoles() {
       var _a2, _b2;
@@ -4274,7 +4299,7 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
       const seen = /* @__PURE__ */ new Set();
       while (current && !seen.has(current)) {
         seen.add(current);
-        if (!moduleIsAllowed(getWorkspaceModule(current)))
+        if (!Array.isArray(selection) && !moduleIsAllowed(getWorkspaceModule(current)))
           return false;
         current = CHILD_TO_PARENT[current];
       }
@@ -4349,7 +4374,7 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
       return doctypeIsAllowed(report == null ? void 0 : report.ref_doctype);
     }
     function routeIsAllowed(route) {
-      var _a2, _b2, _c2;
+      var _a2, _b2, _c2, _d;
       if (!Array.isArray(route) || !route.length)
         return true;
       const view = route[0];
@@ -4359,8 +4384,14 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
       if (view === "List" || view === "Form" || view === "Tree") {
         return doctypeIsAllowed(route[1]);
       }
+      if (view === "dashboard-view") {
+        const access = ((_a2 = frappe.boot) == null ? void 0 : _a2.retail_sidebar_dashboard_access) || {};
+        if (Object.prototype.hasOwnProperty.call(access, route[1]))
+          return access[route[1]];
+        return checklistTargetIsAllowed("dashboard", route[1]);
+      }
       if (view === "query-report") {
-        return reportIsAllowed(route[1], (_c2 = (_b2 = (_a2 = frappe.boot) == null ? void 0 : _a2.user) == null ? void 0 : _b2.all_reports) == null ? void 0 : _c2[route[1]]);
+        return reportIsAllowed(route[1], (_d = (_c2 = (_b2 = frappe.boot) == null ? void 0 : _b2.user) == null ? void 0 : _c2.all_reports) == null ? void 0 : _d[route[1]]);
       }
       if (view === "Workspaces" || view === "workspace" || view === "private") {
         const workspaceName = view === "private" ? route[1] : route[1];
@@ -4435,10 +4466,15 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
       return items;
     }
     function optionIsAllowed(option) {
+      var _a2;
       if (!option)
         return true;
       if (option.match && typeof option.match === "string") {
-        if (DOCTYPE_TO_CHILD[option.match] || DOCTYPE_TO_WORKSPACE[option.match]) {
+        const entries = (((_a2 = frappe.boot) == null ? void 0 : _a2.retail_sidebar_registry) || []).flatMap((group) => [group, ...group.children]);
+        const registeredDoctype = entries.some((entry) => (entry.targets || []).some(
+          (pair) => pair[0] === "doctype" && pair[1] === option.match
+        ));
+        if (registeredDoctype || DOCTYPE_TO_CHILD[option.match] || DOCTYPE_TO_WORKSPACE[option.match]) {
           return doctypeIsAllowed(option.match);
         }
         if (WORKSPACE_TO_MODULE[option.match]) {
@@ -6437,6 +6473,7 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
     }
     let sidebarObserver;
     function refreshSidebarEnhancements() {
+      applyAwesomeBarPermission();
       hideStandardHomeSidebarItems();
       applyDisplayLabels();
       applyDirectLinks();
@@ -6532,8 +6569,26 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
       };
       breadcrumbs.__retail_pos_installed = true;
     }
+    function applyAwesomeBarPermission() {
+      var _a2;
+      if (((_a2 = frappe.boot) == null ? void 0 : _a2.retail_awesome_bar_allowed) !== false)
+        return;
+      if (!document.getElementById("retail-hide-awesome-bar")) {
+        const style = document.createElement("style");
+        style.id = "retail-hide-awesome-bar";
+        style.textContent = ".navbar .search-bar { display: none !important; }";
+        document.head.appendChild(style);
+      }
+      const input = document.getElementById("navbar-search");
+      if (input) {
+        input.disabled = true;
+        input.setAttribute("aria-hidden", "true");
+      }
+    }
     function init() {
       var _a2, _b2, _c2, _d;
+      $(document).on("toolbar_setup.retailAwesomeBar app_ready.retailAwesomeBar", applyAwesomeBarPermission);
+      applyAwesomeBarPermission();
       installPOSBreadcrumbs();
       registerSidebarItems(((_a2 = frappe.boot) == null ? void 0 : _a2.allowed_workspaces) || []);
       injectRetailInlineCss();
@@ -8174,7 +8229,7 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
         var _a;
         return ((_a = frm == null ? void 0 : frm.doc) == null ? void 0 : _a.doctype) === "POS Invoice" && !!frm.doc.custom_pos_completed_payload;
       }
-      async function refreshRowVatAmounts(frm) {
+      async function refreshOtherVatAmounts(frm) {
         var _a, _b, _c, _d, _e;
         if (isCompletedPos(frm))
           return;
@@ -8191,6 +8246,47 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
           row.custom_vat_amount = flt(amount * rate / 100, precision2);
           (_e = (_d = (_c = grid == null ? void 0 : grid.grid_rows_by_docname) == null ? void 0 : _c[row.name]) == null ? void 0 : _d.refresh_field) == null ? void 0 : _e.call(_d, "custom_vat_amount");
         }
+      }
+      function refreshRowVatAmounts(frm) {
+        if (frm.doc.doctype !== "Sales Invoice")
+          return refreshOtherVatAmounts(frm);
+        if (isCompletedPos(frm))
+          return;
+        clearTimeout(frm.__retail_vat_display_timer);
+        frm.__retail_vat_display_timer = setTimeout(() => {
+          if (frm.__retail_vat_display_running) {
+            refreshRowVatAmounts(frm);
+            return;
+          }
+          frm.__retail_vat_display_running = true;
+          refreshVatAmounts(frm).finally(() => {
+            frm.__retail_vat_display_running = false;
+          });
+        }, 80);
+      }
+      async function refreshVatAmounts(frm) {
+        var _a, _b, _c, _d;
+        const grid = (_a = frm.fields_dict.items) == null ? void 0 : _a.grid;
+        if (((_c = (_b = grid == null ? void 0 : grid.docfields) == null ? void 0 : _b.find((df) => df.fieldname === "custom_vat_amount")) == null ? void 0 : _c.read_only) !== 1) {
+          (_d = grid == null ? void 0 : grid.update_docfield_property) == null ? void 0 : _d.call(grid, "custom_vat_amount", "read_only", 1);
+        }
+        await Promise.all((frm.doc.items || []).map(async (row) => {
+          var _a2, _b2, _c2;
+          const field = frappe.meta.get_docfield(row.doctype, "custom_vat_amount", row.name);
+          if (!field)
+            return;
+          field.read_only = 1;
+          const code = row.item_code;
+          const rate = code ? await getVatRate(frm, row, row.doctype) : 0;
+          if (row.item_code !== code || !(frm.doc.items || []).includes(row))
+            return;
+          const amount = flt(row.qty) * flt(row.rate);
+          const value = flt(amount * rate / 100, cint(field.precision) || 2);
+          if (row.custom_vat_amount === value)
+            return;
+          row.custom_vat_amount = value;
+          (_c2 = (_b2 = (_a2 = grid == null ? void 0 : grid.grid_rows_by_docname) == null ? void 0 : _a2[row.name]) == null ? void 0 : _b2.refresh_field) == null ? void 0 : _c2.call(_b2, "custom_vat_amount");
+        }));
       }
       Object.keys(liveVatFormDoctypes).forEach((doctype) => {
         frappe.ui.form.on(doctype, {
@@ -8264,7 +8360,7 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
       frappe.ui.form.on("Sales Taxes and Charges", taxHandlers());
       frappe.ui.form.on("Purchase Taxes and Charges", taxHandlers());
       function scheduleVatTaxRowsSync(frm) {
-        if (["Purchase Receipt", "Purchase Invoice"].includes(frm.doc.doctype)) {
+        if (["Purchase Receipt", "Purchase Invoice", "Sales Invoice"].includes(frm.doc.doctype)) {
           queueVatTaxRowsSync(frm);
           return;
         }
@@ -8471,7 +8567,7 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
       };
       window.retail.transaction_items.purchaseRead = function(frm, request) {
         var _a, _b;
-        if (!["Purchase Receipt", "Purchase Invoice"].includes((_a = frm == null ? void 0 : frm.doc) == null ? void 0 : _a.doctype))
+        if (!["Purchase Receipt", "Purchase Invoice", "Sales Invoice"].includes((_a = frm == null ? void 0 : frm.doc) == null ? void 0 : _a.doctype))
           return frappe.call(request);
         const action = frm.__retail_purchase_action;
         const pending = (action == null ? void 0 : action.reads) || (frm.__retail_purchase_reads || (frm.__retail_purchase_reads = /* @__PURE__ */ new Map()));
@@ -8507,7 +8603,7 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
         const generation = frm.__retail_vat_tax_rows_generation = (frm.__retail_vat_tax_rows_generation || 0) + 1;
         frm.__retail_vat_tax_rows_timer = setTimeout(async () => {
           var _a, _b;
-          if (["Purchase Receipt", "Purchase Invoice"].includes(frm.doc.doctype)) {
+          if (["Purchase Receipt", "Purchase Invoice", "Sales Invoice"].includes(frm.doc.doctype)) {
             await frappe.after_ajax();
             if (generation !== frm.__retail_vat_tax_rows_generation)
               return;
@@ -9241,6 +9337,7 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
         const dialog = this.dialog;
         if (!dialog.fields_dict.custom_barcode)
           return;
+        this.set_scale_barcode_input_limit();
         const generation = this.barcode_generation = (this.barcode_generation || 0) + 1;
         const previous = dialog.get_value("custom_barcode");
         if (!force && previous)
@@ -9261,6 +9358,23 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
         dialog.doc.__retail_scale_barcode_preview = scale ? message : null;
         dialog.doc.__retail_normal_barcode_preview = scale ? null : message;
         await dialog.set_value("custom_barcode", message);
+      }
+      set_scale_barcode_input_limit() {
+        var _a;
+        const input = (_a = this.dialog.fields_dict.custom_barcode) == null ? void 0 : _a.$input;
+        if (!input)
+          return;
+        input.off("input.retailScaleBarcode");
+        if (Number(this.dialog.get_value("custom_scale_item")) === 1) {
+          input.attr({ maxlength: 7, inputmode: "numeric" });
+          input.on("input.retailScaleBarcode", function() {
+            const value = this.value.replace(/[^0-9]/g, "").slice(0, 7);
+            if (this.value !== value)
+              this.value = value;
+          });
+        } else {
+          input.removeAttr("maxlength inputmode");
+        }
       }
     };
   })();
@@ -10112,4 +10226,4 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
     ["Purchase Order", "Purchase Invoice", "Purchase Receipt"].map((doctype) => [doctype, user_grid_view_settings_default[doctype]])
   );
 })();
-//# sourceMappingURL=retail_desk.bundle.SEEXIBEM.js.map
+//# sourceMappingURL=retail_desk.bundle.ZRGJAQDE.js.map

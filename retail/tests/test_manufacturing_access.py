@@ -31,8 +31,8 @@ class TestManufacturingAccess(unittest.TestCase):
 
     @patch("retail.delegated_access.manages", return_value=False)
     @patch("retail.access_control.is_super_admin", return_value=True)
-    def test_both_explicit_controls_are_required(self, *_):
-        for allowed, blocked in ((False, False), (True, True)):
+    def test_explicit_sidebar_selection_is_required(self, *_):
+        for allowed, blocked in ((False, False), (False, True)):
             doc, _ = self.user(allowed=allowed, blocked=blocked)
             prepare_user(doc)
             doc.append_roles.assert_not_called()
@@ -42,6 +42,13 @@ class TestManufacturingAccess(unittest.TestCase):
             data.retail_sidebar_permissions = value
             prepare_user(doc)
             doc.append_roles.assert_not_called()
+
+    @patch("retail.delegated_access.manages", return_value=False)
+    @patch("retail.access_control.is_super_admin", return_value=True)
+    def test_selected_manufacturing_ignores_legacy_module_checkbox(self, *_):
+        doc, _ = self.user(blocked=True)
+        prepare_user(doc)
+        doc.append_roles.assert_called_once_with("Manufacturing User")
 
     @patch("retail.delegated_access.manages", return_value=False)
     @patch("retail.access_control.is_super_admin", return_value=False)

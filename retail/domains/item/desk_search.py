@@ -11,8 +11,8 @@ from retail.domains.item.name_search import condition, ranking
 
 @frappe.whitelist()
 @frappe.validate_and_sanitize_search_inputs
-def item_query(doctype, txt, searchfield, start, page_len, filters, as_dict=False, **kwargs):
-	if not txt.strip():
+def item_query(doctype, txt, searchfield, start, page_len, filters, as_dict=False, order_by_id=False, **kwargs):
+	if not txt.strip() and not order_by_id:
 		return native_item_query(doctype, txt, searchfield, start, page_len, filters, as_dict)
 	frappe.has_permission('Item', 'read', throw=True)
 	values = {}
@@ -20,10 +20,15 @@ def item_query(doctype, txt, searchfield, start, page_len, filters, as_dict=Fals
 	rank = ranking('`tabItem`.item_name', txt, values)
 	values.update(text='%' + txt + '%', exact=txt)
 	# Enumerate in rank order, then retain the native query's eligibility rules.
+	candidate_match = f"""({match} or name like %(text)s or custom_barcode like %(text)s
+		or exists (select 1 from `tabItem Barcode` b where b.parent = `tabItem`.name and b.barcode like %(text)s))"""
+	order = f"case when name = %(exact)s or custom_barcode = %(exact)s then 0 else 1 end, {rank}, name"
+	if order_by_id:
+		# Natural numeric suffix order across pages (I-2 before I-10).
+		order = "regexp_replace(name, '[0-9]+$', ''), cast(regexp_substr(name, '[0-9]+$') as unsigned), name"
 	candidate_sql = f"""select name from `tabItem` where
-		({match} or name like %(text)s or custom_barcode like %(text)s
-		or exists (select 1 from `tabItem Barcode` b where b.parent = `tabItem`.name and b.barcode like %(text)s))
-		{get_match_cond('Item')} order by case when name = %(exact)s or custom_barcode = %(exact)s then 0 else 1 end, {rank}, name
+		{candidate_match if txt.strip() else '1=1'}
+		{get_match_cond('Item')} order by {order}
 		limit 200 offset %(offset)s"""
 	filters = frappe.parse_json(filters) if isinstance(filters, str) else filters
 	results = []
@@ -53,6 +58,13 @@ def item_query(doctype, txt, searchfield, start, page_len, filters, as_dict=Fals
 		if len(results) >= cint(start) + cint(page_len):
 			break
 	return results[cint(start):cint(start) + cint(page_len)]
+
+
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
+def item_query_by_id(doctype, txt, searchfield, start, page_len, filters, as_dict=False, **kwargs):
+	"""Multiple Items browse order; native permissions and eligibility still apply."""
+	return item_query(doctype, txt, searchfield, start, page_len, filters, as_dict, order_by_id=True)
 
 
 def list_query():

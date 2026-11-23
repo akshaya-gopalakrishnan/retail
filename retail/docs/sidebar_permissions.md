@@ -5,9 +5,18 @@ after Allow Modules. It uses Frappe's native MultiCheck control and ordinary Use
 Save. The editor fills the form width and uses five desktop columns, three below
 1200px, two below 768px and one below 480px.
 
-Administrator and the assigned **Super Admin** role retain unrestricted access,
-regardless of saved selections. Only they can change a client administrator's
-maximum access. The editable Role Profile name does not grant this exemption.
+The assigned **Super Admin** role controls the software team's protected access
+settings and complete permission editor. It does not bypass saved business sidebar
+selections or grant business document permissions. Only the software team can
+change a client administrator's maximum access. Administrator remains Frappe's
+emergency recovery identity. The editable Role Profile name is only a preset.
+
+Super Admin does not add System Manager when a User is saved. Fresh-install
+Super Admin presets contain only that role; functional roles are assigned separately.
+The upgrade removes historical Super Admin business DocPerm grants while preserving
+other roles and individual users' existing assignments. POS day corrections still
+need their normal operator privileges. Emergency payload recovery belongs only to
+the built-in Administrator.
 
 A **Customer Administrator** can create and manage their own staff users and
 assign any subset of their own roles, allowed native modules and Retail sidebar
@@ -25,13 +34,30 @@ Other users and protected administrator accounts cannot be managed by them.
 Removing access from a manager removes it from managed staff and their descendants;
 adding access does not automatically add it to existing staff.
 
+Customer Administrator is a staff-management capability, not a source of business
+DocPerms. Business actions require separately assigned functional roles. The upgrade
+removes its historical blanket business grants while retaining User editing and
+existing POS-profile/license setup rules. It never changes users' assigned roles.
+
+Accounting tools without a separate business menu (including Account/Chart of
+Accounts, GL Entry, Cost Center and Budget) belong to Accounts. Shipped accounting
+pages and reports are also classified; reports belong to Accounts Reports unless
+already assigned to another report area. Existing explicit Sales/Purchase/POS
+ownership takes precedence. These targets are filtered from Awesome Bar List,
+Tree, New, recent and global record results, and checked on direct URLs/APIs.
+Named dashboards also follow their owning area: Accounts/Accounting dashboards
+are filtered from boot/search and checked on direct dashboard-view URLs,
+Dashboard document reads, and chart/card loader requests. Site-created dashboards
+in the Accounts module follow the same rule. Other dashboards remain available.
+Named invoice lookup facts and internal ledger posting retain their existing
+narrow dependency exceptions and native permissions.
+
 ## Persistence and migration
 
 The Retail install/migrate hook creates three User Custom Fields: a section, HTML
 editor and hidden `retail_sidebar_permissions` Long Text field at permission level 1.
 No core source is changed. When an authorized administrator changes a System User's
-access, enabling the native Manufacturing module and selecting a Manufacturing
-sidebar child also assigns the native Manufacturing User role. This preserves
+access, selecting a Manufacturing sidebar child also assigns the native Manufacturing User role. This preserves
 operational access when Super Admin is removed. Delegated administrators must
 already possess this role; their existing assignment ceiling still applies.
 Ordinary profile saves and empty legacy sidebar selections do not assign roles.
@@ -81,6 +107,22 @@ receive the new ID. Entries outside the checklist retain existing native access.
 entries and their mapped targets are restricted.
 
 ## Enforcement and necessary boundaries
+
+Saved Retail sidebar selections are the business-area visibility control. The
+legacy native Allow Modules list describes ERPNext storage modules; it must not
+hide a selected area just because that area's documents happen to be stored in
+Accounts, Stock, Selling or Buying. POS, Sales, Purchases and Reports are independent
+of the Accounts sidebar. A disabled Accounts sidebar still denies its mapped
+menus and targets, while selected invoice and report menus retain their native
+permissions. An independently selected POS/Van report category does not require
+the operational POS/Van sidebar as well.
+
+For users without saved Retail selections, legacy module visibility remains in
+use, with each child following its owning business area rather than its document's
+storage module. Reports follow report roles and reference-DocType read permission,
+not the report's storage module. The software team's Super Admin role remains the
+protected setup identity; it is not required for ordinary site administration or
+selected business menus. Delegated administrators retain their assignment ceiling.
 
 Selections can only **remove** access. Native DocPerms, role permissions, field
 permissions, User Permissions and existing Retail restrictions continue to decide
@@ -189,3 +231,16 @@ The dropdown returns active profile names without granting access to profile for
 User role/module/sidebar ceilings and their cascading reductions remain unchanged.
 POS action presets are separate from backend role/module permissions; selecting a
 preset does not grant a staff user additional backend roles or modules.
+
+
+## Awesome Bar visibility
+
+The standalone **Awesome Bar** checkbox at the end of Retail Sidebar Permissions
+controls the signed-in user's navbar search. Checked permits the native search
+bar; unchecked hides it and prevents Ctrl+G from focusing it. It grants no document
+or report access and does not change permission checks. The normal User save and
+permission-change reload apply, including for Administrator and Super Admin.
+Legacy users without saved Retail selections retain the native search preference.
+As with other new registry identifiers, existing explicit selections omit this new
+checkbox: enable and save it for users who should retain Awesome Bar access.
+Delegated administrators can grant it only when it is within their own ceiling.

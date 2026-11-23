@@ -13,6 +13,7 @@ from retail.access_control import is_super_admin, require_super_admin
 from retail.sidebar_registry import registry, entries, routes, labels, target_entries
 
 FIELD = "retail_sidebar_permissions"
+AWESOME_BAR = "control:awesome_bar"
 SHARED = {"Sales Invoice", "Purchase Receipt", "Stock Entry", "Customer", "Payment Entry", "Material Request"}
 VAN_FLAGS = {"Sales Invoice": "custom_is_van_sale", "Stock Entry": "custom_is_van_stock_entry",
              "Customer": "custom_is_van_customer", "Payment Entry": "custom_is_van_payment",
@@ -21,7 +22,7 @@ VAN_FLAGS = {"Sales Invoice": "custom_is_van_sale", "Stock Entry": "custom_is_va
 
 def selection(user=None, *, navigation=False):
     user = user or frappe.session.user
-    if not navigation and is_super_admin(user):
+    if not navigation and user == "Administrator":
         return None
     value = frappe.get_cached_doc("User", user).get(FIELD)
     if not value:
@@ -42,9 +43,20 @@ def deny():
     frappe.throw(frappe._("You do not have permission to access this Retail menu."), frappe.PermissionError)
 
 
+def access_admin_target(kind, target, user=None):
+    from retail.access_control import ACCESS_ADMIN_DOCTYPES
+    return kind == "doctype" and target in ACCESS_ADMIN_DOCTYPES and is_super_admin(user)
+
+
 def target_allowed(kind, target, user=None):
+    if access_admin_target(kind, target, user):
+        return True
     selected = selection(user)
     candidates = target_entries(kind, target)
+    if kind == "dashboard" and target and not candidates and selected is not None:
+        # Include site-created accounting dashboards, not only shipped fixtures.
+        if target in {"Accounts", "Accounting"} or frappe.db.get_value("Dashboard", target, "module") == "Accounts":
+            candidates = [group for group in registry() if group["workspace"] == "Accounts"]
     return selected is None or not candidates or any(entry["id"] in selected for entry in candidates)
 
 
@@ -76,6 +88,8 @@ def document_entries(doc):
 
 
 def require_document(doc):
+    if access_admin_target("doctype", doc.doctype):
+        return
     selected = selection()
     if selected is not None and target_entries("doctype", doc.doctype) and not any(entry["id"] in selected for entry in document_entries(doc)):
         deny()
@@ -123,7 +137,7 @@ def user_updated(doc, method=None):
 @frappe.whitelist()
 def get_editor():
     selected = selection()
-    return registry() if selected is None else [
+    return registry() if selected is None or is_super_admin() else [
         dict(group, children=[child for child in group["children"] if child["id"] in selected])
         for group in registry() if group["id"] in selected
     ]
@@ -134,18 +148,31 @@ def boot(bootinfo):
     bootinfo.retail_sidebar_labels = labels()
     selected = selection()
     bootinfo.retail_sidebar_registry = registry()  # Navigation needs the complete route index.
-    bootinfo.retail_sidebar_editor_registry = registry() if selected is None else [
+    bootinfo.retail_sidebar_editor_registry = registry() if selected is None or is_super_admin() else [
         dict(group, children=[child for child in group["children"] if child["id"] in selected])
         for group in registry() if group["id"] in selected
     ]
     navigation_selected = selection(navigation=True)
+    bootinfo.retail_awesome_bar_allowed = navigation_selected is None or AWESOME_BAR in navigation_selected
+    if not bootinfo.retail_awesome_bar_allowed and bootinfo.get("desk_settings") is not None:
+        bootinfo.desk_settings["search_bar"] = 0
     bootinfo.retail_sidebar_selection = None if navigation_selected is None else sorted(navigation_selected)
-    bootinfo.retail_sidebar_unrestricted_targets = is_super_admin()
+    bootinfo.retail_sidebar_unrestricted_targets = frappe.session.user == "Administrator"
     bootinfo.retail_sidebar_targets = {
         kind: sorted({target for entry in entries() for target_kind, target in entry["targets"]
                       if target_kind == kind and (selected is None or entry["id"] in selected)})
         for kind in ("doctype", "page", "report")
     }
+    if "dashboards" in bootinfo:
+        bootinfo.retail_sidebar_dashboard_access = {
+            row["name"]: target_allowed("dashboard", row["name"]) for row in bootinfo.dashboards
+        }
+        bootinfo.dashboards = [row for row in bootinfo.dashboards
+                               if bootinfo.retail_sidebar_dashboard_access[row["name"]]]
+    if is_super_admin():
+        from retail.access_control import ACCESS_ADMIN_DOCTYPES
+        bootinfo.retail_sidebar_targets["doctype"] = sorted(
+            set(bootinfo.retail_sidebar_targets["doctype"]) | ACCESS_ADMIN_DOCTYPES)
 
 
 def filter_sidebar(pages):
@@ -232,6 +259,8 @@ def filter_workspace(data, workspace):
 
 
 def _target(doc):
+    if doc.doctype == "Dashboard":
+        require_target("dashboard", doc.name)
     if not target_entries("doctype", doc.doctype):
         return
     require_target("doctype", doc.doctype)
@@ -258,6 +287,8 @@ def validate_document(doc, method=None):
 def has_permission(doc, ptype=None, user=None, **kwargs):
     # Read checks apply only to externally requested documents, not dependencies.
     if (doc.doctype, doc.get("name")) not in (frappe.flags.get("retail_sidebar_documents") or set()):
+        return None
+    if access_admin_target("doctype", doc.doctype, user):
         return None
     selected = selection(user)
     if selected is not None and target_entries("doctype", doc.doctype) and not any(entry["id"] in selected for entry in document_entries(doc)):
@@ -373,6 +404,9 @@ def guard_request():
     if path.startswith("/app/"):
         parts = path[len("/app/"):].split("/")
         slug = parts[0]
+        if slug == "dashboard-view" and len(parts) > 1:
+            require_target("dashboard", parts[1])
+            return
         doctypes = {target for entry in entries() for kind, target in entry["targets"] if kind == "doctype"}
         dt = next((target for target in doctypes if frappe.scrub(target).replace("_", "-") == slug), None)
         if dt:
@@ -406,6 +440,11 @@ def guard_request():
             parts = path.split(prefix, 1)[1].strip("/").split("/")
             dt, name = parts[0], parts[1] if len(parts) > 1 else None
             resource = True
+    if dt == "Dashboard" and name:
+        require_target("dashboard", name)
+    dashboard = form.get("dashboard_name")
+    if dashboard:
+        require_target("dashboard", dashboard)
     if dt:
         # A selected transaction can still resolve linked facts without opening
         # an unchecked linked list/form. Unlisted DocTypes need no exception.
@@ -420,6 +459,11 @@ def guard_request():
             value = _json(form[key])
             payloads.extend(value if isinstance(value, list) else [value])
     for payload in payloads:
+        if isinstance(payload, dict) and payload.get("doctype") == "Dashboard":
+            if payload.get("name"):
+                require_target("dashboard", payload["name"])
+            if payload.get("module") == "Accounts":
+                require_target("dashboard", "Accounts")
         if isinstance(payload, dict) and payload.get("doctype") and target_entries("doctype", payload["doctype"]):
             require_target("doctype", payload["doctype"])
             if payload.get("docname") and not payload.get("name"):
@@ -512,3 +556,42 @@ def install():
          "insert_after": "retail_sidebar_permissions_html", "no_copy": 1},
     ]}, update=True)
     frappe.clear_cache()
+
+
+@frappe.whitelist()
+def global_search(text, start=0, limit=20, doctype=""):
+    """Filter record search as well as Awesome Bar navigation suggestions.
+
+    Native read permissions and search configuration still apply. Link-field
+    search is separate and retains the transaction dependency exceptions.
+    """
+    from frappe.utils.global_search import search as native_search
+    if doctype and not target_allowed("doctype", doctype):
+        return []
+    selected = selection()
+    result = []
+    for row in native_search(text, start=start, limit=limit, doctype=doctype):
+        dt = row.get("doctype")
+        if not target_allowed("doctype", dt):
+            continue
+        if dt == "Dashboard" and not target_allowed("dashboard", row["name"]):
+            continue
+        if selected is not None and dt in SHARED:
+            # A selected return/Van menu must not reveal ordinary documents
+            # sharing the same DocType through global record search.
+            try:
+                doc = frappe.get_cached_doc(dt, row["name"])
+            except frappe.DoesNotExistError:
+                frappe.clear_last_message()
+                continue  # A stale global-search index must not break search.
+            if not any(entry["id"] in selected for entry in document_entries(doc)):
+                continue
+        result.append(row)
+    return result
+
+
+def dashboard_query_conditions(user=None):
+    """Apply accounting ownership to dashboard lists without blocking other areas."""
+    if target_allowed("dashboard", "Accounts", user):
+        return ""
+    return "(IFNULL(`tabDashboard`.`module`, '') != 'Accounts' AND `tabDashboard`.`name` NOT IN ('Accounts', 'Accounting'))"

@@ -107,7 +107,7 @@ def run_integration():
             log = frappe.get_doc('POS Sync Log', pos_operations.find('POS Sale',original.external_pos_reference).name)
             log.correction_reason = 'Access check'
             log.request_json = json.dumps({**json.loads(log.request_json),'payload':correct(original)})
-            for role, should_allow in [('System Manager',False), ('Super Admin',True)]:
+            for role, should_allow in [('System Manager',False), ('Super Admin',False)]:
                 frappe.set_user('Administrator')
                 user = frappe.get_doc(dict(doctype='User', email=f'pos-admin-{token}-{int(should_allow)}@example.test',
                     first_name='POS Admin Test', enabled=1, user_type='System User', send_welcome_email=0,
@@ -125,7 +125,7 @@ def run_integration():
                     denied(lambda: admin.retry_posting('POS Sync Log',log.name))
             frappe.set_user('Administrator')
             log.reload()
-            results.append('Real System Manager denied; real Super Admin saves and posts with native permissions')
+            results.append('System Manager and Super Admin do not grant emergency recovery authority')
             log.status = 'Failed'
             denied(log.save)
             results.append('Manual status forgery rejected')

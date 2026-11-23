@@ -78,6 +78,7 @@
 		async generate_barcode(force = false) {
 			const dialog = this.dialog;
 			if (!dialog.fields_dict.custom_barcode) return;
+			this.set_scale_barcode_input_limit();
 			const generation = (this.barcode_generation = (this.barcode_generation || 0) + 1);
 			const previous = dialog.get_value("custom_barcode");
 			if (!force && previous) return;
@@ -101,6 +102,21 @@
 			dialog.doc.__retail_scale_barcode_preview = scale ? message : null;
 			dialog.doc.__retail_normal_barcode_preview = scale ? null : message;
 			await dialog.set_value("custom_barcode", message);
+		}
+
+		set_scale_barcode_input_limit() {
+			const input = this.dialog.fields_dict.custom_barcode?.$input;
+			if (!input) return;
+			input.off("input.retailScaleBarcode");
+			if (Number(this.dialog.get_value("custom_scale_item")) === 1) {
+				input.attr({ maxlength: 7, inputmode: "numeric" });
+				input.on("input.retailScaleBarcode", function () {
+					const value = this.value.replace(/[^0-9]/g, "").slice(0, 7);
+					if (this.value !== value) this.value = value;
+				});
+			} else {
+				input.removeAttr("maxlength inputmode");
+			}
 		}
 	};
 })();

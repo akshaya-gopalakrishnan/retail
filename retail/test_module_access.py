@@ -14,6 +14,7 @@ class TestModuleAccess(unittest.TestCase):
 		frappe.local.request = frappe._dict(path="/api/method/frappe.client.get_list")
 		self.patch(access, "_", side_effect=lambda message: message)
 		self.roles = self.patch(frappe, "get_roles", return_value=["System Manager"])
+		self.selection = self.patch(__import__("retail.sidebar_permissions", fromlist=["selection"]), "selection", return_value=None)
 		self.user = Mock()
 		self.user.get_blocked_modules.return_value = []
 		self.patch(frappe, "get_cached_doc", return_value=self.user)
@@ -35,6 +36,15 @@ class TestModuleAccess(unittest.TestCase):
 								self.user.get_blocked_modules.return_value = [module] if blocked else []
 								self.assertEqual(access.allowed(module), assigned and not blocked)
 								self.assertEqual(sidebar._workspace_sidebar_is_allowed({"title": module}, set(), None), assigned and not blocked)
+
+	def test_explicit_capabilities_do_not_need_duplicate_module_or_role_gates(self):
+		self.selection.return_value = {"workspace:reports", "workspace:pos_sales_reports"}
+		self.user.get_blocked_modules.return_value = ["Accounts", "POS", "Van Sales"]
+		self.roles.return_value = ["Sales User"]
+		self.assertTrue(access.allowed("POS"))
+		self.assertFalse(access.allowed("Van Sales"))
+		# The gate grants no native document permission of its own.
+		self.assertIsNone(access.has_permission(frappe._dict(doctype="POS Invoice")))
 
 	def test_administrator_retains_framework_superuser_access(self):
 		self.assertTrue(access.allowed("POS", "Administrator"))

@@ -17,7 +17,7 @@ function fixture(doctype='Purchase Invoice') {
 }
 
 test('PI and PR fill valid defaults on refresh and preserve subsequent clearing',async()=>{
- for(const dt of ['Purchase Invoice','Purchase Receipt']){
+ for(const dt of ['Purchase Invoice','Purchase Receipt','Stock Reconciliation']){
   const f=fixture(dt);await f.handlers.refresh(f.frm);
   assert.equal(f.frm.doc.set_warehouse,'Stores - CSSL');
   await f.frm.set_value('set_warehouse',null);await f.handlers.refresh(f.frm);

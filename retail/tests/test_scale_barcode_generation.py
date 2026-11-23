@@ -13,7 +13,8 @@ class TestScaleBarcodeGeneration(unittest.TestCase):
 			"__retail_scale_barcode_preview": "9900001", "name": "NEW"}
 		doc.get.side_effect = lambda key: values.get(key, getattr(doc, key, None))
 		doc.get_doc_before_save.return_value = None
-		with patch.object(scale, "get_unique_item_barcode", return_value="9900002") as allocate:
+		with patch.object(scale, "validate_unique_item_barcodes"), \
+			patch.object(scale, "get_unique_item_barcode", return_value="9900002") as allocate:
 			scale.ensure_item_barcode(doc)
 			self.assertEqual(doc.custom_barcode, "9900002")
 			self.assertIsNone(getattr(doc, "__retail_scale_barcode_preview"))
@@ -61,7 +62,8 @@ class TestScaleBarcodeGeneration(unittest.TestCase):
 		doc = frappe._dict(custom_scale_item=0, custom_barcode="2000000000015",
 			__retail_normal_barcode_preview="2000000000015", name="NEW")
 		doc.get_doc_before_save = lambda: None
-		with patch.object(scale, "get_unique_item_barcode", return_value="2000000000022") as allocate:
+		with patch.object(scale, "validate_unique_item_barcodes"), \
+			patch.object(scale, "get_unique_item_barcode", return_value="2000000000022") as allocate:
 			scale.ensure_item_barcode(doc)
 			self.assertEqual(doc.custom_barcode, "2000000000022")
 			self.assertIsNone(doc.__retail_normal_barcode_preview)
@@ -70,8 +72,47 @@ class TestScaleBarcodeGeneration(unittest.TestCase):
 	def test_manual_barcode_is_preserved(self):
 		doc = frappe._dict(custom_scale_item=0, custom_barcode="1234567890128", name="NEW")
 		doc.get_doc_before_save = lambda: None
-		with patch.object(frappe.db, "exists", return_value=False), \
+		with patch.object(frappe.db, "sql", return_value=[]), \
 			patch.object(scale, "get_unique_item_barcode") as allocate:
 			scale.ensure_item_barcode(doc)
 			self.assertEqual(doc.custom_barcode, "1234567890128")
 			allocate.assert_not_called()
+
+	def test_manual_scale_barcode_requires_exactly_seven_ascii_digits(self):
+		for barcode in ("123456", "12345678", "1234567890123", "123a567", "１２３４５６７"):
+			with self.subTest(barcode=barcode):
+				doc = frappe._dict(custom_scale_item=1, custom_barcode=barcode, name="NEW")
+				doc.get_doc_before_save = lambda: None
+				with self.assertRaises(frappe.ValidationError):
+					scale.ensure_item_barcode(doc)
+
+	def test_manual_scale_barcode_preserves_leading_zeroes_and_any_prefix(self):
+		doc = frappe._dict(custom_scale_item=1, custom_barcode="0000001", name="NEW")
+		doc.get_doc_before_save = lambda: None
+		with patch.object(frappe.db, "sql", return_value=[]), \
+			patch.object(scale, "get_unique_item_barcode") as allocate:
+			scale.ensure_item_barcode(doc)
+			self.assertEqual(doc.custom_barcode, "0000001")
+			allocate.assert_not_called()
+
+	def test_duplicates_rejected_across_master_child_and_packing_barcodes(self):
+		for duplicate_table in range(3):
+			for packing in (False, True):
+				with self.subTest(table=duplicate_table, packing=packing):
+					doc = frappe._dict(name="CURRENT", custom_retail_packing_detail=[
+						frappe._dict(barcode="7654321")
+					] if packing else [])
+					responses = [[]] + [[]] * (3 if packing else 0) + [[]] * duplicate_table + [[("OTHER",)]]
+					with patch.object(frappe.db, "sql", side_effect=responses), \
+						self.assertRaises(frappe.ValidationError):
+						scale.validate_unique_item_barcodes(doc, "1234567")
+
+	def test_same_item_aliases_are_allowed_and_reads_are_locked(self):
+		doc = frappe._dict(name="CURRENT", custom_retail_packing_detail=[frappe._dict(barcode="1234567")])
+		with patch.object(frappe.db, "sql", return_value=[]) as query:
+			scale.validate_unique_item_barcodes(doc, "1234567")
+			self.assertEqual(query.call_count, 4)
+			for call in query.call_args_list:
+				self.assertIn("for update", call.args[0])
+			for call in query.call_args_list[1:]:
+				self.assertEqual(call.args[1], ("1234567", "CURRENT"))

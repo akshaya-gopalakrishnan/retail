@@ -1,0 +1,11 @@
+{
+  "user": "Administrator",
+  "awesome_bar_enabled": true,
+  "visibility": {
+    "visible": true,
+    "disabled": false
+  },
+  "ctrl_g": "focuses search",
+  "editor_checkbox": "toggle verified without saving",
+  "runtime_errors": []
+}

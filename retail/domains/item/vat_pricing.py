@@ -590,6 +590,45 @@ def get_company_item_vat_defaults():
 	return values
 
 
+def apply_new_item_vat_defaults(doc, method=None):
+	"""Supply creation defaults without replacing values mapped by Data Import."""
+	if not doc.is_new():
+		return
+	import_fields = None
+	reference = doc.flags.get("updater_reference") or {}
+	if reference.get("doctype") == "Data Import":
+		import_fields = get_item_import_fields(reference["docname"])
+	defaults = get_company_item_vat_defaults()
+	for field, value in defaults.items():
+		if not doc.meta.has_field(field):
+			continue
+		if import_fields is not None:
+			# Check fields already contain metadata's zero before insert. The
+			# mapped columns distinguish an omitted flag from an explicit zero.
+			if field not in import_fields:
+				doc.set(field, value)
+		elif doc.get(field) in (None, ""):
+			doc.set(field, value)
+
+
+def get_item_import_fields(import_name):
+	"""Use Frappe's resolved mapping, including renamed and ignored columns."""
+	from frappe.core.doctype.data_import.importer import ImportFile
+
+	cache = frappe.flags.setdefault("retail_item_import_vat_fields", {})
+	if import_name not in cache:
+		data_import = frappe.get_doc("Data Import", import_name)
+		import_file = ImportFile(
+			"Item", data_import.google_sheets_url or data_import.import_file,
+			frappe.parse_json(data_import.template_options or "{}"), data_import.import_type,
+		)
+		cache[import_name] = {
+			column.df.fieldname for column in import_file.columns
+			if column.df and column.df.parent == "Item" and not column.skip_import
+		}
+	return cache[import_name]
+
+
 def arrange_item_vat_pricing_layout():
 	"""Arrange Item pricing into clean paired rows: left field and right field."""
 	insert_after = {
