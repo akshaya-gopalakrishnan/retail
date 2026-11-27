@@ -147,11 +147,28 @@ baked `assets` directory. The Retail-owned entrypoint replaces the base script
 that deletes/relinks shared assets at every start. On every container start,
 initial installation and migration, `retail.build_asset_manifest.install` merges those snapshots into the
 mounted manifests, ensures the app's public files are available, validates Desk
-CSS/JS, and clears Frappe's global asset cache. It uses the image's exact hashes,
-preserves older files, and does nothing on benches without an image snapshot.
+CSS/JS, and clears Frappe's global asset cache. Public app files are copied into
+the shared assets volume, rather than linked into a container's private app
+tree. Existing private links are replaced atomically; later releases merge
+their files while retaining earlier hashed CSS/JS. This lets either frontend
+serve the hashes published by the other image during an overlapping rollout.
+It uses the image's exact hashes and does nothing on benches without an image snapshot.
 Both build and migration discard unprefixed keys from the RTL manifest. Frappe
 merges that manifest last, so stale LTR CSS or JS entries in it could otherwise
 override the valid normal manifest and hide the theme even after installation.
+
+For the first upgrade from the old private-link layout, publish the running
+release's public files into shared storage using the fixed publisher before
+starting the candidate image. A candidate container cannot recover files that
+exist only in the old container's private image. Do not restart legacy images
+whose entrypoint can replace the shared public links again. Shared sites,
+manifests and Redis asset mappings still mean these containers are not isolated
+blue/green environments; this change does not guarantee zero-downtime schema
+migrations. Before changing public traffic, verify the manifest's Retail CSS
+and JS URLs return HTTP 200 and the correct MIME types through both frontends,
+then verify the original URLs through public HTTPS (without a cache-busting
+query) and check the actual Desk design. A successful login response alone is
+not sufficient. Previously cached asset 404s may require a targeted CDN purge.
 
 Deploy to the intended environment's own Compose project. A demo/staging release
 does not update production. For the existing shared demo/staging project,
