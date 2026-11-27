@@ -92,7 +92,8 @@ validation_compose run --rm checker bash -lc '
     set -e
     ./env/bin/python -c "import os; from pathlib import Path; paths = [Path(\"sites/.retail-manifest.lock\"), Path(\"sites/assets/assets.json\"), Path(\"sites/assets/assets-rtl.json\")]; assert all(p.stat().st_uid == os.geteuid() and os.access(p, os.W_OK) for p in paths), \"Root startup left shared assets unwritable\""
     ./env/bin/python -m unittest retail.tests.test_install_portability \
-        retail.tests.test_runtime_asset_user \
+        retail.tests.test_runtime_asset_user retail.tests.test_shared_image_assets \
+        retail.tests.test_release_desk_assets retail.tests.test_image_build_configuration \
         retail.tests.test_item_naming_setup \
         retail.tests.test_deployment_setup retail.tests.test_recovered_pos_display \
         retail.tests.test_editable_print_portability retail.tests.test_core_compat \

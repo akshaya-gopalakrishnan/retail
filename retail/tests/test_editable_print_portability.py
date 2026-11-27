@@ -1,5 +1,6 @@
 """Database-free checks for fresh-site setup and template portability."""
 
+import re
 import unittest
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
@@ -84,7 +85,17 @@ class TestEditablePrintPortability(unittest.TestCase):
 				self.assertTrue(html.strip())
 				self.assertTrue(css.strip())
 				self.assertNotIn('/private/files/', html)
-				self.assertNotIn('<style', html.lower())
+				# VAT columns are conditional on the document, so their scoped
+				# styles must stay in Jinja HTML instead of unconditional CSS.
+				conditional_styles = re.compile(
+					r'\{% if (?:not )?doc\.get\("custom_trading_vat_disabled"\) %\}'
+					r'\s*<style>(.*?)</style>\s*\{% endif %\}', re.S,
+				)
+				for style in conditional_styles.findall(html):
+					self.assertEqual(doctype, "Sales Invoice")
+					for selector in re.findall(r'([^{}]+)\{', style):
+						self.assertTrue(selector.strip().startswith(".print-format .item-table "))
+				self.assertNotIn('<style', conditional_styles.sub('', html).lower())
 	def test_new_copy_uses_released_layout_without_rewriting_it(self):
 		target = SimpleNamespace(insert=Mock())
 		with (

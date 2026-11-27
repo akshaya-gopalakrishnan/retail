@@ -46,8 +46,17 @@ class TestInstallPortability(unittest.TestCase):
 
 		self.assertIn("retail.pos_sync_schema.install", hooks.after_sync)
 		self.assertIn("retail.pos_sync_schema.install", hooks.after_migrate)
-		with patch.object(pos_sync_schema, "create_custom_fields") as create:
+		with (
+			patch.object(pos_sync_schema, "create_custom_fields") as create,
+			patch("frappe.custom.doctype.custom_field.custom_field.create_custom_fields", create),
+		):
 			pos_sync_schema.install()
+		from retail.pos_delivery import SNAPSHOTS
+		delivery_fields = create.call_args_list[0].args[0]["POS Invoice"]
+		self.assertEqual(
+			{field["fieldname"] for field in delivery_fields},
+			{"custom_pos_" + key for key in SNAPSHOTS},
+		)
 		definitions = {}
 		for call in create.call_args_list:
 			definitions.update(call.args[0])
@@ -65,7 +74,9 @@ class TestInstallPortability(unittest.TestCase):
 			field["fieldname"] for field in definitions["POS Branch Day Closing"]})
 
 	def test_fixture_dependencies_are_prepared_before_install_setup(self):
-		self.assertEqual(hooks.after_install, ["retail.install.prepare_fixture_doctypes"])
+		self.assertEqual(hooks.after_install, [
+			"retail.install.prepare_fixture_doctypes", "retail.backend_sales_admin.install",
+		])
 		self.assertIn("retail.delegated_access.install", hooks.after_sync)
 		self.assertIn("retail.delegated_access.install", hooks.after_migrate)
 		for setup in ("retail.loyalty_setup.install", "retail.pos_transaction_display.execute"):
