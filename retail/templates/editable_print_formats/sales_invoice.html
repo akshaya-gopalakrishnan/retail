@@ -1,5 +1,5 @@
 {% set vat_rate = 0 %}
-{% if doc.taxes and doc.taxes|length > 0 %}
+{% if not doc.get("custom_trading_vat_disabled") and doc.taxes and doc.taxes|length > 0 %}
     {% set vat_rate = frappe.utils.flt(doc.taxes[0].rate) %}
 {% endif %}
 
@@ -47,7 +47,7 @@
             {% if doc.is_return %}
                 {{ _("Credit Note") }}
             {% else %}
-                {{ _("Tax Invoice") }}
+                {{ _("Sales Invoice") if doc.get("custom_trading_vat_disabled") else _("Tax Invoice") }}
             {% endif %}
         </h1>
 
@@ -83,7 +83,7 @@
                 <table class="invoice-details">
                     <tr>
                         <td class="detail-label">{{ _("Invoice") }} #</td>
-                        <td class="detail-value">{{ doc.name }}</td>
+                        <td class="detail-value">{{ doc.get("custom_bill_number") or doc.name }}</td>
                     </tr>
 
                     <tr>
@@ -127,13 +127,14 @@
         <thead>
             <tr>
                 <th class="col-number">{{ _("Sr No") }}</th>
-                <th class="col-description">{{ _("Item") }}</th>
+                <th class="col-description">{{ _("Item Name") }}</th>
                 <th class="col-qty">{{ _("Qty / UOM") }}</th>
-                <th class="col-rate">{{ _("Rate Excl. VAT") }}</th>
-                <th class="col-tax-rate">{{ _("VAT") }}%</th>
-                <th class="col-tax">{{ _("VAT") }}</th>
-                <th class="col-rate-incl">{{ _("Rate Incl. VAT") }}</th>
-                <th class="col-amount">{{ _("Total Incl. VAT") }}</th>
+                {% if not doc.get("custom_trading_vat_disabled") %}<th class="col-tax-rate">{{ _("VAT") }}%</th>{% endif %}
+                {% if not doc.get("custom_trading_vat_disabled") %}<th class="col-tax">{{ _("VAT") }}</th>{% endif %}
+                <th class="col-rate">{{ _("Rate") if doc.get("custom_trading_vat_disabled") else _("Rate Excl. VAT") }}</th>
+                {% if not doc.get("custom_trading_vat_disabled") %}<th class="col-rate-incl">{{ _("Rate Incl. VAT") }}</th>{% endif %}
+                {% if not doc.get("custom_trading_vat_disabled") %}<th class="col-amount-excl">{{ _("Total Excl. VAT") }}</th>{% endif %}
+<th class="col-amount">{{ _("Amount") if doc.get("custom_trading_vat_disabled") else _("Total Incl. VAT") }}</th>
             </tr>
         </thead>
 
@@ -167,12 +168,6 @@
                                 {{ _("Serial No") }}# {{ item.serial_no }}
                             </div>
                         {% endif %}
-
-                        {% if item.batch_no %}
-                            <div class="item-description">
-                                {{ _("Batch") }}# {{ item.batch_no }}
-                            </div>
-                        {% endif %}
                     </td>
 
                     <td class="col-qty">
@@ -182,28 +177,50 @@
                         {% endif %}
                     </td>
 
+                    {% if not doc.get("custom_trading_vat_disabled") %}<td class="col-tax-rate">
+                        {{ frappe.utils.fmt_money(vat_rate, precision=0) }}
+                    </td>{% endif %}
+
+                    {% if not doc.get("custom_trading_vat_disabled") %}<td class="col-tax">
+                        {{ frappe.utils.fmt_money(line_tax, precision=2) }}
+                    </td>{% endif %}
+
                     <td class="col-rate">
                         {{ frappe.utils.fmt_money(item.net_rate, precision=2) }}
                     </td>
 
-                    <td class="col-tax-rate">
-                        {{ frappe.utils.fmt_money(vat_rate, precision=0) }}
-                    </td>
-
-                    <td class="col-tax">
-                        {{ frappe.utils.fmt_money(line_tax, precision=2) }}
-                    </td>
-
-                    <td class="col-rate-incl">{{ frappe.utils.fmt_money(item.net_rate * (1 + vat_rate / 100), precision=2) }}</td>
-                    <td class="col-amount">
+                    {% if not doc.get("custom_trading_vat_disabled") %}<td class="col-rate-incl">{{ frappe.utils.fmt_money(item.net_rate * (1 + vat_rate / 100), precision=2) }}</td>{% endif %}
+                    {% if not doc.get("custom_trading_vat_disabled") %}<td class="col-amount-excl">{{ frappe.utils.fmt_money(item.net_amount, precision=2) }}</td>{% endif %}
+<td class="col-amount">
                         {{ frappe.utils.fmt_money(amount_with_tax, precision=2) }}
                     </td>
                 </tr>
-            {% endfor %}
+
+{% if loop.index % 22 == 0 and not loop.last %}
+</tbody></table>
+<table class="item-table retail-item-table-continuation"><thead>
+            <tr>
+                <th class="col-number">{{ _("Sr No") }}</th>
+                <th class="col-description">{{ _("Item Name") }}</th>
+                <th class="col-qty">{{ _("Qty / UOM") }}</th>
+                {% if not doc.get("custom_trading_vat_disabled") %}<th class="col-tax-rate">{{ _("VAT") }}%</th>{% endif %}
+                {% if not doc.get("custom_trading_vat_disabled") %}<th class="col-tax">{{ _("VAT") }}</th>{% endif %}
+                <th class="col-rate">{{ _("Rate") if doc.get("custom_trading_vat_disabled") else _("Rate Excl. VAT") }}</th>
+                {% if not doc.get("custom_trading_vat_disabled") %}<th class="col-rate-incl">{{ _("Rate Incl. VAT") }}</th>{% endif %}
+                {% if not doc.get("custom_trading_vat_disabled") %}<th class="col-amount-excl">{{ _("Total Excl. VAT") }}</th>{% endif %}
+<th class="col-amount">{{ _("Amount") if doc.get("custom_trading_vat_disabled") else _("Total Incl. VAT") }}</th>
+            </tr>
+        </thead><tbody>
+{% endif %}
+{% endfor %}
         </tbody>
+    
     </table>
 
     
+</div>
+
+<div class="retail-invoice-summary">
     <table class="summary-table">
         <tr>
             <td class="amount-words-section">
@@ -218,7 +235,7 @@
                 <table class="totals-table">
                     <tr>
                         <td class="totals-label">
-                            {{ _("Subtotal (Taxable Amount)") }} {{ doc.currency }}
+                            {{ _("Subtotal") if doc.get("custom_trading_vat_disabled") else _("Subtotal (Taxable Amount)") }} {{ doc.currency }}
                         </td>
 
                         <td class="totals-value">
@@ -240,7 +257,7 @@
                         </td>
                     </tr>
 
-                    <tr>
+                    {% if not doc.get("custom_trading_vat_disabled") %}<tr>
                         <td class="totals-label">
                             {{ _("VAT") }} ({{ frappe.utils.fmt_money(vat_rate, precision=0) }}%):
                             {{ doc.currency }}
@@ -252,11 +269,11 @@
                                 precision=2
                             ) }}
                         </td>
-                    </tr>
+                    </tr>{% endif %}
 
                     <tr class="grand-total-row">
                         <td class="totals-label">
-                            {{ _("Total (Incl. VAT)") }}<br>
+                            {{ _("Total") if doc.get("custom_trading_vat_disabled") else _("Total (Incl. VAT)") }}<br>
                             {{ doc.currency }}
                         </td>
 
@@ -297,8 +314,40 @@
             {{ _("For") }} {{ doc.company }},
         </div>
     </div>
-
+<div class="retail-print-audit" style="margin-top: 12px; font-size: 10px; line-height: 1.3; color: #666; text-align: right; break-inside: avoid;">
+{{ frappe.get_fullname(frappe.session.user) | e }} &nbsp; {{ frappe.utils.format_datetime(frappe.utils.now(), "dd-MM-yyyy HH:mm:ss") }}
+</div>
 </div>
 {% if footer and not no_letterhead %}<div class="letter-head-footer">{{ footer }}</div>{% endif %}
 
 
+
+<!-- retail-trading-vat-layout-v1 -->
+{% if doc.get("custom_trading_vat_disabled") %}
+<style>
+.print-format .item-table .col-number { width: 4% !important; }
+.print-format .item-table .col-description { width: 49% !important; }
+.print-format .item-table .col-qty { width: 15% !important; }
+.print-format .item-table .col-rate { width: 15% !important; }
+.print-format .item-table .col-amount { width: 17% !important; }
+</style>
+{% endif %}
+
+<!-- retail-trading-vat-columns-v2 -->
+{% if not doc.get("custom_trading_vat_disabled") %}
+<style>
+.print-format .item-table .col-number { width: 4% !important; }
+.print-format .item-table .col-description { width: 29% !important; }
+.print-format .item-table .col-qty { width: 11% !important; }
+.print-format .item-table .col-tax-rate { width: 5% !important; }
+.print-format .item-table .col-tax { width: 8% !important; }
+.print-format .item-table .col-rate { width: 10% !important; }
+.print-format .item-table .col-rate-incl { width: 10% !important; }
+.print-format .item-table .col-amount-excl { width: 11% !important; text-align: right; }
+.print-format .item-table .col-amount { width: 12% !important; }
+</style>
+{% endif %}
+
+
+
+<!-- retail-22-item-pages-v1 -->

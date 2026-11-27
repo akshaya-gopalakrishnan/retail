@@ -9,8 +9,11 @@ from retail import customer_balances as service
 
 class TestCustomerBalances(unittest.TestCase):
     def setUp(self):
+        previous_flags = frappe.local.flags
+        frappe.local.flags = frappe._dict(in_test=True)
+        self.addCleanup(setattr, frappe.local, "flags", previous_flags)
         for patcher in (
-            patch.object(frappe.local, "flags", frappe._dict(in_test=False), create=True),
+            patch("retail.pos_settlements.add_customer_summaries"),
             patch.object(frappe, "get_system_settings", return_value="Banker's Rounding"),
             patch.object(service, "now_datetime", return_value="2026-09-28 12:00:00"),
         ):

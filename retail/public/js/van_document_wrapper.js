@@ -88,6 +88,21 @@ retail.VanDocumentWrapper = class VanDocumentWrapper {
 				super.setup_columns();
 				if (!Array.isArray(wrapper_options.columns) || !wrapper_options.columns.length) return;
 
+				if (wrapper_options.hide_scope_filter) {
+					this.retail_fit_columns = true;
+					this.retail_list_activity_width = 90;
+					const compact_widths = {
+						name: 90, title: 180, transaction_date: 100, status: 110,
+						custom_van_request_type: 95, custom_van_session: 95,
+						custom_van: 110, custom_van_warehouse: 175, custom_driver_name: 130,
+					};
+					this.columns.forEach((column) => {
+						const field = column.df?.fieldname || column.fieldname;
+						column.retail_compact_width = compact_widths[field] || 100;
+						column.retail_min_width = field === "title" || field === "custom_van_warehouse" ? 110 : 70;
+					});
+				}
+
 				const existing = new Set((this.columns || []).map((column) => column.df?.fieldname || column.fieldname));
 				const metaFields = new Map((this.meta?.fields || []).map((df) => [df.fieldname, df]));
 
@@ -103,6 +118,10 @@ retail.VanDocumentWrapper = class VanDocumentWrapper {
 					};
 					this.columns.push({
 						type: "Field",
+						...(wrapper_options.hide_scope_filter ? {
+							retail_compact_width: column.fieldname === "custom_van_warehouse" ? 175 : column.fieldname === "custom_driver_name" ? 130 : 100,
+							retail_min_width: column.fieldname === "custom_van_warehouse" ? 110 : 70,
+						} : {}),
 						df,
 					});
 				});
@@ -117,8 +136,37 @@ retail.VanDocumentWrapper = class VanDocumentWrapper {
 				];
 				const blocked_fields = new Set([wrapper_options.flag_field, ...(wrapper_options.clear_fields || [])]);
 				return [
-					van_filter,
+					...(wrapper_options.hide_scope_filter ? [] : [van_filter]),
 					...filters.filter((filter) => Array.isArray(filter) && !blocked_fields.has(filter[1])),
+				];
+			}
+
+			async setup_filter_area() {
+				await super.setup_filter_area();
+				if (!wrapper_options.hide_scope_filter || !this.filter_area?.filter_list) return;
+				const group = this.filter_area.filter_list;
+				// This dedicated page keeps its filter editor, without an applied-filter badge.
+				group.update_filter_button = function() {
+					this.filter_button.removeClass("btn-primary-light").addClass("btn-default");
+					this.filter_button.find(".filter-icon").removeClass("active");
+					this.filter_button.find(".button-label").text(__("Filter"));
+					this.filter_button.attr("title", __("Filter"));
+					const has_user_filters = this.filters.some(
+						(filter) => filter.fieldname !== wrapper_options.flag_field
+					) || Boolean(this.base_list?.filter_area?.get_standard_filters().length);
+					this.filter_x_button?.toggle(has_user_filters);
+				};
+				group.update_filter_button();
+			}
+
+			get_filters_for_args() {
+				const filters = super.get_filters_for_args();
+				if (!wrapper_options.hide_scope_filter) return filters;
+				// The Van Sales scope belongs to this page, not the user's filters.
+				return [
+					[this.doctype, wrapper_options.flag_field, "=",
+						wrapper_options.flag_value === undefined ? 1 : wrapper_options.flag_value],
+					...filters.filter((filter) => filter[1] !== wrapper_options.flag_field),
 				];
 			}
 
@@ -174,6 +222,7 @@ retail.VanDocumentWrapper = class VanDocumentWrapper {
 
 	const page_specs = {
 		"van-stock-request": {
+			hide_scope_filter: true,
 			title: __("Stock Request"),
 			doctype: "Material Request",
 			flag_field: "custom_is_van_stock_request",
@@ -284,6 +333,7 @@ retail.VanDocumentWrapper = class VanDocumentWrapper {
 						doctype: spec.doctype,
 						flag_field: spec.flag_field,
 						flag_value: spec.flag_value,
+						hide_scope_filter: spec.hide_scope_filter,
 						clear_fields: spec.clear_fields,
 						title: spec.list_title,
 						new_doc_values: spec.new_doc_values,

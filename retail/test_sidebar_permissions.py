@@ -33,6 +33,19 @@ class TestSidebarPermissions(unittest.TestCase):
                 identifiers.add(group["id"])
         self.configurations[user or frappe.session.user] = json.dumps({"version": 1, "allowed": sorted(identifiers)})
 
+    def test_invoice_dimensions_without_accounting_menu(self):
+        self.select("Purchase Invoices")
+        frappe.form_dict.cmd = "erpnext.accounts.doctype.accounting_dimension.accounting_dimension.get_dimensions"
+        frappe.form_dict.with_cost_center_and_project = "true"
+        access.guard_request()
+        self.select()
+        with self.assertRaises(frappe.PermissionError):
+            access.guard_request()
+        self.select("Purchase Invoices")
+        self.native.return_value = False
+        with self.assertRaises(frappe.PermissionError):
+            access.guard_request()
+
     def test_own_profile_without_user_list(self):
         self.select()
         user = frappe.session.user

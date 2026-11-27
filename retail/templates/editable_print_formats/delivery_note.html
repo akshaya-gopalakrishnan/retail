@@ -160,9 +160,8 @@
     <table class="item-table">
         <thead>
             <tr>
-                <th class="col-number">#</th>
-                <th class="col-image"></th>
-                <th class="col-description">{{ _("Item Description") }}</th>
+                <th class="col-number">{{ _("Sr No") }}</th>
+                <th class="col-description">{{ _("Item Name") }}</th>
                 <th class="col-qty">{{ _("Qty") }}</th>
             </tr>
         </thead>
@@ -170,30 +169,9 @@
         <tbody>
             {% for item in doc.items %}
 
-                {% set master_item_image = frappe.db.get_value(
-                    "Item",
-                    item.item_code,
-                    "image"
-                ) %}
-
-                {% set display_image = item.image or master_item_image %}
-
                 <tr>
                     <td class="col-number">
                         {{ loop.index }}
-                    </td>
-
-
-                    <td class="col-image">
-                        {% if display_image %}
-                            <img
-                                src="{{ display_image }}"
-                                class="item-image"
-                                alt="{{ _(item.item_name) if item.item_name else item.item_code }}"
-                            >
-                        {% else %}
-                            
-                        {% endif %}
                     </td>
 
 
@@ -204,14 +182,10 @@
                         </div>
 
 
-                        {% if item.item_code %}
-                            <div class="item-code">
-                                {{ item.item_code }}
-                            </div>
-                        {% endif %}
 
 
-                        {% if item.description %}
+
+                        {% if item.description and (item.description | striptags | trim) != (item.item_name | trim) %}
                             <div class="item-description">
                                 {{ _(item.description) }}
                             </div>
@@ -243,20 +217,31 @@
 
 
                     <td class="col-qty">
-                        <div class="quantity-value">
+                        <span class="quantity-value">
                             {{ frappe.utils.fmt_money(
                                 item.qty,
                                 precision=2
                             ) }}
-                        </div>
+                        </span>
 
-                        <div class="quantity-uom">
+                        <span class="quantity-uom">
                             {{ _(item.uom or item.stock_uom) }}
-                        </div>
+                        </span>
                     </td>
                 </tr>
 
-            {% endfor %}
+
+{% if loop.index % 22 == 0 and not loop.last %}
+</tbody></table>
+<table class="item-table retail-item-table-continuation"><thead>
+            <tr>
+                <th class="col-number">{{ _("Sr No") }}</th>
+                <th class="col-description">{{ _("Item Name") }}</th>
+                <th class="col-qty">{{ _("Qty") }}</th>
+            </tr>
+        </thead><tbody>
+{% endif %}
+{% endfor %}
         </tbody>
     </table>
 
@@ -288,7 +273,17 @@
 
     
 
-    <div class="signature-section">
+
+
+</div>
+
+
+
+
+<!-- retail-22-item-pages-v1 -->
+
+<!-- retail-delivery-footer-v6 -->
+<div id="footer-html" class="retail-delivery-footer"><div class="signature-section">
 
         <table class="signature-table">
             <tr>
@@ -348,9 +343,4 @@
             </tr>
         </table>
 
-    </div>
-
-</div>
-{% if footer and not no_letterhead %}<div class="letter-head-footer">{{ footer }}</div>{% endif %}
-
-
+    </div>{% if footer and not no_letterhead %}<div class="letter-head-footer">{{ footer }}</div>{% endif %}</div>

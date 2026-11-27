@@ -1,4 +1,5 @@
 import unittest
+from datetime import date
 from unittest.mock import Mock, patch
 
 import frappe
@@ -7,6 +8,35 @@ from retail import van_permissions
 
 
 class TestVanAssignment(unittest.TestCase):
+	def test_closing_accepts_browser_date_but_rejects_assignment_changes(self):
+		old = frappe._dict(docstatus=1, status="Open", van="VAN-A",
+			van_warehouse="WH-A", driver="DRIVER-A", session_date=date(2026, 9, 9),
+			custom_salesperson="driver@example.com")
+		values = dict(old, status="Closed", session_date="2026-09-09")
+		doc = Mock(status="Closed", custom_salesperson="driver@example.com")
+		doc.get_doc_before_save.return_value = old
+		doc.is_new.return_value = False
+		doc.get.side_effect = values.get
+		database = Mock()
+		database.get_value.return_value = 1
+		with (
+			patch.object(frappe, "db", database),
+			patch.object(frappe, "get_roles", return_value=["Van Sales User"]),
+			patch.object(frappe, "session", frappe._dict(user="driver@example.com")),
+			patch.object(access, "_", side_effect=lambda text: text),
+			patch.object(frappe, "throw", side_effect=frappe.ValidationError),
+		):
+			for operator in (False, True):
+				with self.subTest(operator=operator), patch.object(access, "is_operator", return_value=operator):
+					access.validate_session(doc)
+					for field, changed in (("session_date", "2026-09-10"), ("van", "VAN-B"),
+						("driver", "DRIVER-B"), ("van_warehouse", "WH-B")):
+						original = values[field]
+						values[field] = changed
+						with self.subTest(field=field), self.assertRaises(frappe.ValidationError):
+							access.validate_session(doc)
+						values[field] = original
+
 	def test_erp_roles_do_not_bypass_assignment(self):
 		with patch.object(frappe, "get_roles", return_value=["Van Sales User", "Sales Manager", "Accounts User"]):
 			self.assertTrue(access.is_operator("operator@example.com"))

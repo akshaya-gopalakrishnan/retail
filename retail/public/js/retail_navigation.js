@@ -12,6 +12,8 @@
     const OPEN_SIDEBAR_STORAGE_KEY = 'retail_open_sidebar_groups_v1';
     const OPEN_WORK_TTL_MS = 12 * 60 * 60 * 1000;
     const ICON_MAP = {
+        'van sales sync logs': { icon: 'fa fa-refresh', cls: 'color-sales' },
+        'sales order api logs': { icon: 'fa fa-list-alt', cls: 'color-sales' },
         'restaurant': { icon: 'fa fa-cutlery', cls: 'color-sales' },
         'table location': { icon: 'fa fa-map-marker', cls: 'color-sales' },
         'tables': { icon: 'fa fa-table', cls: 'color-sales' },
@@ -259,6 +261,10 @@
         'POS Closing Entry': 'POS',
         'POS Branch Day Closing': 'POS',
         'POS Sync Log': 'POS',
+        'Van Sales Sync Log': 'Van Sales',
+        'Van Sales Sync Logs': 'Van Sales',
+        'Sales Order API Log': 'Sales',
+        'Sales Order API Logs': 'Sales',
         'Delivery Note': 'Sales',
         'Supplier': 'Purchases',
         'Material Request': 'Purchases',
@@ -320,6 +326,8 @@
         'POS Closing Entry': 'POS Closing Entry',
         'POS Branch Day Closing': 'POS Branch Day Closing',
         'POS Sync Log': 'POS Sync Log',
+        'Van Sales Sync Log': 'Van Sales Sync Logs',
+        'Sales Order API Log': 'Sales Order API Logs',
         'Delivery Note': 'Delivery Notes',
         'Supplier': 'Suppliers',
         'Material Request': 'Material Requests',
@@ -402,6 +410,10 @@
         'POS Branch Day Closings': 'POS',
         'POS Counters': 'POS',
         'POS Sync Log': 'POS',
+        'Van Sales Sync Log': 'Van Sales',
+        'Van Sales Sync Logs': 'Van Sales',
+        'Sales Order API Log': 'Sales',
+        'Sales Order API Logs': 'Sales',
         'POS Sync Logs': 'POS',
         'Mode of Payment': 'POS',
         'POS Payments': 'POS',
@@ -629,6 +641,10 @@
         'POS Branch Day Closings': 'Accounts',
         'POS Sync Log': 'Accounts',
         'POS Sync Logs': 'Accounts',
+        'Van Sales Sync Log': 'Van Sales',
+        'Van Sales Sync Logs': 'Van Sales',
+        'Sales Order API Log': 'Selling',
+        'Sales Order API Logs': 'Selling',
         'Mode of Payment': 'Accounts',
         'POS Reports': 'Accounts',
         'POS Sales Summary': 'Accounts',
@@ -3361,12 +3377,19 @@
             'POS Branch Counter', 'POS Cashier Shift', 'POS Counter Session',
             'POS Closing Entry', 'POS Branch Day Closing', 'POS Sync Log',
         ]);
+        const vanDoctypes = new Set([
+            'Van Fleet', 'Driver', 'Van Session', 'Van Sales Sync Log',
+            'Van Expense', 'Van Expense Type', 'Van API Request',
+        ]);
         const original = breadcrumbs.set_workspace_breadcrumb;
         breadcrumbs.set_workspace_breadcrumb = function (entry) {
             // These pages belong to POS even when module/history selects Promotions.
             // Copy the entry so cached breadcrumb metadata remains untouched.
             if (posDoctypes.has(entry.doctype)) {
                 entry = { ...entry, workspace: 'POS' };
+            }
+            if (vanDoctypes.has(entry.doctype)) {
+                entry = { ...entry, workspace: 'Van Sales' };
             }
             if (entry.doctype === 'Product Conversion') {
                 entry = { ...entry, workspace: 'Items' };

@@ -48,10 +48,10 @@ def registry():
             children.remove("Material Requests")
             children.append("Material Requests")
         if root == "Van Sales":
-            for name in ("Van Sales Stock View Link", "Van Sales Reports"):
+            for name in ("Van Sales Stock View Link", "Van Sales Reports", "Van Sales Sync Logs"):
                 children.remove(name)
             children.insert(children.index("Van Sales Sessions Link") + 1, "Van Sales Stock View Link")
-            children.append("Van Sales Reports")
+            children.extend(("Van Sales Reports", "Van Sales Sync Logs"))
         if root == "Promotions":
             children = ["Promotions " + name + " Link" for name in (
                 "Promo Price", "Buy X Get Y Promotion", "Gift Voucher Promotion",

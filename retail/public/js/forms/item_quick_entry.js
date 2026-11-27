@@ -86,7 +86,7 @@
 			if (dialog.fields_dict.custom_scale_barcode_type) {
 				await dialog.set_value(
 					"custom_scale_barcode_type",
-					scale ? dialog.get_value("custom_scale_barcode_type") || "Weight" : ""
+					scale ? dialog.get_value("custom_scale_barcode_type") || "Weight+TotPrice" : ""
 				);
 			}
 			const { message } = await frappe.call({

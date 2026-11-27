@@ -1,0 +1,20 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const vm = require('node:vm');
+const {test} = require('node:test');
+const code = fs.readFileSync(require('node:path').join(__dirname,'../public/js/doctype_dedupe.js'),'utf8');
+test('parallel callers share metadata; callbacks run once; failures retry; sync delegates', async()=>{
+ const locals={DocType:{}};let calls=0,callbacks=0,fail=false;
+ const original=function(dt,cb,async){calls++;if(async===false){cb?.();return 'sync';}return Promise.resolve().then(()=>{if(fail)throw Error('failed');locals.DocType[dt]={name:dt};cb?.();return {ok:1};});};
+ const frappe={model:{with_doctype:original}};
+ vm.runInNewContext(code,{frappe,locals});
+ const load=frappe.model.with_doctype;
+ await Promise.all([1,2,3].map(()=>load('Item',()=>callbacks++)));
+ assert.equal(calls,1);assert.equal(callbacks,3);assert.ok(locals.DocType.Item);
+ fail=true;
+ const result=await Promise.allSettled([load('Customer'),load('Customer')]);
+ assert.ok(result.every(r=>r.status==='rejected'));assert.equal(calls,2);
+ fail=false;await load('Customer');assert.equal(calls,3);
+ assert.equal(load('Other',()=>callbacks++,false),'sync');assert.equal(callbacks,4);
+ vm.runInNewContext(code,{frappe,locals});assert.equal(frappe.model.with_doctype,load);
+});

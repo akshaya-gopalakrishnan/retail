@@ -47,7 +47,7 @@ def is_super_admin(user=None):
 def is_protected_doctype(doctype, user=None):
     if doctype == "POS Operator Privilege":
         from retail.delegated_access import is_customer_admin
-        if is_customer_admin(user):
+        if is_customer_admin(user) or "Admin" in frappe.get_roles(user or frappe.session.user):
             return False
     return doctype in PROTECTED_DOCTYPES
 

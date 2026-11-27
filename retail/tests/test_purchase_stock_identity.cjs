@@ -206,3 +206,18 @@ test('serial generation rejects duplicate masters, changed quantity and fraction
  assert.equal(f.row.serial_no,undefined);
  const fraction=creationFixture('serial_no',{qty:0.5,conversion_factor:1});fraction.press();assert.equal(fraction.prompt(),undefined);
 });
+
+test('unchanged tracking metadata does not request another whole-grid refresh',async()=>{
+ const f=fixture('Purchase Invoice');f.frm.doc.items=[{item_code:'normal'}];
+ await f.handlers['Purchase Invoice Item'].item_code(f.frm);
+ const resets=f.grid.resets;
+ let updates=0, refreshes=0;
+ const original=f.grid.update_docfield_property;
+ f.grid.update_docfield_property=function(...args){updates++;return original.apply(this,args);};
+ const refresh=f.grid.refresh;
+ f.grid.refresh=function(...args){refreshes++;return refresh.apply(this,args);};
+ for(let i=0;i<10;i++)await f.handlers['Purchase Invoice Item'].item_code(f.frm);
+ assert.equal(updates,0);assert.equal(refreshes,0);assert.equal(f.grid.resets,resets);
+ f.frm.doc.items=[{item_code:'serial'}];await f.handlers['Purchase Invoice Item'].item_code(f.frm);
+ assert.equal(f.grid.fields_map.serial_no.hidden,false);assert.ok(f.grid.resets>resets);
+});

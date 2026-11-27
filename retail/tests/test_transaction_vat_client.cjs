@@ -43,6 +43,8 @@ async function main() {
   await trigger('net_amount');
   assert.equal(row.custom_vat_amount, 10, `${dt}: stale net amount must not overwrite row VAT`);
   await handlers[frm.doc.doctype].refresh[0](frm);
+  // Sales Invoice batches its VAT display refresh behind an 80 ms timer.
+  if (frm.__retail_vat_display_timer) { timers[frm.__retail_vat_display_timer - 1](); await flush(); }
   assert.equal(row.custom_vat_amount, 10, `${dt}: refresh uses qty and rate`);
   assert.equal(vatReadOnly, 1, `${dt}: VAT column remains read-only`);
   row.custom_rate_including_vat = 210;
@@ -92,6 +94,7 @@ async function main() {
  let resolveVat;
  frappe.call = () => new Promise(resolve => {resolveVat = resolve;});
  handlers[dt].item_code[0](frm, dt, row.name);
+ await flush();
  Object.assign(row, {rate: 100, price_list_rate: 100, discount_amount: 0});
  writes.length = 0;
  resolveVat({message: 5});

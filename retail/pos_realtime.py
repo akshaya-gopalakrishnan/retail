@@ -92,10 +92,7 @@ def post_invoice(doc, method=None):
     if not linked:
         frappe.throw(_("POS accounting could not be posted."))
     accounting = frappe.get_doc("Sales Invoice", linked)
-    for field in ("grand_total", "net_total", "total_taxes_and_charges", "paid_amount", "outstanding_amount"):
-        precision = accounting.precision(field)
-        if flt(doc.get(field), precision) != flt(accounting.get(field), precision):
-            frappe.throw(_("Accounting {0} does not match POS receipt {1}; posting was not completed.").format(field, doc.name))
+    audit_accounting_differences(doc, accounting)
     # Do not reload: the sync response/audit still needs the original flags.
     doc.consolidated_invoice = linked
     doc.status = "Consolidated"
@@ -107,6 +104,24 @@ def post_invoice(doc, method=None):
         from retail.pos_completed_sale import note_mismatch
         note_mismatch(doc, f"Closing totals need recovery: {exc}. Completed accounting retained.")
     return linked
+
+
+def audit_accounting_differences(receipt, accounting):
+    """Keep posted accounting and record monetary differences in the rate audit."""
+    from retail.pos_completed_sale import note_mismatch
+
+    for field in ("grand_total", "net_total", "total_taxes_and_charges", "paid_amount", "outstanding_amount"):
+        precision = accounting.precision(field)
+        pos_amount = flt(receipt.get(field), precision)
+        accounting_amount = flt(accounting.get(field), precision)
+        if pos_amount != accounting_amount:
+            note_mismatch(receipt,
+                f"Accounting {field} differs for POS receipt {receipt.name}: "
+                f"POS={pos_amount}, accounting={accounting_amount}, "
+                f"difference={flt(accounting_amount - pos_amount, precision)}, "
+                f"Sales Invoice={accounting.name}, "
+                f"accounting write_off_amount={flt(accounting.get('write_off_amount'), precision)}. "
+                "Posting completed; review required.")
 
 
 def refresh_closed_reconciliation(invoice):

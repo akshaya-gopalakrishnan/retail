@@ -54,10 +54,15 @@
 	vatItemDoctypes.forEach((doctype) => {
 		frappe.ui.form.on(doctype, {
 			item_code(frm, cdt, cdn) {
-				syncVatRates(frm, cdt, cdn, "rate");
+				const row = locals[cdt]?.[cdn];
+				forgetVatRate(frm, row);
+				if (row) row.__retail_vat_force_sync = true;
+				const pending = syncVatRates(frm, cdt, cdn, "rate");
+				if (row) delete row.__retail_vat_force_sync;
 				scheduleVatSync(frm, cdt, cdn, "rate");
 				scheduleVatTaxRowsSync(frm);
 				renderTransactionTotals(frm);
+				return pending;
 			},
 			rate(frm, cdt, cdn) {
 				syncVatRates(frm, cdt, cdn, "rate");
@@ -78,14 +83,10 @@
 				renderTransactionTotals(frm);
 			},
 			item_tax_template(frm, cdt, cdn) {
-				syncVatRates(frm, cdt, cdn, "rate");
-				queueVatTaxRowsSync(frm);
-				renderTransactionTotals(frm);
+				return refreshVatFromTemplate(frm, cdt, cdn);
 			},
 			tax_rate(frm, cdt, cdn) {
-				syncVatRates(frm, cdt, cdn, "rate");
-				queueVatTaxRowsSync(frm);
-				renderTransactionTotals(frm);
+				return refreshVatFromTemplate(frm, cdt, cdn);
 			},
 			qty(frm, cdt, cdn) {
 				syncVatRates(frm, cdt, cdn, "qty");
@@ -130,25 +131,7 @@
 		return frm?.doc?.doctype === "POS Invoice" && !!frm.doc.custom_pos_completed_payload;
 	}
 
-	async function refreshOtherVatAmounts(frm) {
-		if (isCompletedPos(frm)) return;
-		const grid = frm.fields_dict.items?.grid;
-		grid?.update_docfield_property?.("custom_vat_amount", "read_only", 1);
-		for (const row of frm.doc.items || []) {
-			const field = frappe.meta.get_docfield(row.doctype, "custom_vat_amount", row.name);
-			if (!field) continue;
-			field.read_only = 1;
-			const rate = row.item_code ? await getVatRate(frm, row, row.doctype) : 0;
-			// Amount/net_amount may still contain values from the previous edit.
-			const amount = flt(row.qty) * flt(row.rate);
-			const precision = cint(field.precision) || 2;
-			row.custom_vat_amount = flt(amount * rate / 100, precision);
-			grid?.grid_rows_by_docname?.[row.name]?.refresh_field?.("custom_vat_amount");
-		}
-	}
-
 	function refreshRowVatAmounts(frm) {
-		if (frm.doc.doctype !== "Sales Invoice") return refreshOtherVatAmounts(frm);
 		if (isCompletedPos(frm)) return;
 		// Totals emit one event per row. Coalesce display work for the invoice;
 		// never rebuild the whole grid just to repeat a read-only property.
@@ -187,6 +170,9 @@
 		frappe.ui.form.on(doctype, {
 			refresh(frm) {
 				placeVatFieldBeforeGrandTotal(frm);
+				if (frm.doc.doctype === "Sales Invoice" && isEditableDraft(frm) && frm.doc.items?.length) {
+					return syncVatTaxRows(frm);
+				}
 			},
 			company(frm) {
 				queueVatTaxRowsSync(frm);
@@ -268,10 +254,47 @@
 		});
 	}
 
+	function vatInputKey(row) {
+		return [row.item_code, row.uom, row.qty, row.rate, row.amount, row.price_list_rate, row.net_rate,
+			row.conversion_factor, row.item_tax_template, row.tax_rate].join("\u0001");
+	}
+
+	function vatRateMemo(frm) {
+		const memo = frm.__retail_vat_rate_memo || (frm.__retail_vat_rate_memo = {rates: new Map()});
+		clearTimeout(memo.timer);
+		memo.timer = setTimeout(() => {
+			if (frm.__retail_vat_rate_memo === memo) delete frm.__retail_vat_rate_memo;
+		}, 1000);
+		return memo.rates;
+	}
+
+	function vatRateMemoKey(frm, row) {
+		const doc = frm.doc || {};
+		return [row.item_code, row.doctype, doc.doctype, doc.transaction_type || "", row.item_tax_template || "",
+			doc.company || "", doc.is_pos || 0, doc.custom_trading_vat_disabled || 0, doc.return_against || ""].join("\u0001");
+	}
+
+	function forgetVatRate(frm, row) {
+		if (!frm?.__retail_vat_rate_memo || !row?.item_code) return;
+		frm.__retail_vat_rate_memo.rates.delete(vatRateMemoKey(frm, row));
+	}
+
+	function refreshVatFromTemplate(frm, cdt, cdn) {
+		const row = locals[cdt]?.[cdn];
+		forgetVatRate(frm, row);
+		if (row) row.__retail_vat_force_sync = true;
+		const pending = syncVatRates(frm, cdt, cdn, "rate");
+		if (row) delete row.__retail_vat_force_sync;
+		queueVatTaxRowsSync(frm);
+		renderTransactionTotals(frm);
+		return pending;
+	}
+
 	function scheduleVatSync(frm, cdt, cdn, source) {
 		[150, 500].forEach((delay) => {
 			setTimeout(() => {
-				if (!locals[cdt]?.[cdn]) return;
+				const row = locals[cdt]?.[cdn];
+				if (!row || row.__retail_vat_synced_key === vatInputKey(row)) return;
 				syncVatRates(frm, cdt, cdn, source);
 			}, delay);
 		});
@@ -283,15 +306,18 @@
 
 		const row = locals[cdt]?.[cdn];
 		if (!row || !row.item_code) return;
+		const automatic = source === "rate" || source === "qty";
 		if (row.__retail_vat_syncing) {
 			// Scanning first loads stock-UOM details, then the packing UOM/rate.
-			// Do not lose that second refresh while the first one is awaiting writes.
-			if (source === "rate" || source === "qty") row.__retail_vat_refresh_pending = true;
+			// A repeated event with the same price and quantity is not that second refresh.
+			if (automatic && vatInputKey(row) !== row.__retail_vat_sync_key) row.__retail_vat_refresh_pending = true;
 			return;
 		}
+		if (automatic && !row.__retail_vat_force_sync && row.__retail_vat_synced_key === vatInputKey(row)) return;
 		if (!frappe.meta.get_docfield(cdt, "custom_rate_including_vat", cdn)) return;
 
 		row.__retail_vat_syncing = true;
+		row.__retail_vat_sync_key = vatInputKey(row);
 		try {
 			const vatRate = await getVatRate(frm, row, cdt);
 			const factor = 1 + (flt(vatRate) / 100);
@@ -334,14 +360,9 @@
 				// Only explicit inclusive-rate/amount edits above may change rate.
 				inclusiveRate = flt(exclusiveRate * factor, precision);
 				values.custom_rate_including_vat = inclusiveRate;
-				if (amountField) {
-					const amount = flt(qty * exclusiveRate, amountPrecision);
-					if (["Sales Invoice", "Delivery Note"].includes(frm.doc.doctype)) {
-						// A display refresh must not fire the amount-edit handler,
-						// which derives a rounded rate and changes the discount.
-						row.amount = amount;
-					} else values.amount = amount;
-				}
+				// Amount is stored directly. set_value would run the amount handler
+				// and calculate every line again.
+				if (amountField) assignRowAmount(frm, cdt, cdn, row, flt(qty * exclusiveRate, amountPrecision));
 			}
 
 			if (source !== "inclusive_amount" && row.custom_amount_including_vat !== undefined) {
@@ -353,6 +374,7 @@
 			}
 			if (!Object.keys(values).length) return;
 			await setRowValues(frm, cdt, cdn, values);
+			if (row) row.__retail_vat_synced_key = vatInputKey(row);
 			queueVatTaxRowsSync(frm);
 			renderTransactionTotals(frm);
 		} finally {
@@ -360,7 +382,12 @@
 				row.__retail_vat_syncing = false;
 				if (row.__retail_vat_refresh_pending) {
 					delete row.__retail_vat_refresh_pending;
-					await syncVatRates(frm, cdt, cdn, "rate");
+					row.__retail_vat_force_sync = true;
+					try {
+						await syncVatRates(frm, cdt, cdn, "rate");
+					} finally {
+						delete row.__retail_vat_force_sync;
+					}
 				}
 			}
 		}
@@ -395,7 +422,120 @@
 			.map(key => [key, request.args[key]])]);
 	// Keep read results for one native field-handler chain, including nested
 	// rate/UOM handlers. Release them when that chain finishes, never by TTL.
+	const heavyItemForms = ["Sales Invoice", "Purchase Receipt", "Purchase Invoice"];
+	const calculatedItemFields = ["qty", "stock_qty", "rate", "amount", "price_list_rate", "net_rate", "net_amount",
+		"discount_percentage", "discount_amount", "margin_type", "margin_rate_or_amount", "item_tax_rate",
+		"custom_rate_including_vat", "custom_amount_including_vat", "custom_vat_amount", "custom_total_stock_qty"];
+
+	function installLightTotals(frm) {
+		if (!heavyItemForms.includes(frm?.doc?.doctype)) return;
+		const cscript = frm.cscript;
+		if (!cscript || cscript.__retail_light_totals || typeof cscript.calculate_taxes_and_totals !== "function") return;
+		cscript.__retail_light_totals = true;
+		const original = cscript.calculate_taxes_and_totals;
+		// Totals already rewrite every row in memory. Rebuilding the whole item
+		// grid after each added line is what freezes the form once it has many rows.
+		cscript.calculate_taxes_and_totals = function (...args) {
+			const nested = frm.__retail_light_depth || 0;
+			frm.__retail_light_depth = nested + 1;
+			if (!nested) holdItemGrid(frm);
+			let result;
+			try {
+				result = original.apply(this, args);
+			} catch (error) {
+				releaseItemGrid(frm);
+				throw error;
+			}
+			if (result?.finally) return result.finally(() => releaseItemGrid(frm));
+			releaseItemGrid(frm);
+			return result;
+		};
+	}
+
+	function holdItemGrid(frm) {
+		frm.__retail_item_names = (frm.doc.items || []).map(row => row.name).join("\u0001");
+		snapshotItemFigures(frm);
+		const field = frm.fields_dict?.items;
+		if (field?.refresh) {
+			frm.__retail_saved_item_refresh = field.refresh;
+			// layout.refresh() still updates totals, taxes, and dependencies.
+			// The items control is the piece that rebuilds every row.
+			field.refresh = function () {};
+		}
+		const grid = field?.grid;
+		frm.__retail_saved_row_dependency = [];
+		for (const gridRow of grid?.grid_rows || []) {
+			if (typeof gridRow?.refresh_dependency !== "function" || gridRow.refresh_dependency.__retail_held) continue;
+			const original = gridRow.refresh_dependency;
+			const held = function () {};
+			held.__retail_held = true;
+			gridRow.refresh_dependency = held;
+			frm.__retail_saved_row_dependency.push([gridRow, original]);
+		}
+		frm.__retail_saved_refresh_field = frm.refresh_field;
+		frm.refresh_field = function (fieldname, ...args) {
+			if (fieldname === "items") return;
+			if (Array.isArray(fieldname)) {
+				const rest = fieldname.filter(name => name !== "items");
+				if (!rest.length) return;
+				return frm.__retail_saved_refresh_field?.call(frm, rest, ...args);
+			}
+			return frm.__retail_saved_refresh_field?.call(frm, fieldname, ...args);
+		};
+	}
+
+	function releaseItemGrid(frm) {
+		frm.__retail_light_depth = Math.max(0, (frm.__retail_light_depth || 1) - 1);
+		if (frm.__retail_light_depth > 0) return;
+		const field = frm.fields_dict?.items;
+		if (field && frm.__retail_saved_item_refresh) field.refresh = frm.__retail_saved_item_refresh;
+		for (const [gridRow, original] of frm.__retail_saved_row_dependency || []) {
+			if (gridRow.refresh_dependency?.__retail_held) gridRow.refresh_dependency = original;
+		}
+		if (frm.__retail_saved_refresh_field) frm.refresh_field = frm.__retail_saved_refresh_field;
+		delete frm.__retail_saved_item_refresh;
+		delete frm.__retail_saved_row_dependency;
+		delete frm.__retail_saved_refresh_field;
+		const names = (frm.doc.items || []).map(row => row.name).join("\u0001");
+		const grid = frm.fields_dict?.items?.grid;
+		const missing = !grid || (frm.doc.items || []).some(row => row?.name && !grid.grid_rows_by_docname?.[row.name]);
+		if (names !== frm.__retail_item_names || missing) {
+			frm.refresh_field?.("items");
+			return;
+		}
+		paintItemFigures(frm);
+	}
+
+	function snapshotItemFigures(frm) {
+		const grid = frm.fields_dict?.items?.grid;
+		if (!grid?.grid_rows_by_docname) return;
+		for (const row of frm.doc.items || []) {
+			const gridRow = grid.grid_rows_by_docname[row.name];
+			if (!gridRow) continue;
+			const seen = gridRow.__retail_figures || (gridRow.__retail_figures = {});
+			for (const field of calculatedItemFields) {
+				if (Object.prototype.hasOwnProperty.call(row, field)) seen[field] = row[field];
+			}
+		}
+	}
+
+	function paintItemFigures(frm) {
+		const grid = frm.fields_dict?.items?.grid;
+		if (!grid?.grid_rows_by_docname) return;
+		for (const row of frm.doc.items || []) {
+			const gridRow = grid.grid_rows_by_docname[row.name];
+			if (!gridRow?.refresh_field) continue;
+			const seen = gridRow.__retail_figures || (gridRow.__retail_figures = {});
+			for (const field of calculatedItemFields) {
+				if (!Object.prototype.hasOwnProperty.call(row, field) || seen[field] === row[field]) continue;
+				seen[field] = row[field];
+				gridRow.refresh_field(field);
+			}
+		}
+	}
+
 	function installPurchaseActionReads(frm) {
+		installLightTotals(frm);
 		const manager = frm.script_manager;
 		if (!manager || manager.__retail_purchase_actions) return;
 		manager.__retail_purchase_actions = true;
@@ -414,6 +554,11 @@
 				const row = locals[cdt][cdn];
 				const args = {item_code: row.item_code, parent_doctype: frm.doc.doctype,
 					uom: row.uom, transaction_type: frm.doc.transaction_type, item_tax_template: row.item_tax_template};
+				if (frm.doc.doctype === "Sales Invoice") Object.assign(args, {
+					company: frm.doc.company, is_pos: frm.doc.is_pos || 0,
+					is_consolidated: frm.doc.is_consolidated || 0, return_against: frm.doc.return_against,
+					docstatus: frm.doc.docstatus || 0, custom_trading_vat_disabled: frm.doc.custom_trading_vat_disabled || 0,
+				});
 				const key = purchaseReadKey({args});
 				if (!action.bundles.has(key)) {
 					// Use the existing permission-checked Quick Entry read bundle.
@@ -442,7 +587,7 @@
 			}
 		};
 	}
-	purchaseForms.forEach(doctype => frappe.ui.form.on(doctype, {refresh: installPurchaseActionReads}));
+	[...purchaseForms, "Sales Invoice"].forEach(doctype => frappe.ui.form.on(doctype, {refresh: installPurchaseActionReads}));
 	window.retail.transaction_items.preparedPurchaseItem = async (frm, itemCode) => {
 		const action = frm.__retail_purchase_action;
 		if (!action) return null;
@@ -474,7 +619,7 @@
 		}
 		clearTimeout(frm.__retail_vat_tax_rows_timer);
 		frm.__retail_vat_tax_rows_generation = (frm.__retail_vat_tax_rows_generation || 0) + 1;
-		await syncVatTaxRows(frm);
+		await syncVatTaxRows(frm, true);
 	};
 
 	function queueVatTaxRowsSync(frm) {
@@ -512,9 +657,18 @@
 		return cint(frm?.doc?.docstatus) === 0;
 	}
 
-	async function syncVatTaxRows(frm) {
+	function vatTaxStructureKey(frm) {
+		const doc = frm.doc || {};
+		const items = (doc.items || []).map(row => [row.name || "", row.item_code || "", row.item_tax_template || ""].join("\u0001")).join("\u0002");
+		return [doc.doctype, doc.company || "", doc.cost_center || "", doc.transaction_type || "",
+			doc.custom_trading_vat_disabled ? 1 : 0, items].join("\u0001");
+	}
+
+	async function syncVatTaxRows(frm, force) {
 		if (isCompletedPos(frm)) return;
 		if (!canSyncVatTaxRows(frm) || frm.__retail_syncing_vat_tax_rows) return;
+		const key = vatTaxStructureKey(frm);
+		if (!force && key === frm.__retail_vat_tax_key) return;
 
 		frm.__retail_syncing_vat_tax_rows = true;
 		try {
@@ -525,10 +679,33 @@
 				},
 			});
 			const setup = normalizeVatTaxSetup(response.message);
+			if (response.message?.vat_disabled) {
+				const converting = !cint(frm.doc.custom_trading_vat_disabled);
+				const accounts = response.message.vat_accounts || [];
+				frm.doc.taxes = (frm.doc.taxes || []).filter(row => !accounts.includes(row.account_head));
+				frm.doc.taxes_and_charges = "";
+				for (const row of frm.doc.items || []) {
+					const values = response.message.item_values?.[row.name];
+					if (converting && values && flt(row.rate) === flt(values.source_rate)) {
+						row.rate = values.rate;
+						row.price_list_rate = values.price_list_rate;
+						row.discount_amount = values.discount_amount;
+					}
+					row.item_tax_template = "";
+					row.item_tax_rate = "{}";
+					row.custom_vat_amount = 0;
+					row.custom_rate_including_vat = flt(row.rate);
+					row.custom_amount_including_vat = flt(row.qty) * flt(row.rate);
+				}
+				frm.doc.custom_trading_vat_disabled = 1;
+			} else if (frm.doc.doctype === "Sales Invoice") {
+				frm.doc.custom_trading_vat_disabled = 0;
+			}
 			applyItemTaxRates(frm, setup.item_tax_rates);
 			replaceManagedVatTaxRows(frm, setup.tax_rows);
 			await runErpnextTotals(frm);
 			placeVatFieldBeforeGrandTotal(frm);
+			if (vatTaxStructureKey(frm) === key) frm.__retail_vat_tax_key = key;
 		} finally {
 			frm.__retail_syncing_vat_tax_rows = false;
 		}
@@ -614,12 +791,22 @@
 		return description.startsWith(`${taxLabel} [`);
 	}
 
+	function assignRowAmount(frm, cdt, cdn, row, amount) {
+		if (!row || row.amount === amount) return;
+		row.amount = amount;
+		frm.fields_dict?.items?.grid?.grid_rows_by_docname?.[cdn]?.refresh_field?.("amount");
+	}
+
 	async function setRowValues(frm, cdt, cdn, values) {
+		const row = locals[cdt]?.[cdn];
+		const changed = [];
 		for (const [fieldname, value] of Object.entries(values)) {
+			if (row && row[fieldname] === value) continue;
+			changed.push(fieldname);
 			await frappe.model.set_value(cdt, cdn, fieldname, value);
 		}
 		const gridRow = frm.fields_dict.items?.grid?.grid_rows_by_docname?.[cdn];
-		Object.keys(values).forEach((fieldname) => gridRow?.refresh_field?.(fieldname));
+		changed.forEach((fieldname) => gridRow?.refresh_field?.(fieldname));
 	}
 
 	function getExclusiveRateForVat(row, qty) {
@@ -633,7 +820,11 @@
 	async function getVatRate(frm, row, childDoctype) {
 		const parentDoc = frm?.doc || {};
 		const rowRate = flt(row.tax_rate);
-		if (rowRate) return rowRate;
+		if (rowRate && parentDoc.doctype !== "Sales Invoice") return rowRate;
+
+		const known = vatRateMemo(frm);
+		const key = vatRateMemoKey(frm, row);
+		if (known.has(key)) return known.get(key);
 
 		const request = {
 			method: "retail.domains.transactions.vat.get_transaction_item_vat_rate",
@@ -643,10 +834,16 @@
 				parent_doctype: parentDoc.doctype,
 				transaction_type: parentDoc.transaction_type,
 				item_tax_template: row.item_tax_template,
+				company: parentDoc.company, is_pos: parentDoc.is_pos || 0,
+				is_consolidated: parentDoc.is_consolidated || 0,
+				return_against: parentDoc.return_against, docstatus: parentDoc.docstatus || 0,
+				custom_trading_vat_disabled: parentDoc.custom_trading_vat_disabled || 0,
 			},
 		};
 		const response = await (frm.__quick_receipt?.lookup(request) || window.retail.transaction_items.purchaseRead(frm, request));
-		return flt(response.message);
+		const rate = flt(response.message);
+		known.set(key, rate);
+		return rate;
 	}
 
 	function taxHandlers() {

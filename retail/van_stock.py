@@ -279,3 +279,81 @@ def validate_van_stock_entry_warehouses(doc):
 					"Row #{0}: Target Warehouse must be the selected Van Warehouse {1} for {2}."
 				).format(row.idx, frappe.bold(van_warehouse), frappe.bold(van_entry_type))
 			)
+
+
+@frappe.whitelist()
+def get_van_stock_summary(company=None, posting_date=None, van=None, warehouse=None):
+	"""One row per permitted van; do not change the mobile item-stock contract."""
+	_validate_van_stock_view_permission()
+	date = getdate(posting_date or nowdate())
+	rows = []
+	for fleet in _get_van_stock_view_vans(van, warehouse):
+		if not fleet.van_warehouse:
+			continue
+		wh = frappe.get_doc("Warehouse", fleet.van_warehouse)
+		if not frappe.has_permission("Warehouse", "read", doc=wh) or (company and wh.company != company):
+			continue
+		values = {"warehouse": wh.name, "date": date, "van": fleet.name}
+		stock = frappe.db.sql("""
+			select coalesce(sum(actual_qty), 0) qty,
+				coalesce(sum(stock_value_difference), 0) stock_value
+			from `tabStock Ledger Entry`
+			where warehouse=%(warehouse)s and posting_date<=%(date)s
+			and is_cancelled=0 and docstatus<2
+		""", values, as_dict=True)[0]
+		sold = frappe.db.sql("""
+			select coalesce(sum(sii.stock_qty), 0) qty
+			from `tabSales Invoice` si join `tabSales Invoice Item` sii on sii.parent=si.name
+			where si.docstatus=1 and si.custom_is_van_sale=1
+			and si.custom_van=%(van)s and sii.warehouse=%(warehouse)s
+			and si.posting_date<=%(date)s
+			and exists (select 1 from `tabVan API Request` api
+				where api.operation in ('post_sale', 'post_sales_return')
+				and json_valid(api.response)
+				and json_unquote(json_extract(api.response, '$.invoiceid'))=si.name)
+		""", values, as_dict=True)[0]
+		qty, value = flt(stock.qty), flt(stock.stock_value)
+		rows.append(dict(van=fleet.name, vehicle_name=fleet.vehicle_name, warehouse=wh.name,
+			qty=qty, sold_qty=flt(sold.qty), stock_value=value,
+			valuation_rate=value / qty if abs(qty) > 0.000001 else None,
+			currency=frappe.get_cached_value("Company", wh.company, "default_currency")))
+	return {"rows": rows, "summary": {"vans": len(rows),
+		"warehouses": len({r["warehouse"] for r in rows}),
+		"total_qty": sum(r["qty"] for r in rows), "sold_qty": sum(r["sold_qty"] for r in rows)}}
+
+
+@frappe.whitelist()
+def get_van_stock_ledger(van, posting_date=None, company=None, item_code=None, start=0):
+	_validate_van_stock_view_permission()
+	vans = _get_van_stock_view_vans(van=van)
+	if not vans or not vans[0].van_warehouse:
+		frappe.throw(_("Van warehouse not found."))
+	warehouse = vans[0].van_warehouse
+	wh = frappe.get_doc("Warehouse", warehouse)
+	wh.check_permission("read")
+	if company and wh.company != company:
+		frappe.throw(_("Van warehouse does not belong to this company."))
+	from frappe.utils import cint
+	start = max(0, cint(start))
+	rows = frappe.db.sql("""
+		select sle.posting_date, sle.posting_time, sle.item_code, item.item_name,
+			item.stock_uom, sle.voucher_type, sle.voucher_no, sle.actual_qty,
+			sle.stock_value_difference, sle.qty_after_transaction, sle.stock_value,
+			sle.valuation_rate
+		from `tabStock Ledger Entry` sle join `tabItem` item on item.name=sle.item_code
+		where sle.warehouse=%(warehouse)s and sle.posting_date<=%(date)s
+		and sle.is_cancelled=0 and sle.docstatus<2
+		and (%(item)s is null or sle.item_code=%(item)s)
+		order by sle.posting_date, sle.posting_time, sle.creation, sle.name
+		limit 201 offset %(start)s
+	""", {"warehouse": warehouse, "date": getdate(posting_date or nowdate()),
+		"item": item_code or None, "start": start}, as_dict=True)
+	for row in rows[:200]:
+		qty, value = flt(row.actual_qty), flt(row.stock_value_difference)
+		row.update(in_qty=max(qty, 0), out_qty=max(-qty, 0),
+			in_value=value if qty > 0 else 0, out_value=-value if qty < 0 else 0,
+			in_rate=value / qty if qty > 0 else 0,
+			out_rate=value / qty if qty < 0 else 0,
+			value_adjustment=value if not qty else 0)
+	return {"rows": rows[:200], "has_more": len(rows) > 200, "warehouse": warehouse,
+		"currency": frappe.get_cached_value("Company", wh.company, "default_currency")}

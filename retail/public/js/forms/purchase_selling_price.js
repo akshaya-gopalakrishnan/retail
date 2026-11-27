@@ -367,11 +367,12 @@
 		const purchaseRate = flt(row.rate || row.net_rate);
 		const margin = sellingRate ? sellingRate - purchaseRate : 0;
 		const marginPercent = sellingRate ? (margin / sellingRate) * 100 : 0;
-
-		frappe.model.set_value(cdt, cdn, {
+		const values = {
 			custom_sell_margin: flt(margin, 2),
 			custom_sell_margin_pct: flt(marginPercent, 3),
-		});
+		};
+		if (row.custom_sell_margin === values.custom_sell_margin && row.custom_sell_margin_pct === values.custom_sell_margin_pct) return;
+		frappe.model.set_value(cdt, cdn, values);
 	}
 
 	function confirmSellPriceUpdates(frm) {

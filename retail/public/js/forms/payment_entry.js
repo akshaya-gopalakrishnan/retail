@@ -1,5 +1,11 @@
 (function () {
 	if (!window.frappe?.ui?.form) return;
+	frappe.provide("retail.keyboard.doctypes");
+	retail.keyboard.doctypes["Payment Entry"] = {
+		...retail.keyboard.doctypes["Payment Entry"],
+		enter_fields: ["reference_no"],
+		enter_selects: ["payment_type"],
+	};
 
 	frappe.ui.form.on("Payment Entry", {
 		onload(frm) {

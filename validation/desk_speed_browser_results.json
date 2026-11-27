@@ -1,0 +1,1723 @@
+{
+  "boot": {
+    "bytes": 360372,
+    "sidebars": [
+      "Business Home",
+      "Items",
+      "Items List",
+      "Item Family List",
+      "Item Groups",
+      "Price Lists",
+      "Brands",
+      "Sales",
+      "Customers",
+      "Quotations",
+      "Sales Orders",
+      "Sales Invoices",
+      "Delivery Notes",
+      "Sales Order API Logs",
+      "Purchases",
+      "Suppliers",
+      "Purchase Orders",
+      "Purchase Receipts",
+      "Purchase Invoices",
+      "Material Requests",
+      "Stocks",
+      "Warehouses",
+      "Stock Adjustments",
+      "Stock Take",
+      "Serials & Batches",
+      "Stock Status",
+      "Product Conversion Link",
+      "Accounts",
+      "Bank Accounts",
+      "Payments",
+      "Taxes",
+      "Journal Entries",
+      "Accounts Receivable",
+      "Accounts Payable",
+      "Manufacturing",
+      "Manufacturing BOM",
+      "Manufacturing Production Plan",
+      "Work Orders",
+      "Job Cards",
+      "Stock Entries",
+      "Manufacturing Quality Inspection",
+      "Manufacturing Reports",
+      "Manufacturing Setup",
+      "POS",
+      "POS Invoices",
+      "POS Profiles",
+      "POS Counters",
+      "POS Cashier Shifts",
+      "POS Counter Sessions",
+      "POS Opening Entries",
+      "POS Closing Entries",
+      "POS Branch Day Closings",
+      "POS Sync Logs",
+      "POS Reports",
+      "Restaurant",
+      "Restaurant Table Locations Link",
+      "Restaurant Tables Link",
+      "Van Sales",
+      "Van Sales Fleet Link",
+      "Van Sales Driver Link",
+      "Van Sales Sessions Link",
+      "Van Sales Stock View Link",
+      "Stock Request",
+      "Van Sales Stock Entries Link",
+      "Van Sales Invoice Link",
+      "Van Sales Payments Link",
+      "Van Sales Customers Link",
+      "Van Sales Warehouses Link",
+      "Van Sales Reports",
+      "Van Sales Sync Logs",
+      "Reports",
+      "Sales Reports",
+      "retail-report-link-sales_reports-item_group_sales_analysis",
+      "retail-report-link-sales_reports-daily_sales_summary",
+      "retail-report-link-sales_reports-sales_payment_mode_summary",
+      "retail-report-link-sales_reports-daily_transaction_log",
+      "retail-report-link-sales_reports-daily_profit_report",
+      "retail-report-link-sales_reports-gross_profit",
+      "Purchase Reports",
+      "retail-report-link-purchase_reports-purchase_register",
+      "retail-report-link-purchase_reports-supplier_wise_returns",
+      "Stock Reports",
+      "retail-report-link-stock_reports-stock_balance",
+      "retail-report-link-stock_reports-stock_ledger",
+      "retail-report-link-stock_reports-packing_stock_balance",
+      "retail-report-link-stock_reports-packing_stock_ledger",
+      "retail-report-link-stock_reports-stock_movement_summary",
+      "retail-report-link-stock_reports-stock_adjustment_history",
+      "retail-report-link-stock_reports-low_stock_reorder_report",
+      "retail-report-link-stock_reports-fast_moving_items",
+      "retail-report-link-stock_reports-slow_moving_items",
+      "retail-report-link-stock_reports-negative_stock_report",
+      "retail-report-link-stock_reports-near_expiry_report",
+      "retail-report-link-stock_reports-expiry_loss",
+      "Accounts Reports",
+      "retail-report-link-accounts_reports-accounts_receivable",
+      "retail-report-link-accounts_reports-accounts_payable",
+      "retail-report-link-accounts_reports-general_ledger",
+      "retail-report-link-accounts_reports-trial_balance",
+      "retail-report-link-accounts_reports-balance_sheet",
+      "retail-report-link-accounts_reports-profit_and_loss_statement",
+      "Tax Reports",
+      "POS Sales Reports",
+      "retail-report-link-pos_sales_reports-pos_invoice_profit",
+      "retail-report-link-pos_sales_reports-pos_sales_summary",
+      "retail-report-link-pos_sales_reports-pos_transaction_log",
+      "retail-report-link-pos_sales_reports-pos_item_wise_sales",
+      "retail-report-link-pos_sales_reports-pos_category_item_group_sales",
+      "retail-report-link-pos_sales_reports-pos_hourly_sales",
+      "retail-report-link-pos_sales_reports-pos_return_report",
+      "retail-report-link-pos_sales_reports-cashier_wise_sales",
+      "retail-report-link-pos_sales_reports-counter_wise_sales",
+      "retail-report-link-pos_sales_reports-shift_closing_variance",
+      "retail-report-link-pos_sales_reports-pos_payment_mode_summary",
+      "retail-report-link-pos_sales_reports-pos_discount_report",
+      "retail-report-link-pos_sales_reports-pos_price_override_report",
+      "retail-report-link-pos_sales_reports-pos_daily_closing_summary",
+      "retail-report-link-pos_sales_reports-pos_cash_movement_report",
+      "Manufacturing Module Reports",
+      "retail-report-link-manufacturing_module_reports-bom_stock_report",
+      "retail-report-link-manufacturing_module_reports-work_order_stock_report",
+      "retail-report-link-manufacturing_module_reports-open_work_orders",
+      "retail-report-link-manufacturing_module_reports-work_orders_in_progress",
+      "retail-report-link-manufacturing_module_reports-completed_work_orders",
+      "retail-report-link-manufacturing_module_reports-work_order_summary",
+      "retail-report-link-manufacturing_module_reports-job_card_summary",
+      "retail-report-link-manufacturing_module_reports-production_analytics",
+      "Promotions",
+      "Promotions Promo Price Link",
+      "Promotions Buy X Get Y Promotion Link",
+      "Promotions Gift Voucher Promotion Link",
+      "Promotions Gift Voucher Ledger Link",
+      "Promotions Voucher Card Batch Link",
+      "Promotions Loyalty Program Link",
+      "Promotions Loyalty Program List Link",
+      "Promotions Loyalty Point Entry Link",
+      "Settings",
+      "Business Profile",
+      "Branding",
+      "System Rules",
+      "User List",
+      "Employee List",
+      "retail-report-link-tax_reports-tax_report",
+      "retail-report-link-tax_reports-tax_payable_report_summary",
+      "retail-report-link-tax_reports-sales_tax_report",
+      "retail-report-link-tax_reports-sales_day_wise_tax_report",
+      "retail-report-link-tax_reports-purchase_tax_report",
+      "retail-report-link-tax_reports-purchase_day_wise_tax_report"
+    ],
+    "editor": null
+  },
+  "measurements": [
+    {
+      "name": "Items",
+      "quiet_ms": 493,
+      "getdoctype": [],
+      "getdoc": [],
+      "requests": [
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoctype?doctype=POS%20Invoice&with_parent=1&cached_timestamp=&_=1795759013378",
+          "status": 200,
+          "ttfb": 76
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.listview.get_list_settings",
+          "status": 200,
+          "ttfb": 9
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.reportview.get_list?fields=%5B%22name%22%2C%22filter_name%22%2C%22for_user%22%2C%22filters%22%5D&filters=%7B%22reference_doctype%22%3A%22POS%20Invoice%22%7D&or_filters=%5B%5B%22for_user%22%2C%22%3D%22%2C%22Administrator%22%5D%2C%5B%22for_user%22%2C%22%3D%22%2C%22%22%5D%5D&order_by=filter_name%20asc&doctype=List%20Filter&limit=20&_=1795759013379",
+          "status": 200,
+          "ttfb": 9
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.reportview.get",
+          "status": 200,
+          "ttfb": 27
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.reportview.get_count",
+          "status": 200,
+          "ttfb": 11
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.doctype.dashboard_chart.dashboard_chart.get",
+          "status": 200,
+          "ttfb": 39
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.doctype.dashboard_chart.dashboard_chart.get",
+          "status": 200,
+          "ttfb": 43
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.client.get?doctype=Dashboard%20Chart&name=Incoming%20Bills%20(Purchase%20Invoice)&_=1795759013380",
+          "status": 200,
+          "ttfb": 42
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.client.get?doctype=Dashboard%20Chart&name=Outgoing%20Bills%20(Sales%20Invoice)&_=1795759013381",
+          "status": 200,
+          "ttfb": 43
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoctype?doctype=Sales%20Invoice&with_parent=1&cached_timestamp=&_=1795759013382",
+          "status": 200,
+          "ttfb": 115
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoctype?doctype=User&with_parent=1&cached_timestamp=&_=1795759013383",
+          "status": 200,
+          "ttfb": 88
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoc?doctype=User&name=Administrator&_=1795759013384",
+          "status": 200,
+          "ttfb": 40
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.doctype.dashboard_settings.dashboard_settings.save_chart_config",
+          "status": 200,
+          "ttfb": 26
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.doctype.dashboard_chart.dashboard_chart.get",
+          "status": 200,
+          "ttfb": 30
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.core.doctype.user.user.get_timezones",
+          "status": 200,
+          "ttfb": 7
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.client.get?doctype=Dashboard%20Chart&name=Outgoing%20Bills%20(Sales%20Invoice)&_=1795759013385",
+          "status": 200,
+          "ttfb": 12
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.core.doctype.user.user.get_all_roles",
+          "status": 200,
+          "ttfb": 20
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.core.doctype.user.user.get_all_roles",
+          "status": 200,
+          "ttfb": 22
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.client.get_single_value?doctype=LDAP%20Settings&field=enabled&_=1795759013386",
+          "status": 200,
+          "ttfb": 45
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.apps.get_apps",
+          "status": 200,
+          "ttfb": 81
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/retail.sidebar_permissions.get_editor",
+          "status": 200,
+          "ttfb": 6
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.desktop.get_desktop_page",
+          "status": 200,
+          "ttfb": 127
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.desktop.get_desktop_page",
+          "status": 200,
+          "ttfb": 7
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoctype?doctype=Payment%20Entry&with_parent=1&cached_timestamp=&_=1795759013387",
+          "status": 200,
+          "ttfb": 90
+        }
+      ],
+      "state": {
+        "route": [
+          "Workspaces",
+          "Items"
+        ],
+        "cards": [
+          "68",
+          "د.إ 0.00",
+          "د.إ 0.00"
+        ],
+        "loading": 0
+      }
+    },
+    {
+      "name": "Sales",
+      "quiet_ms": 279,
+      "getdoctype": [],
+      "getdoc": [],
+      "requests": [
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoctype?doctype=POS%20Invoice&with_parent=1&cached_timestamp=&_=1795759013378",
+          "status": 200,
+          "ttfb": 76
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.listview.get_list_settings",
+          "status": 200,
+          "ttfb": 9
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.reportview.get_list?fields=%5B%22name%22%2C%22filter_name%22%2C%22for_user%22%2C%22filters%22%5D&filters=%7B%22reference_doctype%22%3A%22POS%20Invoice%22%7D&or_filters=%5B%5B%22for_user%22%2C%22%3D%22%2C%22Administrator%22%5D%2C%5B%22for_user%22%2C%22%3D%22%2C%22%22%5D%5D&order_by=filter_name%20asc&doctype=List%20Filter&limit=20&_=1795759013379",
+          "status": 200,
+          "ttfb": 9
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.reportview.get",
+          "status": 200,
+          "ttfb": 27
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.reportview.get_count",
+          "status": 200,
+          "ttfb": 11
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.doctype.dashboard_chart.dashboard_chart.get",
+          "status": 200,
+          "ttfb": 39
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.doctype.dashboard_chart.dashboard_chart.get",
+          "status": 200,
+          "ttfb": 43
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.client.get?doctype=Dashboard%20Chart&name=Incoming%20Bills%20(Purchase%20Invoice)&_=1795759013380",
+          "status": 200,
+          "ttfb": 42
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.client.get?doctype=Dashboard%20Chart&name=Outgoing%20Bills%20(Sales%20Invoice)&_=1795759013381",
+          "status": 200,
+          "ttfb": 43
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoctype?doctype=Sales%20Invoice&with_parent=1&cached_timestamp=&_=1795759013382",
+          "status": 200,
+          "ttfb": 115
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoctype?doctype=User&with_parent=1&cached_timestamp=&_=1795759013383",
+          "status": 200,
+          "ttfb": 88
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoc?doctype=User&name=Administrator&_=1795759013384",
+          "status": 200,
+          "ttfb": 40
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.doctype.dashboard_settings.dashboard_settings.save_chart_config",
+          "status": 200,
+          "ttfb": 26
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.doctype.dashboard_chart.dashboard_chart.get",
+          "status": 200,
+          "ttfb": 30
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.core.doctype.user.user.get_timezones",
+          "status": 200,
+          "ttfb": 7
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.client.get?doctype=Dashboard%20Chart&name=Outgoing%20Bills%20(Sales%20Invoice)&_=1795759013385",
+          "status": 200,
+          "ttfb": 12
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.core.doctype.user.user.get_all_roles",
+          "status": 200,
+          "ttfb": 20
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.core.doctype.user.user.get_all_roles",
+          "status": 200,
+          "ttfb": 22
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.client.get_single_value?doctype=LDAP%20Settings&field=enabled&_=1795759013386",
+          "status": 200,
+          "ttfb": 45
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.apps.get_apps",
+          "status": 200,
+          "ttfb": 81
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/retail.sidebar_permissions.get_editor",
+          "status": 200,
+          "ttfb": 6
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.desktop.get_desktop_page",
+          "status": 200,
+          "ttfb": 127
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.desktop.get_desktop_page",
+          "status": 200,
+          "ttfb": 7
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoctype?doctype=Payment%20Entry&with_parent=1&cached_timestamp=&_=1795759013387",
+          "status": 200,
+          "ttfb": 90
+        }
+      ],
+      "state": {
+        "route": [
+          "Workspaces",
+          "Sales"
+        ],
+        "cards": [],
+        "loading": 0
+      }
+    },
+    {
+      "name": "Stocks",
+      "quiet_ms": 325,
+      "getdoctype": [],
+      "getdoc": [],
+      "requests": [
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoctype?doctype=POS%20Invoice&with_parent=1&cached_timestamp=&_=1795759013378",
+          "status": 200,
+          "ttfb": 76
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.listview.get_list_settings",
+          "status": 200,
+          "ttfb": 9
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.reportview.get_list?fields=%5B%22name%22%2C%22filter_name%22%2C%22for_user%22%2C%22filters%22%5D&filters=%7B%22reference_doctype%22%3A%22POS%20Invoice%22%7D&or_filters=%5B%5B%22for_user%22%2C%22%3D%22%2C%22Administrator%22%5D%2C%5B%22for_user%22%2C%22%3D%22%2C%22%22%5D%5D&order_by=filter_name%20asc&doctype=List%20Filter&limit=20&_=1795759013379",
+          "status": 200,
+          "ttfb": 9
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.reportview.get",
+          "status": 200,
+          "ttfb": 27
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.reportview.get_count",
+          "status": 200,
+          "ttfb": 11
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.doctype.dashboard_chart.dashboard_chart.get",
+          "status": 200,
+          "ttfb": 39
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.doctype.dashboard_chart.dashboard_chart.get",
+          "status": 200,
+          "ttfb": 43
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.client.get?doctype=Dashboard%20Chart&name=Incoming%20Bills%20(Purchase%20Invoice)&_=1795759013380",
+          "status": 200,
+          "ttfb": 42
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.client.get?doctype=Dashboard%20Chart&name=Outgoing%20Bills%20(Sales%20Invoice)&_=1795759013381",
+          "status": 200,
+          "ttfb": 43
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoctype?doctype=Sales%20Invoice&with_parent=1&cached_timestamp=&_=1795759013382",
+          "status": 200,
+          "ttfb": 115
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoctype?doctype=User&with_parent=1&cached_timestamp=&_=1795759013383",
+          "status": 200,
+          "ttfb": 88
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoc?doctype=User&name=Administrator&_=1795759013384",
+          "status": 200,
+          "ttfb": 40
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.doctype.dashboard_settings.dashboard_settings.save_chart_config",
+          "status": 200,
+          "ttfb": 26
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.doctype.dashboard_chart.dashboard_chart.get",
+          "status": 200,
+          "ttfb": 30
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.core.doctype.user.user.get_timezones",
+          "status": 200,
+          "ttfb": 7
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.client.get?doctype=Dashboard%20Chart&name=Outgoing%20Bills%20(Sales%20Invoice)&_=1795759013385",
+          "status": 200,
+          "ttfb": 12
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.core.doctype.user.user.get_all_roles",
+          "status": 200,
+          "ttfb": 20
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.core.doctype.user.user.get_all_roles",
+          "status": 200,
+          "ttfb": 22
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.client.get_single_value?doctype=LDAP%20Settings&field=enabled&_=1795759013386",
+          "status": 200,
+          "ttfb": 45
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.apps.get_apps",
+          "status": 200,
+          "ttfb": 81
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/retail.sidebar_permissions.get_editor",
+          "status": 200,
+          "ttfb": 6
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.desktop.get_desktop_page",
+          "status": 200,
+          "ttfb": 127
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.desktop.get_desktop_page",
+          "status": 200,
+          "ttfb": 7
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoctype?doctype=Payment%20Entry&with_parent=1&cached_timestamp=&_=1795759013387",
+          "status": 200,
+          "ttfb": 90
+        }
+      ],
+      "state": {
+        "route": [
+          "Workspaces",
+          "Stocks"
+        ],
+        "cards": [
+          "د.إ 2.04 M",
+          "19",
+          "د.إ 0.00",
+          "د.إ 0.00"
+        ],
+        "loading": 0
+      }
+    },
+    {
+      "name": "POS",
+      "quiet_ms": 276,
+      "getdoctype": [],
+      "getdoc": [],
+      "requests": [
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoctype?doctype=POS%20Invoice&with_parent=1&cached_timestamp=&_=1795759013378",
+          "status": 200,
+          "ttfb": 76
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.listview.get_list_settings",
+          "status": 200,
+          "ttfb": 9
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.reportview.get_list?fields=%5B%22name%22%2C%22filter_name%22%2C%22for_user%22%2C%22filters%22%5D&filters=%7B%22reference_doctype%22%3A%22POS%20Invoice%22%7D&or_filters=%5B%5B%22for_user%22%2C%22%3D%22%2C%22Administrator%22%5D%2C%5B%22for_user%22%2C%22%3D%22%2C%22%22%5D%5D&order_by=filter_name%20asc&doctype=List%20Filter&limit=20&_=1795759013379",
+          "status": 200,
+          "ttfb": 9
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.reportview.get",
+          "status": 200,
+          "ttfb": 27
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.reportview.get_count",
+          "status": 200,
+          "ttfb": 11
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.doctype.dashboard_chart.dashboard_chart.get",
+          "status": 200,
+          "ttfb": 39
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.doctype.dashboard_chart.dashboard_chart.get",
+          "status": 200,
+          "ttfb": 43
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.client.get?doctype=Dashboard%20Chart&name=Incoming%20Bills%20(Purchase%20Invoice)&_=1795759013380",
+          "status": 200,
+          "ttfb": 42
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.client.get?doctype=Dashboard%20Chart&name=Outgoing%20Bills%20(Sales%20Invoice)&_=1795759013381",
+          "status": 200,
+          "ttfb": 43
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoctype?doctype=Sales%20Invoice&with_parent=1&cached_timestamp=&_=1795759013382",
+          "status": 200,
+          "ttfb": 115
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoctype?doctype=User&with_parent=1&cached_timestamp=&_=1795759013383",
+          "status": 200,
+          "ttfb": 88
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoc?doctype=User&name=Administrator&_=1795759013384",
+          "status": 200,
+          "ttfb": 40
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.doctype.dashboard_settings.dashboard_settings.save_chart_config",
+          "status": 200,
+          "ttfb": 26
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.doctype.dashboard_chart.dashboard_chart.get",
+          "status": 200,
+          "ttfb": 30
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.core.doctype.user.user.get_timezones",
+          "status": 200,
+          "ttfb": 7
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.client.get?doctype=Dashboard%20Chart&name=Outgoing%20Bills%20(Sales%20Invoice)&_=1795759013385",
+          "status": 200,
+          "ttfb": 12
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.core.doctype.user.user.get_all_roles",
+          "status": 200,
+          "ttfb": 20
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.core.doctype.user.user.get_all_roles",
+          "status": 200,
+          "ttfb": 22
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.client.get_single_value?doctype=LDAP%20Settings&field=enabled&_=1795759013386",
+          "status": 200,
+          "ttfb": 45
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.apps.get_apps",
+          "status": 200,
+          "ttfb": 81
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/retail.sidebar_permissions.get_editor",
+          "status": 200,
+          "ttfb": 6
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.desktop.get_desktop_page",
+          "status": 200,
+          "ttfb": 127
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.desktop.get_desktop_page",
+          "status": 200,
+          "ttfb": 7
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoctype?doctype=Payment%20Entry&with_parent=1&cached_timestamp=&_=1795759013387",
+          "status": 200,
+          "ttfb": 90
+        }
+      ],
+      "state": {
+        "route": [
+          "Workspaces",
+          "POS"
+        ],
+        "cards": [],
+        "loading": 0
+      }
+    },
+    {
+      "name": "Accounts",
+      "quiet_ms": 351,
+      "getdoctype": [],
+      "getdoc": [],
+      "requests": [
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoctype?doctype=POS%20Invoice&with_parent=1&cached_timestamp=&_=1795759013378",
+          "status": 200,
+          "ttfb": 76
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.listview.get_list_settings",
+          "status": 200,
+          "ttfb": 9
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.reportview.get_list?fields=%5B%22name%22%2C%22filter_name%22%2C%22for_user%22%2C%22filters%22%5D&filters=%7B%22reference_doctype%22%3A%22POS%20Invoice%22%7D&or_filters=%5B%5B%22for_user%22%2C%22%3D%22%2C%22Administrator%22%5D%2C%5B%22for_user%22%2C%22%3D%22%2C%22%22%5D%5D&order_by=filter_name%20asc&doctype=List%20Filter&limit=20&_=1795759013379",
+          "status": 200,
+          "ttfb": 9
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.reportview.get",
+          "status": 200,
+          "ttfb": 27
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.reportview.get_count",
+          "status": 200,
+          "ttfb": 11
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.doctype.dashboard_chart.dashboard_chart.get",
+          "status": 200,
+          "ttfb": 39
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.doctype.dashboard_chart.dashboard_chart.get",
+          "status": 200,
+          "ttfb": 43
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.client.get?doctype=Dashboard%20Chart&name=Incoming%20Bills%20(Purchase%20Invoice)&_=1795759013380",
+          "status": 200,
+          "ttfb": 42
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.client.get?doctype=Dashboard%20Chart&name=Outgoing%20Bills%20(Sales%20Invoice)&_=1795759013381",
+          "status": 200,
+          "ttfb": 43
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoctype?doctype=Sales%20Invoice&with_parent=1&cached_timestamp=&_=1795759013382",
+          "status": 200,
+          "ttfb": 115
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoctype?doctype=User&with_parent=1&cached_timestamp=&_=1795759013383",
+          "status": 200,
+          "ttfb": 88
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoc?doctype=User&name=Administrator&_=1795759013384",
+          "status": 200,
+          "ttfb": 40
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.doctype.dashboard_settings.dashboard_settings.save_chart_config",
+          "status": 200,
+          "ttfb": 26
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.doctype.dashboard_chart.dashboard_chart.get",
+          "status": 200,
+          "ttfb": 30
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.core.doctype.user.user.get_timezones",
+          "status": 200,
+          "ttfb": 7
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.client.get?doctype=Dashboard%20Chart&name=Outgoing%20Bills%20(Sales%20Invoice)&_=1795759013385",
+          "status": 200,
+          "ttfb": 12
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.core.doctype.user.user.get_all_roles",
+          "status": 200,
+          "ttfb": 20
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.core.doctype.user.user.get_all_roles",
+          "status": 200,
+          "ttfb": 22
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.client.get_single_value?doctype=LDAP%20Settings&field=enabled&_=1795759013386",
+          "status": 200,
+          "ttfb": 45
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.apps.get_apps",
+          "status": 200,
+          "ttfb": 81
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/retail.sidebar_permissions.get_editor",
+          "status": 200,
+          "ttfb": 6
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.desktop.get_desktop_page",
+          "status": 200,
+          "ttfb": 127
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.desktop.get_desktop_page",
+          "status": 200,
+          "ttfb": 7
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoctype?doctype=Payment%20Entry&with_parent=1&cached_timestamp=&_=1795759013387",
+          "status": 200,
+          "ttfb": 90
+        }
+      ],
+      "state": {
+        "route": [
+          "Workspaces",
+          "Accounts"
+        ],
+        "cards": [],
+        "loading": 0
+      }
+    },
+    {
+      "name": "Reports",
+      "quiet_ms": 129,
+      "getdoctype": [],
+      "getdoc": [],
+      "requests": [
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoctype?doctype=POS%20Invoice&with_parent=1&cached_timestamp=&_=1795759013378",
+          "status": 200,
+          "ttfb": 76
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.listview.get_list_settings",
+          "status": 200,
+          "ttfb": 9
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.reportview.get_list?fields=%5B%22name%22%2C%22filter_name%22%2C%22for_user%22%2C%22filters%22%5D&filters=%7B%22reference_doctype%22%3A%22POS%20Invoice%22%7D&or_filters=%5B%5B%22for_user%22%2C%22%3D%22%2C%22Administrator%22%5D%2C%5B%22for_user%22%2C%22%3D%22%2C%22%22%5D%5D&order_by=filter_name%20asc&doctype=List%20Filter&limit=20&_=1795759013379",
+          "status": 200,
+          "ttfb": 9
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.reportview.get",
+          "status": 200,
+          "ttfb": 27
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.reportview.get_count",
+          "status": 200,
+          "ttfb": 11
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.doctype.dashboard_chart.dashboard_chart.get",
+          "status": 200,
+          "ttfb": 39
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.doctype.dashboard_chart.dashboard_chart.get",
+          "status": 200,
+          "ttfb": 43
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.client.get?doctype=Dashboard%20Chart&name=Incoming%20Bills%20(Purchase%20Invoice)&_=1795759013380",
+          "status": 200,
+          "ttfb": 42
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.client.get?doctype=Dashboard%20Chart&name=Outgoing%20Bills%20(Sales%20Invoice)&_=1795759013381",
+          "status": 200,
+          "ttfb": 43
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoctype?doctype=Sales%20Invoice&with_parent=1&cached_timestamp=&_=1795759013382",
+          "status": 200,
+          "ttfb": 115
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoctype?doctype=User&with_parent=1&cached_timestamp=&_=1795759013383",
+          "status": 200,
+          "ttfb": 88
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoc?doctype=User&name=Administrator&_=1795759013384",
+          "status": 200,
+          "ttfb": 40
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.doctype.dashboard_settings.dashboard_settings.save_chart_config",
+          "status": 200,
+          "ttfb": 26
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.doctype.dashboard_chart.dashboard_chart.get",
+          "status": 200,
+          "ttfb": 30
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.core.doctype.user.user.get_timezones",
+          "status": 200,
+          "ttfb": 7
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.client.get?doctype=Dashboard%20Chart&name=Outgoing%20Bills%20(Sales%20Invoice)&_=1795759013385",
+          "status": 200,
+          "ttfb": 12
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.core.doctype.user.user.get_all_roles",
+          "status": 200,
+          "ttfb": 20
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.core.doctype.user.user.get_all_roles",
+          "status": 200,
+          "ttfb": 22
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.client.get_single_value?doctype=LDAP%20Settings&field=enabled&_=1795759013386",
+          "status": 200,
+          "ttfb": 45
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.apps.get_apps",
+          "status": 200,
+          "ttfb": 81
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/retail.sidebar_permissions.get_editor",
+          "status": 200,
+          "ttfb": 6
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.desktop.get_desktop_page",
+          "status": 200,
+          "ttfb": 127
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.desktop.get_desktop_page",
+          "status": 200,
+          "ttfb": 7
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoctype?doctype=Payment%20Entry&with_parent=1&cached_timestamp=&_=1795759013387",
+          "status": 200,
+          "ttfb": 90
+        }
+      ],
+      "state": {
+        "route": [
+          "Workspaces",
+          "Reports"
+        ],
+        "cards": [],
+        "loading": 0
+      }
+    },
+    {
+      "name": "Business Home",
+      "quiet_ms": 113,
+      "getdoctype": [],
+      "getdoc": [],
+      "requests": [
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoctype?doctype=POS%20Invoice&with_parent=1&cached_timestamp=&_=1795759013378",
+          "status": 200,
+          "ttfb": 76
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.listview.get_list_settings",
+          "status": 200,
+          "ttfb": 9
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.reportview.get_list?fields=%5B%22name%22%2C%22filter_name%22%2C%22for_user%22%2C%22filters%22%5D&filters=%7B%22reference_doctype%22%3A%22POS%20Invoice%22%7D&or_filters=%5B%5B%22for_user%22%2C%22%3D%22%2C%22Administrator%22%5D%2C%5B%22for_user%22%2C%22%3D%22%2C%22%22%5D%5D&order_by=filter_name%20asc&doctype=List%20Filter&limit=20&_=1795759013379",
+          "status": 200,
+          "ttfb": 9
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.reportview.get",
+          "status": 200,
+          "ttfb": 27
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.reportview.get_count",
+          "status": 200,
+          "ttfb": 11
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.doctype.dashboard_chart.dashboard_chart.get",
+          "status": 200,
+          "ttfb": 39
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.doctype.dashboard_chart.dashboard_chart.get",
+          "status": 200,
+          "ttfb": 43
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.client.get?doctype=Dashboard%20Chart&name=Incoming%20Bills%20(Purchase%20Invoice)&_=1795759013380",
+          "status": 200,
+          "ttfb": 42
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.client.get?doctype=Dashboard%20Chart&name=Outgoing%20Bills%20(Sales%20Invoice)&_=1795759013381",
+          "status": 200,
+          "ttfb": 43
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoctype?doctype=Sales%20Invoice&with_parent=1&cached_timestamp=&_=1795759013382",
+          "status": 200,
+          "ttfb": 115
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoctype?doctype=User&with_parent=1&cached_timestamp=&_=1795759013383",
+          "status": 200,
+          "ttfb": 88
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoc?doctype=User&name=Administrator&_=1795759013384",
+          "status": 200,
+          "ttfb": 40
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.doctype.dashboard_settings.dashboard_settings.save_chart_config",
+          "status": 200,
+          "ttfb": 26
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.doctype.dashboard_chart.dashboard_chart.get",
+          "status": 200,
+          "ttfb": 30
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.core.doctype.user.user.get_timezones",
+          "status": 200,
+          "ttfb": 7
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.client.get?doctype=Dashboard%20Chart&name=Outgoing%20Bills%20(Sales%20Invoice)&_=1795759013385",
+          "status": 200,
+          "ttfb": 12
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.core.doctype.user.user.get_all_roles",
+          "status": 200,
+          "ttfb": 20
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.core.doctype.user.user.get_all_roles",
+          "status": 200,
+          "ttfb": 22
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.client.get_single_value?doctype=LDAP%20Settings&field=enabled&_=1795759013386",
+          "status": 200,
+          "ttfb": 45
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.apps.get_apps",
+          "status": 200,
+          "ttfb": 81
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/retail.sidebar_permissions.get_editor",
+          "status": 200,
+          "ttfb": 6
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.desktop.get_desktop_page",
+          "status": 200,
+          "ttfb": 127
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.desktop.get_desktop_page",
+          "status": 200,
+          "ttfb": 7
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoctype?doctype=Payment%20Entry&with_parent=1&cached_timestamp=&_=1795759013387",
+          "status": 200,
+          "ttfb": 90
+        }
+      ],
+      "state": {
+        "route": [
+          "Workspaces",
+          "Business Home"
+        ],
+        "cards": [
+          "0.00",
+          "د.إ 0.00",
+          "0",
+          "0",
+          "د.إ 0.00",
+          "د.إ 0.00",
+          "0",
+          "0"
+        ],
+        "loading": 0
+      }
+    },
+    {
+      "name": "Item",
+      "quiet_ms": 406,
+      "getdoctype": [
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoctype?doctype=Item&with_parent=1&cached_timestamp=&_=1795759013372",
+          "status": 200,
+          "ttfb": 53
+        }
+      ],
+      "getdoc": [],
+      "requests": [
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoctype?doctype=POS%20Invoice&with_parent=1&cached_timestamp=&_=1795759013378",
+          "status": 200,
+          "ttfb": 76
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.listview.get_list_settings",
+          "status": 200,
+          "ttfb": 9
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.reportview.get_list?fields=%5B%22name%22%2C%22filter_name%22%2C%22for_user%22%2C%22filters%22%5D&filters=%7B%22reference_doctype%22%3A%22POS%20Invoice%22%7D&or_filters=%5B%5B%22for_user%22%2C%22%3D%22%2C%22Administrator%22%5D%2C%5B%22for_user%22%2C%22%3D%22%2C%22%22%5D%5D&order_by=filter_name%20asc&doctype=List%20Filter&limit=20&_=1795759013379",
+          "status": 200,
+          "ttfb": 9
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.reportview.get",
+          "status": 200,
+          "ttfb": 27
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.reportview.get_count",
+          "status": 200,
+          "ttfb": 11
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.doctype.dashboard_chart.dashboard_chart.get",
+          "status": 200,
+          "ttfb": 39
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.doctype.dashboard_chart.dashboard_chart.get",
+          "status": 200,
+          "ttfb": 43
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.client.get?doctype=Dashboard%20Chart&name=Incoming%20Bills%20(Purchase%20Invoice)&_=1795759013380",
+          "status": 200,
+          "ttfb": 42
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.client.get?doctype=Dashboard%20Chart&name=Outgoing%20Bills%20(Sales%20Invoice)&_=1795759013381",
+          "status": 200,
+          "ttfb": 43
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoctype?doctype=Sales%20Invoice&with_parent=1&cached_timestamp=&_=1795759013382",
+          "status": 200,
+          "ttfb": 115
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoctype?doctype=User&with_parent=1&cached_timestamp=&_=1795759013383",
+          "status": 200,
+          "ttfb": 88
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoc?doctype=User&name=Administrator&_=1795759013384",
+          "status": 200,
+          "ttfb": 40
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.doctype.dashboard_settings.dashboard_settings.save_chart_config",
+          "status": 200,
+          "ttfb": 26
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.doctype.dashboard_chart.dashboard_chart.get",
+          "status": 200,
+          "ttfb": 30
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.core.doctype.user.user.get_timezones",
+          "status": 200,
+          "ttfb": 7
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.client.get?doctype=Dashboard%20Chart&name=Outgoing%20Bills%20(Sales%20Invoice)&_=1795759013385",
+          "status": 200,
+          "ttfb": 12
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.core.doctype.user.user.get_all_roles",
+          "status": 200,
+          "ttfb": 20
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.core.doctype.user.user.get_all_roles",
+          "status": 200,
+          "ttfb": 22
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.client.get_single_value?doctype=LDAP%20Settings&field=enabled&_=1795759013386",
+          "status": 200,
+          "ttfb": 45
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.apps.get_apps",
+          "status": 200,
+          "ttfb": 81
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/retail.sidebar_permissions.get_editor",
+          "status": 200,
+          "ttfb": 6
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.desktop.get_desktop_page",
+          "status": 200,
+          "ttfb": 127
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.desktop.get_desktop_page",
+          "status": 200,
+          "ttfb": 7
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoctype?doctype=Payment%20Entry&with_parent=1&cached_timestamp=&_=1795759013387",
+          "status": 200,
+          "ttfb": 90
+        }
+      ],
+      "state": {
+        "route": [
+          "List",
+          "Item",
+          "List"
+        ],
+        "cards": [],
+        "loading": 0
+      }
+    },
+    {
+      "name": "Customer",
+      "quiet_ms": 285,
+      "getdoctype": [
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoctype?doctype=Customer&with_parent=1&cached_timestamp=&_=1795759013374",
+          "status": 200,
+          "ttfb": 46
+        }
+      ],
+      "getdoc": [],
+      "requests": [
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoctype?doctype=POS%20Invoice&with_parent=1&cached_timestamp=&_=1795759013378",
+          "status": 200,
+          "ttfb": 76
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.listview.get_list_settings",
+          "status": 200,
+          "ttfb": 9
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.reportview.get_list?fields=%5B%22name%22%2C%22filter_name%22%2C%22for_user%22%2C%22filters%22%5D&filters=%7B%22reference_doctype%22%3A%22POS%20Invoice%22%7D&or_filters=%5B%5B%22for_user%22%2C%22%3D%22%2C%22Administrator%22%5D%2C%5B%22for_user%22%2C%22%3D%22%2C%22%22%5D%5D&order_by=filter_name%20asc&doctype=List%20Filter&limit=20&_=1795759013379",
+          "status": 200,
+          "ttfb": 9
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.reportview.get",
+          "status": 200,
+          "ttfb": 27
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.reportview.get_count",
+          "status": 200,
+          "ttfb": 11
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.doctype.dashboard_chart.dashboard_chart.get",
+          "status": 200,
+          "ttfb": 39
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.doctype.dashboard_chart.dashboard_chart.get",
+          "status": 200,
+          "ttfb": 43
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.client.get?doctype=Dashboard%20Chart&name=Incoming%20Bills%20(Purchase%20Invoice)&_=1795759013380",
+          "status": 200,
+          "ttfb": 42
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.client.get?doctype=Dashboard%20Chart&name=Outgoing%20Bills%20(Sales%20Invoice)&_=1795759013381",
+          "status": 200,
+          "ttfb": 43
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoctype?doctype=Sales%20Invoice&with_parent=1&cached_timestamp=&_=1795759013382",
+          "status": 200,
+          "ttfb": 115
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoctype?doctype=User&with_parent=1&cached_timestamp=&_=1795759013383",
+          "status": 200,
+          "ttfb": 88
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoc?doctype=User&name=Administrator&_=1795759013384",
+          "status": 200,
+          "ttfb": 40
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.doctype.dashboard_settings.dashboard_settings.save_chart_config",
+          "status": 200,
+          "ttfb": 26
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.doctype.dashboard_chart.dashboard_chart.get",
+          "status": 200,
+          "ttfb": 30
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.core.doctype.user.user.get_timezones",
+          "status": 200,
+          "ttfb": 7
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.client.get?doctype=Dashboard%20Chart&name=Outgoing%20Bills%20(Sales%20Invoice)&_=1795759013385",
+          "status": 200,
+          "ttfb": 12
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.core.doctype.user.user.get_all_roles",
+          "status": 200,
+          "ttfb": 20
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.core.doctype.user.user.get_all_roles",
+          "status": 200,
+          "ttfb": 22
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.client.get_single_value?doctype=LDAP%20Settings&field=enabled&_=1795759013386",
+          "status": 200,
+          "ttfb": 45
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.apps.get_apps",
+          "status": 200,
+          "ttfb": 81
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/retail.sidebar_permissions.get_editor",
+          "status": 200,
+          "ttfb": 6
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.desktop.get_desktop_page",
+          "status": 200,
+          "ttfb": 127
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.desktop.get_desktop_page",
+          "status": 200,
+          "ttfb": 7
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoctype?doctype=Payment%20Entry&with_parent=1&cached_timestamp=&_=1795759013387",
+          "status": 200,
+          "ttfb": 90
+        }
+      ],
+      "state": {
+        "route": [
+          "List",
+          "Customer",
+          "List"
+        ],
+        "cards": [],
+        "loading": 0
+      }
+    },
+    {
+      "name": "Purchase Invoice",
+      "quiet_ms": 481,
+      "getdoctype": [
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoctype?doctype=Purchase%20Invoice&with_parent=1&cached_timestamp=&_=1795759013376",
+          "status": 200,
+          "ttfb": 121
+        }
+      ],
+      "getdoc": [],
+      "requests": [
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoctype?doctype=POS%20Invoice&with_parent=1&cached_timestamp=&_=1795759013378",
+          "status": 200,
+          "ttfb": 76
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.listview.get_list_settings",
+          "status": 200,
+          "ttfb": 9
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.reportview.get_list?fields=%5B%22name%22%2C%22filter_name%22%2C%22for_user%22%2C%22filters%22%5D&filters=%7B%22reference_doctype%22%3A%22POS%20Invoice%22%7D&or_filters=%5B%5B%22for_user%22%2C%22%3D%22%2C%22Administrator%22%5D%2C%5B%22for_user%22%2C%22%3D%22%2C%22%22%5D%5D&order_by=filter_name%20asc&doctype=List%20Filter&limit=20&_=1795759013379",
+          "status": 200,
+          "ttfb": 9
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.reportview.get",
+          "status": 200,
+          "ttfb": 27
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.reportview.get_count",
+          "status": 200,
+          "ttfb": 11
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.doctype.dashboard_chart.dashboard_chart.get",
+          "status": 200,
+          "ttfb": 39
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.doctype.dashboard_chart.dashboard_chart.get",
+          "status": 200,
+          "ttfb": 43
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.client.get?doctype=Dashboard%20Chart&name=Incoming%20Bills%20(Purchase%20Invoice)&_=1795759013380",
+          "status": 200,
+          "ttfb": 42
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.client.get?doctype=Dashboard%20Chart&name=Outgoing%20Bills%20(Sales%20Invoice)&_=1795759013381",
+          "status": 200,
+          "ttfb": 43
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoctype?doctype=Sales%20Invoice&with_parent=1&cached_timestamp=&_=1795759013382",
+          "status": 200,
+          "ttfb": 115
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoctype?doctype=User&with_parent=1&cached_timestamp=&_=1795759013383",
+          "status": 200,
+          "ttfb": 88
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoc?doctype=User&name=Administrator&_=1795759013384",
+          "status": 200,
+          "ttfb": 40
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.doctype.dashboard_settings.dashboard_settings.save_chart_config",
+          "status": 200,
+          "ttfb": 26
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.doctype.dashboard_chart.dashboard_chart.get",
+          "status": 200,
+          "ttfb": 30
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.core.doctype.user.user.get_timezones",
+          "status": 200,
+          "ttfb": 7
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.client.get?doctype=Dashboard%20Chart&name=Outgoing%20Bills%20(Sales%20Invoice)&_=1795759013385",
+          "status": 200,
+          "ttfb": 12
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.core.doctype.user.user.get_all_roles",
+          "status": 200,
+          "ttfb": 20
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.core.doctype.user.user.get_all_roles",
+          "status": 200,
+          "ttfb": 22
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.client.get_single_value?doctype=LDAP%20Settings&field=enabled&_=1795759013386",
+          "status": 200,
+          "ttfb": 45
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.apps.get_apps",
+          "status": 200,
+          "ttfb": 81
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/retail.sidebar_permissions.get_editor",
+          "status": 200,
+          "ttfb": 6
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.desktop.get_desktop_page",
+          "status": 200,
+          "ttfb": 127
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.desktop.get_desktop_page",
+          "status": 200,
+          "ttfb": 7
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoctype?doctype=Payment%20Entry&with_parent=1&cached_timestamp=&_=1795759013387",
+          "status": 200,
+          "ttfb": 90
+        }
+      ],
+      "state": {
+        "route": [
+          "List",
+          "Purchase Invoice",
+          "List"
+        ],
+        "cards": [],
+        "loading": 0
+      }
+    },
+    {
+      "name": "POS Invoice",
+      "quiet_ms": 407,
+      "getdoctype": [
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoctype?doctype=POS%20Invoice&with_parent=1&cached_timestamp=&_=1795759013378",
+          "status": 200,
+          "ttfb": 76
+        }
+      ],
+      "getdoc": [],
+      "requests": [
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoctype?doctype=POS%20Invoice&with_parent=1&cached_timestamp=&_=1795759013378",
+          "status": 200,
+          "ttfb": 76
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.listview.get_list_settings",
+          "status": 200,
+          "ttfb": 9
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.reportview.get_list?fields=%5B%22name%22%2C%22filter_name%22%2C%22for_user%22%2C%22filters%22%5D&filters=%7B%22reference_doctype%22%3A%22POS%20Invoice%22%7D&or_filters=%5B%5B%22for_user%22%2C%22%3D%22%2C%22Administrator%22%5D%2C%5B%22for_user%22%2C%22%3D%22%2C%22%22%5D%5D&order_by=filter_name%20asc&doctype=List%20Filter&limit=20&_=1795759013379",
+          "status": 200,
+          "ttfb": 9
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.reportview.get",
+          "status": 200,
+          "ttfb": 27
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.reportview.get_count",
+          "status": 200,
+          "ttfb": 11
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.doctype.dashboard_chart.dashboard_chart.get",
+          "status": 200,
+          "ttfb": 39
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.doctype.dashboard_chart.dashboard_chart.get",
+          "status": 200,
+          "ttfb": 43
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.client.get?doctype=Dashboard%20Chart&name=Incoming%20Bills%20(Purchase%20Invoice)&_=1795759013380",
+          "status": 200,
+          "ttfb": 42
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.client.get?doctype=Dashboard%20Chart&name=Outgoing%20Bills%20(Sales%20Invoice)&_=1795759013381",
+          "status": 200,
+          "ttfb": 43
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoctype?doctype=Sales%20Invoice&with_parent=1&cached_timestamp=&_=1795759013382",
+          "status": 200,
+          "ttfb": 115
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoctype?doctype=User&with_parent=1&cached_timestamp=&_=1795759013383",
+          "status": 200,
+          "ttfb": 88
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoc?doctype=User&name=Administrator&_=1795759013384",
+          "status": 200,
+          "ttfb": 40
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.doctype.dashboard_settings.dashboard_settings.save_chart_config",
+          "status": 200,
+          "ttfb": 26
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.doctype.dashboard_chart.dashboard_chart.get",
+          "status": 200,
+          "ttfb": 30
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.core.doctype.user.user.get_timezones",
+          "status": 200,
+          "ttfb": 7
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.client.get?doctype=Dashboard%20Chart&name=Outgoing%20Bills%20(Sales%20Invoice)&_=1795759013385",
+          "status": 200,
+          "ttfb": 12
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.core.doctype.user.user.get_all_roles",
+          "status": 200,
+          "ttfb": 20
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.core.doctype.user.user.get_all_roles",
+          "status": 200,
+          "ttfb": 22
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.client.get_single_value?doctype=LDAP%20Settings&field=enabled&_=1795759013386",
+          "status": 200,
+          "ttfb": 45
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.apps.get_apps",
+          "status": 200,
+          "ttfb": 81
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/retail.sidebar_permissions.get_editor",
+          "status": 200,
+          "ttfb": 6
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.desktop.get_desktop_page",
+          "status": 200,
+          "ttfb": 127
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.desktop.get_desktop_page",
+          "status": 200,
+          "ttfb": 7
+        },
+        {
+          "url": "http://retail-test.localhost:45135/api/method/frappe.desk.form.load.getdoctype?doctype=Payment%20Entry&with_parent=1&cached_timestamp=&_=1795759013387",
+          "status": 200,
+          "ttfb": 90
+        }
+      ],
+      "state": {
+        "route": [
+          "List",
+          "POS Invoice",
+          "List"
+        ],
+        "cards": [],
+        "loading": 0
+      }
+    }
+  ],
+  "dedupe": {
+    "loaded": true,
+    "requests": 1
+  },
+  "errors": [],
+  "failedRequests": [
+    {
+      "url": "http://retail-test.localhost:45135/socket.io/?EIO=4&transport=polling&t=Q8Ra_y4",
+      "status": 404
+    },
+    {
+      "url": "http://retail-test.localhost:45135/socket.io/?EIO=4&transport=polling&t=Q8Rb0I6",
+      "status": 404
+    },
+    {
+      "url": "http://retail-test.localhost:45135/socket.io/?EIO=4&transport=polling&t=Q8Rb0ci",
+      "status": 404
+    },
+    {
+      "url": "http://retail-test.localhost:45135/socket.io/?EIO=4&transport=polling&t=Q8Rb1Cs",
+      "status": 404
+    }
+  ]
+}

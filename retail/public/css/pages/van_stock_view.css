@@ -37,28 +37,33 @@
 	font-weight: 700;
 }
 
-.van-stock-view .van-stock-table-wrap {
+.van-stock-view .van-stock-table-wrap,
+.van-stock-ledger-dialog .van-stock-table-wrap {
 	overflow: auto;
 	border: 1px solid var(--border-color);
 	border-radius: 8px;
 	background: var(--card-bg);
 }
 
-.van-stock-view .van-stock-table {
+.van-stock-view .van-stock-table,
+.van-stock-ledger-dialog .van-stock-table {
 	width: 100%;
 	border-collapse: collapse;
 	min-width: 980px;
 }
 
 .van-stock-view .van-stock-table th,
-.van-stock-view .van-stock-table td {
+.van-stock-ledger-dialog .van-stock-table th,
+.van-stock-view .van-stock-table td,
+.van-stock-ledger-dialog .van-stock-table td {
 	border-bottom: 1px solid var(--border-color);
 	padding: 10px 12px;
 	vertical-align: middle;
 	white-space: nowrap;
 }
 
-.van-stock-view .van-stock-table th {
+.van-stock-view .van-stock-table th,
+.van-stock-ledger-dialog .van-stock-table th {
 	background: var(--subtle-fg);
 	color: var(--text-muted);
 	font-weight: 700;
@@ -66,7 +71,9 @@
 }
 
 .van-stock-view .van-stock-table td.numeric,
-.van-stock-view .van-stock-table th.numeric {
+.van-stock-ledger-dialog .van-stock-table td.numeric,
+.van-stock-view .van-stock-table th.numeric,
+.van-stock-ledger-dialog .van-stock-table th.numeric {
 	text-align: right;
 }
 
@@ -86,4 +93,56 @@
 	.van-stock-view .van-stock-summary {
 		grid-template-columns: repeat(2, minmax(120px, 1fr));
 	}
+}
+
+.van-stock-ledger-dialog .modal-dialog {
+	width: calc(100vw - 48px);
+	max-width: 1800px;
+}
+
+.van-stock-ledger-dialog .van-stock-table-wrap {
+	max-height: 60vh;
+}
+
+.van-stock-ledger-dialog .van-stock-table {
+	min-width: 0;
+	table-layout: fixed;
+	font-size: 12px;
+	font-variant-numeric: tabular-nums;
+}
+
+.van-stock-ledger-dialog .van-stock-table th {
+	position: sticky;
+	top: 0;
+	z-index: 1;
+}
+
+.van-stock-ledger-dialog .van-stock-table td.ledger-in-qty {
+	color: var(--green-600, #16803c);
+	font-weight: 600;
+}
+
+.van-stock-ledger-dialog .van-stock-table td.ledger-out-qty {
+	color: var(--red-600, #c92a2a);
+	font-weight: 600;
+}
+
+.van-stock-ledger-dialog .van-stock-table th,
+.van-stock-ledger-dialog .van-stock-table td {
+	padding: 9px 6px;
+	white-space: normal;
+	overflow-wrap: anywhere;
+	line-height: 1.45;
+}
+
+.van-stock-ledger-dialog .van-stock-table th:nth-child(1) { width: 7%; }
+.van-stock-ledger-dialog .van-stock-table th:nth-child(2) { width: 9%; }
+.van-stock-ledger-dialog .van-stock-table th:nth-child(3) { width: 6%; }
+.van-stock-ledger-dialog .van-stock-table th:nth-child(4) { width: 10%; }
+.van-stock-ledger-dialog .van-stock-table th:nth-child(5) { width: 4%; }
+.van-stock-ledger-dialog .van-stock-table th:nth-child(6) { width: 10%; }
+
+.van-stock-ledger-dialog [data-fieldname="item_code"] {
+	width: 320px;
+	max-width: 100%;
 }

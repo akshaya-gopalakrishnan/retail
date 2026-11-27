@@ -1,0 +1,68 @@
+{
+ "doctype": "DocType",
+ "name": "Van Expense Type",
+ "module": "Retail-app",
+ "engine": "InnoDB",
+ "field_order": [
+  "expense_type",
+  "company",
+  "expense_account",
+  "enabled",
+  "proof_required"
+ ],
+ "fields": [
+  {
+   "fieldname": "expense_type",
+   "label": "Expense Type",
+   "fieldtype": "Data",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "company",
+   "label": "Company",
+   "fieldtype": "Link",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "expense_account",
+   "label": "Expense Account",
+   "fieldtype": "Link",
+   "options": "Account",
+   "reqd": 1
+  },
+  {
+   "fieldname": "enabled",
+   "label": "Enabled",
+   "fieldtype": "Check",
+   "default": "1"
+  },
+  {
+   "fieldname": "proof_required",
+   "label": "Proof Required",
+   "fieldtype": "Check",
+   "default": "1"
+  }
+ ],
+ "permissions": [
+  {
+   "role": "Van Sales Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "Van Sales User",
+   "read": 1
+  }
+ ],
+ "track_changes": 1,
+ "autoname": "field:expense_type"
+}

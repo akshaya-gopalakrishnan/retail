@@ -40,10 +40,10 @@
 		packing_uom: "UOM",
 		uom: "Internal UOM",
 		conversion_factor: "Conv fac",
-		purchase_net_rate: "Pur Exc",
-		purchase_gross_rate: "Pur Inc",
-		selling_net_rate: "Sell Exc",
-		selling_gross_rate: "Sell Inc",
+		purchase_net_rate: "PR Excl VAT",
+		purchase_gross_rate: "PR Incl VAT",
+		selling_net_rate: "SR Excl VAT",
+		selling_gross_rate: "SR Incl VAT",
 		is_fast_plu_item: "Fast PLU",
 		disabled: "Disabled",
 	};
@@ -228,7 +228,7 @@
 		}
 		const updates = {};
 		if (!frm.doc.custom_barcode) await previewScaleItemBarcode(frm);
-		if (!frm.doc.custom_scale_barcode_type) updates.custom_scale_barcode_type = "Weight";
+		if (!frm.doc.custom_scale_barcode_type) updates.custom_scale_barcode_type = "Weight+TotPrice";
 		updates.is_scale_item = 1;
 		updates.scale_enabled = 1;
 		updates.scale_barcode_type = normalizeScaleBarcodeType(
@@ -491,7 +491,31 @@
 			row.__retail_last_auto_packing_name = packingName;
 			updates.packing_name = packingName;
 		}
-		return frappe.model.set_value(cdt, cdn, updates);
+		return frappe.model.set_value(cdt, cdn, updates)
+			.then(() => previewPackingBarcode(frm, cdt, cdn));
+	}
+
+	function previewPackingBarcode(frm, cdt, cdn) {
+		// Serialize rows so previews in the same unsaved Item remain distinct.
+		const run = async () => {
+			const row = locals[cdt]?.[cdn];
+			if (!row || row.barcode || !(row.packing_uom || row.uom) || flt(row.conversion_factor) <= 0) return;
+			const excluded = [frm.doc.custom_barcode,
+				...(frm.doc.custom_retail_packing_detail || []).map(pack => pack.barcode),
+				...(frm.doc.barcodes || []).map(pack => pack.barcode)].filter(Boolean);
+			const { message } = await frappe.call({
+				method: "retail.api.scale_item_api.preview_packing_barcode",
+				args: { excluded: JSON.stringify(excluded) },
+			});
+			if (locals[cdt]?.[cdn] !== row || row.barcode ||
+				!(row.packing_uom || row.uom) || flt(row.conversion_factor) <= 0 ||
+				!(frm.doc.custom_retail_packing_detail || []).includes(row)) return;
+			row.__retail_packing_barcode_preview = message;
+			await frappe.model.set_value(cdt, cdn, "barcode", message);
+		};
+		const pending = (frm._packing_barcode_queue || Promise.resolve()).then(run, run);
+		frm._packing_barcode_queue = pending;
+		return pending;
 	}
 
 	function getAutoPackingName(itemName, uom, conversionFactor) {

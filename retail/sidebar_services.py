@@ -374,6 +374,10 @@ def authorize_service(command, form):
         return True
     if command in ("retail.van_stock.get_van_stock_view", "retail.van_stock.get_van_warehouse_stock"):
         return capability("Van Sales Stock View Link", "Stock Entry")
+    if command == "retail.retail_app.retail_dashboard.get_business_home_profit_cards":
+        from retail.retail_app.retail_dashboard import validate_card_contexts
+        validate_card_contexts(form.get("contexts"))
+        return True
     if command.startswith("retail.retail_app.retail_dashboard."):
         function = command.rsplit(".", 1)[1]
         if function in ("get_pos_top_selling_products", "get_pos_sales_by_counter", "get_pos_sales_trend_7_days"):

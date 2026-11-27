@@ -148,10 +148,7 @@ def boot(bootinfo):
     bootinfo.retail_sidebar_labels = labels()
     selected = selection()
     bootinfo.retail_sidebar_registry = registry()  # Navigation needs the complete route index.
-    bootinfo.retail_sidebar_editor_registry = registry() if selected is None or is_super_admin() else [
-        dict(group, children=[child for child in group["children"] if child["id"] in selected])
-        for group in registry() if group["id"] in selected
-    ]
+    bootinfo.retail_sidebar_editor_registry = None  # User editor loads get_editor on demand.
     navigation_selected = selection(navigation=True)
     bootinfo.retail_awesome_bar_allowed = navigation_selected is None or AWESOME_BAR in navigation_selected
     if not bootinfo.retail_awesome_bar_allowed and bootinfo.get("desk_settings") is not None:
@@ -520,6 +517,16 @@ def guard_request():
                            "frappe.desk.query_report.", "frappe.desk.desk_page.")) and (dt or report or page or payloads):
         # Native endpoints perform action permissions after this additive check.
         return
+    # Transaction dependencies must be checked before controller-name menu matching.
+    # Accounting Dimension is configuration, not a request to open its menu.
+    if command == "erpnext.accounts.doctype.accounting_dimension.accounting_dimension.get_dimensions":
+        from retail.sidebar_services import authorize_link_service
+        if authorize_link_service(command, form):
+            return
+    if command == "erpnext.accounts.doctype.unreconcile_payment.unreconcile_payment.doc_has_references":
+        from retail.sidebar_services import authorize_service
+        if authorize_service(command, form):
+            return
     # Controller read helpers retain native read requirements. Return factories
     # must also authorize the return capability before exposing a return draft.
     for entry in entries():

@@ -115,7 +115,7 @@ def validate_van_payment_references(doc):
 		invoice = frappe.db.get_value(
 			"Sales Invoice",
 			row.reference_name,
-			["custom_is_van_sale", "custom_van_session"],
+			["custom_is_van_sale", "custom_van_session", "custom_driver", "company"],
 			as_dict=True,
 		)
 		if not invoice or not cint(invoice.custom_is_van_sale):
@@ -125,6 +125,13 @@ def validate_van_payment_references(doc):
 			)
 
 		if invoice.custom_van_session != doc.custom_van_session:
+			# Collections on a later route belong to today's session while retaining
+			# their original invoice. Never cross driver, company or operator ownership.
+			from retail.van_assignment import is_operator
+			same_driver = invoice.custom_driver == doc.custom_driver and invoice.company == doc.company
+			assigned = not is_operator() or frappe.db.get_value("Van Session", invoice.custom_van_session, "custom_salesperson") == frappe.session.user
+			if same_driver and assigned:
+				continue
 			frappe.throw(
 				_("Row #{0}: Sales Invoice {1} belongs to Van Session {2}, not {3}.")
 				.format(

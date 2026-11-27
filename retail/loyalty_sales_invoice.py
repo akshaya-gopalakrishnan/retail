@@ -13,6 +13,8 @@ class RetailSalesInvoice(InvoicePriceProtection, SalesInvoice):
         super().set_title_field()
         from retail.pos_transaction_display import correct_consolidated_title
         correct_consolidated_title(self)
+        from retail.domains.sales.bill_number import set_bill_title
+        set_bill_title(self)
 
     def check_credit_limit(self):
         if self.flags.get("completed_pos_accounting"):
@@ -33,6 +35,8 @@ class RetailSalesInvoice(InvoicePriceProtection, SalesInvoice):
             return super().validate_selling_price()
 
     def calculate_taxes_and_totals(self):
+        from retail.domains.transactions.trading_vat import prepare
+        prepare(self)
         from retail.promotions.gift_voucher import calculate_invoice_totals
         return calculate_invoice_totals(self, super().calculate_taxes_and_totals)
 

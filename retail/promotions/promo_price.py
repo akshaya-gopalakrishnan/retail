@@ -141,6 +141,9 @@ def apply_inclusive_promo_prices(doc, method=None):
 			parent_doctype=doc.doctype,
 			transaction_type=doc.get("transaction_type"),
 			item_tax_template=item.get("item_tax_template"),
+			company=doc.get("company"), is_pos=doc.get("is_pos"),
+			is_consolidated=doc.get("is_consolidated"), return_against=doc.get("return_against"),
+			docstatus=doc.docstatus, custom_trading_vat_disabled=doc.get("custom_trading_vat_disabled"),
 			throw=True,
 		)
 		inclusive_rate = flt(promo_row.promo_price_including_tax)

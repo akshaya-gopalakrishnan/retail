@@ -4,13 +4,15 @@ import frappe
 
 
 def set_update_stock_for_standalone_invoice(doc, method=None):
-	"""Update stock on standalone stock-item invoices.
+	"""Update stock on standalone purchase invoices.
 
 	ERPNext Gross Profit reads stock valuation. A standalone invoice that does not
 	update stock has no Stock Ledger Entry, so the report falls back to the last
 	available stock valuation instead of the invoice's current item cost.
 	"""
-	if doc.doctype not in {"Purchase Invoice", "Sales Invoice"}:
+	# Sales Invoices may be billed before delivery. Preserve the user's choice
+	# so a later Delivery Note can post the stock movement.
+	if doc.doctype != "Purchase Invoice":
 		return
 	if not doc.meta.has_field("update_stock"):
 		return
@@ -22,8 +24,6 @@ def set_update_stock_for_standalone_invoice(doc, method=None):
 		return
 
 	if doc.doctype == "Purchase Invoice" and all(not item.get("purchase_receipt") for item in stock_items):
-		doc.update_stock = 1
-	elif doc.doctype == "Sales Invoice" and all(not item.get("delivery_note") for item in stock_items):
 		doc.update_stock = 1
 
 

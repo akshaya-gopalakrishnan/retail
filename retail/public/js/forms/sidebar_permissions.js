@@ -1,9 +1,11 @@
 // Native MultiCheck markup, bulk buttons and normal User Save behavior.
 frappe.ui.form.on("User", {
-    refresh(frm) {
+    async refresh(frm) {
         const field = frm.fields_dict.retail_sidebar_permissions_html;
         if (!field || frm.doc.user_type !== "System User") return;
-        const groups = frappe.boot.retail_sidebar_editor_registry || [];
+        const name = frm.doc.name;
+        const groups = await frappe.xcall("retail.sidebar_permissions.get_editor");
+        if (frm.doc.name !== name || cur_frm !== frm) return;
         const canManage = Boolean(frappe.boot.can_manage_access ||
             (frappe.boot.can_delegate_access && frm.doc.name !== frappe.session.user &&
                 (frm.is_new() || frm.doc.retail_access_manager === frappe.session.user ||

@@ -6,7 +6,7 @@
 		const get_data = prototype.get_data;
 		function with_definitions(page) {
 			return get_data.apply(this, arguments).then((result) => {
-				if (page.name === "Business Home") {
+				if (retail.workspace_speed.names.has(page.name)) {
 					for (const definition of this.page_data?.retail_widget_definitions || []) {
 						try {
 							frappe.model.sync(definition);

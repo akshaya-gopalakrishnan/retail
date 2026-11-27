@@ -1,0 +1,45 @@
+{
+  "capabilities": [
+    {
+      "label": "POS Sync Logs",
+      "parent": "POS",
+      "permission_key": "workspace:pos_sync_logs",
+      "toggle_verified": true
+    },
+    {
+      "label": "Van Sales Sync Logs",
+      "parent": "Van Sales",
+      "permission_key": "workspace:van_sales_sync_logs",
+      "toggle_verified": true
+    },
+    {
+      "label": "Sales Order API Logs",
+      "parent": "Sales",
+      "permission_key": "workspace:sales_order_api_logs",
+      "toggle_verified": true
+    }
+  ],
+  "sidebar": [
+    {
+      "doctype": "Van Sales Sync Log",
+      "label": "Van Sales Sync Logs",
+      "parent": "Van Sales",
+      "href": "/app/van-sales-sync-log"
+    },
+    {
+      "doctype": "POS Sync Log",
+      "label": "POS Sync Logs",
+      "parent": "POS",
+      "href": "/app/pos-sync-log"
+    },
+    {
+      "doctype": "Sales Order API Log",
+      "label": "Sales Order API Logs",
+      "parent": "Sales",
+      "href": "/app/sales-order-api-log"
+    }
+  ],
+  "van_log_immediately_after_reports": true,
+  "forms_saved": false,
+  "runtime_errors": []
+}

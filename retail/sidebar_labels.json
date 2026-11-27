@@ -32,5 +32,7 @@
   "Promotions Voucher Card Batch Link": "Voucher Cards",
   "Restaurant Table Locations Link": "Table Location",
   "Restaurant Tables Link": "Tables",
-  "Product Conversion Link": "Product Conversion"
+  "Product Conversion Link": "Product Conversion",
+  "Van Sales Sync Logs": "Van Sales Sync Logs",
+  "Sales Order API Logs": "Sales Order Sync Logs"
 }

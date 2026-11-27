@@ -28,7 +28,7 @@ test('purchase reads share pending identical inputs, refresh after completion, a
  assert.equal((await retry).message,7);
 });
 
-for (const doctype of ['Purchase Receipt', 'Purchase Invoice']) {
+for (const doctype of ['Purchase Receipt', 'Purchase Invoice', 'Sales Invoice']) {
  test(doctype + ': VAT summary waits for native actions and Quick Entry, while explicit flush still works', async () => {
   const handlers={}, timers=[], calls=[];
   const frappe={ui:{form:{on(dt,events){handlers[dt]={...handlers[dt],...events};}}},after_ajax:async()=>{},

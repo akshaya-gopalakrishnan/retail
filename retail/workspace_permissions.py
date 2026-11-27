@@ -13,6 +13,7 @@ MANUFACTURING_WORKSPACE_ALIASES = {
 	"Manufacturing Quality Inspection": "Quality Inspection",
 }
 SIDEBAR_DISPLAY_LABELS = {
+	"Sales Order API Logs": "Sales Order Sync Logs",
 	"Product Conversion Link": "Product Conversion",
 	"Restaurant Table Locations Link": "Table Location",
 	"Restaurant Tables Link": "Tables",
@@ -102,6 +103,8 @@ WORKSPACE_ROUTE_PERMISSIONS = {
 	"POS Counter Sessions": (("doctype", "POS Counter Session"),),
 	"POS Branch Day Closings": (("doctype", "POS Branch Day Closing"),),
 	"POS Sync Logs": (("doctype", "POS Sync Log"),),
+	"Van Sales Sync Logs": (("doctype", "Van Sales Sync Log"),),
+	"Sales Order API Logs": (("doctype", "Sales Order API Log"),),
 	"External POS Rate Audit": (("report", "External POS Rate Audit"), ("doctype", "External POS Rate Audit")),
 	"POS Reports": (("doctype", "POS Invoice"),),
 	"BOM": (("doctype", "BOM"),),
@@ -219,6 +222,8 @@ WORKSPACE_MODULES = {
 	"Van Sales Items Link": "Van Sales",
 	"Van Sales Warehouses Link": "Van Sales",
 	"Van Sales Reports": "Van Sales",
+	"Van Sales Sync Logs": "Van Sales",
+	"Sales Order API Logs": "Sales",
 }
 
 WORKSPACE_SIDEBAR_GROUPS = {
@@ -302,6 +307,8 @@ WORKSPACE_SIDEBAR_GROUPS = {
 	"Van Sales Items Link": "Van Sales",
 	"Van Sales Warehouses Link": "Van Sales",
 	"Van Sales Reports": "Van Sales",
+	"Van Sales Sync Logs": "Van Sales",
+	"Sales Order API Logs": "Sales",
 }
 
 
@@ -467,6 +474,9 @@ def extend_bootinfo(bootinfo):
 	bootinfo.retail_blocked_modules = sorted(_get_blocked_modules())
 	bootinfo.retail_workspace_modules = WORKSPACE_MODULES
 	bootinfo.retail_workspace_sidebar_groups = WORKSPACE_SIDEBAR_GROUPS.copy()
+	# Browser visibility checks receive the saved workspace names, including aliases.
+	for alias, canonical in MANUFACTURING_WORKSPACE_ALIASES.items():
+		bootinfo.retail_workspace_sidebar_groups[alias] = WORKSPACE_SIDEBAR_GROUPS[canonical]
 	allowed_workspaces = _get_role_allowed_sidebar_workspaces()
 	bootinfo.retail_allowed_sidebar_workspaces = (
 		None if allowed_workspaces is None else sorted(allowed_workspaces)

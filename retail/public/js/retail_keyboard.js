@@ -352,8 +352,11 @@
 		const blockedHere = returnToScan
 			? window.cur_dialog || frozen() || $(".modal:visible").length : blocked();
 		if (blockedHere) return;
+		const enterSelect = event.key === "Enter" &&
+			(api.doctypes[frm.doctype]?.enter_selects || []).includes(target.dataset?.fieldname) &&
+			target.matches("select");
 		if (!returnToScan && (!frm.wrapper.contains(target) ||
-			target.closest(arrow ? "button,a,[role=button],[contenteditable]:not([contenteditable=false])" : native))) return;
+			(!enterSelect && target.closest(arrow ? "button,a,[role=button],[contenteditable]:not([contenteditable=false])" : native)))) return;
 		if (returnToScan && target !== document.body && !frm.wrapper.contains(target)) return;
 		if (repeatedEnter) { consume(event); return; }
 		const scan = scanField(frm);
@@ -415,7 +418,9 @@
 			if (!await commit(frm, field, target, token)) return;
 			const headers = headerFields(frm);
 			const index = headers.findIndex((candidate) => candidate.df.fieldname === field.df.fieldname);
-			const next = headers.slice(index + 1).find((candidate) => candidate.df.reqd && candidate !== scanField(frm));
+			const enterFields = api.doctypes[frm.doctype]?.enter_fields || [];
+			const next = headers.slice(index + 1).find((candidate) =>
+				(candidate.df.reqd || enterFields.includes(candidate.df.fieldname)) && candidate !== scanField(frm));
 			if (next) return focus(next);
 			if (scanField(frm)) return focus(scanField(frm));
 			await focusItems(frm, token);

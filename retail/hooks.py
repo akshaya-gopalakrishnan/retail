@@ -166,6 +166,7 @@ doctype_js = {
 	],
 	"Material Request": "public/js/forms/material_request.js",
 	"Van Session": "public/js/forms/van_session.js",
+	"Van Fleet": "public/js/forms/van_fleet.js",
 }
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 doctype_tree_js = {"Account": "public/js/account_tree.js"}
@@ -252,6 +253,7 @@ after_sync = [
 # Permissions evaluated in scripted ways
 
 permission_query_conditions = {
+	"Van Expense": "retail.retail_app.doctype.van_expense.van_expense.permission_query",
 	"Van Fleet": "retail.van_assignment.fleet_condition",
 	"Van Session": "retail.van_assignment.session_condition",
 	"Sales Invoice": "retail.van_permissions.get_sales_invoice_permission_query_conditions",
@@ -262,6 +264,7 @@ permission_query_conditions = {
 }
 
 has_permission = {
+	"Van Expense": "retail.retail_app.doctype.van_expense.van_expense.has_permission",
 	"Van Fleet": "retail.van_assignment.has_fleet_permission",
 	"Van Session": "retail.van_assignment.has_session_permission",
 	"Sales Invoice": "retail.van_permissions.has_sales_invoice_permission",
@@ -390,6 +393,7 @@ doc_events = {
 		"before_naming": "retail.domains.item.naming.set_automatic_item_code",
 		"before_validate": [
 			"retail.domains.item.scale_item_validation.ensure_item_barcode",
+			"retail.domains.item.scale_item_validation.ensure_packing_barcodes",
 			"retail.domains.item.packing_sync.sync_uoms_and_barcodes",
 		],
 		"validate": [
@@ -543,6 +547,8 @@ after_migrate = [
 	"retail.setup.ensure_print_languages",
 	"retail.retail_app.report.pos_report_utils.ensure_pos_reports",
 	"retail.domains.transactions.vat.ensure_transaction_vat_rate_fields",
+	"retail.domains.transactions.trading_vat.ensure_setup",
+	"retail.domains.sales.bill_number.ensure_setup",
 	"retail.domains.purchase.order.backfill_balance_qty",
 	"retail.retail_app.report.damaged_and_expired_stock.damaged_and_expired_stock.ensure_report",
 	"retail.retail_app.report.item_family_list.item_family_list.ensure_setup",
@@ -567,6 +573,7 @@ after_migrate = [
 	"retail.domains.sales.invoice_totals.ensure_all_transaction_totals_fields",
 	"retail.domains.purchase.selling_price.ensure_purchase_selling_price_fields",
 	"retail.van_sales_setup.ensure_van_sales_metadata",
+	"retail.van_api_setup.ensure_van_api_fields",
 	"retail.van_sales_setup.remove_legacy_van_sales_invoice",
 	"retail.customer_reports_workspace.ensure_customer_report_cards",
 ]
@@ -1090,6 +1097,12 @@ doctype_js["Stock Reconciliation"] += [
 	"public/js/forms/stock_reconciliation.js",
 ]
 
+for _return_qty_dt in ("Purchase Invoice", "Purchase Receipt", "Sales Invoice", "Delivery Note", "POS Invoice", "Subcontracting Receipt"):
+	_scripts = doctype_js.get(_return_qty_dt, [])
+	if isinstance(_scripts, str):
+		_scripts = [_scripts]
+	doctype_js[_return_qty_dt] = [*_scripts, "public/js/forms/return_qty.js"]
+
 for _purchase_identity_dt in ("Purchase Invoice", "Purchase Receipt"):
 	doctype_js[_purchase_identity_dt].append("public/js/forms/purchase_stock_identity.js")
 
@@ -1169,6 +1182,7 @@ after_migrate.append("retail.patches.make_item_shelf_life_optional.execute")
 after_sync.append("retail.patches.show_supplier_tax_id.execute")
 after_migrate.append("retail.patches.show_supplier_tax_id.execute")
 doctype_list_js["Sales Invoice"].append("public/js/list/sales_invoice_columns.js")
+doctype_list_js["Purchase Invoice"].append("public/js/list/purchase_invoice_columns.js")
 doc_events.setdefault("Company", {}).setdefault("on_update", []).append(
     "retail.site_readiness.initialize_item_defaults"
 )
@@ -1248,3 +1262,65 @@ _dashboard_conditions = permission_query_conditions.get("Dashboard", [])
 if isinstance(_dashboard_conditions, str):
     _dashboard_conditions = [_dashboard_conditions]
 permission_query_conditions["Dashboard"] = [*_dashboard_conditions, "retail.sidebar_permissions.dashboard_query_conditions"]
+
+# Mobile van API fields must be available after upgrades as well as fresh installs.
+after_migrate.append("retail.van_api_setup.ensure_van_api_fields")
+
+# Van sync diagnostics use the same post-request audit pattern as Sales Order logs.
+after_request.append("retail.van_sales_sync_log.after_request")
+after_sync.append("retail.patches.sync_log_navigation.execute")
+after_migrate.append("retail.patches.sync_log_navigation.execute")
+boot_session.append("retail.sales_order_api_log.extend_bootinfo")
+
+# Role Profile app classification for shared mobile authentication.
+after_migrate.append("retail.app_login_setup.execute")
+
+after_sync.append("retail.payment_entry_layout.install")
+after_migrate.append("retail.payment_entry_layout.install")
+
+after_sync.append("retail.patches.sales_invoice_update_stock.execute")
+after_migrate.append("retail.patches.sales_invoice_update_stock.execute")
+after_sync.append("retail.app_login_setup.execute")
+
+# Backend invoice operation permission is separate from access administration.
+after_migrate.append("retail.backend_sales_admin.install")
+after_install = ([after_install] if isinstance(after_install, str) else list(after_install))
+after_install.append("retail.backend_sales_admin.install")
+doc_events["Sales Invoice"]["validate"].append("retail.backend_sales_admin.validate")
+doctype_js["Sales Invoice"].append("public/js/forms/backend_sales_admin.js")
+
+doc_events["Sales Invoice"].setdefault("before_insert", []).append("retail.backend_sales_admin.before_insert")
+doc_events["Sales Invoice"].setdefault("after_insert", []).append("retail.backend_sales_admin.after_insert")
+
+
+# Desk cache invalidation supplements existing accounting and permission handlers.
+for _speed_dt in ("Sales Invoice", "POS Invoice", "Payment Entry", "Journal Entry", "Stock Entry",
+                  "Purchase Invoice", "Purchase Receipt", "Stock Reconciliation", "Repost Item Valuation",
+                  "GL Entry", "Payment Ledger Entry", "Stock Ledger Entry", "Bin", "Item", "Customer",
+                  "Customer Group", "Company", "POS Branch Day Closing", "POS Cashier Shift", "POS Closing Entry"):
+    for _speed_event in ("on_update", "on_submit", "on_cancel", "after_insert", "on_trash"):
+        _speed_handlers = doc_events.setdefault(_speed_dt, {}).get(_speed_event, [])
+        if isinstance(_speed_handlers, str):
+            _speed_handlers = [_speed_handlers]
+        doc_events[_speed_dt][_speed_event] = [*_speed_handlers, "retail.desk_speed.invalidate_values"]
+for _speed_dt in ("Workspace", "Number Card", "Dashboard Chart", "Dashboard Chart Source"):
+    for _speed_event in ("on_update", "on_trash"):
+        _speed_handlers = doc_events.setdefault(_speed_dt, {}).get(_speed_event, [])
+        if isinstance(_speed_handlers, str):
+            _speed_handlers = [_speed_handlers]
+        doc_events[_speed_dt][_speed_event] = [*_speed_handlers, "retail.desk_speed.invalidate_permissions"]
+for _speed_dt in ("User", "Role", "Role Profile", "User Permission", "Custom DocPerm", "DocShare"):
+    for _speed_event in ("on_update", "after_insert", "on_trash"):
+        _speed_handlers = doc_events.setdefault(_speed_dt, {}).get(_speed_event, [])
+        if isinstance(_speed_handlers, str):
+            _speed_handlers = [_speed_handlers]
+        doc_events[_speed_dt][_speed_event] = [*_speed_handlers, "retail.desk_speed.invalidate_permissions"]
+scheduler_events.setdefault("hourly", []).append("retail.desk_speed.warmup_meta")
+
+clear_cache = ["retail.desk_speed.clear_caches"]
+
+# Exact page counts for the editable SI/DN formats, using the native PDF renderer.
+pdf_generator = ["retail.document_print_layout.generate_pdf"]
+after_sync.append("retail.document_print_layout.install")
+after_migrate.append("retail.document_print_layout.install")
+page_js = {"print": "public/js/printing/numbered_documents.js"}

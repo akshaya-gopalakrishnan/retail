@@ -90,6 +90,8 @@ def prepare(doc, method=None):
 	# Reported bill discount is a summary, never a second ERP deduction.
 	doc.discount_amount = 0
 	doc.apply_discount_on = "Net Total"
+	from retail.pos_delivery import set_snapshots
+	set_snapshots(doc, payload)
 	doc.disable_rounded_total = 1
 	# Use explicit tax amounts, assigned only to this company's configured accounts.
 	taxes = payload.get("taxes") or []
@@ -107,6 +109,8 @@ def prepare(doc, method=None):
 		doc.append("taxes", {"charge_type": "Actual", "account_head": account,
 			"description": row.get("description") or "POS reported VAT", "rate": 0,
 			"tax_amount": _signed(doc, row.get("tax_amount")), "cost_center": doc.cost_center})
+	from retail.pos_delivery import append_charge
+	append_charge(doc, payload)
 	for item, row in zip(doc.get("items") or [], payload.get("items") or []):
 		item.item_tax_template = None
 		item.item_tax_rate = "{}"
@@ -190,7 +194,8 @@ def restore(doc, method=None):
 	vat = payload.get("vat_amount")
 	if vat is None:
 		vat = sum(flt(row.get("tax_amount")) for row in payload.get("taxes") or [])
-	doc.total_taxes_and_charges = _signed(doc, vat)
+	delivery = _signed(doc, payload.get("delivery_charge"))
+	doc.total_taxes_and_charges = _signed(doc, vat) + delivery
 	reported_total = payload.get("grand_total")
 	rows = payload.get("items") or []
 	# Legacy terminals send inclusive unit prices and a bill VAT total, but no
@@ -205,7 +210,7 @@ def restore(doc, method=None):
 		item_discount = sum(flt(row.get("discount_amount")) * abs(flt(row.get("qty"))) for row in rows)
 		additional_discount = max(flt(payload.get("discount_amount")) - item_discount, 0)
 		reported_total = sum((flt(row.get("rate")) - flt(row.get("discount_amount")))
-			* abs(flt(row.get("qty"))) for row in rows) - additional_discount
+			* abs(flt(row.get("qty"))) for row in rows) - additional_discount + flt(payload.get("delivery_charge"))
 	doc.grand_total = _signed(doc, reported_total) if reported_total is not None else doc.net_total + doc.total_taxes_and_charges
 	# Explicit final total is authoritative. Allocate any difference to the final
 	# line only when POS did not send final per-line net amounts (legacy clients).

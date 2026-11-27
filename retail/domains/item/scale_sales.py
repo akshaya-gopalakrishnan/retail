@@ -72,6 +72,40 @@ def sale_values(label, master_rate):
 	return {"qty": qty, "rate": rate, "amount": amount if amount is not None else qty * rate}
 
 
+def _candidate_scale_barcodes(rows):
+	barcodes = []
+	for row in rows or []:
+		barcode = str(row.get("barcode") or row.get("custom_barcode_scan") or "").strip()
+		if len(barcode) in (13, 18) and barcode.isascii() and barcode.isdigit():
+			barcodes.append(barcode)
+	return barcodes
+
+
+@frappe.whitelist()
+def scale_prefixes_in_use(barcodes):
+	"""True when any barcode prefix belongs to a scale item. One query, not one scan per row."""
+	if isinstance(barcodes, str):
+		barcodes = frappe.parse_json(barcodes) or []
+	prefixes = []
+	seen = set()
+	for barcode in barcodes or []:
+		barcode = str(barcode or "").strip()
+		if len(barcode) not in (13, 18) or not barcode.isdigit():
+			continue
+		prefix = barcode[:7]
+		if prefix not in seen:
+			seen.add(prefix)
+			prefixes.append(prefix)
+	if not prefixes:
+		return False
+	return bool(frappe.get_all(
+		"Item",
+		filters={"custom_barcode": ["in", prefixes], "custom_scale_item": 1, "disabled": 0},
+		limit=1,
+		pluck="name",
+	))
+
+
 def prepare_precision(doc, method=None):
 	"""Keep derived rates/quantities through ERPNext's ordinary rounding.
 
@@ -82,8 +116,15 @@ def prepare_precision(doc, method=None):
 		return
 	if doc.get("pos_sync_source") or doc.get("is_consolidated"):
 		return  # Completed external POS facts already own their quantity and price.
+	rows = doc.get("items") or []
+	barcodes = _candidate_scale_barcodes(rows)
+	# Ordinary EAN barcodes are not scale labels. Skip a barcode scan per line.
+	if not barcodes or not scale_prefixes_in_use(barcodes):
+		for row in rows:
+			row.flags.pop("retail_scale_price", None)
+		return
 	from retail.domains.item.packing_scan import scan_barcode
-	for row in doc.get("items", []):
+	for row in rows:
 		row.flags.pop("retail_scale_price", None)
 		barcode = row.get("barcode") or row.get("custom_barcode_scan") or ""
 		if len(barcode) not in (13, 18) or not barcode.isascii() or not barcode.isdigit():

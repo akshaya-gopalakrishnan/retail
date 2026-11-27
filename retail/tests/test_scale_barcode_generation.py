@@ -47,14 +47,14 @@ class TestScaleBarcodeGeneration(unittest.TestCase):
 	def test_normal_fills_gap_including_child_barcodes(self):
 		with patch.object(frappe.db, "sql", side_effect=[
 			[], [(scale.normal_barcode(1),), (scale.normal_barcode(4),)],
-			[(scale.normal_barcode(2),)],
+			[(scale.normal_barcode(2),)], [],
 		]) as query:
 			self.assertEqual(scale.get_unique_item_barcode(), "2000000000039")
 			self.assertTrue(all("for update" in call.args[0] for call in query.call_args_list))
 
 	def test_normal_ignores_unrelated_and_invalid_check_digits(self):
 		with patch.object(frappe.db, "sql", side_effect=[
-			[], [("2000000000010",), ("200abcdefghij",)], [],
+			[], [("2000000000010",), ("200abcdefghij",)], [], [],
 		]):
 			self.assertEqual(scale.get_unique_item_barcode(), "2000000000015")
 
@@ -116,3 +116,24 @@ class TestScaleBarcodeGeneration(unittest.TestCase):
 				self.assertIn("for update", call.args[0])
 			for call in query.call_args_list[1:]:
 				self.assertEqual(call.args[1], ("1234567", "CURRENT"))
+
+
+class TestPackingBarcodeGeneration(unittest.TestCase):
+	def test_saved_packing_and_unsaved_exclusions_share_normal_sequence(self):
+		with patch.object(frappe.db, "sql", side_effect=[[], [], [], [(scale.normal_barcode(1),)]]):
+			self.assertEqual(scale.get_next_normal_barcode([scale.normal_barcode(2)]), scale.normal_barcode(3))
+
+	def test_previews_reallocate_and_manual_values_survive(self):
+		rows = [frappe._dict(packing_uom="Box", conversion_factor=10, barcode="preview",
+			__retail_packing_barcode_preview="preview"),
+			frappe._dict(packing_uom="Carton", conversion_factor=20, barcode="manual"),
+			frappe._dict(packing_uom="Pack", conversion_factor=5),
+			frappe._dict(packing_uom="Pack", conversion_factor=0)]
+		doc = frappe._dict(custom_barcode="master", custom_retail_packing_detail=rows)
+		with patch.object(scale, "get_next_normal_barcode", side_effect=["first", "second"]) as allocate, \
+			patch.object(scale, "validate_unique_item_barcodes"):
+			scale.ensure_packing_barcodes(doc)
+			self.assertEqual([r.barcode for r in rows], ["first", "manual", "second", None])
+			self.assertIsNone(rows[0].__retail_packing_barcode_preview)
+			scale.ensure_packing_barcodes(doc)
+			self.assertEqual(allocate.call_count, 2)

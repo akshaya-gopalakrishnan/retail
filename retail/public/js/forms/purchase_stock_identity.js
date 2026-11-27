@@ -153,15 +153,16 @@
 		let visibilityChanged = false;
 		for (const [field, flag] of tracking) {
 			const hidden = !(frm.doc.items || []).some(row => applicable(frm, row, flag));
-			visibilityChanged ||= grid.fields_map[field]?.hidden !== hidden;
-			grid.update_docfield_property(field, "depends_on", "");
-			grid.update_docfield_property(field, "hidden", hidden);
-			grid.update_docfield_property(field, "read_only_depends_on", "");
+			visibilityChanged ||= grid.fields_map[field]?.hidden == null || Boolean(grid.fields_map[field].hidden) !== hidden;
+			for (const [property, value] of Object.entries({depends_on: "", hidden, read_only_depends_on: ""})) {
+				const current = grid.fields_map[field]?.[property];
+				const unchanged = property === "hidden" ? current != null && Boolean(current) === value : current === value;
+				if (!unchanged) grid.update_docfield_property(field, property, value);
+			}
 		}
 		// refresh() retains visible_columns and existing row columns. Rebuild on
 		// visibility transitions, using the user's saved widths and selection.
 		if (visibilityChanged) grid.reset_grid();
-		else grid.refresh();
 		for (const row of grid.grid_rows || []) styleRow(frm, row);
 	}
 
