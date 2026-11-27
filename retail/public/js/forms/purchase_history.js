@@ -64,7 +64,9 @@
 		const state = setup(frm);
 		clearTimeout(state.timer);
 		state.generation++;
-		render(frm);
+		// Row highlights update when the comparison returns. Repainting the grid
+		// on every keystroke only repeats the previous result.
+		if (state.dialog && (state.dialog.display || state.dialog.$wrapper?.is?.(":visible"))) render(frm);
 		const delay = ["Purchase Receipt", "Purchase Invoice"].includes(frm.doc.doctype) ? 1000 : 450;
 		state.timer = setTimeout(() => refresh(frm), delay);
 	}

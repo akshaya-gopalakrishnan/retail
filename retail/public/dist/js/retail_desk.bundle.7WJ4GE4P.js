@@ -606,17 +606,65 @@
                 var _a3, _b3;
                 const grid = this.target;
                 const row = (grid.frm.doc[grid.df.fieldname] || []).find((row2) => row2[this.fieldname] === choice.item_code && row2.uom === choice.uom && (row2.custom_packing_detail || "") === (choice.packing_id || "")) || grid.add_new_row();
-                if (!row[this.fieldname]) {
-                  row.uom = choice.uom;
-                  await frappe.model.set_value(row.doctype, row.name, this.fieldname, choice.item_code);
+                const seed = !row[this.fieldname] && grid.frm.doc.doctype === "Sales Invoice" && !grid.frm.doc.is_internal_customer && !grid.frm.doc.is_return;
+                if (seed) {
+                  Object.assign(row, {
+                    uom: choice.uom,
+                    barcode: choice.barcode || "",
+                    custom_item_barcode: choice.barcode || "",
+                    custom_packing_detail: choice.packing_id || ""
+                  });
+                  row.__retail_selecting_packing = true;
+                  row.__retail_packing_choice = choice;
                 }
-                await this.apply_packing_choice(row, choice);
+                try {
+                  if (!row[this.fieldname]) {
+                    row.uom = choice.uom;
+                    await frappe.model.set_value(row.doctype, row.name, this.fieldname, choice.item_code);
+                  }
+                  if (seed)
+                    row.barcode = choice.barcode || "";
+                  await this.apply_packing_choice(row, choice);
+                } finally {
+                  if (seed) {
+                    delete row.__retail_selecting_packing;
+                    delete row.__retail_packing_choice;
+                  }
+                }
                 if (this.qty_fieldname)
                   await frappe.model.set_value(row.doctype, row.name, this.qty_fieldname, qty);
                 (_b3 = (_a3 = window.retail).remember_transaction_barcode) == null ? void 0 : _b3.call(_a3, row);
                 grid.refresh();
               };
-              if (this.qty_fieldname)
+              if (this.qty_fieldname && (frm == null ? void 0 : frm.doc.doctype) === "Sales Invoice") {
+                if (this.__retail_qty_dialog || this.__retail_adding)
+                  return;
+                const dialog = new frappe.ui.Dialog({
+                  title: __("Set Quantity"),
+                  fields: [{ fieldname: "qty", fieldtype: "Float", label: __("Qty"), default: 1, reqd: 1 }],
+                  primary_action_label: __("Set Quantity"),
+                  primary_action: (values) => {
+                    if (this.__retail_adding)
+                      return;
+                    this.__retail_adding = true;
+                    dialog.disable_primary_action();
+                    dialog.$wrapper.one("hidden.bs.modal.retailPackingAdd", () => {
+                      Promise.resolve().then(() => add(values.qty)).catch((error) => {
+                        console.error(error);
+                        frappe.msgprint(__("Could not finish adding the item. Check the Items table before trying again."));
+                      }).finally(() => {
+                        this.__retail_adding = false;
+                      });
+                    });
+                    dialog.hide();
+                  }
+                });
+                this.__retail_qty_dialog = dialog;
+                dialog.on_hide = () => {
+                  delete this.__retail_qty_dialog;
+                };
+                dialog.show();
+              } else if (this.qty_fieldname)
                 frappe.prompt(
                   { fieldname: "qty", fieldtype: "Float", label: __("Qty"), default: 1, reqd: 1 },
                   (data) => add(data.qty),
@@ -852,13 +900,19 @@
     }
     function finishLine(frm) {
       var _a2, _b2, _c;
+      let calculated = false;
       try {
-        (_b2 = (_a2 = frm.cscript) == null ? void 0 : _a2.calculate_taxes_and_totals) == null ? void 0 : _b2.call(_a2);
+        if (typeof ((_a2 = frm.cscript) == null ? void 0 : _a2.calculate_taxes_and_totals) === "function") {
+          const pending = frm.cscript.calculate_taxes_and_totals();
+          calculated = true;
+          (_b2 = pending == null ? void 0 : pending.catch) == null ? void 0 : _b2.call(pending, () => frm.refresh_field("items"));
+        }
       } catch (error) {
         console.error(error);
       }
       (_c = frm.dirty) == null ? void 0 : _c.call(frm);
-      frm.refresh_field("items");
+      if (!calculated)
+        frm.refresh_field("items");
     }
     function stockFields(row) {
       row.stock_qty = flt(flt(row.qty) * flt(row.conversion_factor || 1));
@@ -2506,6 +2560,18 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
           return result;
         };
     }
+    function widthSignature(grid) {
+      var _a;
+      const parts = [];
+      for (const [df] of grid.visible_columns || []) {
+        parts.push(df.fieldname, df.label, df.columns, df.colsize, df.width_px);
+      }
+      for (const row of grid.grid_rows || []) {
+        for (const [df] of grid.visible_columns || [])
+          parts.push((_a = row.doc) == null ? void 0 : _a[df.fieldname]);
+      }
+      return parts.join("");
+    }
     function contentWidths(grid) {
       var _a, _b;
       const widths = {};
@@ -2738,7 +2804,11 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
         return;
       container.setAttribute("aria-label", __("Scrollable table"));
       container.setAttribute("tabindex", "0");
-      grid.__retail_content_widths = contentWidths(grid);
+      const signature = widthSignature(grid);
+      if (signature !== grid.__retail_width_signature || !grid.__retail_content_widths) {
+        grid.__retail_content_widths = contentWidths(grid);
+        grid.__retail_width_signature = signature;
+      }
       const totalWidth = 138 + grid.visible_columns.reduce(
         (sum, [df]) => sum + grid.__retail_content_widths[df.fieldname],
         0
@@ -8909,10 +8979,18 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
       vatItemDoctypes.forEach((doctype) => {
         frappe.ui.form.on(doctype, {
           item_code(frm, cdt, cdn) {
-            syncVatRates(frm, cdt, cdn, "rate");
+            var _a;
+            const row = (_a = locals[cdt]) == null ? void 0 : _a[cdn];
+            forgetVatRate(frm, row);
+            if (row)
+              row.__retail_vat_force_sync = true;
+            const pending = syncVatRates(frm, cdt, cdn, "rate");
+            if (row)
+              delete row.__retail_vat_force_sync;
             scheduleVatSync(frm, cdt, cdn, "rate");
             scheduleVatTaxRowsSync(frm);
             renderTransactionTotals(frm);
+            return pending;
           },
           rate(frm, cdt, cdn) {
             syncVatRates(frm, cdt, cdn, "rate");
@@ -8933,14 +9011,10 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
             renderTransactionTotals(frm);
           },
           item_tax_template(frm, cdt, cdn) {
-            syncVatRates(frm, cdt, cdn, "rate");
-            queueVatTaxRowsSync(frm);
-            renderTransactionTotals(frm);
+            return refreshVatFromTemplate(frm, cdt, cdn);
           },
           tax_rate(frm, cdt, cdn) {
-            syncVatRates(frm, cdt, cdn, "rate");
-            queueVatTaxRowsSync(frm);
-            renderTransactionTotals(frm);
+            return refreshVatFromTemplate(frm, cdt, cdn);
           },
           qty(frm, cdt, cdn) {
             syncVatRates(frm, cdt, cdn, "qty");
@@ -9106,11 +9180,67 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
           setTimeout(() => queueVatTaxRowsSync(frm), delay);
         });
       }
+      function vatInputKey(row) {
+        return [
+          row.item_code,
+          row.uom,
+          row.qty,
+          row.rate,
+          row.amount,
+          row.price_list_rate,
+          row.net_rate,
+          row.conversion_factor,
+          row.item_tax_template,
+          row.tax_rate
+        ].join("");
+      }
+      function vatRateMemo(frm) {
+        const memo = frm.__retail_vat_rate_memo || (frm.__retail_vat_rate_memo = { rates: /* @__PURE__ */ new Map() });
+        clearTimeout(memo.timer);
+        memo.timer = setTimeout(() => {
+          if (frm.__retail_vat_rate_memo === memo)
+            delete frm.__retail_vat_rate_memo;
+        }, 1e3);
+        return memo.rates;
+      }
+      function vatRateMemoKey(frm, row) {
+        const doc = frm.doc || {};
+        return [
+          row.item_code,
+          row.doctype,
+          doc.doctype,
+          doc.transaction_type || "",
+          row.item_tax_template || "",
+          doc.company || "",
+          doc.is_pos || 0,
+          doc.custom_trading_vat_disabled || 0,
+          doc.return_against || ""
+        ].join("");
+      }
+      function forgetVatRate(frm, row) {
+        if (!(frm == null ? void 0 : frm.__retail_vat_rate_memo) || !(row == null ? void 0 : row.item_code))
+          return;
+        frm.__retail_vat_rate_memo.rates.delete(vatRateMemoKey(frm, row));
+      }
+      function refreshVatFromTemplate(frm, cdt, cdn) {
+        var _a;
+        const row = (_a = locals[cdt]) == null ? void 0 : _a[cdn];
+        forgetVatRate(frm, row);
+        if (row)
+          row.__retail_vat_force_sync = true;
+        const pending = syncVatRates(frm, cdt, cdn, "rate");
+        if (row)
+          delete row.__retail_vat_force_sync;
+        queueVatTaxRowsSync(frm);
+        renderTransactionTotals(frm);
+        return pending;
+      }
       function scheduleVatSync(frm, cdt, cdn, source) {
         [150, 500].forEach((delay) => {
           setTimeout(() => {
             var _a;
-            if (!((_a = locals[cdt]) == null ? void 0 : _a[cdn]))
+            const row = (_a = locals[cdt]) == null ? void 0 : _a[cdn];
+            if (!row || row.__retail_vat_synced_key === vatInputKey(row))
               return;
             syncVatRates(frm, cdt, cdn, source);
           }, delay);
@@ -9125,14 +9255,18 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
         const row = (_a = locals[cdt]) == null ? void 0 : _a[cdn];
         if (!row || !row.item_code)
           return;
+        const automatic = source === "rate" || source === "qty";
         if (row.__retail_vat_syncing) {
-          if (source === "rate" || source === "qty")
+          if (automatic && vatInputKey(row) !== row.__retail_vat_sync_key)
             row.__retail_vat_refresh_pending = true;
           return;
         }
+        if (automatic && !row.__retail_vat_force_sync && row.__retail_vat_synced_key === vatInputKey(row))
+          return;
         if (!frappe.meta.get_docfield(cdt, "custom_rate_including_vat", cdn))
           return;
         row.__retail_vat_syncing = true;
+        row.__retail_vat_sync_key = vatInputKey(row);
         try {
           const vatRate = await getVatRate(frm, row, cdt);
           const factor = 1 + flt(vatRate) / 100;
@@ -9170,13 +9304,8 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
           } else {
             inclusiveRate = flt(exclusiveRate * factor, precision2);
             values.custom_rate_including_vat = inclusiveRate;
-            if (amountField) {
-              const amount = flt(qty * exclusiveRate, amountPrecision);
-              if (["Sales Invoice", "Delivery Note"].includes(frm.doc.doctype)) {
-                row.amount = amount;
-              } else
-                values.amount = amount;
-            }
+            if (amountField)
+              assignRowAmount(frm, cdt, cdn, row, flt(qty * exclusiveRate, amountPrecision));
           }
           if (source !== "inclusive_amount" && row.custom_amount_including_vat !== void 0) {
             values.custom_amount_including_vat = flt(qty * inclusiveRate, amountPrecision);
@@ -9187,6 +9316,8 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
           if (!Object.keys(values).length)
             return;
           await setRowValues(frm, cdt, cdn, values);
+          if (row)
+            row.__retail_vat_synced_key = vatInputKey(row);
           queueVatTaxRowsSync(frm);
           renderTransactionTotals(frm);
         } finally {
@@ -9194,7 +9325,12 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
             row.__retail_vat_syncing = false;
             if (row.__retail_vat_refresh_pending) {
               delete row.__retail_vat_refresh_pending;
-              await syncVatRates(frm, cdt, cdn, "rate");
+              row.__retail_vat_force_sync = true;
+              try {
+                await syncVatRates(frm, cdt, cdn, "rate");
+              } finally {
+                delete row.__retail_vat_force_sync;
+              }
             }
           }
         }
@@ -9231,7 +9367,153 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
         request.method,
         Object.keys(request.args || {}).sort().filter((key) => request.args[key] != null).map((key) => [key, request.args[key]])
       ]);
+      const heavyItemForms = ["Sales Invoice", "Purchase Receipt", "Purchase Invoice"];
+      const calculatedItemFields = [
+        "qty",
+        "stock_qty",
+        "rate",
+        "amount",
+        "price_list_rate",
+        "net_rate",
+        "net_amount",
+        "discount_percentage",
+        "discount_amount",
+        "margin_type",
+        "margin_rate_or_amount",
+        "item_tax_rate",
+        "custom_rate_including_vat",
+        "custom_amount_including_vat",
+        "custom_vat_amount",
+        "custom_total_stock_qty"
+      ];
+      function installLightTotals(frm) {
+        var _a;
+        if (!heavyItemForms.includes((_a = frm == null ? void 0 : frm.doc) == null ? void 0 : _a.doctype))
+          return;
+        const cscript = frm.cscript;
+        if (!cscript || cscript.__retail_light_totals || typeof cscript.calculate_taxes_and_totals !== "function")
+          return;
+        cscript.__retail_light_totals = true;
+        const original = cscript.calculate_taxes_and_totals;
+        cscript.calculate_taxes_and_totals = function(...args) {
+          const nested = frm.__retail_light_depth || 0;
+          frm.__retail_light_depth = nested + 1;
+          if (!nested)
+            holdItemGrid(frm);
+          let result;
+          try {
+            result = original.apply(this, args);
+          } catch (error) {
+            releaseItemGrid(frm);
+            throw error;
+          }
+          if (result == null ? void 0 : result.finally)
+            return result.finally(() => releaseItemGrid(frm));
+          releaseItemGrid(frm);
+          return result;
+        };
+      }
+      function holdItemGrid(frm) {
+        var _a;
+        frm.__retail_item_names = (frm.doc.items || []).map((row) => row.name).join("");
+        snapshotItemFigures(frm);
+        const field = (_a = frm.fields_dict) == null ? void 0 : _a.items;
+        if (field == null ? void 0 : field.refresh) {
+          frm.__retail_saved_item_refresh = field.refresh;
+          field.refresh = function() {
+          };
+        }
+        const grid = field == null ? void 0 : field.grid;
+        frm.__retail_saved_row_dependency = [];
+        for (const gridRow of (grid == null ? void 0 : grid.grid_rows) || []) {
+          if (typeof (gridRow == null ? void 0 : gridRow.refresh_dependency) !== "function" || gridRow.refresh_dependency.__retail_held)
+            continue;
+          const original = gridRow.refresh_dependency;
+          const held = function() {
+          };
+          held.__retail_held = true;
+          gridRow.refresh_dependency = held;
+          frm.__retail_saved_row_dependency.push([gridRow, original]);
+        }
+        frm.__retail_saved_refresh_field = frm.refresh_field;
+        frm.refresh_field = function(fieldname, ...args) {
+          var _a2, _b;
+          if (fieldname === "items")
+            return;
+          if (Array.isArray(fieldname)) {
+            const rest = fieldname.filter((name) => name !== "items");
+            if (!rest.length)
+              return;
+            return (_a2 = frm.__retail_saved_refresh_field) == null ? void 0 : _a2.call(frm, rest, ...args);
+          }
+          return (_b = frm.__retail_saved_refresh_field) == null ? void 0 : _b.call(frm, fieldname, ...args);
+        };
+      }
+      function releaseItemGrid(frm) {
+        var _a, _b, _c, _d, _e;
+        frm.__retail_light_depth = Math.max(0, (frm.__retail_light_depth || 1) - 1);
+        if (frm.__retail_light_depth > 0)
+          return;
+        const field = (_a = frm.fields_dict) == null ? void 0 : _a.items;
+        if (field && frm.__retail_saved_item_refresh)
+          field.refresh = frm.__retail_saved_item_refresh;
+        for (const [gridRow, original] of frm.__retail_saved_row_dependency || []) {
+          if ((_b = gridRow.refresh_dependency) == null ? void 0 : _b.__retail_held)
+            gridRow.refresh_dependency = original;
+        }
+        if (frm.__retail_saved_refresh_field)
+          frm.refresh_field = frm.__retail_saved_refresh_field;
+        delete frm.__retail_saved_item_refresh;
+        delete frm.__retail_saved_row_dependency;
+        delete frm.__retail_saved_refresh_field;
+        const names = (frm.doc.items || []).map((row) => row.name).join("");
+        const grid = (_d = (_c = frm.fields_dict) == null ? void 0 : _c.items) == null ? void 0 : _d.grid;
+        const missing = !grid || (frm.doc.items || []).some((row) => {
+          var _a2;
+          return (row == null ? void 0 : row.name) && !((_a2 = grid.grid_rows_by_docname) == null ? void 0 : _a2[row.name]);
+        });
+        if (names !== frm.__retail_item_names || missing) {
+          (_e = frm.refresh_field) == null ? void 0 : _e.call(frm, "items");
+          return;
+        }
+        paintItemFigures(frm);
+      }
+      function snapshotItemFigures(frm) {
+        var _a, _b;
+        const grid = (_b = (_a = frm.fields_dict) == null ? void 0 : _a.items) == null ? void 0 : _b.grid;
+        if (!(grid == null ? void 0 : grid.grid_rows_by_docname))
+          return;
+        for (const row of frm.doc.items || []) {
+          const gridRow = grid.grid_rows_by_docname[row.name];
+          if (!gridRow)
+            continue;
+          const seen = gridRow.__retail_figures || (gridRow.__retail_figures = {});
+          for (const field of calculatedItemFields) {
+            if (Object.prototype.hasOwnProperty.call(row, field))
+              seen[field] = row[field];
+          }
+        }
+      }
+      function paintItemFigures(frm) {
+        var _a, _b;
+        const grid = (_b = (_a = frm.fields_dict) == null ? void 0 : _a.items) == null ? void 0 : _b.grid;
+        if (!(grid == null ? void 0 : grid.grid_rows_by_docname))
+          return;
+        for (const row of frm.doc.items || []) {
+          const gridRow = grid.grid_rows_by_docname[row.name];
+          if (!(gridRow == null ? void 0 : gridRow.refresh_field))
+            continue;
+          const seen = gridRow.__retail_figures || (gridRow.__retail_figures = {});
+          for (const field of calculatedItemFields) {
+            if (!Object.prototype.hasOwnProperty.call(row, field) || seen[field] === row[field])
+              continue;
+            seen[field] = row[field];
+            gridRow.refresh_field(field);
+          }
+        }
+      }
       function installPurchaseActionReads(frm) {
+        installLightTotals(frm);
         const manager = frm.script_manager;
         if (!manager || manager.__retail_purchase_actions)
           return;
@@ -9341,7 +9623,7 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
         }
         clearTimeout(frm.__retail_vat_tax_rows_timer);
         frm.__retail_vat_tax_rows_generation = (frm.__retail_vat_tax_rows_generation || 0) + 1;
-        await syncVatTaxRows(frm);
+        await syncVatTaxRows(frm, true);
       };
       function queueVatTaxRowsSync(frm) {
         if (!canSyncVatTaxRows(frm))
@@ -9372,11 +9654,26 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
         var _a;
         return cint((_a = frm == null ? void 0 : frm.doc) == null ? void 0 : _a.docstatus) === 0;
       }
-      async function syncVatTaxRows(frm) {
+      function vatTaxStructureKey(frm) {
+        const doc = frm.doc || {};
+        const items = (doc.items || []).map((row) => [row.name || "", row.item_code || "", row.item_tax_template || ""].join("")).join("");
+        return [
+          doc.doctype,
+          doc.company || "",
+          doc.cost_center || "",
+          doc.transaction_type || "",
+          doc.custom_trading_vat_disabled ? 1 : 0,
+          items
+        ].join("");
+      }
+      async function syncVatTaxRows(frm, force) {
         var _a, _b;
         if (isCompletedPos(frm))
           return;
         if (!canSyncVatTaxRows(frm) || frm.__retail_syncing_vat_tax_rows)
+          return;
+        const key = vatTaxStructureKey(frm);
+        if (!force && key === frm.__retail_vat_tax_key)
           return;
         frm.__retail_syncing_vat_tax_rows = true;
         try {
@@ -9413,6 +9710,8 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
           replaceManagedVatTaxRows(frm, setup.tax_rows);
           await runErpnextTotals(frm);
           placeVatFieldBeforeGrandTotal(frm);
+          if (vatTaxStructureKey(frm) === key)
+            frm.__retail_vat_tax_key = key;
         } finally {
           frm.__retail_syncing_vat_tax_rows = false;
         }
@@ -9493,13 +9792,25 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
         const description = String((row == null ? void 0 : row.description) || "").trim();
         return description.startsWith(`${taxLabel} [`);
       }
+      function assignRowAmount(frm, cdt, cdn, row, amount) {
+        var _a, _b, _c, _d, _e, _f;
+        if (!row || row.amount === amount)
+          return;
+        row.amount = amount;
+        (_f = (_e = (_d = (_c = (_b = (_a = frm.fields_dict) == null ? void 0 : _a.items) == null ? void 0 : _b.grid) == null ? void 0 : _c.grid_rows_by_docname) == null ? void 0 : _d[cdn]) == null ? void 0 : _e.refresh_field) == null ? void 0 : _f.call(_e, "amount");
+      }
       async function setRowValues(frm, cdt, cdn, values) {
-        var _a, _b, _c;
+        var _a, _b, _c, _d;
+        const row = (_a = locals[cdt]) == null ? void 0 : _a[cdn];
+        const changed = [];
         for (const [fieldname, value] of Object.entries(values)) {
+          if (row && row[fieldname] === value)
+            continue;
+          changed.push(fieldname);
           await frappe.model.set_value(cdt, cdn, fieldname, value);
         }
-        const gridRow = (_c = (_b = (_a = frm.fields_dict.items) == null ? void 0 : _a.grid) == null ? void 0 : _b.grid_rows_by_docname) == null ? void 0 : _c[cdn];
-        Object.keys(values).forEach((fieldname) => {
+        const gridRow = (_d = (_c = (_b = frm.fields_dict.items) == null ? void 0 : _b.grid) == null ? void 0 : _c.grid_rows_by_docname) == null ? void 0 : _d[cdn];
+        changed.forEach((fieldname) => {
           var _a2;
           return (_a2 = gridRow == null ? void 0 : gridRow.refresh_field) == null ? void 0 : _a2.call(gridRow, fieldname);
         });
@@ -9521,6 +9832,10 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
         const rowRate = flt(row.tax_rate);
         if (rowRate && parentDoc.doctype !== "Sales Invoice")
           return rowRate;
+        const known = vatRateMemo(frm);
+        const key = vatRateMemoKey(frm, row);
+        if (known.has(key))
+          return known.get(key);
         const request = {
           method: "retail.domains.transactions.vat.get_transaction_item_vat_rate",
           args: {
@@ -9538,7 +9853,9 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
           }
         };
         const response = await (((_a = frm.__quick_receipt) == null ? void 0 : _a.lookup(request)) || window.retail.transaction_items.purchaseRead(frm, request));
-        return flt(response.message);
+        const rate = flt(response.message);
+        known.set(key, rate);
+        return rate;
       }
       function taxHandlers() {
         return {
@@ -10418,20 +10735,20 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
     for (const doctype of sales)
       frappe.ui.form.on(doctype, { setup: install, async refresh(frm) {
         install();
-        if (frm.doc.docstatus !== 0)
+        if (frm.doc.docstatus !== 0 || frm.__retail_scale_precision)
           return;
-        for (const row of frm.doc.items || []) {
-          if (!/^\d{13}$|^\d{18}$/.test(row.barcode || ""))
-            continue;
-          const { message } = await frappe.call({
-            method: "retail.domains.item.packing_scan.scan_barcode",
-            args: { search_value: row.barcode }
-          });
-          if ((message == null ? void 0 : message.scale_barcode_type) && message.item_code === row.item_code) {
-            preparePrecision(frm);
-            break;
-          }
-        }
+        const barcodes = (frm.doc.items || []).map((row) => row.barcode || "").filter((barcode) => /^\d{13}$|^\d{18}$/.test(barcode));
+        if (!barcodes.length)
+          return;
+        const { message } = await frappe.call({
+          method: "retail.domains.item.scale_sales.scale_prefixes_in_use",
+          args: { barcodes },
+          no_spinner: true
+        });
+        if (!message || frm.doc.docstatus !== 0)
+          return;
+        frm.__retail_scale_precision = true;
+        preparePrecision(frm);
       } });
   })();
 
@@ -11008,4 +11325,4 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
     ["Purchase Order", "Purchase Invoice", "Purchase Receipt"].map((doctype) => [doctype, user_grid_view_settings_default[doctype]])
   );
 })();
-//# sourceMappingURL=retail_desk.bundle.TLL7I57C.js.map
+//# sourceMappingURL=retail_desk.bundle.7WJ4GE4P.js.map

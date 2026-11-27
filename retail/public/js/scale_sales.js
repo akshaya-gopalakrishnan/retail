@@ -108,15 +108,16 @@
 	$(document).on("startup", install);
 	for (const doctype of sales) frappe.ui.form.on(doctype, {setup: install, async refresh(frm) {
 		install();
-		if (frm.doc.docstatus !== 0) return;
-		for (const row of frm.doc.items || []) {
-			if (!/^\d{13}$|^\d{18}$/.test(row.barcode || "")) continue;
-			const {message} = await frappe.call({method: "retail.domains.item.packing_scan.scan_barcode",
-				args: {search_value: row.barcode}});
-			if (message?.scale_barcode_type && message.item_code === row.item_code) {
-				preparePrecision(frm);
-				break;
-			}
-		}
+		if (frm.doc.docstatus !== 0 || frm.__retail_scale_precision) return;
+		const barcodes = (frm.doc.items || []).map(row => row.barcode || "").filter(barcode => /^\d{13}$|^\d{18}$/.test(barcode));
+		if (!barcodes.length) return;
+		// One lookup for the whole invoice. Scanning each EAN separately blocked the form.
+		const {message} = await frappe.call({
+			method: "retail.domains.item.scale_sales.scale_prefixes_in_use",
+			args: {barcodes}, no_spinner: true,
+		});
+		if (!message || frm.doc.docstatus !== 0) return;
+		frm.__retail_scale_precision = true;
+		preparePrecision(frm);
 	}});
 })();

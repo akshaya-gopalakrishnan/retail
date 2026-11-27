@@ -235,6 +235,17 @@
 		};
 	}
 
+	function widthSignature(grid) {
+		const parts = [];
+		for (const [df] of grid.visible_columns || []) {
+			parts.push(df.fieldname, df.label, df.columns, df.colsize, df.width_px);
+		}
+		for (const row of grid.grid_rows || []) {
+			for (const [df] of grid.visible_columns || []) parts.push(row.doc?.[df.fieldname]);
+		}
+		return parts.join("\u0001");
+	}
+
 	// Measure formatted text, not the current cell box (which already has a fixed width).
 	function contentWidths(grid) {
 		const widths = {};
@@ -455,7 +466,11 @@
 		if (!container) return;
 		container.setAttribute("aria-label", __("Scrollable table"));
 		container.setAttribute("tabindex", "0");
-		grid.__retail_content_widths = contentWidths(grid);
+		const signature = widthSignature(grid);
+		if (signature !== grid.__retail_width_signature || !grid.__retail_content_widths) {
+			grid.__retail_content_widths = contentWidths(grid);
+			grid.__retail_width_signature = signature;
+		}
 		const totalWidth =
 			138 +
 			grid.visible_columns.reduce(

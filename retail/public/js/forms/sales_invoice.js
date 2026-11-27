@@ -296,6 +296,5 @@
 		};
 
 		frappe.model.set_value(cdt, cdn, values);
-		frm.refresh_field("items");
 	}
 	})();

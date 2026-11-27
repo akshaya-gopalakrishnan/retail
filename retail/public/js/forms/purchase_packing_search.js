@@ -190,16 +190,56 @@
 								const row = (grid.frm.doc[grid.df.fieldname] || []).find(row =>
 									row[this.fieldname] === choice.item_code && row.uom === choice.uom
 									&& (row.custom_packing_detail || "") === (choice.packing_id || "")) || grid.add_new_row();
-								if (!row[this.fieldname]) {
-									row.uom = choice.uom;
-									await frappe.model.set_value(row.doctype, row.name, this.fieldname, choice.item_code);
+								const seed = !row[this.fieldname] && grid.frm.doc.doctype === "Sales Invoice"
+									&& !grid.frm.doc.is_internal_customer && !grid.frm.doc.is_return;
+								if (seed) {
+									// Let native item loading price the selected UOM immediately.
+									// Keep the quantity event below for quantity-based pricing rules.
+									Object.assign(row, {uom: choice.uom, barcode: choice.barcode || "",
+										custom_item_barcode: choice.barcode || "", custom_packing_detail: choice.packing_id || ""});
+									row.__retail_selecting_packing = true;
+									row.__retail_packing_choice = choice;
 								}
-								await this.apply_packing_choice(row, choice);
+								try {
+									if (!row[this.fieldname]) {
+										row.uom = choice.uom;
+										await frappe.model.set_value(row.doctype, row.name, this.fieldname, choice.item_code);
+									}
+									// This barcode came from packing search, not a new scan.
+									// Re-triggering barcode would start another async item load.
+									if (seed) row.barcode = choice.barcode || "";
+									await this.apply_packing_choice(row, choice);
+								} finally {
+									if (seed) { delete row.__retail_selecting_packing; delete row.__retail_packing_choice; }
+								}
 								if (this.qty_fieldname) await frappe.model.set_value(row.doctype, row.name, this.qty_fieldname, qty);
 								window.retail.remember_transaction_barcode?.(row);
 								grid.refresh();
 							};
-							if (this.qty_fieldname) frappe.prompt({fieldname: "qty", fieldtype: "Float", label: __("Qty"), default: 1, reqd: 1},
+							if (this.qty_fieldname && frm?.doc.doctype === "Sales Invoice") {
+								if (this.__retail_qty_dialog || this.__retail_adding) return;
+								const dialog = new frappe.ui.Dialog({
+									title: __("Set Quantity"),
+									fields: [{fieldname: "qty", fieldtype: "Float", label: __("Qty"), default: 1, reqd: 1}],
+									primary_action_label: __("Set Quantity"),
+									primary_action: values => {
+										if (this.__retail_adding) return;
+										this.__retail_adding = true;
+										dialog.disable_primary_action();
+										// Finish closing before item handlers can rebuild the grid.
+										dialog.$wrapper.one("hidden.bs.modal.retailPackingAdd", () => {
+											Promise.resolve().then(() => add(values.qty)).catch(error => {
+												console.error(error);
+												frappe.msgprint(__("Could not finish adding the item. Check the Items table before trying again."));
+											}).finally(() => { this.__retail_adding = false; });
+										});
+										dialog.hide();
+									},
+								});
+								this.__retail_qty_dialog = dialog;
+								dialog.on_hide = () => { delete this.__retail_qty_dialog; };
+								dialog.show();
+							} else if (this.qty_fieldname) frappe.prompt({fieldname: "qty", fieldtype: "Float", label: __("Qty"), default: 1, reqd: 1},
 								data => add(data.qty), __("Set Quantity"), __("Set Quantity"));
 							else await add(1);
 						} else {
@@ -426,13 +466,19 @@
 	}
 
 	function finishLine(frm) {
+		let calculated = false;
 		try {
-			frm.cscript?.calculate_taxes_and_totals?.();
+			if (typeof frm.cscript?.calculate_taxes_and_totals === "function") {
+				const pending = frm.cscript.calculate_taxes_and_totals();
+				calculated = true;
+				// The native totals method already refreshes the item grid.
+				pending?.catch?.(() => frm.refresh_field("items"));
+			}
 		} catch (error) {
 			console.error(error);
 		}
 		frm.dirty?.();
-		frm.refresh_field("items");
+		if (!calculated) frm.refresh_field("items");
 	}
 
 	function stockFields(row) {
