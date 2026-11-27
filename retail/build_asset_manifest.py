@@ -126,21 +126,35 @@ def install(bench=None):
 		return _install_image_assets(bench, source, assets)
 
 
+def publish_shared_public(assets, app, public):
+	"""Keep hashed files accessible to frontends running either image version."""
+	destination = assets / app
+	if destination.is_dir() and not destination.is_symlink():
+		shutil.copytree(public, destination, dirs_exist_ok=True)
+		return
+	if destination.is_symlink() and destination.resolve().is_relative_to(assets.resolve()):
+		shutil.copytree(public, destination, dirs_exist_ok=True)
+		return
+	# A link into apps/... resolves inside each container's private image. Replace
+	# it atomically with a relative link into the shared volume, preserving files
+	# from the old image before adding this image's files. Never unlink the live
+	# public path while requests may still be using it.
+	shared = Path(tempfile.mkdtemp(dir=assets, prefix=f".{app}-public-"))
+	shared.chmod(0o775)
+	if destination.is_dir():
+		shutil.copytree(destination, shared, dirs_exist_ok=True)
+	shutil.copytree(public, shared, dirs_exist_ok=True)
+	link = shared.with_name(shared.name + ".link")
+	link.symlink_to(shared.name, target_is_directory=True)
+	link.replace(destination)
+
+
 def _install_image_assets(bench, source, assets):
 	for app in ("frappe", "erpnext", "retail", "hrms"):
 		public = bench / "apps" / app / app / "public"
 		if not public.is_dir():
 			continue
-		destination = assets / app
-		if destination.is_symlink() and destination.resolve() != public.resolve():
-			destination.unlink()
-			destination.symlink_to(public, target_is_directory=True)
-		elif not destination.exists():
-			destination.symlink_to(public, target_is_directory=True)
-		elif destination.resolve() != public.resolve():
-			# Some deployments keep public assets as directories in the volume.
-			# Preserve older hashed files for browsers with an earlier page open.
-			shutil.copytree(public, destination, dirs_exist_ok=True)
+		publish_shared_public(assets, app, public)
 	for filename in ("assets.json", "assets-rtl.json"):
 		path = assets / filename
 		data = json.loads(path.read_text()) if path.exists() else {}
