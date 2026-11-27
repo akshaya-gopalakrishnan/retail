@@ -7,7 +7,7 @@ from decimal import Decimal, InvalidOperation
 
 import frappe
 from frappe import _
-from frappe.utils import cint, flt, getdate, now_datetime
+from frappe.utils import cint, flt, getdate, get_datetime, now_datetime
 
 from retail import pos_operations
 
@@ -36,6 +36,8 @@ def authorize(closing, privilege):
     roles = frappe.get_roles()
     if "POS Integration User" in roles:
         deny()
+    if privilege == REOPEN and "Admin" in roles:
+        return
     employees = frappe.get_all("Employee", filters={"user_id": frappe.session.user, "status": "Active"},
         fields=["name", "branch", "pos_operator_privilege", "pos_login_enabled"])
     if not any(e.branch == closing.branch and e.pos_login_enabled and
@@ -394,9 +396,17 @@ def guard_day_document(doc, method=None):
     if method == "on_trash" and doc.docstatus != 0:
         frappe.throw(_("Closing history must be retained."))
     old = doc.get_doc_before_save()
-    if old and (old.docstatus != 0 or doc.get("amended_from")) and any(doc.get(f) != old.get(f) for f in ("branch", "business_date")):
+    # Desk sends dates as strings; database-loaded documents contain date objects.
+    if old and (old.docstatus != 0 or doc.get("amended_from")) and (
+        doc.get("branch") != old.get("branch")
+        or getdate(doc.get("business_date")) != getdate(old.get("business_date"))
+    ):
         frappe.throw(_("The business date and branch of a closing revision cannot change."))
-    if old and any(doc.get(f) != old.get(f) for f in ("amended_from", "revision", "reopened_by", "reopened_at", "reopen_reason")):
+    if old and (
+        any(doc.get(f) != old.get(f) for f in ("amended_from", "revision", "reopened_by", "reopen_reason"))
+        or (get_datetime(doc.reopened_at) if doc.get("reopened_at") else None)
+        != (get_datetime(old.reopened_at) if old.get("reopened_at") else None)
+    ):
         frappe.throw(_("Day revision identity cannot be changed."))
 
 
@@ -464,6 +474,8 @@ def get_day_correction_actions(day_closing):
                 "status": "Active", "branch": closing.branch, "pos_login_enabled": 1},
                 fields=["pos_operator_privilege"]):
             privileges.update(k for k, allowed in profile_privileges(employee.pos_operator_privilege).items() if allowed)
+    if "Admin" in frappe.get_roles() and "POS Integration User" not in frappe.get_roles():
+        privileges.add(REOPEN)
     return {"reopen": closing.docstatus == 1 and REOPEN in privileges,
             "recalculate": closing.docstatus == 0 and bool(closing.amended_from) and "DAY_CLOSING" in privileges,
             "reclose": closing.docstatus == 0 and bool(closing.amended_from) and "DAY_CLOSING" in privileges}

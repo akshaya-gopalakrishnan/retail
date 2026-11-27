@@ -1,11 +1,6 @@
-// Business Home's custom charts have no value_based_on field. Keep their source
-// DocType for actions/filters, but do not fetch form metadata just for tooltips.
+// Render Retail charts from their preloaded field formatting; load form metadata
+// only when an interactive filter needs it.
 (() => {
-	const chart_names = new Set([
-		"Top Selling Products",
-		"Sales by Counter",
-		"Sales Trend 7 Days",
-	]);
 	const pending = new Map();
 
 	function with_metadata(doctype) {
@@ -38,21 +33,19 @@
 				const route = frappe.get_route();
 				this.retail_business_home =
 					route[0] === "Workspaces" &&
-					route[1] === "Business Home" &&
-					chart_names.has(opts.chart_name);
+					retail.workspace_speed.names.has(route[1]);
 			}
 
-			is_retail_custom_chart() {
+			is_retail_workspace_chart() {
 				return (
 					this.retail_business_home &&
-					this.chart_doc?.chart_type === "Custom" &&
-					this.chart_doc.source === this.chart_name &&
-					this.chart_doc.document_type === "Sales Invoice"
+					this.chart_doc && (!this.chart_doc.value_based_on ||
+                        this.chart_doc.__onload?.retail_value_field || this.chart_doc.chart_type === "Custom")
 				);
 			}
 
 			get_chart_args() {
-				if (!this.is_retail_custom_chart() || this.chart_doc.value_based_on) {
+				if (!this.is_retail_workspace_chart() || (this.chart_doc.value_based_on && !this.chart_doc.__onload?.retail_value_field)) {
 					return super.get_chart_args();
 				}
 				// The core lookup would find no field. Everything else (currency,
@@ -60,15 +53,40 @@
 				const chart_doc = this.chart_doc;
 				this.chart_doc = { ...chart_doc, document_type: null };
 				try {
-					return super.get_chart_args();
+					const args = super.get_chart_args();
+                    const field = chart_doc.__onload?.retail_value_field;
+                    if (field && !chart_doc.currency &&
+                        !(chart_doc.chart_type === "Report" && this.report_result?.chart?.fieldtype) &&
+                        !(chart_doc.chart_type === "Custom" && chart_doc.custom_options)) {
+                        args.tooltipOptions = {formatTooltipY: value => frappe.format(value, field,
+                            {always_show_decimals: true, inline: true})};
+                    }
+                    return args;
 				} finally {
 					this.chart_doc = chart_doc;
 				}
 			}
 
+            create_filter_group_and_add_filters() {
+                if (!this.retail_business_home) return super.create_filter_group_and_add_filters();
+                // Native filter groups load the entire source metadata. Defer
+                // their construction until the user opens the filter control.
+                const open = async event => {
+                    event.stopImmediatePropagation();
+                    try {
+                        await with_metadata(this.chart_doc.document_type);
+                        super.create_filter_group_and_add_filters();
+                        this.filter_button.trigger("click");
+                    } catch (error) {
+                        this.filter_button.one("click.retail_lazy_filters", open);
+                    }
+                };
+                this.filter_button.off("click.retail_lazy_filters").one("click.retail_lazy_filters", open);
+            }
+
 			async render() {
-				if (!this.is_retail_custom_chart()) return super.render();
-				if (this.chart_doc.value_based_on) {
+				if (!this.is_retail_workspace_chart()) return super.render();
+				if (this.chart_doc.value_based_on && !this.chart_doc.__onload?.retail_value_field) {
 					await with_metadata(this.chart_doc.document_type);
 					return super.render();
 				}

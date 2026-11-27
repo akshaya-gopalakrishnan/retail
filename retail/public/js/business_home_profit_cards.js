@@ -8,6 +8,11 @@
 		"Invoice Count Today": ["get_invoice_count_today", "count", true],
 		"Return Amount Today": ["get_return_amount_today", "returns", true],
 	};
+    const workspace_methods = new Set([
+        prefix + "get_damage_amount_today", prefix + "get_cash_in_hand_today",
+        "retail.retail_app.report.low_stock_reorder_report.low_stock_reorder_report.get_low_stock_items_count",
+        "retail.retail_app.report.low_stock_reorder_report.low_stock_reorder_report.get_out_of_stock_items_count",
+    ]);
 	let pending = new Map();
 	let queue = [];
 	let scheduled = false;
@@ -50,23 +55,37 @@
 				return result;
 			}
 
+            get_number_for_doctype_card(res) {
+                const field = this.card_doc?.aggregate_function_based_on;
+                const types = {"Bin.stock_value": "Currency"};
+                const fieldtype = types[`${this.card_doc?.document_type}.${field}`];
+                if (retail.workspace_speed.active() && this.card_doc.function === "Sum" && fieldtype) {
+                    this.number = res;
+                    return this.set_formatted_number({fieldtype});
+                }
+                return super.get_number_for_doctype_card(res);
+            }
+
 			async get_data() {
-				const route = frappe.get_route();
 				const card = cards[this.card_doc?.name];
-				if (route[0] !== "Workspaces" || route[1] !== "Business Home" ||
-					!card || this.card_doc.type !== "Custom" ||
-					this.settings.method !== prefix + card[0]) return super.get_data();
+				if (!retail.workspace_speed.active()) return super.get_data();
+                const legacy_card = card && this.card_doc.type === "Custom" &&
+                    this.settings.method === prefix + card[0];
+                const workspace_card = (this.card_doc.type === "Document Type" &&
+                    this.settings.method === "frappe.desk.doctype.number_card.number_card.get_result") ||
+                    (this.card_doc.type === "Custom" && workspace_methods.has(this.settings.method));
+                if (!legacy_card && !workspace_card) return super.get_data();
 				const args = this.settings.args || {};
 				// These APIs ignore nested `filters`. Preserve their actual top-level
 				// arguments; Count/Returns intentionally ignore dates/branch/counter.
-				const context = {
+				const context = legacy_card ? {
 					company: args.company || null,
 					today_only: card[2],
 					from_date: (!card[2] && args.from_date) || null,
 					to_date: (!card[2] && args.to_date) || null,
 					branch: (!card[2] && args.branch) || null,
 					counter: (!card[2] && args.counter) || null,
-				};
+                } : {card_name: this.card_doc.name, filters: args.filters || []};
 				const key = JSON.stringify({ ...context, today_only: undefined });
 				// A second get_data on a widget is a refresh, not initial hydration.
 				if (this.retail_profit_loaded) pending = new Map();
@@ -81,7 +100,7 @@
 					requests.set(key, shared);
 				}
 				const result = await requests.get(key);
-				this.data = result[card[1]];
+				this.data = result[legacy_card ? card[1] : "value"];
 				return this.settings.get_number(this.data);
 			}
 		}

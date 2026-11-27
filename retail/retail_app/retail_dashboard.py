@@ -7,6 +7,7 @@ import frappe
 from frappe import _
 from frappe.utils import flt, getdate, today
 from frappe.utils.dashboard import cache_source
+from retail.desk_speed import cached
 
 from retail.retail_app.report.cashier_wise_damage.cashier_wise_damage import execute as get_damage_report
 
@@ -258,7 +259,7 @@ def get_sales_by_counter(
 
 
 @frappe.whitelist()
-@cache_source
+@cached("trend", 60)
 def get_sales_trend_7_days(
 	chart_name=None,
 	chart=None,
@@ -611,10 +612,16 @@ def _format_profit_number_card(summary, company):
 
 @frappe.whitelist()
 def get_business_home_profit_cards(contexts):
-    """Request-scoped sharing, keyed after the legacy effective filters resolve.
+    contexts = validate_card_contexts(contexts)
+    return _compute_business_home_profit_cards(contexts)
 
-    Exceptions abort the whole response. No partial values or cached accounting
-    data are returned, and the original invoice permission path is unchanged.
+
+@cached("cards", 60)
+def _compute_business_home_profit_cards(contexts):
+    """Share existing calculations after each card's permission check.
+
+    The short-lived outer cache keeps complete responses only; errors are never
+    cached and no alternative profit or stock formula is introduced.
     """
     contexts = frappe.parse_json(contexts)
     if not isinstance(contexts, list) or len(contexts) > 32:
@@ -622,6 +629,9 @@ def get_business_home_profit_cards(contexts):
     summaries = {}
     results = []
     for context in contexts:
+        if context.get("card_name"):
+            results.append({"value": _workspace_card_value(context)})
+            continue
         company = _get_company_filter(context.get("company"))
         today_only = context.get("today_only")
         from_date = (not today_only and context.get("from_date")) or get_today()
@@ -640,3 +650,54 @@ def get_business_home_profit_cards(contexts):
             }
         results.append(summaries[key])
     return results
+
+
+# Only existing trusted card methods may enter the shared workspace request.
+_WORKSPACE_METHODS = {
+    "retail.retail_app.retail_dashboard.get_cash_in_hand_today": get_cash_in_hand_today,
+    "retail.retail_app.retail_dashboard.get_damage_amount_today": get_damage_amount_today,
+}
+
+
+def validate_card_contexts(contexts):
+    contexts = frappe.parse_json(contexts)
+    if not isinstance(contexts, list) or len(contexts) > 32 or any(not isinstance(c, dict) for c in contexts):
+        frappe.throw("Invalid Business Home card contexts")
+    from retail.sidebar_services import authorize_service, workspace_dependencies
+    for context in contexts:
+        if not context.get("card_name"):
+            authorize_service("retail.retail_app.retail_dashboard.get_today_sales", {})
+            continue
+        name = context["card_name"]
+        if name not in workspace_dependencies()["Number Card"]:
+            frappe.throw("Not permitted", frappe.PermissionError)
+        doc = frappe.get_cached_doc("Number Card", name)
+        doc.check_permission("read")
+        if doc.document_type:
+            frappe.has_permission(doc.document_type, "read", throw=True)
+        if doc.type == "Custom":
+            allowed = set(_WORKSPACE_METHODS) | {
+                "retail.retail_app.report.low_stock_reorder_report.low_stock_reorder_report.get_low_stock_items_count",
+                "retail.retail_app.report.low_stock_reorder_report.low_stock_reorder_report.get_out_of_stock_items_count",
+            }
+            if doc.method not in allowed:
+                frappe.throw("Unsupported workspace card")
+            authorize_service(doc.method, {})
+        elif doc.type != "Document Type":
+            frappe.throw("Unsupported workspace card")
+    return contexts
+
+
+def _workspace_card_value(context):
+    doc = frappe.get_cached_doc("Number Card", context["card_name"])
+    if doc.type == "Document Type":
+        from frappe.desk.doctype.number_card.number_card import get_result
+        return get_result(doc.as_dict(), context.get("filters"))
+    from retail.retail_app.report.low_stock_reorder_report.low_stock_reorder_report import (
+        get_low_stock_items_count, get_out_of_stock_items_count,
+    )
+    methods = dict(_WORKSPACE_METHODS)
+    prefix = "retail.retail_app.report.low_stock_reorder_report.low_stock_reorder_report."
+    methods[prefix + "get_low_stock_items_count"] = get_low_stock_items_count
+    methods[prefix + "get_out_of_stock_items_count"] = get_out_of_stock_items_count
+    return methods[doc.method]()

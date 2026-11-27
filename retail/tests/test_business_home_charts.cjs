@@ -22,6 +22,8 @@ function setup() {
  const core = path.resolve(__dirname, '../../../frappe/frappe/public/js/frappe/widgets/chart_widget.js');
  vm.runInContext(fs.readFileSync(core, 'utf8').replace(/^import .*;\n/m, '').replace('export default class ChartWidget', 'class ChartWidget') + '\nfrappe.widget.widget_factory = {chart: ChartWidget};', context);
  const Base = context.frappe.widget.widget_factory.chart;
+ context.retail.workspace_speed = {}; context.frappe.provide = () => {};
+ vm.runInContext(fs.readFileSync(path.resolve(__dirname, '../public/js/workspace_speed.js'), 'utf8'), context);
  vm.runInContext(fs.readFileSync(path.resolve(__dirname, '../public/js/business_home_charts.js'), 'utf8'), context);
  return { context, Base, Chart: context.frappe.widget.widget_factory.chart, load: context.retail.business_home_charts.with_metadata };
 }
@@ -96,7 +98,7 @@ test('unrelated charts and other workspace instances retain the core renderer', 
  let count = 0;
  const original = context.frappe.model.with_doctype;
  context.frappe.model.with_doctype = async (dt, callback) => { count++; await original(dt, callback); };
- const unrelated = widget(Chart, 'Other Chart');
+ const unrelated = widget(Chart, 'Other Chart'); unrelated.chart_doc.chart_type = 'Count'; unrelated.chart_doc.value_based_on = 'grand_total';
  await unrelated.render();
  assert.equal(count, 1);
  delete context.locals.DocType['Sales Invoice'];

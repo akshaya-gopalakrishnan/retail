@@ -8,6 +8,29 @@
 	const SETTINGS = "RetailScrollableGrid";
 	const registrations = new Set();
 
+	// Display copies only: retain original DocFields for editors and calculations.
+	function compactRateLabel(grid, df) {
+		if (!["items", "custom_retail_packing_detail"].includes(grid.df.fieldname)) return df;
+		const labels = {
+			purchase_net_rate: "PR Excl VAT", purchase_gross_rate: "PR Incl VAT",
+			selling_net_rate: "SR Excl VAT", selling_gross_rate: "SR Incl VAT",
+			custom_purchase_net_rate: "PR Excl VAT", custom_purchase_gross_rate: "PR Incl VAT",
+			custom_sales_net_rate: "SR Excl VAT", custom_sales_gross_rate: "SR Incl VAT",
+			custom_amount_including_vat: "Amt Incl VAT", custom_vat_amount: "VAT Amt",
+		};
+		if (grid.df.fieldname === "custom_retail_packing_detail") {
+			Object.assign(labels, {packing_name: "Pack Name", conversion_factor: "Conv fac"});
+		}
+		const type = grid.frm.doctype;
+		const prefix = ["Purchase Order", "Purchase Receipt", "Purchase Invoice", "Supplier Quotation"].includes(type)
+			? "PR" : ["Sales Order", "Delivery Note", "Sales Invoice", "POS Invoice", "Quotation"].includes(type) ? "SR" : null;
+		if (prefix) {
+			labels.rate = `${prefix} Excl VAT`;
+			labels.custom_rate_including_vat = `${prefix} Incl VAT`;
+		}
+		return labels[df.fieldname] ? {...df, label: labels[df.fieldname]} : df;
+	}
+
 	function setupColumns() {
 		if (this.visible_columns?.length) return;
 		const own = frappe.get_user_settings(this.frm.doctype, SETTINGS) || {};
@@ -107,7 +130,8 @@
 		this.visible_columns = [];
 		const seen = new Set();
 		for (const field of fields) {
-			const df = typeof field === "string" ? this.fields_map[field] : field;
+			const original = typeof field === "string" ? this.fields_map[field] : field;
+			const df = original && compactRateLabel(this, original);
 			if (
 				!df ||
 				seen.has(df.fieldname) ||
@@ -224,12 +248,22 @@
 			return Math.max(0, ...lines.map((line) =>
 				context ? context.measureText(line).width : line.length * 7));
 		};
+		const packingWidths = grid.df.fieldname === "custom_retail_packing_detail" ? {
+			packing_name: 260, barcode: 200, packing_uom: 72, conversion_factor: 90,
+			purchase_net_rate: 112, purchase_gross_rate: 112,
+			selling_net_rate: 112, selling_gross_rate: 112, is_fast_plu_item: 72,
+		} : {};
 		for (const [df] of grid.visible_columns) {
-			if (Number.isFinite(df.width_px)) {
+			if (packingWidths[df.fieldname]) {
+				widths[df.fieldname] = packingWidths[df.fieldname];
+				continue;
+			}
+			const compact = compactRateLabel(grid, df) !== df;
+			if (!compact && Number.isFinite(df.width_px)) {
 				widths[df.fieldname] = df.width_px;
 				continue;
 			}
-			if (grid.user_defined_columns?.some(column => column.fieldname === df.fieldname)) {
+			if (!compact && grid.user_defined_columns?.some(column => column.fieldname === df.fieldname)) {
 				widths[df.fieldname] = Math.max(1, Math.min(12, Number(df.columns) || df.colsize || 1)) * 80;
 				continue;
 			}
@@ -288,6 +322,15 @@
 			row.columns?.item_code?.static_area.html(
 				itemColumn[0].formatter(row.doc.item_code, itemColumn[0], {}, row.doc));
 		}
+		// Native GridRow takes heading labels from its own DocFields, not visible_columns.
+		if (!row.doc) {
+			for (const [df] of grid.visible_columns) {
+				if (compactRateLabel(grid, df) === df) continue;
+				const cell = row.columns?.[df.fieldname];
+				cell?.static_area?.text(__(df.label));
+				cell?.attr("title", __(grid.fields_map[df.fieldname]?.label || df.label));
+			}
+		}
 		const options = grid.__retail_scroll_options;
 		// Native search cells omit data-fieldname; use their field map so they
 		// receive the same sizing and pinned position as headings and item cells.
@@ -303,7 +346,9 @@
 				? 56
 				: 40;
 			this.style.setProperty("--retail-column-width", `${width}px`);
-			this.style.setProperty("--retail-column-grow", column && fieldname !== grid.__retail_resizing ? String(width) : "0");
+			const grow = grid.df.fieldname === "custom_retail_packing_detail"
+				? ({packing_name: 2, barcode: 1}[fieldname] || 0) : width;
+			this.style.setProperty("--retail-column-grow", column && fieldname !== grid.__retail_resizing ? String(grow) : "0");
 			this.classList.toggle("retail-grid-data-column", Boolean(column));
 			this.classList.toggle("retail-grid-pinned", fieldname === options.pin_field && grid.visible_columns[0]?.[0].fieldname === fieldname);
 		});

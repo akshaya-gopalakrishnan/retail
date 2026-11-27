@@ -23,6 +23,7 @@
 	function bind(control, select, selling = false) {
 		if (!control?.awesomplete || control.__retail_packing_search) return;
 		control.__retail_packing_search = true;
+		control.__retail_select_packing = select;
 		const awesome = control.awesomplete;
 		$(awesome.ul).addClass("retail-packing-results");
 		awesome.item = function (item, _value, index) {
@@ -114,6 +115,118 @@
 				.finally(() => { control.__retail_packing_busy = false; });
 		});
 	}
+	// Share packing results with Advanced Search and Add Multiple.
+	const selector = frappe.ui.form.LinkSelector?.prototype;
+	if (selector && !selector.__retail_packing_search) {
+		selector.__retail_packing_search = true;
+		const nativeSearch = selector.search;
+		selector.search = async function () {
+			if (this.doctype !== "Item") return nativeSearch.call(this);
+			clearTimeout(this.__retail_search_timer);
+			if (!this.__retail_live_search) {
+				this.__retail_live_search = true;
+				const field = this.dialog.fields_dict.txt;
+				field.df.label = __("Search Item");
+				field.refresh();
+				field.$input.attr("placeholder", __("Type item name, packing name or barcode"));
+				field.$input.on("input.retailPackingSelector", () => {
+					clearTimeout(this.__retail_search_timer);
+					// Invalidate an older response as soon as the text changes.
+					this.__retail_request = (this.__retail_request || 0) + 1;
+					this.start = 0;
+					this.dialog.fields_dict.results.$wrapper.empty();
+					this.dialog.fields_dict.more.$wrapper.hide();
+					this.__retail_search_timer = setTimeout(() => this.search(), 200);
+				});
+				this.dialog.$wrapper.on("hidden.bs.modal.retailPackingSelector", () => {
+					clearTimeout(this.__retail_search_timer);
+					this.__retail_request = (this.__retail_request || 0) + 1;
+				});
+			}
+			const args = {};
+			this.target.set_custom_query?.(args);
+			if (this.target.is_grid) {
+				const query = this.target.fieldinfo?.[this.fieldname]?.get_query;
+				Object.assign(args, typeof query === "function" ? query(this.target.frm.doc) : query);
+			}
+			const parent = this.target.frm?.doc?.doctype || this.target.get_reference_doctype?.() || "";
+			const version = this.__retail_request = (this.__retail_request || 0) + 1;
+			const start = this.start;
+			const {message = []} = await frappe.call({
+				method: "retail.domains.purchase.packing_search.search",
+				args: {txt: this.dialog.get_value("txt"), start, page_length: this.page_length,
+					filters: args.filters, query: args.query, reference_doctype: parent,
+					transaction_type: /^(Sales|Delivery|Quotation|POS)/.test(parent) ? "selling"
+						: /^(Purchase|Supplier)/.test(parent) ? "buying" : "all"},
+				btn: this.dialog.get_primary_btn(),
+			});
+			if (version !== this.__retail_request) return;
+			this.dialog.$wrapper.find(".modal-dialog").css("max-width", "900px");
+			const wrapper = this.dialog.fields_dict.results.$wrapper;
+			if (!start) {
+				wrapper.empty();
+				$("<div class='retail-packing-heading'>").html(columns([
+					__("Item Name"), __("Packing Name"), __("Barcode"), __("UOM"), __("UOM Factor"),
+				])).appendTo(wrapper);
+			}
+			for (const choice of message) {
+				$("<button type='button' class='btn btn-default'>")
+					.css({display: "block", width: "100%", textAlign: "left", marginBottom: "4px"})
+					.attr("title", choice.item_code)
+					.html(columns([choice.item_name, choice.packing_name || choice.item_name,
+						choice.barcode, choice.packing_uom, choice.conversion_factor]))
+					.appendTo(wrapper).on("click", async () => {
+						if (this.target.is_grid) {
+							const frm = this.target.frm;
+							if (frm?.doc.doctype === "Sales Invoice") {
+								const existing = (frm.doc[this.target.df.fieldname] || []).find(row =>
+									row[this.fieldname] === choice.item_code && row.uom === choice.uom
+									&& (row.custom_packing_detail || "") === (choice.packing_id || "")
+									&& window.retail.sales_invoice_duplicates?.same(row, {...row}));
+								if (existing && window.retail.sales_invoice_duplicates.offer(frm, existing)) return;
+							}
+							const add = async qty => {
+								const grid = this.target;
+								const row = (grid.frm.doc[grid.df.fieldname] || []).find(row =>
+									row[this.fieldname] === choice.item_code && row.uom === choice.uom
+									&& (row.custom_packing_detail || "") === (choice.packing_id || "")) || grid.add_new_row();
+								if (!row[this.fieldname]) {
+									row.uom = choice.uom;
+									await frappe.model.set_value(row.doctype, row.name, this.fieldname, choice.item_code);
+								}
+								await this.apply_packing_choice(row, choice);
+								if (this.qty_fieldname) await frappe.model.set_value(row.doctype, row.name, this.qty_fieldname, qty);
+								window.retail.remember_transaction_barcode?.(row);
+								grid.refresh();
+							};
+							if (this.qty_fieldname) frappe.prompt({fieldname: "qty", fieldtype: "Float", label: __("Qty"), default: 1, reqd: 1},
+								data => add(data.qty), __("Set Quantity"), __("Set Quantity"));
+							else await add(1);
+						} else {
+							if (this.target.__retail_select_packing) await this.target.__retail_select_packing(choice);
+							else {
+								await this.target.set_value(choice.item_code);
+								if (this.target.doc) await this.apply_packing_choice(this.target.doc, choice);
+							}
+							this.dialog.hide();
+						}
+					});
+			}
+			if (!message.length && !start) {
+				$("<p class='text-muted'>").text(__("No Results")).appendTo(wrapper);
+				if (frappe.model.can_create("Item")) $("<button type='button' class='btn btn-default btn-sm'>")
+					.text(__("Create a new {0}", [__("Item")])).appendTo(wrapper).on("click", () => frappe.new_doc("Item"));
+			}
+			this.dialog.fields_dict.more.$wrapper.toggle(message.length >= this.page_length);
+		};
+		selector.apply_packing_choice = async function (row, choice) {
+			for (const [field, value] of Object.entries({uom: choice.uom, barcode: choice.barcode || "",
+				custom_item_barcode: choice.barcode || "", custom_packing_detail: choice.packing_id || ""})) {
+				if (frappe.meta.has_field(row.doctype, field)) await frappe.model.set_value(row.doctype, row.name, field, value);
+			}
+		};
+	}
+
 	function installScanner(frm) {
 		const scanner = frm.cscript?.barcode_scanner;
 		if (!scanner || scanner.__retail_packing_input) return;
@@ -584,6 +697,14 @@
 					.find(field => field?.$input?.[0] === input && field.df.options === "Item");
 				window.retail.purchase_packing_search.bind(control, async choice => {
 					const row = gridRow.doc;
+					if (doctype === "Sales Invoice" && !row.item_code && window.retail.sales_invoice_duplicates?.preflight(frm, row, choice)) return;
+					row.__retail_selecting_packing = true;
+					if (doctype === "Sales Invoice") {
+						row.__retail_packing_choice = choice;
+						row.custom_item_barcode = choice.barcode || "";
+						gridRow.refresh_field?.("custom_item_barcode");
+					}
+					try {
 					if (lineEligible(frm)) {
 						const result = await window.retail.purchaseLine.fill(frm, {
 							item_code: choice.item_code,
@@ -615,8 +736,10 @@
 						row.custom_packing_detail = choice.packing_id || "";
 						row.item_name = choice.packing_name || choice.item_name;
 					}
+					window.retail.remember_transaction_barcode?.(row);
 					frm.dirty();
 					frm.refresh_field("items");
+					} finally { delete row.__retail_selecting_packing; delete row.__retail_packing_choice; }
 				}, ["Sales Order", "Sales Invoice"].includes(doctype));
 			}, true);
 		},

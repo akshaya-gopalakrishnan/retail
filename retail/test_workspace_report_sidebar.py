@@ -151,6 +151,9 @@ class TestWorkspaceReportSidebar(unittest.TestCase):
 		self.assertEqual(bootinfo.allowed_workspaces, pages)
 		self.assertEqual(bootinfo.retail_allowed_workspace_reports, ["Accounts Receivable"])
 		self.assertEqual(bootinfo.retail_workspace_sidebar_groups["Accounts Receivable"], "Accounts")
+		for alias in workspace_permissions.MANUFACTURING_WORKSPACE_ALIASES:
+			self.assertEqual(bootinfo.retail_workspace_sidebar_groups[alias], "Manufacturing")
+		self.assertNotIn("Manufacturing BOM", workspace_permissions.WORKSPACE_SIDEBAR_GROUPS)
 
 	def test_boot_builds_report_navigation_once_and_rechecks_next_boot(self):
 		self.allow_report("Accounts Receivable")

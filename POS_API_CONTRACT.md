@@ -5692,7 +5692,7 @@ Users are created in ERP; the app does not register users.
 Successful response example:
 
 ```json
-{"message":"Logged In","home_page":"/app","full_name":"Sales Person","sales_person_id":"SP2-2","sales_person_name":"Mith"}
+{"message":"Logged In","home_page":"/app","full_name":"Sales Person","sales_person_id":"SP2-2","sales_person_name":"Mith","roles":["All","Desk User","Guest","Sales User","Van Sales User"],"permissions":{"sales":true,"van_sales":false}}
 ```
 
 `sales_person_id` and `sales_person_name` are added to the existing response using
@@ -5700,6 +5700,8 @@ the authenticated User → active Employee → enabled, non-group Sales Person l
 Both are `null` if a link is missing or more than one matching Employee or Sales
 Person exists. Existing login fields, cookies and authentication rules remain
 unchanged. These identity fields do not grant access or filter customer records.
+
+`roles` contains the authenticated user's effective ERP roles, including automatic Frappe roles. Top-level `permissions.sales` and `permissions.van_sales` are boolean area-access flags (`true` = enabled, `false` = disabled), computed from the same role, saved sidebar-selection and blocked-module rules as Desk. Document Create/Write/Submit permissions still apply. The same fields are included by van driver login.
 
 Keep the returned `sid` cookie and send it on every following request. ERP authentication
 settings, including two-factor authentication where enabled, still apply. Session-authenticated
@@ -5988,3 +5990,48 @@ Loyalty active snapshot: both customer and promotion downloads replace cached po
 For `payments[]` with `mode_of_payment: "Loyalty"`, an empty or omitted `reference_no` resolves the customer's assigned Loyalty Program only when its company matches the invoice and its dates include the invoice posting date. An explicit reference is preserved and never replaced by this fallback. Numeric `points` is the quantity redeemed; `amount` is its monetary value. This applies to newly processed operations; previously completed promotion-redemption operations are not replayed automatically.
 
 POS Opening Entry and POS Closing Entry expose read-only `custom_pos_business_date`. Opening sync stores payload `business_date` (legacy `posting_date`, otherwise today); closing inherits the opening business date. This descriptive field does not change posting dates or session timestamps.
+
+### Optional POS receipt and delivery details
+
+Add these optional fields inside the existing sale/credit-sale/return `payload`:
+
+```json
+{
+  "cashier": "E-2",
+  "cashier_employee": "E-2",
+  "cashier_name": "Ahmed Ali",
+  "sales_man": "E-3",
+  "sales_man_name": "Omar Khalid",
+  "customer": "C-4",
+  "customer_name": "Mohammed Hassan",
+  "delivery_person": "E-5",
+  "delivery_person_name": "Abdul Rahman",
+  "customer_address": "Apartment 204, Building 12, Al Nahda, Dubai",
+  "delivery_charge": 5,
+  "is_dine_in": false,
+  "grand_total": 25,
+  "payments": [{"mode_of_payment": "CASH", "amount": 25, "points": 0, "reference_no": ""}]
+}
+```
+
+This fragment supplements the existing items and required sale identity fields.
+For items totaling 20 including VAT, a delivery charge of 5 gives a payable total
+of 25. `grand_total` and payment amounts already include delivery; the server does
+not add it a second time. Omitted delivery charge means zero. Delivery charge is
+exclusive of any VAT, and no additional VAT is inferred: include any delivery VAT
+in the reported header `vat_amount` (or explicit VAT tax rows).
+
+Names, sales man ID, delivery person ID and address are receipt snapshots, stored in read-only
+`custom_pos_<payload_field>` fields on POS Invoice as well as the original completed
+payload. They do not update Customer/Employee/Address masters or replace existing
+cashier/customer identity fields. Delivery person is an optional employee identifier
+stored as text, so historical offline staff references remain acceptable.
+`sales_man` and `sales_man_name` are optional sales staff ID/name snapshots. They do
+not create Sales Team allocations or commissions; omitted fields remain empty.
+
+Delivery is posted as a separate Actual charge using the server-owned Company
+Default Income Account (falling back to an invoice item income account). Configure
+that account before syncing delivery charges. Item revenue and reported VAT remain
+separate. Returns use the existing return sign convention for the charge. Exact
+retries retain existing idempotency rules; altered snapshots on the same external
+reference are a reference conflict.

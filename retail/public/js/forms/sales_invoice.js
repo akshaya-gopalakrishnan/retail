@@ -2,12 +2,23 @@
 	if (!window.frappe?.ui?.form) return;
 
 		frappe.ui.form.on("Sales Invoice", {
+			before_validate(frm) {
+				clearFetchedStockDefault(frm);
+			},
+			onload(frm) {
+				if (frm.is_new() && !frm.doc.amended_from && !frm.doc.is_return &&
+					!(frm.doc.items || []).some(row => row.item_code || row.delivery_note || row.sales_order)) {
+					frm.__retail_fresh_stock_default = true;
+					frm.set_value("update_stock", 1);
+				}
+			},
 			onload_post_render(frm) {
 				keepCompanyVisible(frm);
 				applyVanSalesInvoiceState(frm);
 				populateSalesPersonField(frm);
 			},
 			refresh(frm) {
+				clearFetchedStockDefault(frm);
 				installItemRefreshBatching(frm);
 				const grid = frm.fields_dict.items?.grid;
 				if (grid && !grid.__retail_id_order) {
@@ -53,6 +64,14 @@
 				restoreStandardDraftAction(frm, true);
 			},
 		});
+
+	function clearFetchedStockDefault(frm) {
+		if (!frm.is_new() || !frm.__retail_fresh_stock_default) return;
+		if ((frm.doc.items || []).some(row => row.delivery_note || row.sales_order || row.sales_invoice)) {
+			frm.__retail_fresh_stock_default = false;
+			frm.set_value("update_stock", 0);
+		}
+	}
 
 	function installItemRefreshBatching(frm) {
 		if (frm.__retail_item_refresh_batching) return;

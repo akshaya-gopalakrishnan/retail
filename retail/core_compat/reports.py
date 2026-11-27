@@ -16,10 +16,17 @@ class RetailReport(Report):
 
         columns = [get_column_as_dict(c) for c in result[0] or []]
         output = dict(columns=columns, result=normalize_result(result[1] or [], columns))
+        if self.name == "General Ledger":
+            from retail.core_compat.general_ledger import label_purchase_returns
+
+            label_purchase_returns(output)
         enrich_result(output)
         return (output['columns'], output['result'], *result[2:])
 
     def _execute_retail_module(self, filters):
+        if self.name == "Stock Ledger":
+            from retail.report_speed import stock_ledger
+            return stock_ledger(filters, self._execute_stock_ledger)
         if self.name in ("Accounts Receivable", "Accounts Payable"):
             from retail.core_compat.accounts_receivable import ReceivablePayableReport
 
@@ -56,12 +63,18 @@ class RetailReport(Report):
             return execute(frappe._dict(filters or {}))
         from retail.report_transaction_identity import enrich_report
 
-        if self.name in ("Stock Ledger", "Stock Balance"):
+        if self.name == "Stock Balance":
             from retail.stock_report_barcodes import execute
 
             result = execute(self.name, filters, super().execute_module)
             return enrich_report(self.name, result, filters)
         return enrich_report(self.name, super().execute_module(filters), filters)
+
+
+    def _execute_stock_ledger(self, filters):
+        from retail.stock_report_barcodes import execute
+        from retail.report_transaction_identity import enrich_report
+        return enrich_report(self.name, execute(self.name, filters, super().execute_module), filters)
 
 
 @frappe.whitelist()

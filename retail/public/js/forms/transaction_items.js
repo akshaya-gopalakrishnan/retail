@@ -130,25 +130,7 @@
 		return frm?.doc?.doctype === "POS Invoice" && !!frm.doc.custom_pos_completed_payload;
 	}
 
-	async function refreshOtherVatAmounts(frm) {
-		if (isCompletedPos(frm)) return;
-		const grid = frm.fields_dict.items?.grid;
-		grid?.update_docfield_property?.("custom_vat_amount", "read_only", 1);
-		for (const row of frm.doc.items || []) {
-			const field = frappe.meta.get_docfield(row.doctype, "custom_vat_amount", row.name);
-			if (!field) continue;
-			field.read_only = 1;
-			const rate = row.item_code ? await getVatRate(frm, row, row.doctype) : 0;
-			// Amount/net_amount may still contain values from the previous edit.
-			const amount = flt(row.qty) * flt(row.rate);
-			const precision = cint(field.precision) || 2;
-			row.custom_vat_amount = flt(amount * rate / 100, precision);
-			grid?.grid_rows_by_docname?.[row.name]?.refresh_field?.("custom_vat_amount");
-		}
-	}
-
 	function refreshRowVatAmounts(frm) {
-		if (frm.doc.doctype !== "Sales Invoice") return refreshOtherVatAmounts(frm);
 		if (isCompletedPos(frm)) return;
 		// Totals emit one event per row. Coalesce display work for the invoice;
 		// never rebuild the whole grid just to repeat a read-only property.
@@ -187,6 +169,9 @@
 		frappe.ui.form.on(doctype, {
 			refresh(frm) {
 				placeVatFieldBeforeGrandTotal(frm);
+				if (frm.doc.doctype === "Sales Invoice" && isEditableDraft(frm) && frm.doc.items?.length) {
+					return syncVatTaxRows(frm);
+				}
 			},
 			company(frm) {
 				queueVatTaxRowsSync(frm);
@@ -414,6 +399,11 @@
 				const row = locals[cdt][cdn];
 				const args = {item_code: row.item_code, parent_doctype: frm.doc.doctype,
 					uom: row.uom, transaction_type: frm.doc.transaction_type, item_tax_template: row.item_tax_template};
+				if (frm.doc.doctype === "Sales Invoice") Object.assign(args, {
+					company: frm.doc.company, is_pos: frm.doc.is_pos || 0,
+					is_consolidated: frm.doc.is_consolidated || 0, return_against: frm.doc.return_against,
+					docstatus: frm.doc.docstatus || 0, custom_trading_vat_disabled: frm.doc.custom_trading_vat_disabled || 0,
+				});
 				const key = purchaseReadKey({args});
 				if (!action.bundles.has(key)) {
 					// Use the existing permission-checked Quick Entry read bundle.
@@ -442,7 +432,7 @@
 			}
 		};
 	}
-	purchaseForms.forEach(doctype => frappe.ui.form.on(doctype, {refresh: installPurchaseActionReads}));
+	[...purchaseForms, "Sales Invoice"].forEach(doctype => frappe.ui.form.on(doctype, {refresh: installPurchaseActionReads}));
 	window.retail.transaction_items.preparedPurchaseItem = async (frm, itemCode) => {
 		const action = frm.__retail_purchase_action;
 		if (!action) return null;
@@ -525,6 +515,28 @@
 				},
 			});
 			const setup = normalizeVatTaxSetup(response.message);
+			if (response.message?.vat_disabled) {
+				const converting = !cint(frm.doc.custom_trading_vat_disabled);
+				const accounts = response.message.vat_accounts || [];
+				frm.doc.taxes = (frm.doc.taxes || []).filter(row => !accounts.includes(row.account_head));
+				frm.doc.taxes_and_charges = "";
+				for (const row of frm.doc.items || []) {
+					const values = response.message.item_values?.[row.name];
+					if (converting && values && flt(row.rate) === flt(values.source_rate)) {
+						row.rate = values.rate;
+						row.price_list_rate = values.price_list_rate;
+						row.discount_amount = values.discount_amount;
+					}
+					row.item_tax_template = "";
+					row.item_tax_rate = "{}";
+					row.custom_vat_amount = 0;
+					row.custom_rate_including_vat = flt(row.rate);
+					row.custom_amount_including_vat = flt(row.qty) * flt(row.rate);
+				}
+				frm.doc.custom_trading_vat_disabled = 1;
+			} else if (frm.doc.doctype === "Sales Invoice") {
+				frm.doc.custom_trading_vat_disabled = 0;
+			}
 			applyItemTaxRates(frm, setup.item_tax_rates);
 			replaceManagedVatTaxRows(frm, setup.tax_rows);
 			await runErpnextTotals(frm);
@@ -633,7 +645,7 @@
 	async function getVatRate(frm, row, childDoctype) {
 		const parentDoc = frm?.doc || {};
 		const rowRate = flt(row.tax_rate);
-		if (rowRate) return rowRate;
+		if (rowRate && parentDoc.doctype !== "Sales Invoice") return rowRate;
 
 		const request = {
 			method: "retail.domains.transactions.vat.get_transaction_item_vat_rate",
@@ -643,6 +655,10 @@
 				parent_doctype: parentDoc.doctype,
 				transaction_type: parentDoc.transaction_type,
 				item_tax_template: row.item_tax_template,
+				company: parentDoc.company, is_pos: parentDoc.is_pos || 0,
+				is_consolidated: parentDoc.is_consolidated || 0,
+				return_against: parentDoc.return_against, docstatus: parentDoc.docstatus || 0,
+				custom_trading_vat_disabled: parentDoc.custom_trading_vat_disabled || 0,
 			},
 		};
 		const response = await (frm.__quick_receipt?.lookup(request) || window.retail.transaction_items.purchaseRead(frm, request));

@@ -158,7 +158,13 @@ def backfill_type(doctype):
 def ensure_codes(doctype):
     if doctype not in prefixes() or not frappe.has_permission(doctype, "read"):
         frappe.throw("Not permitted", frappe.PermissionError)
-    return backfill_type(doctype)
+    key = f"retail:codes-done:{doctype}"
+    if frappe.cache.get_value(key):
+        return 0
+    assigned = backfill_type(doctype)
+    if not assigned:
+        frappe.cache.set_value(key, 1, expires_in_sec=3600)
+    return assigned
 
 
 def backfill_missing():

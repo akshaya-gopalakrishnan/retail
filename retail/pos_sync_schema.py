@@ -29,6 +29,8 @@ def ensure_settlement_fields():
 
 
 def install():
+    from retail.pos_delivery import install as install_delivery
+    install_delivery()
     ensure_completed_payload_field()
     ensure_settlement_fields()
 

@@ -36,7 +36,18 @@ for (const doctype of ['POS Branch Counter', 'POS Cashier Shift', 'POS Counter S
         assert.equal(JSON.stringify(entry), before);
     }
 }
-for (const [doctype, module, expected] of [['Promo Price', 'Retail-app', 'Promotions'], ['Payment Entry', 'Accounts', 'Accounts']]) {
+for (const doctype of ['Van Fleet', 'Driver', 'Van Session', 'Van Sales Sync Log', 'Van Expense', 'Van Expense Type', 'Van API Request']) {
+    for (const workspace of [undefined, 'Promotions', 'Accounts']) {
+        const entry = { doctype, module: 'Retail-app', workspace };
+        const before = JSON.stringify(entry);
+        breadcrumbs.set_workspace_breadcrumb(entry);
+        assert.equal(output.pop().route, '/app/van-sales');
+        assert.equal(JSON.stringify(entry), before);
+    }
+}
+for (const [doctype, module, expected] of [['Promo Price', 'Retail-app', 'Promotions'], ['Payment Entry', 'Accounts', 'Accounts'], ['Stock Entry', 'Stock', 'Stocks'], ['Customer', 'Selling', 'Sales']]) {
+    context.frappe.boot.module_wise_workspaces[module] ||= [expected];
+    if (!context.frappe.visible_modules.includes(module)) context.frappe.visible_modules.push(module);
     breadcrumbs.set_workspace_breadcrumb({ doctype, module });
     assert.equal(output.pop().label, expected);
 }
@@ -55,6 +66,8 @@ for (const match of initSource.matchAll(/^        (\w+)\(/gm)) {
     }
 }
 context.window = { matchMedia: () => ({ addEventListener() {} }) };
+context.document = {};
+context.$ = () => ({ on() {} });
 context.DESKTOP_MEDIA = '(min-width: 992px)';
 delete breadcrumbs.__retail_pos_installed;
 vm.runInNewContext(initSource, context);
@@ -62,4 +75,4 @@ context.init();
 for (const name of ['applyIcons', 'applyDirectLinks', 'renderPersistentSidebar', 'bindSubmenuRouting', 'bindMobileSidebarToggle']) {
     assert.ok(startupCalls.includes(name), `${name} must run during startup`);
 }
-console.log('PASS: six POS breadcrumbs, cached/history cases, unrelated pages, native gates and repeated installation.');
+console.log('PASS: POS and Van Sales breadcrumbs, cached/history cases, shared documents, native gates and repeated installation.');

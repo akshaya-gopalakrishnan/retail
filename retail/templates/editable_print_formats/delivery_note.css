@@ -452,3 +452,86 @@
 .print-format .retail-document-number { text-align: right; font-size: 10px; margin: 4px 0 12px; }
 .print-format .title-row { margin: 12px 0; }
 .print-format .invoice-title { color: #2d6dc4; font-size: 18px; font-weight: normal; text-transform: uppercase; }
+
+
+/* retail-22-item-pages-v1 */
+.print-format .retail-item-table-continuation { page-break-before: always; break-before: page; }
+.print-format .item-table thead { display: table-header-group; }
+.print-format .item-table tr { page-break-inside: avoid; break-inside: avoid; }
+
+
+/* retail-delivery-invoice-design-v1: preserve every Delivery Note column */
+.print-format { padding: 0 !important; font-size: 12px; }
+.print-format .hardcoded-letterhead { margin-bottom: 4px; }
+.print-format .retail-title-table { margin: 4px 0 7px; }
+.print-format .retail-title-table .document-title { font-size: 18px; }
+.print-format .information-table { margin-bottom: 8px; }
+.print-format .customer-section { padding-top: 0 !important; padding-right: 10px !important; }
+.print-format .delivery-details td { padding: 2px 5px !important; height: auto; font-size: 12px; }
+.print-format .customer-name { font-size: 12px; }
+.print-format .item-table { margin-bottom: 8px; }
+.print-format .item-table th { padding: 4px 3px !important; font-size: 11px; line-height: 1.2; }
+.print-format .item-table td { padding: 2px 3px !important; font-size: 11px; line-height: 1.2; }
+.print-format .item-table thead th { text-align: center; }
+.print-format .item-table .col-description { text-align: left; }
+.print-format .item-table tbody td.col-number,
+.print-format .item-table tbody td.col-qty { text-align: center; }
+.print-format .item-name { margin: 0; overflow-wrap: break-word; font-size: 11px; }
+.print-format .retail-item-barcode, .print-format .quantity-uom { font-size: 10px; }
+.print-format .item-table tbody tr:nth-child(odd) > td { background: #f0f3f7 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.print-format .item-table tbody tr:nth-child(even) > td { background: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+
+/* retail-delivery-invoice-compact-v2 */
+.print-format .retail-title-rule { display: none; }
+.print-format .retail-title-cell { width: 100%; text-align: center; }
+.print-format .item-name { display: inline; }
+.print-format .item-code { display: inline; margin-left: 6px; font-size: 9px; }
+.print-format .item-description { margin: 0; font-size: 10px; line-height: 1.15; }
+.print-format .item-image { width: 28px; height: 28px; max-width: 28px; max-height: 28px; }
+.print-format .signature-section { margin-top: 24px; }
+.print-format .signature-field { margin-bottom: 20px; }
+.print-format .stamp-label { margin-top: 35px; }
+
+
+/* retail-delivery-invoice-table-v3 */
+.print-format .item-table { border: 1px solid #111; }
+.print-format .item-table th { background: transparent !important; color: #000 !important; border: 1px solid #111 !important; }
+.print-format .item-table th * { background: transparent !important; color: #000 !important; }
+.print-format .item-table td { border: none !important; }
+.print-format .item-name { font-weight: 500; }
+
+
+/* retail-delivery-name-first-v4 */
+.print-format .item-table .col-number { width: 6%; }
+.print-format .item-table .col-description { width: 79%; }
+.print-format .item-table .col-qty { width: 15%; }
+
+
+/* retail-neutral-print-header-v4 */
+.print-format table thead th,
+.print-format .item-table th,
+.print-format .item-table th * { background: #fff !important; color: #000 !important; }
+
+/* retail-delivery-inline-qty-v5 */
+.print-format .item-table .col-qty { white-space: nowrap; }
+.print-format .quantity-value, .print-format .quantity-uom { display: inline; margin: 0; }
+.print-format .quantity-uom { margin-left: 3px; }
+
+/* retail-delivery-footer-v6 */
+.print-format #footer-html.retail-delivery-footer .signature-section { margin-top: 0; }
+.print-format #footer-html.retail-delivery-footer .signature-table { margin: 0; }
+@supports (display: grid) {
+    @media print {
+        .print-format #footer-html.retail-delivery-footer { position: fixed; bottom: 0; left: 0; width: 100%; }
+    }
+}
+
+/* retail-item-table-readability-v1 */
+.print-format .item-table th { font-size: 12px; line-height: 1.3; }
+.print-format .item-table td { padding: 4px 3px !important; font-size: 12px; line-height: 1.3; }
+.print-format .item-table .item-name { font-size: 12px; }
+.print-format .item-table .item-description { font-size: 11px; line-height: 1.3; }
+.print-format .item-table .retail-item-barcode,
+.print-format .item-table .qty-uom,
+.print-format .item-table .quantity-uom { font-size: 11px; }

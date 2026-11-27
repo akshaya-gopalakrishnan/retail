@@ -729,5 +729,21 @@
   "Product Conversion Link": [
     "List",
     "Product Conversion"
+  ],
+  "Van Sales Sync Logs": [
+    "List",
+    "Van Sales Sync Log"
+  ],
+  "Van Sales Sync Log": [
+    "List",
+    "Van Sales Sync Log"
+  ],
+  "Sales Order API Logs": [
+    "List",
+    "Sales Order API Log"
+  ],
+  "Sales Order API Log": [
+    "List",
+    "Sales Order API Log"
   ]
 }

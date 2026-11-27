@@ -38,6 +38,33 @@ class TestDayCorrectionPermissions(unittest.TestCase):
         with self.assertRaises(frappe.PermissionError):
             service.authorize(self.closing,service.REOPEN)
 
+    def test_admin_can_reopen_without_employee_profile(self):
+        self.roles.return_value = ["Admin"]
+        self.employees.return_value = []
+        service.authorize(self.closing, service.REOPEN)
+        self.closing.check_permission.assert_called_with("read")
+        self.employees.assert_not_called()
+
+    def test_admin_does_not_gain_other_corrections(self):
+        self.roles.return_value = ["Admin"]
+        self.employees.return_value = []
+        with self.assertRaises(frappe.PermissionError):
+            service.authorize(self.closing, service.ADJUST)
+
+    def test_admin_integration_identity_cannot_reopen(self):
+        self.roles.return_value = ["Admin", "POS Integration User"]
+        with self.assertRaises(frappe.PermissionError):
+            service.authorize(self.closing, service.REOPEN)
+
+    def test_admin_reopen_button_matches_authorization(self):
+        self.roles.return_value = ["Admin"]
+        self.employees.return_value = []
+        self.closing.docstatus = 1
+        self.patch(frappe, "get_doc", return_value=self.closing)
+        self.assertTrue(service.get_day_correction_actions("DAY")["reopen"])
+        self.roles.return_value.append("POS Integration User")
+        self.assertFalse(service.get_day_correction_actions("DAY")["reopen"])
+
     def test_shared_integration_identity_cannot_approve_corrections(self):
         self.roles.return_value=["POS Manager","POS Integration User"]
         with self.assertRaises(frappe.PermissionError):

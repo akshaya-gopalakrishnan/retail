@@ -1,4 +1,4 @@
-"""Add the authenticated user's Sales Person identity to new-session responses."""
+"""Add user identity, effective roles and Retail area access to login responses."""
 
 import frappe
 
@@ -25,5 +25,29 @@ def get_sales_person_identity(user):
 	return identity
 
 
+def get_login_access():
+	"""Read the same Sales/Van Sales area gates as Desk; never grant permissions."""
+	if frappe.session.user == "Guest":
+		return {"roles": [], "permissions": {"sales": False, "van_sales": False}}
+	from retail.workspace_permissions import (
+		_get_blocked_modules,
+		_get_role_allowed_sidebar_workspaces,
+		_workspace_sidebar_is_allowed,
+	)
+	blocked = _get_blocked_modules()
+	workspaces = _get_role_allowed_sidebar_workspaces()
+	return {
+		"roles": sorted(set(frappe.get_roles())),
+		"permissions": {
+			key: bool(_workspace_sidebar_is_allowed({"title": title}, blocked, workspaces))
+			for key, title in (("sales", "Sales"), ("van_sales", "Van Sales"))
+		},
+	}
+
+
 def on_session_creation(login_manager):
 	frappe.local.response.update(get_sales_person_identity(login_manager.user))
+	# Guest sessions are also created before API-token authentication. Do not
+	# attach a false Guest access snapshot to an otherwise authenticated RPC.
+	if login_manager.user != "Guest" or "roles" in frappe.local.response or "permissions" in frappe.local.response:
+		frappe.local.response.update(get_login_access())

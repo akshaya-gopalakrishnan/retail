@@ -68,22 +68,22 @@ function add_day_closing_actions(frm) {
 				const choices = [
 					["reopen", "Reopen Day", "reopen_day_closing"],
 					["recalculate", "Recalculate", "recalculate_day_closing"],
-					["reclose", "Close Day", "submit_branch_day_closing"],
+					["reclose", "Close Day", "reclose_day_closing"],
 				];
 				choices.forEach(([key, label, method]) => {
 					if (!actions[key]) return;
-					frm.add_custom_button(__(label), () => {
+					const action_button = frm.add_custom_button(__(label), () => {
 						if (frm.is_dirty()) {
 							frappe.msgprint(__("Save or reload the document before continuing."));
 							return;
 						}
 						const run_action = (values = {}) => {
 							frappe.call({
-								method: (key === "reclose" ? "retail.api.pos_sync." : "retail.pos_day_corrections.") + method,
+								method: "retail.pos_day_corrections." + method,
 								args: { data: { day_closing: frm.doc.name,
 									...(key === "reopen" ? { reason: values.reason } : {}),
 									operation_reference: frappe.utils.get_random(32),
-									...(key === "reclose" ? {branch: frm.doc.branch, business_date: frm.doc.business_date, external_pos_reference: frappe.utils.get_random(32)} : {}),
+									...(key === "reclose" ? { expected_reconciliation_hash: frm.doc.reconciliation_hash } : {}),
 								} },
 								freeze: true,
 								callback: ({message}) => {
@@ -100,6 +100,9 @@ function add_day_closing_actions(frm) {
 							run_action();
 						}
 					});
+					if (key === "reclose") {
+						frm.page.set_primary_action(__("Close Day"), () => action_button.trigger("click"));
+					}
 				});
 			},
 		});

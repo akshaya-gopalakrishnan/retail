@@ -49,6 +49,10 @@ def get_item_details(args, doc=None, for_validate=False, overwrite_warehouse=Tru
 	install()
 	args = frappe._dict(frappe.parse_json(args))
 	document = frappe.parse_json(doc) if doc else {}
+	# Retain invoice policy context through native item/UOM price lookup.
+	for key in ("is_pos", "is_consolidated", "return_against", "docstatus", "custom_trading_vat_disabled"):
+		if document.get(key) is not None:
+			args[key] = document.get(key)
 	barcode = args.get("barcode")
 	if args.get("doctype") == "Sales Invoice":
 		# ERPNext clears row.barcode before this RPC, but serializes the scan field.

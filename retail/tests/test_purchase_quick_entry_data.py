@@ -41,10 +41,29 @@ class TestPurchaseQuickEntryData(unittest.TestCase):
     def test_non_purchase_context_is_rejected_before_item_read(self):
         with patch.object(frappe, 'throw', side_effect=ValueError):
             with self.assertRaises(ValueError):
-                api.item_data('SKU', 'Sales Invoice')
+                api.item_data('SKU', 'Sales Order')
         self.mocks[1].assert_not_called()
 
     def test_same_stock_purchase_and_requested_uom_are_queried_once(self):
         self.mocks[1].return_value = frappe._dict(name='SKU', stock_uom='Nos', purchase_uom='Nos')
         api.item_data('SKU', 'Purchase Invoice', uom='Nos')
         self.mocks[-1].assert_called_once_with('SKU', uom='Nos')
+
+    def test_sales_invoice_bundles_vat_without_purchase_price_reads(self):
+        result = api.item_data('SKU', 'Sales Invoice', uom='Box-36')
+        self.assertEqual(result['item']['name'], 'SKU')
+        self.assertEqual(len(result['lookups']), 1)
+        self.assertEqual(result['lookups'][0]['args']['child_doctype'], 'Sales Invoice Item')
+        self.mocks[-1].assert_not_called()
+        self.mocks[-2].assert_not_called()
+
+    def test_sales_bundle_retains_complete_vat_context_for_read_reuse(self):
+        context = dict(company='Test Company', is_pos=0, is_consolidated=0,
+                       return_against=None, docstatus=0, custom_trading_vat_disabled=1)
+        result = api.item_data('SKU', 'Sales Invoice', item_tax_template='ZERO', **context)
+        args = result['lookups'][0]['args']
+        for key, value in context.items():
+            self.assertIn(key, args)
+            self.assertEqual(args[key], value)
+        self.mocks[2].assert_called_once_with(item_code='SKU', child_doctype='Sales Invoice Item',
+            parent_doctype='Sales Invoice', transaction_type=None, item_tax_template='ZERO', **context)

@@ -1,5 +1,6 @@
 import frappe
 from frappe import _
+from frappe.utils import getdate
 
 
 def is_operator(user=None):
@@ -48,17 +49,23 @@ def assigned_sessions(user=None, active=False):
 	return frappe.get_all("Van Session", filters=filters, fields=["name", "van", "van_warehouse"])
 
 
+def _assignment_value(doc, field):
+	value = doc.get(field)
+	# Desk sends Date fields as strings; saved documents contain date objects.
+	return getdate(value) if field == "session_date" and value else value
+
+
 def validate_session(doc, method=None):
 	old = doc.get_doc_before_save()
 	if old and old.docstatus == 1:
 		for field in ("van", "van_warehouse", "driver", "session_date"):
-			if doc.get(field) != old.get(field):
+			if _assignment_value(doc, field) != _assignment_value(old, field):
 				frappe.throw(_("Create a new session when changing the van or driver."))
 	if is_operator():
 		if doc.is_new() or not old or old.custom_salesperson != frappe.session.user:
 			frappe.throw(_("A Van Sales Manager must assign your session first."), frappe.PermissionError)
 		for field in ("custom_salesperson", "driver", "van", "van_warehouse", "session_date"):
-			if doc.get(field) != old.get(field):
+			if _assignment_value(doc, field) != _assignment_value(old, field):
 				frappe.throw(_("Only a Van Sales Manager can change session assignments."), frappe.PermissionError)
 		if old.status in ("Closed", "Cancelled"):
 			frappe.throw(_("This session is closed."), frappe.PermissionError)

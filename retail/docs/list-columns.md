@@ -17,6 +17,14 @@ resize line resets only that column's width. Both controls support arrow keys.
 Mobile layouts retain native column behavior. Report, Kanban and Image views are
 excluded from these desktop controls.
 
+Batch and BOM use compact, predefined desktop columns in
+`public/js/list/stock_master_columns.js`. Batch shows its ID, Item Name, Batch UOM,
+quantity, manufacturing date, expiry date and saved Supplier. BOM shows its ID,
+Item Name, quantity, UOM, total cost, Active, Default and the native status.
+These layouts take precedence over native field selection for these two lists;
+personal column widths and order still apply. Use Reset Column Widths if an older
+personal layout causes horizontal scrolling. Other lists retain native selection.
+
 The extended count choices are installed after sync and migration by
 `retail.list_view_columns.install`, using a Property Setter on
 `List View Settings.total_fields.options`. Frappe and ERPNext source is unchanged.

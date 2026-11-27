@@ -1,0 +1,55 @@
+{
+ "doctype": "DocType",
+ "name": "Van API Request",
+ "module": "Retail-app",
+ "engine": "InnoDB",
+ "field_order": [
+  "request_id",
+  "operation",
+  "payload_hash",
+  "request_payload",
+  "response"
+ ],
+ "fields": [
+  {
+   "fieldname": "request_id",
+   "label": "Request Id",
+   "fieldtype": "Data",
+   "reqd": 1
+  },
+  {
+   "fieldname": "operation",
+   "label": "Operation",
+   "fieldtype": "Data",
+   "reqd": 1
+  },
+  {
+   "fieldname": "payload_hash",
+   "label": "Payload Hash",
+   "fieldtype": "Data",
+   "reqd": 1
+  },
+  {
+   "fieldname": "response",
+   "label": "Response",
+   "fieldtype": "Long Text"
+  },
+  {
+   "fieldname": "request_payload",
+   "label": "Request Payload",
+   "fieldtype": "Long Text"
+  }
+ ],
+ "permissions": [
+  {
+   "role": "Van Sales Manager",
+   "read": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1
+  }
+ ],
+ "track_changes": 1,
+ "autoname": "hash"
+}

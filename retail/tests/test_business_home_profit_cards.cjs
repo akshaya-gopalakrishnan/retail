@@ -16,7 +16,7 @@ const frappe = {
  }
 };
 vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../public/js/business_home_profit_cards.js'), 'utf8'),
- {frappe, setTimeout, $: () => ({on() {}}), document: {}});
+ {retail: {workspace_speed: {active: () => route[0] === 'Workspaces' && ['Business Home','Stocks','POS'].includes(route[1])}}, frappe, setTimeout, $: () => ({on() {}}), document: {}});
 const names = ["Today's Sales", "Today's Profit", 'Invoice Count Today', 'Return Amount Today'];
 const methods = ['get_today_sales', 'get_profit_number_card', 'get_invoice_count_today', 'get_return_amount_today'];
 function widget(i, args = {filters: {branch:'ignored'}}) {

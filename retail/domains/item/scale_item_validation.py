@@ -5,7 +5,7 @@ import re
 import frappe
 from frappe import _
 from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
-from frappe.utils import cint
+from frappe.utils import cint, flt
 
 
 DEFAULT_SCALE_PREFIX = "99"
@@ -41,7 +41,10 @@ def ensure_item_barcode(doc, method=None):
 		doc.custom_barcode = barcode
 		return
 
-	doc.custom_barcode = get_unique_item_barcode(doc.get("name"), scale_item=is_scale_item(doc))
+	reserved = [row.get("barcode") for row in doc.get("custom_retail_packing_detail") or []
+		if row.get("barcode") and row.get("barcode") != row.get("__retail_packing_barcode_preview")]
+	doc.custom_barcode = (get_next_normal_barcode(reserved) if reserved and not is_scale_item(doc)
+		else get_unique_item_barcode(doc.get("name"), scale_item=is_scale_item(doc)))
 	validate_unique_item_barcodes(doc, doc.custom_barcode)
 
 
@@ -53,7 +56,7 @@ def validate_unique_item_barcodes(doc, barcode):
 	barcodes = {barcode}
 	for row in doc.get("custom_retail_packing_detail") or []:
 		value = (row.get("barcode") or "").strip()
-		if value:
+		if value and value != row.get("__retail_packing_barcode_preview"):
 			barcodes.add(value)
 	for value in sorted(barcodes):
 		for table, field, owner in (
@@ -84,11 +87,14 @@ def normal_barcode(number):
 	return body + str(checksum)
 
 
-def get_next_normal_barcode():
+def get_next_normal_barcode(excluded=None):
 	"""Fill the first unused EAN-13 sequence; serialize until commit/rollback."""
 	frappe.db.sql("select name from `tabDocType` where name = 'Item' for update")
 	used = set()
-	for table, field in (("tabItem", "custom_barcode"), ("tabItem Barcode", "barcode")):
+	for barcode in excluded or []:
+		if re.fullmatch(r"200[0-9]{10}", barcode or "") and barcode == normal_barcode(int(barcode[3:12])):
+			used.add(int(barcode[3:12]))
+	for table, field in (("tabItem", "custom_barcode"), ("tabItem Barcode", "barcode"), ("tabRetail Packing Detail", "barcode")):
 		rows = frappe.db.sql(
 			f"select `{field}` from `{table}` "
 			f"where `{field}` like '200%' and char_length(`{field}`) = 13 for update"
@@ -135,7 +141,7 @@ def validate_scale_item(doc, method=None):
 		doc.scale_barcode_type = None
 		return
 
-	barcode_type = doc.get("custom_scale_barcode_type") or doc.get("scale_barcode_type") or "WEIGHT"
+	barcode_type = doc.get("custom_scale_barcode_type") or doc.get("scale_barcode_type") or "Weight+TotPrice"
 	doc.scale_barcode_type = normalize_barcode_type(barcode_type)
 	doc.custom_scale_barcode_type = display_barcode_type(barcode_type)
 
@@ -318,3 +324,20 @@ def disable_legacy_scale_barcode_script():
 			update_modified=False,
 		)
 		frappe.clear_cache(doctype="Item")
+
+
+def ensure_packing_barcodes(doc, method=None):
+	"""Allocate only on save; editable previews never consume sequence numbers."""
+	rows = doc.get("custom_retail_packing_detail") or []
+	reserved = {doc.get("custom_barcode")}
+	reserved.update(row.get("barcode") for row in doc.get("barcodes") or [])
+	reserved.update(row.get("barcode") for row in rows
+		if row.get("barcode") != row.get("__retail_packing_barcode_preview"))
+	for row in rows:
+		if not (row.get("packing_uom") or row.get("uom")) or flt(row.get("conversion_factor")) <= 0:
+			continue
+		if not row.get("barcode") or row.get("barcode") == row.get("__retail_packing_barcode_preview"):
+			row.barcode = get_next_normal_barcode(reserved)
+			row.__retail_packing_barcode_preview = None
+			reserved.add(row.barcode)
+	validate_unique_item_barcodes(doc, doc.get("custom_barcode") or "")

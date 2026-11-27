@@ -25,3 +25,12 @@ def export_scale_items_file(template=None, price_list=None):
 	frappe.local.response.filename = "weighing.txt"
 	frappe.local.response.filecontent = content
 	frappe.local.response.type = "download"
+
+
+@frappe.whitelist()
+def preview_packing_barcode(excluded=None):
+	if not (frappe.has_permission("Item", "create") or frappe.has_permission("Item", "write")):
+		raise frappe.PermissionError
+	from retail.domains.item.scale_item_validation import get_next_normal_barcode
+	excluded = frappe.parse_json(excluded) if isinstance(excluded, str) else excluded
+	return get_next_normal_barcode(excluded or [])

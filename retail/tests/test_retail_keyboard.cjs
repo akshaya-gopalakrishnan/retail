@@ -87,6 +87,14 @@ test('Enter skips optional, hidden and read-only headers; final mandatory field 
  await f.key(f.supplier);assert.equal(f.document.activeElement,f.scan.$input[0]);
  assert.equal(f.frm.doc.supplier,'value');
 });
+test('configured optional reference participates in Enter navigation without becoming required',async()=>{
+ const f=fixture();
+ f.context.retail.keyboard.doctypes[f.frm.doctype]={enter_fields:['remarks']};
+ await f.key(f.company);assert.equal(f.document.activeElement,f.optional.$input[0]);
+ f.optional.$input[0].value='';
+ await f.key(f.optional);assert.equal(f.document.activeElement,f.supplier.$input[0]);
+ assert.equal(f.frm.doc.remarks,'');assert.ok(!f.optional.df.reqd);
+});
 test('dynamic required fields are included and blank/invalid fields retain focus',async()=>{
  const f=fixture();f.optional.df.reqd=1;await f.key(f.company);assert.equal(f.document.activeElement,f.optional.$input[0]);
  f.optional.$input[0].value='';await f.key(f.optional);assert.equal(f.document.activeElement,f.optional.$input[0]);assert.equal(f.context.alerts,1);

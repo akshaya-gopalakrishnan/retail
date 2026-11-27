@@ -75,11 +75,17 @@
 			this.settings.add_fields = [...new Set([...(this.settings.add_fields || []), fieldname])];
 			return set_fields.call(this);
 		};
+		const codes_checked = new Set();
 		const refresh = prototype.refresh;
 		prototype.refresh = async function (...args) {
-			if (code_field(this) === "custom_document_code") {
-				await frappe.call("retail.document_codes.ensure_codes", { doctype: this.doctype });
-			}
+			if (code_field(this) === "custom_document_code" && !codes_checked.has(this.doctype)) {
+                const doctype = this.doctype;
+                codes_checked.add(doctype);
+                // A failed check may retry; it never gates the list query.
+                frappe.call({method: "retail.document_codes.ensure_codes", args: {doctype}})
+                    .then(response => { if (response.exc) codes_checked.delete(doctype); })
+                    .catch(() => codes_checked.delete(doctype));
+            }
 			return refresh.apply(this, args);
 		};
 		const setup_columns = prototype.setup_columns;

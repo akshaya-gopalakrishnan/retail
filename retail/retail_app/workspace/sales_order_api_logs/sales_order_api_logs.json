@@ -1,0 +1,35 @@
+{
+ "charts": [],
+ "content": "[{\"id\": \"hdr_sales_order_api_logs\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Sales Order Sync Logs</span>\", \"col\": 12}}, {\"id\": \"ql_sales_order_api_logs\", \"type\": \"quick_list\", \"data\": {\"quick_list_name\": \"Sales Order API Logs\", \"col\": 4}}]",
+ "creation": "2026-11-24 14:11:41.327115",
+ "custom_blocks": [],
+ "custom_document_code": "W4-2117",
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "hide_custom": 0,
+ "icon": "list",
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "Sales Order API Logs",
+ "links": [],
+ "modified": "2026-11-24 14:56:37.413316",
+ "modified_by": "Administrator",
+ "module": "Retail-app",
+ "name": "Sales Order API Logs",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "Sales",
+ "public": 1,
+ "quick_lists": [
+  {
+   "document_type": "Sales Order API Log",
+   "label": "Sales Order API Logs",
+   "quick_list_filter": "[]"
+  }
+ ],
+ "roles": [],
+ "sequence_id": 99.0,
+ "shortcuts": [],
+ "title": "Sales Order API Logs"
+}

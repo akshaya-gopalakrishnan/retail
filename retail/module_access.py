@@ -21,6 +21,16 @@ VAN_FLAGS = {
 POS_EXTRA_REPORTS = {"Cashier Wise Sales", "Counter Wise Sales", "Shift Closing Variance", "Item Group Sales Analysis"}
 
 
+# Exact mobile aliases only; ordinary POS methods retain their POS gate.
+VAN_MOBILE_ALIASES = {
+	"driver_login", "start_session", "get_sales_invoices", "get_sales_returns",
+	"get_customer_payments", "get_expenses", "get_active_session", "get_van_master_data",
+	"get_load_stock", "confirm_load", "unload_stock", "update_session_status", "end_session",
+	"post_sale", "post_sales_return", "get_credit_customers", "post_customer_payment",
+	"post_expense", "upsert_van_customer",
+}
+
+
 def allowed(module, user=None):
 	user = user or frappe.session.user
 	if user == "Administrator":
@@ -65,7 +75,7 @@ def require(module, user=None):
 def target_module(doctype=None, page=None, report=None, workspace=None):
 	if isinstance(doctype, str) and doctype.startswith("POS "):
 		return "POS"
-	if isinstance(doctype, str) and doctype in {"Van Fleet", "Van Session"}:
+	if isinstance(doctype, str) and doctype in {"Van Fleet", "Van Session", "Van Expense", "Van Expense Type", "Van API Request", "Van Sales Sync Log"}:
 		return "Van Sales"
 	if isinstance(page, str) and page in {"point-of-sale", "pos"}:
 		return "POS"
@@ -140,7 +150,13 @@ def guard_request():
 	path = path.replace("/api/v1/", "/api/", 1)
 	method = form.get("cmd") or path.split("/method/", 1)[-1]
 	module = None
-	if method.startswith(("retail.api.pos_sync.", "erpnext.selling.page.point_of_sale.", "erpnext.accounts.doctype.pos_", "retail.retail_app.doctype.pos_", "retail.pos_privileges.", "retail.retail_app.retail_dashboard.get_pos_")):
+	if method in {"retail.api.van_sales.driver_login", "retail.api.pos_sync.driver_login"}:
+		return  # Native login and the endpoint's post-login Van Sales check handle admission.
+	if method.startswith("retail.api.van_sales.") or (
+		method.startswith("retail.api.pos_sync.") and method.rsplit(".", 1)[-1] in VAN_MOBILE_ALIASES
+	):
+		module = "Van Sales"
+	elif method.startswith(("retail.api.pos_sync.", "erpnext.selling.page.point_of_sale.", "erpnext.accounts.doctype.pos_", "retail.retail_app.doctype.pos_", "retail.pos_privileges.", "retail.retail_app.retail_dashboard.get_pos_")):
 		module = "POS"
 	elif method.startswith(("retail.van_", "retail.retail_app.retail_dashboard.get_van_")):
 		module = "Van Sales"

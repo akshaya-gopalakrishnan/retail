@@ -69,6 +69,10 @@
 			const status = view.columns.filter(column => column.type === "Status" || column.df?.fieldname === "status").map(column_key);
 			order = order.filter(key => !status.includes(key)).concat(status);
 		}
+		if (view.retail_last_field) {
+			const last = view.columns.filter(column => column.df?.fieldname === view.retail_last_field).map(column_key);
+			order = order.filter(key => !last.includes(key)).concat(last);
+		}
 		const headers = Array.from(head.children).filter(el => el.classList.contains("list-row-col"));
 		const widths = view.columns.map(column => saved[column_key(column)] || default_width(column));
 		const visible = headers.map((el, index) => ({ el, index })).filter(({el}) => getComputedStyle(el).display !== "none");
@@ -84,9 +88,9 @@
         const reserved_width = activity_width + 40;
         root.style.setProperty("--retail-list-activity-width", `${activity_width}px`);
         if (view.retail_fit_columns) {
-            // Shrink only default widths; keep personal resizing intact.
+            // Fit default widths; opted-in lists also adapt saved widths without deleting preferences.
             let excess = visible.reduce((sum, {index}) => sum + widths[index] + 15, 0) + reserved_width - available_width;
-            const adjustable = visible.filter(({index}) => !saved[column_key(view.columns[index])]);
+            const adjustable = visible.filter(({index}) => view.retail_fit_saved_columns || !saved[column_key(view.columns[index])]);
             const capacity = adjustable.reduce((sum, {index}) => sum + Math.max(0, widths[index] - (view.columns[index].retail_min_width || 70)), 0);
             for (const {index} of adjustable) {
                 const room = Math.max(0, widths[index] - (view.columns[index].retail_min_width || 70));

@@ -4,6 +4,7 @@ import frappe
 from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 from frappe.custom.doctype.property_setter.property_setter import make_property_setter
 from frappe.utils import flt
+from retail.domains.transactions.trading_vat import vat_disabled, prepare as prepare_trading_vat
 
 PURCHASE_ITEM_DOCTYPES = {
 	"Purchase Order Item",
@@ -51,6 +52,10 @@ def set_vat_rates(doc, method=None):
 	if payload_for(doc):
 		from retail.pos_completed_sale import restore
 		restore(doc)
+		return
+	if prepare_trading_vat(doc):
+		doc.calculate_taxes_and_totals()
+		_refresh_total_in_words(doc)
 		return
 	prepare_external_pos_taxes(doc)
 
@@ -109,6 +114,10 @@ def set_row_vat_amounts(doc, method=None):
 		restore(doc)
 		return
 
+	if vat_disabled(doc):
+		for item in doc.get("items") or []:
+			item.custom_vat_amount = 0
+		return
 	for item in doc.get("items") or []:
 		if not item.meta.has_field("custom_vat_amount"):
 			continue
@@ -161,6 +170,9 @@ def prepare_external_pos_taxes(doc, method=None):
 
 def apply_transaction_vat_taxes(doc):
 	"""Mirror item VAT templates into the standard Taxes table for ERPNext totals."""
+	if prepare_trading_vat(doc):
+		doc.calculate_taxes_and_totals()
+		return
 	tax_label = VAT_TAX_DOCTYPES.get(doc.doctype)
 	if not tax_label or not doc.meta.has_field("taxes"):
 		return
@@ -198,6 +210,15 @@ def apply_transaction_vat_taxes(doc):
 def get_transaction_vat_tax_rows(doc):
 	"""Return managed VAT rows for live ERPNext totals calculation."""
 	doc = frappe.get_doc(frappe.parse_json(doc))
+	if vat_disabled(doc):
+		from retail.domains.transactions.trading_vat import vat_accounts
+		accounts = list(vat_accounts(doc))
+		source_rates = {row.name: row.rate for row in doc.items}
+		prepare_trading_vat(doc)
+		return {"vat_disabled": True, "vat_accounts": accounts, "tax_rows": [],
+		        "item_values": {row.name: {"source_rate": source_rates[row.name], "rate": row.rate,
+		            "price_list_rate": row.price_list_rate, "discount_amount": row.discount_amount} for row in doc.items},
+		        "item_tax_rates": {row.name: "{}" for row in doc.items}}
 	tax_label = VAT_TAX_DOCTYPES.get(doc.doctype)
 	if not tax_label or not doc.meta.has_field("taxes"):
 		return {"tax_rows": [], "item_tax_rates": {}}
@@ -311,7 +332,14 @@ def get_transaction_item_vat_rate(
 	transaction_type=None,
 	item_tax_template=None,
 	throw=False,
+	company=None, is_pos=0, is_consolidated=0, return_against=None,
+	docstatus=0, custom_trading_vat_disabled=0,
 ):
+	context = frappe._dict(doctype=parent_doctype, company=company, is_pos=int(is_pos or 0),
+	    is_consolidated=int(is_consolidated or 0), return_against=return_against,
+	    docstatus=docstatus, custom_trading_vat_disabled=custom_trading_vat_disabled)
+	if vat_disabled(context):
+		return 0.0
 	template = _get_transaction_item_vat_template(
 		item_code,
 		child_doctype=child_doctype,

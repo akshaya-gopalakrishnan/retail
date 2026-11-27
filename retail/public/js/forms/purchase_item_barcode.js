@@ -7,11 +7,14 @@
         "Purchase Order", "Purchase Receipt", "Purchase Invoice", "Material Request",
         "Stock Entry", "Stock Reconciliation", "Supplier Quotation", "Request for Quotation"];
     const signature = row => JSON.stringify([row.item_code, row.uom, row.barcode, row.custom_packing_detail, row.custom_item_barcode]);
+    const resolved = new WeakMap();
+    // A packing search result already contains the permission-checked barcode.
+    window.retail.remember_transaction_barcode = row => resolved.set(row, signature(row));
     async function refresh(frm) {
         if (frm.doc.docstatus !== 0) return;
         const generation = frm.__retail_barcode_generation = (frm.__retail_barcode_generation || 0) + 1;
         const rows = (frm.doc.items || []).filter(row => row.item_code &&
-            frappe.meta.has_field(row.doctype, "custom_item_barcode"));
+            frappe.meta.has_field(row.doctype, "custom_item_barcode") && resolved.get(row) !== signature(row));
         if (!rows.length) return;
         const snapshots = new Map(rows.map(row => [row.name, signature(row)]));
         const {message} = await frappe.call({method: "retail.transaction_barcodes.get_barcodes",
@@ -26,12 +29,17 @@
                 row.custom_item_barcode = message[row.name];
                 changed = true;
             }
+            resolved.set(row, signature(row));
         }
         if (changed) frm.refresh_field("items");
     }
     function schedule(frm) {
         clearTimeout(frm.__retail_barcode_timer);
-        frm.__retail_barcode_timer = setTimeout(() => refresh(frm), 100);
+        frm.__retail_barcode_timer = setTimeout(() => {
+            // Do not resolve an intermediate Item/UOM while native pricing runs.
+            if (frm.__retail_purchase_action?.active) return schedule(frm);
+            return refresh(frm);
+        }, 100);
     }
     window.retail.refresh_transaction_barcodes = schedule;
     for (const parent of parents) {
@@ -46,7 +54,11 @@
                 frappe.ui.form.on(child, {
                     item_code(frm, cdt, cdn) {
                         const row = locals[cdt]?.[cdn];
-                        if (row) { row.custom_packing_detail = ""; row.custom_item_barcode = ""; }
+                        if (row) {
+                            const choice = row.__retail_packing_choice;
+                            row.custom_packing_detail = choice?.packing_id || "";
+                            row.custom_item_barcode = choice?.barcode || "";
+                        }
                         schedule(frm);
                     },
                     uom: schedule, barcode: schedule,

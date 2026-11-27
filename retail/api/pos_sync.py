@@ -1458,6 +1458,45 @@ def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
 	counter_code = payload.get("counter_code")
 	modified_after = payload.get("modified_after")
 	counter_doc = _counter(branch, counter_code)
+	catalog = _catalog_master_data(counter_doc.warehouse, modified_after)
+	modified_filter = [["modified", ">", modified_after]] if modified_after else []
+	return with_item_identity({
+		"status": "Success",
+		"server_time": now_datetime(),
+		"server_timezone": get_system_timezone(),
+		"counter": counter_doc.as_dict(),
+		"tax_config": _pos_tax_config(counter_doc),
+		"bill_format": _company_bill_format(counter_doc.company),
+		**catalog,
+		# Master data consumes only Promo Price rows. Avoid building and then
+		# discarding pricing rules, schemes, loyalty and voucher snapshots.
+		"promo_prices": _get_pos_promo_prices(branch, counter_code, modified_after, include_additional=False)["promotions"],
+		"buy_x_get_y_promotions": get_pos_buy_x_get_y_promotions(branch, counter_code, modified_after)["promotions"],
+		"gift_voucher_promotions": get_gift_voucher_promotions({"branch": branch, "counter_code": counter_code})["promotions"],
+		"customers": _customer_master_rows(counter_doc.company, modified_filter),
+		"operators": _operator_master_rows(branch, modified_after),
+		"modes_of_payment": _pos_payment_modes(modified_filter),
+		"counters": frappe.get_all(
+			"POS Branch Counter",
+			filters={"branch": branch, "is_active": 1},
+			fields=[
+				"name",
+				"branch",
+				"warehouse",
+				"cost_center",
+				"counter_code",
+				"counter_name",
+				"terminal_id",
+				"printer_name",
+				"pos_profile",
+			],
+			limit_page_length=0,
+		),
+	}, counter_doc.warehouse, known_items=catalog["items"])
+
+
+def _catalog_master_data(warehouse, modified_after=None):
+	"""Shared item/packing/stock payload; caller must authorize the warehouse."""
 	modified_filter = [["modified", ">", modified_after]] if modified_after else []
 	# Filter related rows too, including independently modified barcodes/prices.
 	sales_item_codes = frappe.get_all("Item", filters={"is_sales_item": 1}, pluck="name")
@@ -1559,12 +1598,12 @@ def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
 	)
 	item_codes = [item.item_code for item in items if item.item_code]
 	from retail.pos_serials import apply_master_batches, apply_master_serials
-	apply_master_serials(items, counter_doc.warehouse)
-	apply_master_batches(items, counter_doc.warehouse)
+	apply_master_serials(items, warehouse)
+	apply_master_batches(items, warehouse)
 	item_group_by_item = {item.item_code: item.item_group for item in items}
 	_apply_item_tax_fields(items)
 	stock_by_item = _warehouse_stock_by_item(
-		counter_doc.warehouse, sorted(set(item_codes) | set(packing_parent_items))
+		warehouse, sorted(set(item_codes) | set(packing_parent_items))
 	)
 	all_item_packings = []
 	if not modified_after:
@@ -1605,16 +1644,10 @@ def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
 			(stock_by_item.get(packing.item_code) or {}).get("actual_qty", 0), packing.conversion_factor
 		)
 
-	_apply_current_stock_to_items(items, counter_doc.warehouse, stock_by_item)
-	_apply_current_stock_to_packings(packing_details, counter_doc.warehouse, stock_by_item)
+	_apply_current_stock_to_items(items, warehouse, stock_by_item)
+	_apply_current_stock_to_packings(packing_details, warehouse, stock_by_item)
 
-	return with_item_identity({
-		"status": "Success",
-		"server_time": now_datetime(),
-		"server_timezone": get_system_timezone(),
-		"counter": counter_doc.as_dict(),
-		"tax_config": _pos_tax_config(counter_doc),
-		"bill_format": _company_bill_format(counter_doc.company),
+	return {
 		"items": items,
 			"item_barcodes": frappe.get_all(
 				"Item Barcode",
@@ -1646,31 +1679,7 @@ def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
 			],
 			limit_page_length=0,
 		),
-		# Master data consumes only Promo Price rows. Avoid building and then
-		# discarding pricing rules, schemes, loyalty and voucher snapshots.
-		"promo_prices": _get_pos_promo_prices(branch, counter_code, modified_after, include_additional=False)["promotions"],
-		"buy_x_get_y_promotions": get_pos_buy_x_get_y_promotions(branch, counter_code, modified_after)["promotions"],
-		"gift_voucher_promotions": get_gift_voucher_promotions({"branch": branch, "counter_code": counter_code})["promotions"],
-		"customers": _customer_master_rows(counter_doc.company, modified_filter),
-		"operators": _operator_master_rows(branch, modified_after),
-		"modes_of_payment": _pos_payment_modes(modified_filter),
-		"counters": frappe.get_all(
-			"POS Branch Counter",
-			filters={"branch": branch, "is_active": 1},
-			fields=[
-				"name",
-				"branch",
-				"warehouse",
-				"cost_center",
-				"counter_code",
-				"counter_name",
-				"terminal_id",
-				"printer_name",
-				"pos_profile",
-			],
-			limit_page_length=0,
-		),
-	}, counter_doc.warehouse, known_items=items)
+	}
 
 
 def _pos_payment_modes(modified_filter):
@@ -3349,3 +3358,121 @@ def save_sales_order(data=None, **kwargs):
 	return {"status": "Success", "action": action, "duplicate": duplicate,
 		"name": doc.name if action != "calculate" else None, "docstatus": doc.docstatus,
 		"order": doc.as_dict()}
+
+
+# Mobile Van Sales compatibility aliases. Existing POS endpoints stay unchanged.
+# Each delegate performs its own Van Sales authentication and assignment checks.
+
+
+@frappe.whitelist(methods=['POST'])
+def start_session(data=None, **kwargs):
+	from retail.api.van_sales import start_session as endpoint
+	return endpoint(data=data, **kwargs)
+
+
+@frappe.whitelist(methods=['GET', 'POST'])
+def get_sales_invoices(data=None, **kwargs):
+	from retail.api.van_sales import get_sales_invoice_data as endpoint
+	return endpoint(data=data, **kwargs)
+
+
+@frappe.whitelist(methods=['GET', 'POST'])
+def get_sales_returns(data=None, **kwargs):
+	from retail.api.van_sales import get_sales_return_data as endpoint
+	return endpoint(data=data, **kwargs)
+
+
+@frappe.whitelist(methods=['GET', 'POST'])
+def get_customer_payments(data=None, **kwargs):
+	from retail.api.van_sales import get_customer_payment_data as endpoint
+	return endpoint(data=data, **kwargs)
+
+
+@frappe.whitelist(methods=['GET', 'POST'])
+def get_expenses(data=None, **kwargs):
+	from retail.api.van_sales import get_expense_data as endpoint
+	return endpoint(data=data, **kwargs)
+
+
+@frappe.whitelist(methods=['GET', 'POST'])
+def get_active_session(data=None, **kwargs):
+	from retail.api.van_sales import get_active_session as endpoint
+	return endpoint(data=data, **kwargs)
+
+
+@frappe.whitelist(methods=['GET', 'POST'])
+def get_van_master_data(data=None, **kwargs):
+	from retail.api.van_sales import get_van_master_data as endpoint
+	return endpoint(data=data, **kwargs)
+
+
+@frappe.whitelist(methods=['GET', 'POST'])
+def get_load_stock(data=None, **kwargs):
+	from retail.api.van_sales import get_load_stock as endpoint
+	return endpoint(data=data, **kwargs)
+
+
+@frappe.whitelist(methods=['POST'])
+def confirm_load(data=None, **kwargs):
+	from retail.api.van_sales import confirm_load as endpoint
+	return endpoint(data=data, **kwargs)
+
+
+@frappe.whitelist(methods=['POST'])
+def unload_stock(data=None, **kwargs):
+	from retail.api.van_sales import unload_stock as endpoint
+	return endpoint(data=data, **kwargs)
+
+
+@frappe.whitelist(methods=['POST'])
+def update_session_status(data=None, **kwargs):
+	from retail.api.van_sales import update_session_status as endpoint
+	return endpoint(data=data, **kwargs)
+
+
+@frappe.whitelist(methods=['POST'])
+def end_session(data=None, **kwargs):
+	from retail.api.van_sales import end_session as endpoint
+	return endpoint(data=data, **kwargs)
+
+
+@frappe.whitelist(methods=['POST'])
+def post_sale(data=None, **kwargs):
+	from retail.api.van_sales import post_sale as endpoint
+	return endpoint(data=data, **kwargs)
+
+
+@frappe.whitelist(methods=['POST'])
+def post_sales_return(data=None, **kwargs):
+	from retail.api.van_sales import post_sales_return as endpoint
+	return endpoint(data=data, **kwargs)
+
+
+@frappe.whitelist(methods=['GET', 'POST'])
+def get_credit_customers(data=None, **kwargs):
+	from retail.api.van_sales import get_credit_customers as endpoint
+	return endpoint(data=data, **kwargs)
+
+
+@frappe.whitelist(methods=['POST'])
+def post_customer_payment(data=None, **kwargs):
+	from retail.api.van_sales import post_customer_payment as endpoint
+	return endpoint(data=data, **kwargs)
+
+
+@frappe.whitelist(methods=['POST'])
+def post_expense(data=None, **kwargs):
+	from retail.api.van_sales import post_expense as endpoint
+	return endpoint(data=data, **kwargs)
+
+
+@frappe.whitelist(allow_guest=True, methods=["POST"])
+def driver_login(userid=None, password=None):
+	from retail.api.van_sales import driver_login as endpoint
+	return endpoint(userid=userid, password=password)
+
+
+@frappe.whitelist(methods=["POST"])
+def upsert_van_customer(data=None, **kwargs):
+	from retail.api.van_sales import upsert_customer as endpoint
+	return endpoint(data=data, **kwargs)

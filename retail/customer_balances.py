@@ -2,6 +2,7 @@
 
 import frappe
 from frappe import _
+from retail.desk_speed import cached
 from frappe.utils import flt, now_datetime, nowdate
 
 from retail.core_compat.accounts_receivable import ReceivablePayableReport
@@ -25,6 +26,12 @@ def get_customer_credit_balances(customers, company=None):
 		frappe.throw(_("Set a default Company to view customer credit balances."))
 	company_doc = frappe.get_doc("Company", company)
 	company_doc.check_permission("read")
+	return _compute_customer_credit_balances(customers, company)
+
+
+@cached("credit", 60)
+def _compute_customer_credit_balances(customers, company):
+	company_doc = frappe.get_doc("Company", company)
 	response = {
 		"company": company,
 		"currency": company_doc.default_currency,

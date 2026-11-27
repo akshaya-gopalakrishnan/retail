@@ -61,3 +61,19 @@ class TestBusinessHomePreload(TestCase):
 			result = preload.get_desktop_page('{"name":"Business Home"}')
 		self.assertEqual(result['retail_chart_source_configs'], {'Shared': 'source config'})
 		self.assertEqual(configs.call_count, 2)
+
+	def test_multiple_native_charts_keep_formatting_without_losing_later_definitions(self):
+		from types import SimpleNamespace
+		data = {'charts': {'items': [{'chart_name': name} for name in ('Sales', 'Purchases')]}}
+		def load(doctype, name):
+			doc = {'doctype': doctype, 'name': name, 'chart_type': 'Sum',
+				'document_type': 'Sales Invoice', 'value_based_on': 'base_net_total'}
+			return {'docs': [SimpleNamespace(as_dict=lambda: doc)], 'docinfo': {'name': name}}
+		field = SimpleNamespace(fieldtype='Currency', options='Company:company:default_currency')
+		with patch.object(preload, 'standard_get_desktop_page', return_value=data), patch.object(
+			preload, '_load_definition', side_effect=load
+		), patch.object(frappe, 'get_meta', return_value=SimpleNamespace(get_field=lambda name: field)):
+			result = preload.get_desktop_page('{"name":"Reports"}')
+		self.assertEqual(len(result['retail_widget_definitions']), 2)
+		for definition in result['retail_widget_definitions']:
+			self.assertEqual(definition['docs'][0]['__onload']['retail_value_field']['fieldtype'], 'Currency')

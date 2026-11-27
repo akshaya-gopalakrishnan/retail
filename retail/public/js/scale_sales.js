@@ -32,7 +32,10 @@
 				method: "retail.domains.transactions.vat.get_transaction_item_vat_rate",
 				args: {item_code: row.item_code, child_doctype: row.doctype,
 					parent_doctype: frm.doc.doctype, transaction_type: frm.doc.transaction_type,
-					item_tax_template: row.item_tax_template},
+					item_tax_template: row.item_tax_template, company: frm.doc.company,
+					is_pos: frm.doc.is_pos || 0, is_consolidated: frm.doc.is_consolidated || 0,
+					return_against: frm.doc.return_against, docstatus: frm.doc.docstatus,
+					custom_trading_vat_disabled: frm.doc.custom_trading_vat_disabled || 0},
 			});
 			vatFactor += flt(vatRate) / 100;
 		}
