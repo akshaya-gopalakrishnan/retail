@@ -135,11 +135,17 @@ def set_selling_price_margins(doc, method=None):
 	if doc.get("is_return") or not flt(doc.get("custom_allow_selling_price")):
 		return
 
+	# Masters cannot change while this validation's read-only row pass runs.
+	# Reuse duplicate Item/UOM reads only here, never across saves or users.
+	selling_rates = {}
 	for row in doc.get("items") or []:
 		if not row.meta.has_field("custom_new_sell_rate"):
 			continue
 
-		current_selling_rate = get_standard_selling_rate(row.get("item_code"), row.get("uom"))
+		key = (row.get("item_code"), row.get("uom"))
+		if key not in selling_rates:
+			selling_rates[key] = get_standard_selling_rate(*key)
+		current_selling_rate = selling_rates[key]
 		if current_selling_rate and not flt(row.get("custom_cur_sell_rate")):
 			row.set("custom_cur_sell_rate", current_selling_rate)
 

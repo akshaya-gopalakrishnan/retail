@@ -2,6 +2,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 let hooks, dialog, opened = 0, eventHandler, unapproved = true, holdLookup = false, releaseLookup;
+let roles = [], rpcCount = 0, ajaxWaits = 0;
 const frm = {doc:{docstatus:0}, wrapper:{}, is_new:()=>false};
 class Dialog {
     constructor(options) { Object.assign(this, options); dialog=this; }
@@ -12,16 +13,18 @@ class Dialog {
     enable_primary_action() {}
 }
 const frappe = {
+    session: {user: 'cashier@example.com'}, user: {has_role: role => roles.includes(role)},
     ui:{Dialog, form:{on:(_dt, handlers)=>{hooks=handlers;}}},
-    after_ajax:async()=>{}, show_alert:()=>{},
+    after_ajax:async()=>{ajaxWaits++;}, show_alert:()=>{},
     call:async args => {
+        rpcCount++;
         if (args.method.endsWith('.authorize')) { unapproved=false; return {message:'approved-token'}; }
         if (holdLookup) { holdLookup=false; return new Promise(resolve=>{releaseLookup=resolve;}); }
         return {message:unapproved || !args.args.doc._retail_sales_approval?.length};
     },
 };
 vm.runInNewContext(fs.readFileSync('apps/retail/retail/public/js/forms/backend_sales_admin.js','utf8'), {
-    frappe, __:s=>s, setTimeout, clearTimeout, console,
+    frappe, window: {}, __:s=>s, setTimeout, clearTimeout, console,
     $:()=>({off(){return this;},on(_event,_selector,handler){eventHandler=handler;return this;}}),
 });
 const settle=()=>new Promise(resolve=>setTimeout(resolve,200));
@@ -68,5 +71,18 @@ const settle=()=>new Promise(resolve=>setTimeout(resolve,200));
     releaseLookup({message:true});
     await olderSaveCheck;
     assert.equal(opened,beforeApproval,'An older response must not reopen a completed approval');
+    const beforeDirect = {rpcCount, ajaxWaits, opened};
+    for (const role of ['Admin', 'Customer Administrator']) {
+        roles = [role];
+        hooks.refresh(frm);
+        await hooks.before_save(frm);
+        await hooks.before_submit(frm);
+    }
+    roles = [];
+    frappe.session.user = 'Administrator';
+    await hooks.before_save(frm);
+    await hooks.before_submit(frm);
+    assert.deepEqual({rpcCount, ajaxWaits, opened}, beforeDirect,
+        'Direct operations must not wait for global AJAX, call approval, or open a dialog');
     console.log('PASS approved Save/Submit reuse approval; cancelled edits ask; late responses do not reopen popup');
 })().catch(error=>{console.error(error);process.exitCode=1;});

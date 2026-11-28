@@ -17,6 +17,13 @@ class Doc(SimpleNamespace):
 
 class TestSalesApproval(unittest.TestCase):
     def setUp(self):
+        for target, replacement in (
+            ("session", SimpleNamespace(user="cashier@example.com")),
+            ("get_roles", lambda *args: []),
+        ):
+            mocked = patch.object(frappe, target, replacement)
+            mocked.start()
+            self.addCleanup(mocked.stop)
         rounding = patch.object(frappe, "get_system_settings", return_value="Banker's Rounding")
         rounding.start()
         self.addCleanup(rounding.stop)
@@ -40,8 +47,19 @@ class TestSalesApproval(unittest.TestCase):
                          margin_rate_or_amount=10, discount_percentage=5), row), 104.5)
         self.assertEqual(policy.automatic_row_rate(dict(rate=75, price_list_rate=100), row), 75)
 
-    def test_administrator_requires_return_approval(self):
-        with patch.object(policy, "approved", return_value=False), patch.object(policy, "allowed", return_value=True), patch.object(policy, "deny", side_effect=frappe.PermissionError):
+    def test_admins_can_change_prices_discounts_and_returns_directly(self):
+        self.doc.discount_amount = 5
+        self.doc.additional_discount_percentage = 10
+        self.doc.items = [Doc(rate=12, price_list_rate=20, discount_percentage=40, qty=-1)]
+        for user, roles in (("Administrator", []), ("admin@example.com", ["Admin"]),
+                            ("manager@example.com", ["Customer Administrator"])):
+            with self.subTest(user=user), patch.object(frappe, "session", SimpleNamespace(user=user)), \
+                    patch.object(frappe, "get_roles", return_value=roles), \
+                    patch.object(policy, "approved", side_effect=AssertionError("Admin must not need a token")):
+                policy.validate(self.doc)
+
+    def test_non_admin_return_requires_approval(self):
+        with patch.object(policy, "deny", side_effect=frappe.PermissionError):
             with self.assertRaises(frappe.PermissionError):
                 policy.validate(self.doc)
 

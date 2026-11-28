@@ -41,7 +41,7 @@ def deny(operation):
 
 
 def validate(doc, method=None):
-    if not applies(doc) or approved(doc):
+    if not applies(doc) or allowed() or approved(doc):
         return
     header_approved = approved_header(doc)
     if (cint(doc.get("is_return")) or any(flt(row.qty) < 0 for row in doc.items)) and not header_approved:

@@ -1,6 +1,41 @@
 // Use native row fields and server bundle creation; do not change Stock Settings.
 (() => {
 	const tracking = [["serial_no", "has_serial_no"], ["batch_no", "has_batch_no"]];
+	async function withBatchPriceReads(frm, update) {
+		const controller = frm.cscript;
+		const original = controller?.batch_no;
+		if (typeof original !== "function") return update();
+		const reads = new Map();
+		controller.batch_no = function (...args) {
+			const call = frappe.call;
+			const pending = [];
+			// Capture only the native handler's synchronous price read. Restore the
+			// dispatcher before awaiting anything; unrelated calls remain native.
+			frappe.call = function (request, ...rest) {
+				if (request?.method !== "erpnext.stock.get_item_details.get_batch_based_item_price") {
+					return call.call(this, request, ...rest);
+				}
+				const params = request.args?.params;
+				if (!params || typeof params !== "object") return call.call(this, request, ...rest);
+				// This read uses item/batch/UOM/party/date/price context, never child
+				// record IDs. Keep every other argument in its per-dialog cache key.
+				const key = JSON.stringify({...request.args, params: {...params,
+					items: params.items?.map(({name, child_docname, ...item}) => item)}});
+				if (!reads.has(key)) {
+					reads.set(key, Promise.resolve(call.call(this, {...request, callback: undefined})));
+				}
+				const result = reads.get(key).then(response => request.callback?.(response));
+				pending.push(result);
+				return result;
+			};
+			let result;
+			try { result = original.apply(this, args); }
+			finally { frappe.call = call; }
+			return Promise.all([result, ...pending]);
+		};
+		try { return await update(); }
+		finally { controller.batch_no = original; }
+	}
 	function bindCreate(frm, row, field, control) {
 		// Sales use existing serials/batches; receipt creation shortcuts do not apply.
 		if (frm.doctype === "Sales Invoice") return;
@@ -233,17 +268,26 @@
 						}
 						dialog.disable_primary_action();
 						try {
-							for (const [index, {row, field}] of missing.entries()) {
-								if (!(frm.doc.items || []).includes(row)) return;
-								await frappe.model.set_value(row.doctype, row.name, {
-									[field]: values[`tracking_${index}`], use_serial_batch_fields: 1,
-								});
-							}
+							if (missing.some(({row}) => !(frm.doc.items || []).includes(row))) return;
+							const update = async () => {
+								// Native handlers still run in row order, including batch pricing.
+								// Paint the final grid once instead of after every tracked row.
+								for (const [index, {row, field}] of missing.entries()) {
+									await frappe.model.set_value(row.doctype, row.name, {
+										[field]: values[`tracking_${index}`], use_serial_batch_fields: 1,
+									});
+								}
+							};
+							const batchUpdates = window.retail?.transaction_items?.withTrackingUpdates;
+							await withBatchPriceReads(frm, () => batchUpdates ? batchUpdates(frm, update) : update());
 							frappe.validated = true;
 							// Close only on the native save success callback. Form.save catches
 							// rejections internally, so awaiting it alone cannot prove success.
 							await frm.save("Save", response => {
 								if (response?.exc) return;
+								// The save has succeeded; do not keep the completed dialog
+								// on screen for Bootstrap's extra closing transition.
+								dialog.$wrapper?.removeClass?.("fade");
 								dialog.hide();
 								frappe.show_alert({message: __("Tracking details saved. Click Submit to confirm the invoice."), indicator: "green"});
 							}, undefined, () => dialog.enable_primary_action());
