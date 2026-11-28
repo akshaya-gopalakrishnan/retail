@@ -93,7 +93,7 @@
    "label": "Status",
    "fieldtype": "Select",
    "read_only": 1,
-   "options": "Accepted\nPosted\nPending Dependency\nPending Reconciliation\nReconciled\nReconciliation Exception",
+   "options": "Accepted\nPosted\nPending Dependency\nPending Reconciliation\nReconciled\nReconciliation Exception\nCancelled",
    "in_list_view": 1
   },
   {

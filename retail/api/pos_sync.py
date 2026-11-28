@@ -208,6 +208,8 @@ def _run(sync_type, payload, handler):
 					frappe.db.get_value("Employee", _cashier_employee(payload, required=True), "name", for_update=True)
 				_validate_legacy_operation(sync_type, payload)
 				if sync_type in ("Sales Invoice", "Credit Sales Invoice", "Return"):
+					from retail.pos_cancellation import assert_not_cancelled
+					assert_not_cancelled(external_reference)
 					from retail.pos_settlements import accept
 					return echo(payload, accept(sync_type, payload, counter, handler))
 				return echo(payload, handler())
@@ -1963,6 +1965,13 @@ def create_pos_invoice(data=None, **kwargs):
 		}
 
 	return _run("Sales Invoice", payload, handler)
+
+
+@frappe.whitelist(methods=["POST"])
+def cancel_pos_invoice(data=None, **kwargs):
+	"""Cancel a completed POS sale and its single-receipt accounting atomically."""
+	from retail.pos_cancellation import cancel
+	return cancel(_as_dict(data, **kwargs))
 
 
 @frappe.whitelist()

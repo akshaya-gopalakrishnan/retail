@@ -178,6 +178,16 @@ def cancel_invoice_posting(doc):
     if len(merge.pos_invoices) != 1:
         return
     merge.flags.ignore_permissions = True
+    if frappe.flags.get("retail_pos_cancellation") == doc.name:
+        def cancel_accounting():
+            # Authorization was checked against this receipt's configured counter.
+            # Keep native validation/link/ledger checks, bypass only SI permissions.
+            for name in (merge.consolidated_credit_note, merge.consolidated_invoice):
+                if name:
+                    invoice = frappe.get_doc("Sales Invoice", name)
+                    invoice.flags.ignore_permissions = True
+                    invoice.cancel()
+        merge.cancel_linked_invoices = cancel_accounting
     merge.cancel()
     doc.consolidated_invoice = None
 

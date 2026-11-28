@@ -250,6 +250,10 @@ def accept(kind, payload, counter, handler):
 
 
 def post(transaction, handler):
+    if transaction.status == "Cancelled":
+        frappe.throw("Cancelled POS transactions cannot be posted again. Use a new external reference.")
+    from retail.pos_cancellation import assert_not_cancelled
+    assert_not_cancelled(transaction.external_pos_reference)
     from retail.pos_external_refs import MissingPOSDependency
     frappe.db.savepoint("pos_accepted_post")
     try:
@@ -284,6 +288,8 @@ def post(transaction, handler):
 
 
 def resolve_transaction(transaction):
+    if transaction.status == "Cancelled":
+        return
     allocations = frappe.get_all("POS Settlement Allocation", filters={"transaction": transaction.name}, pluck="name", order_by="creation asc")
     statuses = []
     for name in allocations:
@@ -348,7 +354,7 @@ def resolve_transaction(transaction):
 
 
 def resolve_allocation(transaction, row):
-    if row.status == "Reconciled":
+    if row.status in ("Reconciled", "Cancelled"):
         return
     row.destination_pos_bill = transaction.pos_invoice
     row.destination_erp_document = transaction.sales_invoice
@@ -452,7 +458,7 @@ def recovery_context():
 def recover(limit=100):
     """Safe repeated scheduler/after-commit processing, including reversed arrivals."""
     from retail.api import pos_sync as api
-    names = frappe.get_all("POS Accepted Transaction", filters={"status": ["!=", "Reconciled"]},
+    names = frappe.get_all("POS Accepted Transaction", filters={"status": ["not in", ["Reconciled", "Cancelled"]]},
                           fields=["name", "branch", "customer"], order_by="modified asc", limit_page_length=int(limit))
     with recovery_context():
         # Two passes let a later-created original resolve earlier returns/redemptions.
@@ -463,7 +469,7 @@ def recover(limit=100):
                 transaction = frappe.get_doc("POS Accepted Transaction", pending.name, for_update=True)
                 frappe.db.savepoint("pos_recovery_transaction")
                 try:
-                    if transaction.status == "Reconciled":
+                    if transaction.status in ("Reconciled", "Cancelled"):
                         continue
                     if transaction.pos_invoice:
                         resolve_transaction(transaction)
@@ -528,6 +534,8 @@ def _summarize_allocations(rows):
     result = dict.fromkeys(tuple(SUMMARY_FIELDS.values()) + (
         "credit_notes_applied", "credit_notes_unresolved", "pending_credit_allocations", "unresolved_settlement_amount"), 0.0)
     for row in rows:
+        if row.status == "Cancelled":
+            continue
         field = SUMMARY_FIELDS.get(row.settlement_type)
         if field:
             result[field] += flt(row.requested_amount)

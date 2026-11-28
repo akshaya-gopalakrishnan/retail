@@ -489,7 +489,7 @@ Payment record or payment account is required for this option.
 
 `Voucher` uses the existing gift-voucher approval and `voucher_redemption` sale
 flow. `Cancelled` is a POS cancellation/status option, not a monetary tender;
-its presence does not introduce a bill-cancellation API. Do not send either
+use `cancel_pos_invoice` below to cancel a posted bill. Do not send either
 option as a cash/card payment row or include it in counted cash.
 
 `Customer` identifies the customer-credit option in POS. Send the customer's ERP
@@ -757,6 +757,118 @@ Response example:
 ```
 
 ## Sales, returns and customer payments
+
+### Cancel a POS sale, including before sale sync
+
+`POST /api/method/retail.api.pos_sync.cancel_pos_invoice`
+
+Use the same authenticated POS integration credentials as sale posting
+(`Authorization: token API_KEY:API_SECRET`, or the authenticated session).
+The existing POS module/role and counter integration-user checks apply on every
+request, including retries. The sale must belong to the supplied branch/counter.
+The app does not need an ERP invoice ID: send `pos_bill_no` together with the
+original sale's `external_pos_reference` as `original_external_pos_reference`.
+This identifies the original version even when a replacement reuses the printed
+bill number. If posted, this endpoint also cancels the linked accounting Sales
+Invoice; do not separately call `frappe.client.cancel` on it.
+
+Request JSON (replace the example values with the original sale's values):
+
+```json
+{
+  "operation_reference": "BRANCH-COUNTER-CANCEL-000001",
+  "branch": "Business Demo Branch",
+  "counter_code": "COUNTER-1",
+  "pos_bill_no": "123",
+  "original_external_pos_reference": "BRANCH-COUNTER-SALE-000001",
+  "reason": ""
+}
+```
+
+`operation_reference`, `branch`, `counter_code`, `pos_bill_no` and
+`original_external_pos_reference` are required for cancellation without an ERP ID.
+`reason` is optional and accepts an empty string, whitespace, `null`, or omission;
+the cancellation operation and authenticated user are always retained in the audit.
+For compatibility, `pos_invoice_name` (the ERP ID returned by sale posting) can
+still be sent instead of the bill/reference pair. Additional bill/reference fields
+must match that invoice when supplied. The API never guesses which version to
+cancel from a reused display bill number alone. Generate a new operation reference
+for each cancellation and persist the complete request for retries.
+
+Response example (relevant fields):
+
+```json
+{
+  "message": {
+    "status": "Success",
+    "cancellation_status": "Cancelled",
+    "doctype": "POS Invoice",
+    "pos_invoice_name": "PSI-123",
+    "invoice_name": "PSI-123",
+    "sales_invoice": "SI-456",
+    "docstatus": 2,
+    "original_external_pos_reference": "BRANCH-COUNTER-SALE-000001",
+    "pos_bill_no": "123",
+    "already_cancelled": false,
+    "duplicate": false
+  }
+}
+```
+
+If the original sale has not reached ERP, the cancellation is retained permanently:
+
+```json
+{
+  "message": {
+    "status": "Success",
+    "cancellation_status": "Cancelled Before Sync",
+    "pos_invoice_name": null,
+    "invoice_name": null,
+    "sales_invoice": null,
+    "docstatus": null,
+    "original_external_pos_reference": "BRANCH-COUNTER-SALE-000001",
+    "pos_bill_no": "123",
+    "already_cancelled": false,
+    "duplicate": false
+  }
+}
+```
+
+- If already posted, the original POS Invoice and related Sales Invoice are
+  cancelled. If accepted but not yet posted, its acceptance/allocations are marked
+  `Cancelled`. If not received, no invoice or ledger entry is created merely to
+  cancel it. In all cases the original external reference stays blocked.
+- A delayed first sync of the cancelled original returns `status: "Failed"` and
+  creates no acceptance, invoice or ledger entries. The replacement sale uses the
+  same `pos_bill_no` and a **new** `external_pos_reference`, so it can post normally.
+  A retry of the original cancellation continues to target only the old reference.
+- Cancellation atomically reverses the single-receipt merge, accounting and stock
+  through native ERPNext cancellation. Failure rolls everything back and raises a
+  standard Frappe API error; do not treat a failed HTTP request as a cancellation.
+- Exact retry of the same operation/request returns the saved result with
+  `duplicate: true`. Reusing an operation reference with changed data or a different
+  authenticated actor raises a reference conflict. A new operation against an
+  already cancelled invoice returns `already_cancelled: true` without reversals.
+- Original invoice IDs, external reference, completed payload and acceptance audit
+  remain retained. Accepted transactions/allocations become `Cancelled`; recovery
+  never reposts them, and cancelled allocations are excluded from settlement totals.
+- The sale's original `external_pos_reference` is permanently reserved. If the
+  sale was accepted before cancellation, its exact retry still returns the immutable
+  acceptance receipt, which is not
+  proof that the bill remains submitted. Save the cancellation response in the app.
+  A replacement sale needs a **new** `external_pos_reference`; the same display
+  `pos_bill_no` can be used with that new reference.
+- Supports ordinary cash/card sales and uncollected credit sales with their own
+  accounting invoice. Returns/exchanges, combined accounting, payment-corrected
+  bills, voucher/loyalty redemptions, credit-note allocations, later collections or
+  accounting allocations, bank-cleared payments and dependent accepted returns
+  require their respective correction workflows/accounts review first. Spent
+  vouchers issued by the sale also block cancellation through native validation.
+  For unposted bills, reverse any separate voucher redemption approvals first;
+  new voucher approvals for a cancelled original reference are rejected.
+- Reopen a submitted branch day/POS closing first. Frozen/finalized accounting
+  periods and native stock/link validations still apply. Generic Desk/native API
+  cancellation of completed POS bills remains blocked.
 
 For Payment Entries, send optional `reference_no` to fill **Cheque/Reference No**. This applies to `create_customer_deposit`, `pay_customer_invoice`, `create_pos_payment_entry`, and the `CollectCredit` / `ChangeCollectionMOP` correction actions. If omitted or empty, the existing fallback remains: `external_pos_reference` for the three payment APIs, or `operation_reference` for corrections.
 
