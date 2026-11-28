@@ -1293,6 +1293,8 @@ if isinstance(doc_events["Sales Invoice"]["before_validate"], str):
 	doc_events["Sales Invoice"]["before_validate"] = [doc_events["Sales Invoice"]["before_validate"]]
 doc_events["Sales Invoice"]["before_validate"].append("retail.backend_sales_admin.validate")
 doctype_js["Sales Invoice"].append("public/js/forms/backend_sales_admin.js")
+doc_events["Sales Invoice"]["before_validate"].append("retail.domains.sales.invoice_accounts.set_missing_income_accounts")
+doctype_js["Sales Invoice"].append("public/js/forms/sales_invoice_accounts.js")
 
 doc_events["Sales Invoice"].setdefault("before_insert", []).append("retail.backend_sales_admin.before_insert")
 doc_events["Sales Invoice"].setdefault("after_insert", []).append("retail.backend_sales_admin.after_insert")
