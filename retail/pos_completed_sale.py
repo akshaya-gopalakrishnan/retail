@@ -294,8 +294,8 @@ class RetailPOSInvoice(InvoicePriceProtection, POSInvoice):
 		return super().validate_serialised_or_batched_item()
 
 	def before_cancel(self):
-		if payload_for(self):
-			frappe.throw("Completed POS bills cannot be cancelled; use an independently referenced return.")
+		if payload_for(self) and frappe.flags.get("retail_pos_cancellation") != self.name:
+			frappe.throw("Completed POS bills cannot be cancelled here; use the POS cancellation API or an independently referenced return.")
 		from retail.pos_realtime import cancel_invoice_posting
 		cancel_invoice_posting(self)
 		super().before_cancel()

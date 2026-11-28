@@ -151,6 +151,9 @@ def redeem_gift_voucher(data=None, **kwargs):
 	if card_batch:
 		request.update(items=payload.get("items"), bill_total=payload.get("bill_total"))
 	def action():
+		frappe.db.get_value("Branch", counter.branch, "name", for_update=True)
+		from retail.pos_cancellation import assert_not_cancelled
+		assert_not_cancelled(payload.external_pos_reference)
 		return {**debit(request["voucher_code"], request["amount"], counter.company,
 			items=request.get("items"), bill_total=request.get("bill_total"), reference=reference),
 			"redemption_reference": reference}
