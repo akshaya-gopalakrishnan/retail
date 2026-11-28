@@ -31,6 +31,36 @@
     return target;
   };
 
+  // ../retail/retail/public/js/utils/prevent_history_swipe.js
+  (() => {
+    if (window.retail_history_swipe_guard)
+      return;
+    window.retail_history_swipe_guard = true;
+    document.addEventListener("wheel", (event) => {
+      if (!event.cancelable || event.ctrlKey || event.defaultPrevented)
+        return;
+      if (Math.abs(event.deltaX) <= Math.abs(event.deltaY))
+        return;
+      for (const element of event.composedPath()) {
+        if (!(element instanceof Element))
+          continue;
+        const style = getComputedStyle(element);
+        if (!/^(auto|scroll|overlay)$/.test(style.overflowX))
+          continue;
+        const extent = element.scrollWidth - element.clientWidth;
+        if (extent <= 1)
+          continue;
+        const minimum = style.direction === "rtl" ? -extent : 0;
+        const maximum = style.direction === "rtl" ? 0 : extent;
+        if (event.deltaX < 0 && element.scrollLeft > minimum + 1)
+          return;
+        if (event.deltaX > 0 && element.scrollLeft < maximum - 1)
+          return;
+      }
+      event.preventDefault();
+    }, { passive: false, capture: true });
+  })();
+
   // ../retail/retail/public/js/forms/sales_document_design.js
   (() => {
     if (!document.getElementById("retail-sales-document-design")) {
@@ -106,12 +136,12 @@
           const input = row.row.find('input[type="Text"],textarea,select').filter(":visible:first")[0];
           input == null ? void 0 : input.focus({ preventScroll: true });
           restore(positions);
-          input == null ? void 0 : input.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "instant" });
         }, 100);
       };
     }
-    for (const doctype of ["Sales Invoice", "Delivery Note"])
+    for (const doctype of ["Purchase Order", "Purchase Receipt", "Purchase Invoice", "Sales Invoice", "Delivery Note"]) {
       frappe.ui.form.on(doctype, { refresh: install });
+    }
   })();
 
   // ../retail/retail/public/js/forms/sales_invoice_duplicates.js
@@ -287,6 +317,7 @@
     const resolved = /* @__PURE__ */ new WeakMap();
     window.retail.remember_transaction_barcode = (row) => resolved.set(row, signature(row));
     async function refresh(frm) {
+      var _a, _b, _c, _d, _e;
       if (frm.doc.docstatus !== 0)
         return;
       const generation = frm.__retail_barcode_generation = (frm.__retail_barcode_generation || 0) + 1;
@@ -308,18 +339,20 @@
       });
       if (generation !== frm.__retail_barcode_generation)
         return;
-      let changed = false;
+      const painted = [];
       for (const row of rows) {
         if (snapshots.get(row.name) !== signature(row) || !(row.name in (message || {})))
           continue;
         if (row.custom_item_barcode !== message[row.name]) {
           row.custom_item_barcode = message[row.name];
-          changed = true;
+          painted.push(row);
         }
         resolved.set(row, signature(row));
       }
-      if (changed)
-        frm.refresh_field("items");
+      const grid = (_b = (_a = frm.fields_dict) == null ? void 0 : _a.items) == null ? void 0 : _b.grid;
+      for (const row of painted) {
+        (_e = (_d = (_c = grid == null ? void 0 : grid.grid_rows_by_docname) == null ? void 0 : _c[row.name]) == null ? void 0 : _d.refresh_field) == null ? void 0 : _e.call(_d, "custom_item_barcode");
+      }
     }
     function schedule(frm) {
       clearTimeout(frm.__retail_barcode_timer);
@@ -398,8 +431,12 @@
       return options;
     }
     function bind(control, select, selling = false) {
-      if (!(control == null ? void 0 : control.awesomplete) || control.__retail_packing_search)
+      if (!(control == null ? void 0 : control.awesomplete))
         return;
+      if (control.__retail_packing_search) {
+        control.__retail_select_packing = select;
+        return;
+      }
       control.__retail_packing_search = true;
       control.__retail_select_packing = select;
       const awesome = control.awesomplete;
@@ -478,15 +515,40 @@
           console.error(error);
         }
       }
-      control.$input[0].addEventListener("keydown", (event) => {
+      const onPackingKeydown = (event) => {
         if (event.ctrlKey || event.metaKey || event.altKey || event.shiftKey || event.isComposing)
           return;
-        if (!["Enter", "Tab"].includes(event.key) || !awesome.opened || !awesome.selected)
+        if (!["Enter", "Tab"].includes(event.key))
+          return;
+        if (!awesome.opened) {
+          const row = control.doc;
+          const incomplete = ["Purchase Invoice Item", "Purchase Receipt Item"].includes(row == null ? void 0 : row.doctype) && row.item_code && (!row.item_name || !row.uom);
+          const retry = control.__retail_failed_packing_choice || (incomplete ? {
+            item_code: row.item_code,
+            uom: row.uom,
+            barcode: row.custom_item_barcode || row.barcode
+          } : null);
+          if (event.key !== "Enter" || !retry)
+            return;
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          selectPacking(retry);
+          return true;
+        }
+        if (!awesome.selected && event.key === "Enter") {
+          const first = awesome._list.findIndex((result) => result.packing);
+          if (first >= 0)
+            awesome.goto(first);
+        }
+        if (!awesome.selected)
           return;
         event.preventDefault();
         event.stopImmediatePropagation();
         awesome.select(void 0, void 0, event);
-      }, true);
+        return true;
+      };
+      control.$input[0].__retail_packing_keydown = onPackingKeydown;
+      control.$input[0].addEventListener("keydown", onPackingKeydown, true);
       control.$input.off("input").on("input.retailPacking", () => {
         clearTimeout(timer);
         const version = ++request;
@@ -513,12 +575,29 @@
           (_a2 = result == null ? void 0 : result.action) == null ? void 0 : _a2.call(control);
           return;
         }
+        selectPacking(choice);
+      });
+      function selectPacking(choice) {
+        if (control.__retail_packing_busy)
+          return;
         control.set_input(choice.item_code);
         control.__retail_packing_busy = true;
-        Promise.resolve().then(() => select(choice)).catch((error) => console.error(error)).finally(() => {
+        control.__retail_packing_selection = Promise.resolve().then(() => control.__retail_select_packing(choice)).then(() => {
+          delete control.__retail_failed_packing_choice;
+        }).catch((error) => {
+          var _a2;
+          control.__retail_failed_packing_choice = choice;
+          control.set_input(((_a2 = control.get_model_value) == null ? void 0 : _a2.call(control)) || "");
+          console.error(error);
+          frappe.msgprint({
+            title: __("Could not load Item"),
+            indicator: "red",
+            message: __("The Item details could not be loaded. Check the error above, then press Enter in the Item field to retry.")
+          });
+        }).finally(() => {
           control.__retail_packing_busy = false;
         });
-      });
+      }
     }
     const selector = (_a = frappe.ui.form.LinkSelector) == null ? void 0 : _a.prototype;
     if (selector && !selector.__retail_packing_search) {
@@ -1194,55 +1273,60 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
             window.retail.purchase_packing_search.bind(control, async (choice) => {
               var _a3, _b3, _c2, _d2;
               const row = gridRow.doc;
-              if (doctype === "Sales Invoice" && !row.item_code && ((_a3 = window.retail.sales_invoice_duplicates) == null ? void 0 : _a3.preflight(frm, row, choice)))
-                return;
-              row.__retail_selecting_packing = true;
-              if (doctype === "Sales Invoice") {
-                row.__retail_packing_choice = choice;
-                row.custom_item_barcode = choice.barcode || "";
-                (_b3 = gridRow.refresh_field) == null ? void 0 : _b3.call(gridRow, "custom_item_barcode");
-              }
+              frm.__retail_selecting_count = (frm.__retail_selecting_count || 0) + 1;
               try {
-                if (lineEligible(frm)) {
-                  const result = await window.retail.purchaseLine.fill(frm, {
-                    item_code: choice.item_code,
-                    uom: choice.uom,
-                    barcode: choice.barcode
-                  }, row);
-                  if (!(result == null ? void 0 : result.row))
-                    frappe.throw(__("Could not load the selected Item."));
-                  result.row.custom_packing_detail = choice.packing_id || "";
-                  result.row.custom_item_barcode = choice.barcode || "";
-                  frm.refresh_field("items");
+                if (doctype === "Sales Invoice" && !row.item_code && ((_a3 = window.retail.sales_invoice_duplicates) == null ? void 0 : _a3.preflight(frm, row, choice)))
                   return;
+                row.__retail_selecting_packing = true;
+                if (doctype === "Sales Invoice") {
+                  row.__retail_packing_choice = choice;
+                  row.custom_item_barcode = choice.barcode || "";
+                  (_b3 = gridRow.refresh_field) == null ? void 0 : _b3.call(gridRow, "custom_item_barcode");
                 }
-                const seed = !row.item_code && choice.barcode && !frm.doc.is_internal_supplier && !frm.doc.is_internal_customer;
-                const previous = { uom: row.uom, barcode: row.barcode };
-                if (seed)
-                  Object.assign(row, { uom: choice.uom, barcode: choice.barcode });
                 try {
-                  await control.set_value(choice.item_code);
-                } catch (error) {
-                  if (seed && !row.item_code)
-                    Object.assign(row, previous);
-                  throw error;
-                }
-                while (row.__retail_vat_syncing || row.__retail_sell_price_syncing)
-                  await new Promise((resolve) => setTimeout(resolve, 16));
-                await frappe.model.set_value(row.doctype, row.name, "uom", choice.uom);
-                row.barcode = choice.barcode || "";
-                row.custom_item_barcode = choice.barcode || "";
-                row.custom_packing_detail = choice.packing_id || "";
-                if (doctype === "Sales Order") {
+                  if (lineEligible(frm)) {
+                    const result = await window.retail.purchaseLine.fill(frm, {
+                      item_code: choice.item_code,
+                      uom: choice.uom,
+                      barcode: choice.barcode
+                    }, row);
+                    if (!(result == null ? void 0 : result.row))
+                      frappe.throw(__("Could not load the selected Item."));
+                    result.row.custom_packing_detail = choice.packing_id || "";
+                    result.row.custom_item_barcode = choice.barcode || "";
+                    frm.refresh_field("items");
+                    return;
+                  }
+                  const seed = !row.item_code && choice.barcode && !frm.doc.is_internal_supplier && !frm.doc.is_internal_customer;
+                  const previous = { uom: row.uom, barcode: row.barcode };
+                  if (seed)
+                    Object.assign(row, { uom: choice.uom, barcode: choice.barcode });
+                  try {
+                    await control.set_value(choice.item_code);
+                  } catch (error) {
+                    if (seed && !row.item_code)
+                      Object.assign(row, previous);
+                    throw error;
+                  }
+                  while (row.__retail_vat_syncing || row.__retail_sell_price_syncing)
+                    await new Promise((resolve) => setTimeout(resolve, 16));
+                  await frappe.model.set_value(row.doctype, row.name, "uom", choice.uom);
+                  row.barcode = choice.barcode || "";
+                  row.custom_item_barcode = choice.barcode || "";
                   row.custom_packing_detail = choice.packing_id || "";
-                  row.item_name = choice.packing_name || choice.item_name;
+                  if (doctype === "Sales Order") {
+                    row.custom_packing_detail = choice.packing_id || "";
+                    row.item_name = choice.packing_name || choice.item_name;
+                  }
+                  (_d2 = (_c2 = window.retail).remember_transaction_barcode) == null ? void 0 : _d2.call(_c2, row);
+                  frm.dirty();
+                  frm.refresh_field("items");
+                } finally {
+                  delete row.__retail_selecting_packing;
+                  delete row.__retail_packing_choice;
                 }
-                (_d2 = (_c2 = window.retail).remember_transaction_barcode) == null ? void 0 : _d2.call(_c2, row);
-                frm.dirty();
-                frm.refresh_field("items");
               } finally {
-                delete row.__retail_selecting_packing;
-                delete row.__retail_packing_choice;
+                frm.__retail_selecting_count = Math.max(0, (frm.__retail_selecting_count || 1) - 1);
               }
             }, ["Sales Order", "Sales Invoice"].includes(doctype));
           }, true);
@@ -2560,15 +2644,36 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
           return result;
         };
     }
+    function gridRows(grid) {
+      return (grid.grid_rows || []).filter((row) => (row == null ? void 0 : row.doc) || (row == null ? void 0 : row.row));
+    }
     function widthSignature(grid) {
-      var _a;
+      var _a, _b;
       const parts = [];
+      const measured = [];
+      const packing = grid.df.fieldname === "custom_retail_packing_detail";
       for (const [df] of grid.visible_columns || []) {
         parts.push(df.fieldname, df.label, df.columns, df.colsize, df.width_px);
+        const compact = compactRateLabel(grid, df) !== df;
+        if (packing && [
+          "packing_name",
+          "barcode",
+          "packing_uom",
+          "conversion_factor",
+          "purchase_net_rate",
+          "purchase_gross_rate",
+          "selling_net_rate",
+          "selling_gross_rate",
+          "is_fast_plu_item"
+        ].includes(df.fieldname))
+          continue;
+        if (!compact && (Number.isFinite(df.width_px) || ((_a = grid.user_defined_columns) == null ? void 0 : _a.some((column) => column.fieldname === df.fieldname))))
+          continue;
+        measured.push(df);
       }
-      for (const row of grid.grid_rows || []) {
-        for (const [df] of grid.visible_columns || [])
-          parts.push((_a = row.doc) == null ? void 0 : _a[df.fieldname]);
+      for (const row of gridRows(grid)) {
+        for (const df of measured)
+          parts.push((_b = row.doc) == null ? void 0 : _b[df.fieldname]);
       }
       return parts.join("");
     }
@@ -2595,7 +2700,7 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
         selling_gross_rate: 112,
         is_fast_plu_item: 72
       } : {};
-      for (const [df] of grid.visible_columns) {
+      for (const [df] of grid.visible_columns || []) {
         if (packingWidths[df.fieldname]) {
           widths[df.fieldname] = packingWidths[df.fieldname];
           continue;
@@ -2610,7 +2715,7 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
           continue;
         }
         let width = measure(__(df.label || df.fieldname)) + 40;
-        for (const row of grid.grid_rows || []) {
+        for (const row of gridRows(grid)) {
           const value = (_b = row.doc) == null ? void 0 : _b[df.fieldname];
           let text = value != null ? value : "";
           if (frappe.format && value != null) {
@@ -2626,7 +2731,7 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
       return widths;
     }
     function styleRow(grid, row) {
-      var _a, _b, _c, _d, _e, _f, _g;
+      var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p;
       if (!(row == null ? void 0 : row.row))
         return;
       if (row.doc && !row.__retail_item_name_search && ((_a = grid.fields_map.item_code) == null ? void 0 : _a.options) === "Item") {
@@ -2664,22 +2769,24 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
           this.on_grid_fields.push(field);
         };
       }
-      const itemColumn = grid.visible_columns.find(([df]) => df.fieldname === "item_code" && df.fieldtype === "Link" && df.options === "Item");
-      if (row.doc && itemColumn) {
-        const field = (_b = row.docfields) == null ? void 0 : _b.find((df) => df.fieldname === "item_code");
+      const itemColumn = (grid.visible_columns || []).find(([df]) => df.fieldname === "item_code" && df.fieldtype === "Link" && df.options === "Item");
+      if (row.doc && ((_b = itemColumn == null ? void 0 : itemColumn[0]) == null ? void 0 : _b.formatter)) {
+        const field = (_c = row.docfields) == null ? void 0 : _c.find((df) => df.fieldname === "item_code");
         if (field)
           field.formatter = itemColumn[0].formatter;
-        (_d = (_c = row.columns) == null ? void 0 : _c.item_code) == null ? void 0 : _d.static_area.html(
-          itemColumn[0].formatter(row.doc.item_code, itemColumn[0], {}, row.doc)
-        );
+        const cell = (_e = (_d = row.columns) == null ? void 0 : _d.item_code) == null ? void 0 : _e.static_area;
+        const html = itemColumn[0].formatter(row.doc.item_code, itemColumn[0], {}, row.doc);
+        if (cell && cell.html() !== html)
+          cell.html(html);
       }
       if (!row.doc) {
-        for (const [df] of grid.visible_columns) {
+        (_k = (_j = (_i = (_h = (_g = (_f = row.row) == null ? void 0 : _f.find) == null ? void 0 : _g.call(_f, "[tabindex]")) == null ? void 0 : _h.removeAttr) == null ? void 0 : _i.call(_h, "tabindex")) == null ? void 0 : _j.off) == null ? void 0 : _k.call(_j, "focus");
+        for (const [df] of grid.visible_columns || []) {
           if (compactRateLabel(grid, df) === df)
             continue;
-          const cell = (_e = row.columns) == null ? void 0 : _e[df.fieldname];
-          (_f = cell == null ? void 0 : cell.static_area) == null ? void 0 : _f.text(__(df.label));
-          cell == null ? void 0 : cell.attr("title", __(((_g = grid.fields_map[df.fieldname]) == null ? void 0 : _g.label) || df.label));
+          const cell = (_l = row.columns) == null ? void 0 : _l[df.fieldname];
+          (_m = cell == null ? void 0 : cell.static_area) == null ? void 0 : _m.text(__(df.label));
+          cell == null ? void 0 : cell.attr("title", __(((_n = grid.fields_map[df.fieldname]) == null ? void 0 : _n.label) || df.label));
         }
       }
       const options = grid.__retail_scroll_options;
@@ -2687,18 +2794,31 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
         if (cell == null ? void 0 : cell[0])
           cell[0].dataset.fieldname = fieldname;
       }
+      const cells = ((_o = row.row[0]) == null ? void 0 : _o.children) && Array.from(row.row[0].children);
+      const signature = JSON.stringify([
+        grid.__retail_content_widths,
+        options == null ? void 0 : options.pin_field,
+        grid.__retail_resizing,
+        (grid.visible_columns || []).map(([df]) => df.fieldname)
+      ]);
+      if (cells && row.__retail_cell_style === signature && ((_p = row.__retail_styled_cells) == null ? void 0 : _p.length) === cells.length && cells.every((cell, index) => cell === row.__retail_styled_cells[index]))
+        return;
       row.row.children(".col").each(function() {
-        var _a2, _b2;
+        var _a2, _b2, _c2, _d2;
         const fieldname = this.dataset.fieldname;
-        const column = grid.visible_columns.find(([df]) => df.fieldname === fieldname);
+        const column = (grid.visible_columns || []).find(([df]) => df.fieldname === fieldname);
         const width = column ? ((_a2 = grid.__retail_content_widths) == null ? void 0 : _a2[fieldname]) || 80 : this.classList.contains("row-index") ? 56 : 40;
         this.style.setProperty("--retail-column-width", `${width}px`);
         const grow = grid.df.fieldname === "custom_retail_packing_detail" ? { packing_name: 2, barcode: 1 }[fieldname] || 0 : width;
         this.style.setProperty("--retail-column-grow", column && fieldname !== grid.__retail_resizing ? String(grow) : "0");
         this.classList.toggle("retail-grid-data-column", Boolean(column));
-        this.classList.toggle("retail-grid-pinned", fieldname === options.pin_field && ((_b2 = grid.visible_columns[0]) == null ? void 0 : _b2[0].fieldname) === fieldname);
+        this.classList.toggle("retail-grid-pinned", fieldname === (options == null ? void 0 : options.pin_field) && ((_d2 = (_c2 = (_b2 = grid.visible_columns) == null ? void 0 : _b2[0]) == null ? void 0 : _c2[0]) == null ? void 0 : _d2.fieldname) === fieldname);
       });
       row.row.children("[data-fieldname]").off("touchmove");
+      if (cells) {
+        row.__retail_cell_style = signature;
+        row.__retail_styled_cells = cells;
+      }
     }
     function currentColumns(grid) {
       return grid.visible_columns.map(([df]) => __spreadValues({
@@ -2766,7 +2886,7 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
             column.width_px = pixels;
             grid.__retail_content_widths[column.fieldname] = pixels;
             grid.wrapper[0].style.setProperty("--retail-grid-width", `${138 + Object.values(grid.__retail_content_widths).reduce((sum, value) => sum + value, 0)}px`);
-            [header, grid.header_search, ...grid.grid_rows || []].forEach((row) => styleRow(grid, row));
+            [header, grid.header_search, ...gridRows(grid)].forEach((row) => styleRow(grid, row));
           };
           const finish = () => {
             document.removeEventListener("pointermove", move);
@@ -2786,7 +2906,7 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
             document.removeEventListener("pointercancel", cancel);
             cell.draggable = true;
             delete grid.__retail_resizing;
-            layout(grid);
+            safeLayout(grid);
           };
           document.addEventListener("pointermove", move);
           document.addEventListener("pointerup", finish);
@@ -2809,16 +2929,136 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
         grid.__retail_content_widths = contentWidths(grid);
         grid.__retail_width_signature = signature;
       }
-      const totalWidth = 138 + grid.visible_columns.reduce(
-        (sum, [df]) => sum + grid.__retail_content_widths[df.fieldname],
+      const totalWidth = 138 + (grid.visible_columns || []).reduce(
+        (sum, [df]) => {
+          var _a;
+          return sum + (((_a = grid.__retail_content_widths) == null ? void 0 : _a[df.fieldname]) || 0);
+        },
         0
       );
       grid.wrapper[0].style.setProperty("--retail-grid-width", `${totalWidth}px`);
       configureHeader(grid);
-      [grid.header_row, grid.header_search, ...grid.grid_rows || []].forEach(
+      [grid.header_row, grid.header_search, ...gridRows(grid)].forEach(
         (row) => styleRow(grid, row)
       );
       configureDirectColumns(grid);
+    }
+    function scrollPositions(grid) {
+      var _a;
+      const nodes = [];
+      const add = (element) => {
+        if (element && typeof element.scrollTop === "number" && !nodes.includes(element))
+          nodes.push(element);
+      };
+      const root = (_a = grid.wrapper) == null ? void 0 : _a[0];
+      if (root == null ? void 0 : root.querySelectorAll)
+        root.querySelectorAll(".form-grid-container").forEach(add);
+      let node = root;
+      while (node) {
+        add(node);
+        node = node.parentElement;
+      }
+      if (typeof document !== "undefined")
+        add(document.scrollingElement);
+      return nodes.map((element) => ({ element, top: element.scrollTop || 0, left: element.scrollLeft || 0 }));
+    }
+    function restoreScroll(positions) {
+      for (const { element, top, left } of positions || []) {
+        if (element.scrollTop !== top)
+          element.scrollTop = top;
+        if (element.scrollLeft !== left)
+          element.scrollLeft = left;
+      }
+    }
+    function pageScroll() {
+      const scrolling = typeof document !== "undefined" ? document.scrollingElement : null;
+      return { x: window.scrollX || 0, y: window.scrollY || (scrolling == null ? void 0 : scrolling.scrollTop) || 0 };
+    }
+    function holdPage(positions, page) {
+      var _a, _b, _c, _d;
+      const jq = globalThis.jQuery || globalThis.$;
+      try {
+        (_b = (_a = jq == null ? void 0 : jq("html, body")) == null ? void 0 : _a.stop) == null ? void 0 : _b.call(_a, true, false);
+      } catch (error) {
+        (_d = (_c = globalThis.console) == null ? void 0 : _c.error) == null ? void 0 : _d.call(_c, error);
+      }
+      restoreScroll(positions);
+      if (!page || typeof window.scrollTo !== "function")
+        return;
+      const x = window.scrollX || 0;
+      const y = window.scrollY || 0;
+      if (x !== page.x || y !== page.y)
+        window.scrollTo(page.x, page.y);
+    }
+    function keepPlace(positions, page) {
+      holdPage(positions, page);
+      for (const delay of [0, 120, 280])
+        setTimeout(() => holdPage(positions, page), delay);
+    }
+    function stripHeadingJump(grid) {
+      var _a, _b, _c, _d, _e, _f, _g;
+      (_g = (_f = (_e = (_d = (_c = (_b = (_a = grid.header_row) == null ? void 0 : _a.row) == null ? void 0 : _b.find) == null ? void 0 : _c.call(_b, "[tabindex]")) == null ? void 0 : _d.removeAttr) == null ? void 0 : _e.call(_d, "tabindex")) == null ? void 0 : _f.off) == null ? void 0 : _g.call(_f, "focus");
+    }
+    function parkFocus(grid) {
+      var _a, _b, _c, _d, _e, _f, _g, _h, _i;
+      const active = (_a = globalThis.document) == null ? void 0 : _a.activeElement;
+      const root = (_b = grid.wrapper) == null ? void 0 : _b[0];
+      if (!active || active === document.body || !((_c = root == null ? void 0 : root.contains) == null ? void 0 : _c.call(root, active)))
+        return;
+      const row = (_d = active.closest) == null ? void 0 : _d.call(active, ".grid-row");
+      grid.__retail_active_row = {
+        name: ((_e = row == null ? void 0 : row.getAttribute) == null ? void 0 : _e.call(row, "data-name")) || "",
+        field: ((_f = active.getAttribute) == null ? void 0 : _f.call(active, "data-fieldname")) || ((_i = (_h = (_g = active.closest) == null ? void 0 : _g.call(active, "[data-fieldname]")) == null ? void 0 : _h.getAttribute) == null ? void 0 : _i.call(_h, "data-fieldname")) || ""
+      };
+      let park = document.getElementById("retail-focus-park");
+      if (!park) {
+        park = document.createElement("div");
+        park.id = "retail-focus-park";
+        park.tabIndex = -1;
+        park.setAttribute("aria-hidden", "true");
+        park.style.cssText = "position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;pointer-events:none";
+        document.body.appendChild(park);
+      }
+      try {
+        park.focus({ preventScroll: true });
+      } catch (error) {
+        park.focus();
+      }
+    }
+    function refocusEdited(grid) {
+      var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j;
+      const kept = grid.__retail_active_row;
+      if (!(kept == null ? void 0 : kept.name))
+        return;
+      const row = (_a = grid.grid_rows_by_docname) == null ? void 0 : _a[kept.name];
+      const input = kept.field && ((_d = (_c = (_b = row == null ? void 0 : row.on_grid_fields_dict) == null ? void 0 : _b[kept.field]) == null ? void 0 : _c.$input) == null ? void 0 : _d[0]) || ((_i = (_h = (_g = (_f = (_e = row == null ? void 0 : row.row) == null ? void 0 : _e.find) == null ? void 0 : _f.call(_e, "input,textarea,select")) == null ? void 0 : _g.filter) == null ? void 0 : _h.call(_g, ":visible:first")) == null ? void 0 : _i[0]);
+      if (!input || document.activeElement === input)
+        return;
+      try {
+        input.focus({ preventScroll: true });
+      } catch (error) {
+        (_j = input.focus) == null ? void 0 : _j.call(input);
+      }
+    }
+    function silenceScroll(grid) {
+      var _a;
+      if (typeof frappe === "undefined")
+        return;
+      frappe.flags = frappe.flags || {};
+      const previous = frappe.flags.disable_auto_scroll;
+      frappe.flags.disable_auto_scroll = true;
+      (_a = globalThis.clearTimeout) == null ? void 0 : _a.call(globalThis, grid.__retail_scroll_release);
+      grid.__retail_scroll_release = setTimeout(() => {
+        frappe.flags.disable_auto_scroll = previous;
+      }, 400);
+    }
+    function safeLayout(grid) {
+      var _a, _b;
+      try {
+        layout(grid);
+      } catch (error) {
+        (_b = (_a = globalThis.console) == null ? void 0 : _a.error) == null ? void 0 : _b.call(_a, error);
+      }
     }
     function bindInteractions(grid) {
       let popup;
@@ -2926,16 +3166,108 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
         }
         return result;
       };
+      const renderResultRows = grid.render_result_rows;
+      if (typeof renderResultRows === "function" && !renderResultRows.__retail_page_layout) {
+        grid.render_result_rows = function(...args) {
+          parkFocus(this);
+          silenceScroll(this);
+          const positions = scrollPositions(this);
+          const page = pageScroll();
+          const result = renderResultRows.apply(this, args);
+          stripHeadingJump(this);
+          safeLayout(this);
+          keepPlace(positions, page);
+          return result;
+        };
+        grid.render_result_rows.__retail_page_layout = true;
+      }
+      const makeHead = grid.make_head;
+      if (typeof makeHead === "function" && !makeHead.__retail_no_header_jump) {
+        grid.make_head = function(...args) {
+          const result = makeHead.apply(this, args);
+          stripHeadingJump(this);
+          return result;
+        };
+        grid.make_head.__retail_no_header_jump = true;
+      }
+      grid.scroll_to_top = () => {
+      };
+      const pagination = grid.grid_pagination;
+      if ((pagination == null ? void 0 : pagination.go_to_last_page_to_add_row) && !pagination.__retail_keep_place) {
+        pagination.__retail_keep_place = true;
+        const goToLast = pagination.go_to_last_page_to_add_row;
+        pagination.go_to_last_page_to_add_row = function(...args) {
+          const scrollTo = frappe.utils.scroll_to;
+          frappe.utils.scroll_to = () => {
+          };
+          try {
+            return goToLast.apply(this, args);
+          } finally {
+            frappe.utils.scroll_to = scrollTo;
+          }
+        };
+      }
+      const focusRow = grid.set_focus_on_row;
+      if (typeof focusRow === "function" && !focusRow.__retail_keep_place) {
+        grid.set_focus_on_row = function(idx) {
+          var _a2, _b2, _c, _d, _e;
+          if (!((_a2 = this.allow_on_grid_editing) == null ? void 0 : _a2.call(this)))
+            return focusRow.call(this, idx);
+          let index = idx == null && idx !== 0 ? (((_b2 = this.grid_rows) == null ? void 0 : _b2.length) || 1) - 1 : idx;
+          const keptName = idx === 0 ? (_c = this.__retail_active_row) == null ? void 0 : _c.name : "";
+          if (keptName) {
+            const found = (this.grid_rows || []).findIndex((row2) => {
+              var _a3;
+              return ((_a3 = row2 == null ? void 0 : row2.doc) == null ? void 0 : _a3.name) === keptName;
+            });
+            if (found > 0)
+              index = found;
+          }
+          const positions = scrollPositions(this);
+          const page = pageScroll();
+          const row = (_d = this.grid_rows) == null ? void 0 : _d[index];
+          if (!(row == null ? void 0 : row.toggle_editable_row))
+            return;
+          const field = (_e = this.__retail_active_row) == null ? void 0 : _e.field;
+          setTimeout(() => {
+            var _a3, _b3, _c2, _d2, _e2, _f, _g, _h, _i, _j;
+            if (!row.row)
+              return;
+            row.toggle_editable_row(true);
+            const input = field && ((_c2 = (_b3 = (_a3 = row.on_grid_fields_dict) == null ? void 0 : _a3[field]) == null ? void 0 : _b3.$input) == null ? void 0 : _c2[0]) || ((_h = (_g = (_f = (_e2 = (_d2 = row.row).find) == null ? void 0 : _e2.call(_d2, 'input[type="Text"],textarea,select')) == null ? void 0 : _f.filter) == null ? void 0 : _g.call(_f, ":visible:first")) == null ? void 0 : _h[0]);
+            try {
+              (_i = input == null ? void 0 : input.focus) == null ? void 0 : _i.call(input, { preventScroll: true });
+            } catch (error) {
+              (_j = input == null ? void 0 : input.focus) == null ? void 0 : _j.call(input);
+            }
+            holdPage(positions, page);
+          }, 100);
+        };
+        grid.set_focus_on_row.__retail_keep_place = true;
+      }
       const refresh = grid.refresh;
       grid.refresh = function(...args) {
-        var _a2, _b2;
-        const scroll = ((_a2 = this.wrapper) == null ? void 0 : _a2.find(".form-grid-container").scrollLeft()) || 0;
-        const result = refresh.apply(this, args);
-        layout(this);
-        (_b2 = this.wrapper) == null ? void 0 : _b2.find(".form-grid-container").scrollLeft(scroll);
-        return result;
+        var _a2, _b2, _c, _d;
+        try {
+          parkFocus(this);
+          silenceScroll(this);
+          const positions = scrollPositions(this);
+          const page = pageScroll();
+          const scroll = ((_a2 = this.wrapper) == null ? void 0 : _a2.find(".form-grid-container").scrollLeft()) || 0;
+          const result = refresh.apply(this, args);
+          stripHeadingJump(this);
+          safeLayout(this);
+          (_b2 = this.wrapper) == null ? void 0 : _b2.find(".form-grid-container").scrollLeft(scroll);
+          keepPlace(positions, page);
+          refocusEdited(this);
+          holdPage(positions, page);
+          return result;
+        } catch (error) {
+          (_d = (_c = globalThis.console) == null ? void 0 : _c.error) == null ? void 0 : _d.call(_c, error);
+        }
       };
-      const fitColumns = frappe.utils.debounce(() => layout(grid), 100);
+      const fitColumns = frappe.utils.debounce(() => safeLayout(grid), 100);
+      grid.__retail_fit_columns = fitColumns;
       const refreshField = grid.refresh_field;
       if (refreshField) {
         grid.refresh_field = function(...args) {
@@ -2946,10 +3278,15 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
       }
       grid.debounced_refresh = frappe.utils.debounce(grid.refresh.bind(grid), 100);
       $(frm.wrapper).on(`grid-row-render.retailScroll_${fieldname}`, (_event, row) => {
-        if (row.grid === grid) {
+        var _a2, _b2;
+        if (row.grid !== grid)
+          return;
+        try {
           styleRow(grid, row);
-          fitColumns();
+        } catch (error) {
+          (_b2 = (_a2 = globalThis.console) == null ? void 0 : _a2.error) == null ? void 0 : _b2.call(_a2, error);
         }
+        fitColumns();
       });
       grid.reset_grid();
       bindInteractions(grid);
@@ -2965,7 +3302,14 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
         }
       });
     }
-    retail.scrollable_grid = { enable, register };
+    retail.scrollable_grid = {
+      enable,
+      register,
+      scheduleLayout(grid) {
+        var _a;
+        (_a = grid.__retail_fit_columns) == null ? void 0 : _a.call(grid);
+      }
+    };
     function boot() {
       var _a, _b, _c;
       if (!((_c = (_b = (_a = window.frappe) == null ? void 0 : _a.ui) == null ? void 0 : _b.form) == null ? void 0 : _c.on)) {
@@ -3023,43 +3367,49 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
       });
     };
     function reveal(input) {
-      if (!(input == null ? void 0 : input.getBoundingClientRect) || !input.scrollIntoView)
+      var _a, _b, _c;
+      if (!(input == null ? void 0 : input.getBoundingClientRect))
+        return;
+      const margin = 12;
+      if (((_a = input.closest) == null ? void 0 : _a.call(input, ".form-grid-container")) || ((_b = input.closest) == null ? void 0 : _b.call(input, ".retail-scrollable-grid")) || ((_c = input.closest) == null ? void 0 : _c.call(input, ".form-grid"))) {
+        const container = input.closest(".retail-scrollable-grid .form-grid-container");
+        const row = input.closest(".data-row");
+        if (!container || !row || input.closest(".retail-grid-pinned"))
+          return;
+        const bounds = container.getBoundingClientRect();
+        let left = Math.max(0, bounds.left) + margin;
+        let right = Math.min(window.innerWidth, bounds.right) - margin;
+        for (const pinned of row.querySelectorAll(".row-check, .row-index, .retail-grid-pinned")) {
+          if (getComputedStyle(pinned).position !== "sticky")
+            continue;
+          const pin = pinned.getBoundingClientRect();
+          if (getComputedStyle(container).direction === "rtl")
+            right = Math.min(right, pin.left - margin);
+          else
+            left = Math.max(left, pin.right + margin);
+        }
+        const cell = input.getBoundingClientRect();
+        const dx = cell.left < left ? cell.left - left : cell.right > right ? cell.right - right : 0;
+        if (dx)
+          container.scrollBy({ left: dx, top: 0, behavior: "instant" });
+        return;
+      }
+      if (!input.scrollIntoView)
         return;
       input.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "instant" });
-      const margin = 12;
       const viewportHeight = window.innerHeight;
       let top = margin;
       const rect = input.getBoundingClientRect();
       for (const bar of Array.from(document.querySelectorAll(".sticky-top, .navbar, .page-head, .form-tabs-list")).sort((a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top)) {
         const style = getComputedStyle(bar);
-        const bounds2 = bar.getBoundingClientRect();
-        if (!["fixed", "sticky"].includes(style.position) || style.visibility === "hidden" || !bounds2.height || bounds2.bottom <= 0 || bounds2.top > top || bounds2.right <= rect.left || bounds2.left >= rect.right)
+        const bounds = bar.getBoundingClientRect();
+        if (!["fixed", "sticky"].includes(style.position) || style.visibility === "hidden" || !bounds.height || bounds.bottom <= 0 || bounds.top > top || bounds.right <= rect.left || bounds.left >= rect.right)
           continue;
-        top = Math.max(top + bounds2.height, bounds2.bottom + margin);
+        top = Math.max(top + bounds.height, bounds.bottom + margin);
       }
       const dy = rect.top < top ? rect.top - top : rect.bottom > viewportHeight - margin ? rect.bottom - viewportHeight + margin : 0;
       if (dy)
         window.scrollBy({ top: dy, left: 0, behavior: "instant" });
-      const container = input.closest(".retail-scrollable-grid .form-grid-container");
-      const row = input.closest(".data-row");
-      if (!container || !row || input.closest(".retail-grid-pinned"))
-        return;
-      const bounds = container.getBoundingClientRect();
-      let left = Math.max(0, bounds.left) + margin;
-      let right = Math.min(window.innerWidth, bounds.right) - margin;
-      for (const pinned of row.querySelectorAll(".row-check, .row-index, .retail-grid-pinned")) {
-        if (getComputedStyle(pinned).position !== "sticky")
-          continue;
-        const pin = pinned.getBoundingClientRect();
-        if (getComputedStyle(container).direction === "rtl")
-          right = Math.min(right, pin.left - margin);
-        else
-          left = Math.max(left, pin.right + margin);
-      }
-      const cell = input.getBoundingClientRect();
-      const dx = cell.left < left ? cell.left - left : cell.right > right ? cell.right - right : 0;
-      if (dx)
-        container.scrollBy({ left: dx, top: 0, behavior: "instant" });
     }
     const focus = (field) => {
       var _a, _b;
@@ -5868,9 +6218,14 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
       link.onerror = () => console.error("retail_navigation: failed to load retail_icons.css");
       document.head.appendChild(link);
     }
+    function syncRetailModalState() {
+      document.body.classList.toggle("retail-modal-open", Boolean(document.querySelector(".modal.show")));
+    }
     function injectRetailInlineCss() {
       if (document.getElementById("retail-icons-inline-css"))
         return;
+      $(document).on("shown.bs.modal.retailGridStack hidden.bs.modal.retailGridStack", syncRetailModalState);
+      syncRetailModalState();
       const css = `
         @media (min-width: 992px) {
             .sidebar-item-container .sidebar-item-icon > svg,
@@ -5946,13 +6301,13 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
                 padding-right: 12px !important;
             }
 
-            body:has(.modal.show)[data-route^="Form/"] .form-grid,
-            body:has(.modal.show)[data-route^="Form/"] .grid-body,
-            body:has(.modal.show)[data-route^="Form/"] .rows,
-            body:has(.modal.show)[data-route^="Form/"] .grid-row,
-            body:has(.modal.show)[data-route^="Form/"] .data-row,
-            body:has(.modal.show)[data-route^="Form/"] .grid-static-col,
-            body:has(.modal.show)[data-route^="Form/"] .field-area {
+            body.retail-modal-open[data-route^="Form/"] .form-grid,
+            body.retail-modal-open[data-route^="Form/"] .grid-body,
+            body.retail-modal-open[data-route^="Form/"] .rows,
+            body.retail-modal-open[data-route^="Form/"] .grid-row,
+            body.retail-modal-open[data-route^="Form/"] .data-row,
+            body.retail-modal-open[data-route^="Form/"] .grid-static-col,
+            body.retail-modal-open[data-route^="Form/"] .field-area {
                 z-index: auto !important;
             }
 
@@ -9106,6 +9461,8 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
             }
           },
           company(frm) {
+            delete frm.__retail_vat_rate_memo;
+            delete frm.__retail_vat_template_rates;
             queueVatTaxRowsSync(frm);
           },
           cost_center(frm) {
@@ -9172,7 +9529,7 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
       frappe.ui.form.on("Sales Taxes and Charges", taxHandlers());
       frappe.ui.form.on("Purchase Taxes and Charges", taxHandlers());
       function scheduleVatTaxRowsSync(frm) {
-        if (["Purchase Receipt", "Purchase Invoice", "Sales Invoice"].includes(frm.doc.doctype)) {
+        if (["Purchase Order", "Purchase Receipt", "Purchase Invoice", "Sales Invoice"].includes(frm.doc.doctype)) {
           queueVatTaxRowsSync(frm);
           return;
         }
@@ -9195,13 +9552,20 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
         ].join("");
       }
       function vatRateMemo(frm) {
-        const memo = frm.__retail_vat_rate_memo || (frm.__retail_vat_rate_memo = { rates: /* @__PURE__ */ new Map() });
-        clearTimeout(memo.timer);
-        memo.timer = setTimeout(() => {
-          if (frm.__retail_vat_rate_memo === memo)
-            delete frm.__retail_vat_rate_memo;
-        }, 1e3);
-        return memo.rates;
+        return frm.__retail_vat_rate_memo || (frm.__retail_vat_rate_memo = /* @__PURE__ */ new Map());
+      }
+      function vatTemplateRates(frm) {
+        return frm.__retail_vat_template_rates || (frm.__retail_vat_template_rates = /* @__PURE__ */ new Map());
+      }
+      function vatTemplateKey(frm, row) {
+        const doc = frm.doc || {};
+        return [
+          row.item_tax_template || "",
+          doc.doctype || "",
+          doc.company || "",
+          doc.custom_trading_vat_disabled || 0,
+          doc.is_pos || 0
+        ].join("");
       }
       function vatRateMemoKey(frm, row) {
         const doc = frm.doc || {};
@@ -9220,7 +9584,7 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
       function forgetVatRate(frm, row) {
         if (!(frm == null ? void 0 : frm.__retail_vat_rate_memo) || !(row == null ? void 0 : row.item_code))
           return;
-        frm.__retail_vat_rate_memo.rates.delete(vatRateMemoKey(frm, row));
+        frm.__retail_vat_rate_memo.delete(vatRateMemoKey(frm, row));
       }
       function refreshVatFromTemplate(frm, cdt, cdn) {
         var _a;
@@ -9250,6 +9614,8 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
         var _a, _b, _c;
         if (isCompletedPos(frm))
           return;
+        if (frm == null ? void 0 : frm.__retail_running_erpnext_totals)
+          return;
         if (!isEditableDraft(frm))
           return;
         const row = (_a = locals[cdt]) == null ? void 0 : _a[cdn];
@@ -9267,8 +9633,11 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
           return;
         row.__retail_vat_syncing = true;
         row.__retail_vat_sync_key = vatInputKey(row);
+        const generation = frm.__retail_price_generation || 0;
         try {
           const vatRate = await getVatRate(frm, row, cdt);
+          if ((frm.__retail_price_generation || 0) !== generation)
+            return;
           const factor = 1 + flt(vatRate) / 100;
           const precision2 = cint((_b = frappe.meta.get_docfield(cdt, "rate", cdn)) == null ? void 0 : _b.precision) || 2;
           const amountPrecision = cint((_c = frappe.meta.get_docfield(cdt, "amount", cdn)) == null ? void 0 : _c.precision) || precision2;
@@ -9316,6 +9685,8 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
           if (!Object.keys(values).length)
             return;
           await setRowValues(frm, cdt, cdn, values);
+          if ((frm.__retail_price_generation || 0) !== generation)
+            return;
           if (row)
             row.__retail_vat_synced_key = vatInputKey(row);
           queueVatTaxRowsSync(frm);
@@ -9323,8 +9694,9 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
         } finally {
           if (row) {
             row.__retail_vat_syncing = false;
-            if (row.__retail_vat_refresh_pending) {
-              delete row.__retail_vat_refresh_pending;
+            const pending = row.__retail_vat_refresh_pending && (frm.__retail_price_generation || 0) === generation;
+            delete row.__retail_vat_refresh_pending;
+            if (pending) {
               row.__retail_vat_force_sync = true;
               try {
                 await syncVatRates(frm, cdt, cdn, "rate");
@@ -9339,20 +9711,20 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
       window.retail.transaction_items = window.retail.transaction_items || {};
       window.retail.transaction_items.refreshVatDisplays = async (frm) => {
         var _a, _b, _c, _d, _e, _f, _g;
-        for (const row of frm.doc.items || []) {
-          if (!row.item_code)
+        const rows = (frm.doc.items || []).filter((row) => row.item_code && !row.__retail_vat_syncing);
+        const rates = await Promise.all(rows.map((row) => getVatRate(frm, row, row.doctype)));
+        for (const [index, row] of rows.entries()) {
+          if (!(frm.doc.items || []).includes(row))
             continue;
-          while (row.__retail_vat_syncing)
-            await new Promise((resolve) => setTimeout(resolve, 16));
-          const vat = await getVatRate(frm, row, row.doctype);
+          const vat = flt(rates[index]);
           const rate = flt(row.rate);
           const precision2 = cint((_a = frappe.meta.get_docfield(row.doctype, "rate", row.name)) == null ? void 0 : _a.precision) || 2;
           const amountPrecision = cint((_b = frappe.meta.get_docfield(row.doctype, "amount", row.name)) == null ? void 0 : _b.precision) || precision2;
-          const inclusive = flt(rate * (1 + flt(vat) / 100), precision2);
+          const inclusive = flt(rate * (1 + vat / 100), precision2);
           const values = {
             custom_rate_including_vat: inclusive,
             custom_amount_including_vat: flt(flt(row.qty) * inclusive, amountPrecision),
-            custom_vat_amount: flt(flt(row.qty) * rate * flt(vat) / 100, amountPrecision)
+            custom_vat_amount: flt(flt(row.qty) * rate * vat / 100, amountPrecision)
           };
           for (const [field, value] of Object.entries(values)) {
             if (!frappe.meta.has_field(row.doctype, field))
@@ -9362,12 +9734,22 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
           }
         }
       };
+      window.retail.transaction_items.releaseSaveWait = (frm) => {
+        if (!frm)
+          return;
+        frm.__retail_price_generation = (frm.__retail_price_generation || 0) + 1;
+        frm.__retail_vat_tax_rows_generation = (frm.__retail_vat_tax_rows_generation || 0) + 1;
+        clearTimeout(frm.__retail_vat_tax_rows_timer);
+        clearTimeout(frm.__retail_whole_bill_timer);
+        clearTimeout(frm.__retail_promo_display_timer);
+        clearTimeout(frm.__retail_vat_display_timer);
+      };
       const purchaseForms = ["Purchase Receipt", "Purchase Invoice"];
       const purchaseReadKey = (request) => JSON.stringify([
         request.method,
         Object.keys(request.args || {}).sort().filter((key) => request.args[key] != null).map((key) => [key, request.args[key]])
       ]);
-      const heavyItemForms = ["Sales Invoice", "Purchase Receipt", "Purchase Invoice"];
+      const heavyItemForms = ["Purchase Order", "Sales Invoice", "Purchase Receipt", "Purchase Invoice"];
       const calculatedItemFields = [
         "qty",
         "stock_qty",
@@ -9416,11 +9798,13 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
       function holdItemGrid(frm) {
         var _a;
         frm.__retail_item_names = (frm.doc.items || []).map((row) => row.name).join("");
+        frm.__retail_item_refresh_pending = false;
         snapshotItemFigures(frm);
         const field = (_a = frm.fields_dict) == null ? void 0 : _a.items;
         if (field == null ? void 0 : field.refresh) {
           frm.__retail_saved_item_refresh = field.refresh;
           field.refresh = function() {
+            frm.__retail_item_refresh_pending = true;
           };
         }
         const grid = field == null ? void 0 : field.grid;
@@ -9438,9 +9822,13 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
         frm.__retail_saved_refresh_field = frm.refresh_field;
         frm.refresh_field = function(fieldname, ...args) {
           var _a2, _b;
-          if (fieldname === "items")
+          if (fieldname === "items") {
+            frm.__retail_item_refresh_pending = true;
             return;
+          }
           if (Array.isArray(fieldname)) {
+            if (fieldname.includes("items"))
+              frm.__retail_item_refresh_pending = true;
             const rest = fieldname.filter((name) => name !== "items");
             if (!rest.length)
               return;
@@ -9466,13 +9854,15 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
         delete frm.__retail_saved_item_refresh;
         delete frm.__retail_saved_row_dependency;
         delete frm.__retail_saved_refresh_field;
+        const refreshPending = frm.__retail_item_refresh_pending;
+        delete frm.__retail_item_refresh_pending;
         const names = (frm.doc.items || []).map((row) => row.name).join("");
         const grid = (_d = (_c = frm.fields_dict) == null ? void 0 : _c.items) == null ? void 0 : _d.grid;
         const missing = !grid || (frm.doc.items || []).some((row) => {
           var _a2;
           return (row == null ? void 0 : row.name) && !((_a2 = grid.grid_rows_by_docname) == null ? void 0 : _a2[row.name]);
         });
-        if (names !== frm.__retail_item_names || missing) {
+        if (refreshPending || names !== frm.__retail_item_names || missing) {
           (_e = frm.refresh_field) == null ? void 0 : _e.call(frm, "items");
           return;
         }
@@ -9512,7 +9902,234 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
           }
         }
       }
+      const qtyKeepRateForms = [
+        "Purchase Order",
+        "Purchase Receipt",
+        "Purchase Invoice",
+        "Sales Invoice",
+        "Sales Order",
+        "Delivery Note",
+        "Quotation"
+      ];
+      function installQtyKeepRate(frm) {
+        var _a;
+        if (!qtyKeepRateForms.includes((_a = frm == null ? void 0 : frm.doc) == null ? void 0 : _a.doctype))
+          return;
+        const cscript = frm.cscript;
+        if (!cscript || cscript.__retail_qty_keep_rate || typeof cscript.qty !== "function")
+          return;
+        cscript.__retail_qty_keep_rate = true;
+        cscript.qty = function(doc, cdt, cdn) {
+          var _a2, _b, _c;
+          frm.__retail_price_generation = (frm.__retail_price_generation || 0) + 1;
+          const row = (_a2 = locals[cdt]) == null ? void 0 : _a2[cdn];
+          if (!(row == null ? void 0 : row.item_code))
+            return;
+          if (((doc == null ? void 0 : doc.doctype) === "Purchase Receipt" || (doc == null ? void 0 : doc.doctype) === "Purchase Invoice" && doc.update_stock) && typeof this.calculate_received_qty === "function") {
+            this.calculate_received_qty(doc, cdt, cdn);
+          }
+          (_b = this.conversion_factor) == null ? void 0 : _b.call(this, doc, cdt, cdn, true);
+          return (_c = this.calculate_taxes_and_totals) == null ? void 0 : _c.call(this);
+        };
+        if (typeof frm.call === "function" && !frm.__retail_price_generation_guard) {
+          frm.__retail_price_generation_guard = true;
+          const call = frm.call;
+          frm.call = function(opts, ...args) {
+            const method = typeof opts === "object" ? String((opts == null ? void 0 : opts.method) || "") : "";
+            if ((opts == null ? void 0 : opts.callback) && (method.includes("apply_pricing_rule") || method.includes("apply_price_list"))) {
+              const token = frm.__retail_price_generation || 0;
+              const original = opts.callback;
+              opts.callback = function(...cbArgs) {
+                if ((frm.__retail_price_generation || 0) !== token)
+                  return;
+                return original.apply(this, cbArgs);
+              };
+            }
+            return call.call(this, opts, ...args);
+          };
+        }
+      }
+      function installColumnDisplayBatch(frm, grid) {
+        const controller = frm.cscript;
+        if (!(controller == null ? void 0 : controller.toggle_item_grid_columns) || controller.__retail_column_display_batch)
+          return;
+        controller.__retail_column_display_batch = true;
+        const toggle = controller.toggle_item_grid_columns;
+        controller.toggle_item_grid_columns = function(...args) {
+          const refresh = grid.refresh;
+          let requested = false;
+          grid.refresh = function() {
+            requested = true;
+          };
+          try {
+            return toggle.apply(this, args);
+          } finally {
+            grid.refresh = refresh;
+            if (requested)
+              refresh.call(grid);
+          }
+        };
+      }
+      function installPurchaseGridRefresh(frm) {
+        var _a, _b, _c, _d, _e, _f;
+        installQtyKeepRate(frm);
+        if (!["Purchase Order", "Purchase Receipt", "Purchase Invoice", "Sales Invoice"].includes((_a = frm == null ? void 0 : frm.doc) == null ? void 0 : _a.doctype))
+          return;
+        const grid = (_c = (_b = frm.fields_dict) == null ? void 0 : _b.items) == null ? void 0 : _c.grid;
+        if (grid)
+          installColumnDisplayBatch(frm, grid);
+        if (!(grid == null ? void 0 : grid.refresh) || grid.__retail_incremental_refresh)
+          return;
+        grid.__retail_incremental_refresh = true;
+        const refresh = grid.refresh;
+        let painted = null;
+        let deferredDialog;
+        const fields = () => [.../* @__PURE__ */ new Set(["idx", "__checked", ...(grid.docfields || []).map((df) => df.fieldname).filter(Boolean)])];
+        const safeJson = (value) => {
+          try {
+            return JSON.stringify(value);
+          } catch (e) {
+            return null;
+          }
+        };
+        const values = (row, keys) => Object.fromEntries(keys.map((key) => [key, safeJson(row == null ? void 0 : row[key])]));
+        const layout = () => {
+          var _a2, _b2, _c2, _d2, _e2;
+          return safeJson([
+            frm.doc.name,
+            frm.doc.docstatus,
+            (_a2 = grid.grid_pagination) == null ? void 0 : _a2.page_index,
+            (_b2 = grid.grid_pagination) == null ? void 0 : _b2.page_length,
+            (_c2 = grid.df) == null ? void 0 : _c2.read_only,
+            (_d2 = grid.df) == null ? void 0 : _d2.hidden,
+            (_e2 = grid.df) == null ? void 0 : _e2.reqd,
+            (grid.docfields || []).map((df) => [
+              df.fieldname,
+              df.fieldtype,
+              df.label,
+              df.options,
+              Number(df.hidden || 0),
+              Number(df.read_only || 0),
+              Number(df.reqd || 0),
+              df.depends_on,
+              df.read_only_depends_on,
+              df.mandatory_depends_on,
+              df.columns,
+              df.width_px
+            ]),
+            (grid.visible_columns || []).flatMap((entry) => {
+              var _a3;
+              return ((_a3 = entry == null ? void 0 : entry[0]) == null ? void 0 : _a3.fieldname) ? [[entry[0].fieldname, entry[1], entry[0].width_px]] : [];
+            })
+          ]);
+        };
+        const structure = () => safeJson([layout(), (frm.doc.items || []).map((row) => [row == null ? void 0 : row.name, row == null ? void 0 : row.idx, Boolean(row == null ? void 0 : row.__checked)])]);
+        function snapshot() {
+          const keys = fields();
+          painted = { layout: layout(), structure: structure(), rows: new Map((grid.grid_rows || []).filter((row) => {
+            var _a2;
+            return (_a2 = row.doc) == null ? void 0 : _a2.name;
+          }).map((row) => [row.doc.name, values(row.doc, keys)])) };
+        }
+        grid.refresh = function(...args) {
+          var _a2, _b2;
+          try {
+            return refreshGrid.apply(this, args);
+          } catch (error) {
+            (_b2 = (_a2 = globalThis.console) == null ? void 0 : _a2.error) == null ? void 0 : _b2.call(_a2, error);
+          }
+        };
+        function refreshGrid(...args) {
+          var _a2, _b2, _c2, _d2, _e2, _f2, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s;
+          const dialog = (_a2 = frm.__quick_receipt) == null ? void 0 : _a2.dialog;
+          if (Number(frm.doc.docstatus || 0) === 0 && ((_c2 = (_b2 = dialog == null ? void 0 : dialog.$wrapper) == null ? void 0 : _b2.is) == null ? void 0 : _c2.call(_b2, ":visible"))) {
+            if (deferredDialog !== dialog) {
+              deferredDialog = dialog;
+              dialog.$wrapper.one("hidden.bs.modal.retailItemGrid", () => {
+                deferredDialog = null;
+                frm.refresh_field("items");
+              });
+            }
+            return;
+          }
+          const rows = frm.doc.items || [];
+          const length = Number((_d2 = grid.grid_pagination) == null ? void 0 : _d2.page_length) || rows.length;
+          const start = (Number(((_e2 = grid.grid_pagination) == null ? void 0 : _e2.page_index) || 1) - 1) * length;
+          const missing = rows.slice(start, start + length).some((row) => {
+            var _a3;
+            return !((_a3 = grid.grid_rows_by_docname) == null ? void 0 : _a3[row.name]);
+          });
+          const byName = new Map(rows.map((row) => [row.name, row]));
+          const replaced = (grid.grid_rows || []).some((row) => {
+            var _a3;
+            return ((_a3 = row.doc) == null ? void 0 : _a3.name) && byName.has(row.doc.name) && byName.get(row.doc.name) !== row.doc;
+          });
+          if (!painted || args.length || Number(frm.doc.docstatus || 0) !== 0 || missing || replaced || Object.keys(grid.filter || {}).length || painted.structure !== structure()) {
+            const held = [];
+            if (painted && !args.length && !replaced && Number(frm.doc.docstatus || 0) === 0 && !Object.keys(grid.filter || {}).length && painted.layout === layout()) {
+              const keys2 = fields();
+              for (const row of (grid.grid_rows || []).filter((row2) => row2 == null ? void 0 : row2.doc)) {
+                if (!((_f2 = row.doc) == null ? void 0 : _f2.name) || !byName.has(row.doc.name) || typeof row.refresh !== "function")
+                  continue;
+                if (JSON.stringify(painted.rows.get(row.doc.name)) !== JSON.stringify(values(row.doc, keys2)))
+                  continue;
+                held.push([row, row.refresh]);
+                row.refresh = function() {
+                };
+              }
+            }
+            try {
+              const result = refresh.apply(this, args);
+              snapshot();
+              return result;
+            } finally {
+              for (const [row, original] of held)
+                row.refresh = original;
+            }
+          }
+          const keys = fields();
+          let changed = false;
+          for (const gridRow of (grid.grid_rows || []).filter((row) => row == null ? void 0 : row.doc)) {
+            const row = gridRow.doc;
+            if (!(row == null ? void 0 : row.name))
+              continue;
+            const previous = painted.rows.get(row.name) || {};
+            const current = values(row, keys);
+            const dirty = keys.filter((key) => previous[key] !== current[key]);
+            if (!dirty.length)
+              continue;
+            if (row.item_code && row.item_name)
+              (_i = (_h = (_g = window.frappe) == null ? void 0 : _g.utils) == null ? void 0 : _h.add_link_title) == null ? void 0 : _i.call(_h, "Item", row.item_code, row.item_name);
+            for (const key of dirty) {
+              if (!gridRow.columns || gridRow.columns[key] || ((_k = (_j = gridRow.grid_form) == null ? void 0 : _j.fields_dict) == null ? void 0 : _k[key])) {
+                try {
+                  gridRow.refresh_field(key);
+                } catch (error) {
+                  (_m = (_l = globalThis.console) == null ? void 0 : _l.error) == null ? void 0 : _m.call(_l, error);
+                }
+              }
+            }
+            if (dirty.includes("item_code") && !dirty.includes("item_name")) {
+              try {
+                gridRow.refresh_field("item_name");
+              } catch (error) {
+                (_o = (_n = globalThis.console) == null ? void 0 : _n.error) == null ? void 0 : _o.call(_n, error);
+              }
+            }
+            (_p = gridRow.refresh_dependency) == null ? void 0 : _p.call(gridRow);
+            painted.rows.set(row.name, values(row, keys));
+            changed = true;
+          }
+          if (changed)
+            (_s = (_r = (_q = window.retail) == null ? void 0 : _q.scrollable_grid) == null ? void 0 : _r.scheduleLayout) == null ? void 0 : _s.call(_r, grid);
+        }
+        if ((_e = (_d = window.frappe) == null ? void 0 : _d.utils) == null ? void 0 : _e.debounce)
+          grid.debounced_refresh = window.frappe.utils.debounce(grid.refresh.bind(grid), 100);
+        if ((_f = grid.grid_rows) == null ? void 0 : _f.length)
+          snapshot();
+      }
       function installPurchaseActionReads(frm) {
+        installPurchaseGridRefresh(frm);
         installLightTotals(frm);
         const manager = frm.script_manager;
         if (!manager || manager.__retail_purchase_actions)
@@ -9587,6 +10204,10 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
         };
       }
       [...purchaseForms, "Sales Invoice"].forEach((doctype) => frappe.ui.form.on(doctype, { refresh: installPurchaseActionReads }));
+      frappe.ui.form.on("Purchase Order", { refresh: installPurchaseGridRefresh });
+      for (const doctype of ["Sales Order", "Delivery Note", "Quotation"]) {
+        frappe.ui.form.on(doctype, { refresh: installQtyKeepRate });
+      }
       window.retail.transaction_items.preparedPurchaseItem = async (frm, itemCode) => {
         const action = frm.__retail_purchase_action;
         if (!action)
@@ -9596,7 +10217,7 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
       };
       window.retail.transaction_items.purchaseRead = function(frm, request) {
         var _a, _b;
-        if (!["Purchase Receipt", "Purchase Invoice", "Sales Invoice"].includes((_a = frm == null ? void 0 : frm.doc) == null ? void 0 : _a.doctype))
+        if (!["Purchase Order", "Purchase Receipt", "Purchase Invoice", "Sales Invoice"].includes((_a = frm == null ? void 0 : frm.doc) == null ? void 0 : _a.doctype))
           return frappe.call(request);
         const action = frm.__retail_purchase_action;
         const pending = (action == null ? void 0 : action.reads) || (frm.__retail_purchase_reads || (frm.__retail_purchase_reads = /* @__PURE__ */ new Map()));
@@ -9626,13 +10247,15 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
         await syncVatTaxRows(frm, true);
       };
       function queueVatTaxRowsSync(frm) {
+        if (frm == null ? void 0 : frm.__retail_running_erpnext_totals)
+          return;
         if (!canSyncVatTaxRows(frm))
           return;
         clearTimeout(frm.__retail_vat_tax_rows_timer);
         const generation = frm.__retail_vat_tax_rows_generation = (frm.__retail_vat_tax_rows_generation || 0) + 1;
         frm.__retail_vat_tax_rows_timer = setTimeout(async () => {
           var _a, _b;
-          if (["Purchase Receipt", "Purchase Invoice", "Sales Invoice"].includes(frm.doc.doctype)) {
+          if (["Purchase Order", "Purchase Receipt", "Purchase Invoice", "Sales Invoice"].includes(frm.doc.doctype)) {
             await frappe.after_ajax();
             if (generation !== frm.__retail_vat_tax_rows_generation)
               return;
@@ -9739,6 +10362,13 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
         const taxLabel = liveVatFormDoctypes[frm.doc.doctype];
         const taxTable = frm.doc.taxes || [];
         const managedRows = taxTable.filter((row) => isManagedVatTaxRow(row, taxLabel));
+        if (managedRows.length === taxRows.length && taxRows.every((values, index) => Object.entries(values).every(([field, value]) => {
+          if (!frappe.meta.get_docfield(managedRows[index].doctype, field, frm.doc.name))
+            return true;
+          const current = managedRows[index][field];
+          return typeof value === "number" ? Number(current || 0) === value : (current != null ? current : "") === (value != null ? value : "");
+        })))
+          return;
         managedRows.forEach((row) => frappe.model.clear_doc(row.doctype, row.name));
         frm.doc.taxes = taxTable.filter((row) => !isManagedVatTaxRow(row, taxLabel));
         taxRows.forEach((values) => {
@@ -9748,7 +10378,7 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
         refreshTaxTable(frm);
       }
       async function runErpnextTotals(frm) {
-        var _a;
+        var _a, _b, _c;
         if (isCompletedPos(frm))
           return;
         if (!(frm == null ? void 0 : frm.doc) || frm.__retail_running_erpnext_totals)
@@ -9764,6 +10394,7 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
         } finally {
           frm.__retail_running_erpnext_totals = false;
         }
+        await ((_c = (_b = window.retail.transaction_items).refreshVatDisplays) == null ? void 0 : _c.call(_b, frm));
       }
       function placeVatFieldBeforeGrandTotal(frm) {
         var _a, _b, _c, _d;
@@ -9826,17 +10457,16 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
           return flt(row.price_list_rate);
         return flt(row.rate);
       }
-      async function getVatRate(frm, row, childDoctype) {
-        var _a;
-        const parentDoc = (frm == null ? void 0 : frm.doc) || {};
-        const rowRate = flt(row.tax_rate);
-        if (rowRate && parentDoc.doctype !== "Sales Invoice")
-          return rowRate;
+      function rememberVatRate(frm, row, rate) {
         const known = vatRateMemo(frm);
-        const key = vatRateMemoKey(frm, row);
-        if (known.has(key))
-          return known.get(key);
-        const request = {
+        known.set(vatRateMemoKey(frm, row), rate);
+        if (row == null ? void 0 : row.item_tax_template)
+          vatTemplateRates(frm).set(vatTemplateKey(frm, row), rate);
+        return rate;
+      }
+      function vatRateRequest(frm, row, childDoctype) {
+        const parentDoc = (frm == null ? void 0 : frm.doc) || {};
+        return {
           method: "retail.domains.transactions.vat.get_transaction_item_vat_rate",
           args: {
             item_code: row.item_code,
@@ -9852,10 +10482,90 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
             custom_trading_vat_disabled: parentDoc.custom_trading_vat_disabled || 0
           }
         };
+      }
+      async function fetchOneVatRate(frm, row, childDoctype) {
+        var _a;
+        const request = vatRateRequest(frm, row, childDoctype);
         const response = await (((_a = frm.__quick_receipt) == null ? void 0 : _a.lookup(request)) || window.retail.transaction_items.purchaseRead(frm, request));
-        const rate = flt(response.message);
-        known.set(key, rate);
-        return rate;
+        return rememberVatRate(frm, row, flt(response.message));
+      }
+      async function flushVatRateBatch(frm) {
+        const batch = frm.__retail_vat_rate_batch || [];
+        frm.__retail_vat_rate_batch = [];
+        if (!batch.length)
+          return;
+        if (batch.length === 1) {
+          const item = batch[0];
+          try {
+            item.resolve(await fetchOneVatRate(frm, item.row, item.childDoctype));
+          } catch (error) {
+            item.reject(error);
+          }
+          return;
+        }
+        const parentDoc = frm.doc || {};
+        try {
+          const response = await frappe.call({
+            method: "retail.domains.transactions.vat.get_transaction_item_vat_rates",
+            type: "POST",
+            args: {
+              parent_doctype: parentDoc.doctype,
+              company: parentDoc.company,
+              transaction_type: parentDoc.transaction_type,
+              is_pos: parentDoc.is_pos || 0,
+              is_consolidated: parentDoc.is_consolidated || 0,
+              return_against: parentDoc.return_against,
+              docstatus: parentDoc.docstatus || 0,
+              custom_trading_vat_disabled: parentDoc.custom_trading_vat_disabled || 0,
+              rows: batch.map((item) => ({
+                item_code: item.row.item_code,
+                child_doctype: item.childDoctype,
+                item_tax_template: item.row.item_tax_template || ""
+              }))
+            }
+          });
+          const rates = response.message || [];
+          batch.forEach((item, index) => item.resolve(rememberVatRate(frm, item.row, flt(rates[index]))));
+        } catch (error) {
+          batch.forEach((item) => item.reject(error));
+        }
+      }
+      function getVatRate(frm, row, childDoctype) {
+        const parentDoc = (frm == null ? void 0 : frm.doc) || {};
+        const rowRate = flt(row.tax_rate);
+        if (rowRate && parentDoc.doctype !== "Sales Invoice")
+          return Promise.resolve(rowRate);
+        const known = vatRateMemo(frm);
+        const key = vatRateMemoKey(frm, row);
+        if (known.has(key))
+          return Promise.resolve(known.get(key));
+        if (row.item_tax_template) {
+          const templateKey = vatTemplateKey(frm, row);
+          const templates = vatTemplateRates(frm);
+          if (templates.has(templateKey))
+            return Promise.resolve(rememberVatRate(frm, row, templates.get(templateKey)));
+        }
+        const waiting = frm.__retail_vat_rate_wait || (frm.__retail_vat_rate_wait = /* @__PURE__ */ new Map());
+        if (waiting.has(key))
+          return waiting.get(key);
+        let tracked;
+        const promise = new Promise((resolve, reject) => {
+          const batch = frm.__retail_vat_rate_batch || (frm.__retail_vat_rate_batch = []);
+          batch.push({ row, childDoctype, key, resolve, reject });
+        });
+        tracked = promise.finally(() => {
+          var _a;
+          if (((_a = frm.__retail_vat_rate_wait) == null ? void 0 : _a.get(key)) === tracked)
+            frm.__retail_vat_rate_wait.delete(key);
+        });
+        waiting.set(key, tracked);
+        if (!frm.__retail_vat_rate_flush) {
+          frm.__retail_vat_rate_flush = Promise.resolve().then(() => {
+            frm.__retail_vat_rate_flush = null;
+            return flushVatRateBatch(frm);
+          });
+        }
+        return tracked;
       }
       function taxHandlers() {
         return {
@@ -11284,13 +11994,79 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
         await ((_b = (_a = window.retail.transaction_items).refreshVatDisplays) == null ? void 0 : _b.call(_a, frm));
       }, 100);
     }
+    function packingBusy(frm) {
+      return (frm.__retail_selecting_count || 0) > 0 || (frm.doc.items || []).some((row) => row.__retail_selecting_packing);
+    }
+    function rowSignature(frm) {
+      return new Map((frm.doc.items || []).filter((row) => row == null ? void 0 : row.name).map((row) => [row.name, {
+        qty: row.qty,
+        rate: row.rate,
+        discount_percentage: row.discount_percentage,
+        discount_amount: row.discount_amount,
+        pricing_rules: row.pricing_rules || "",
+        margin_type: row.margin_type || "",
+        margin_rate_or_amount: row.margin_rate_or_amount
+      }]));
+    }
+    const num = (value) => {
+      const parsed = typeof flt === "function" ? flt(value) : Number(value || 0);
+      return Number.isFinite(parsed) ? parsed : 0;
+    };
+    function discountUnchanged(next, prev) {
+      if (!prev)
+        return false;
+      return num(next.discount_percentage) === num(prev.discount_percentage) && num(next.discount_amount) === num(prev.discount_amount) && (next.margin_type || "") === (prev.margin_type || "") && num(next.margin_rate_or_amount) === num(prev.margin_rate_or_amount);
+    }
+    function restorePricedRows(frm, before) {
+      var _a, _b, _c, _d, _e, _f, _g;
+      const grid = (_b = (_a = frm.fields_dict) == null ? void 0 : _a.items) == null ? void 0 : _b.grid;
+      let changed = false;
+      for (const [name, prev] of before) {
+        const row = (frm.doc.items || []).find((item) => item.name === name);
+        if (!row)
+          continue;
+        const fields = [];
+        if (num(row.qty) !== num(prev.qty)) {
+          row.qty = prev.qty;
+          fields.push("qty");
+        }
+        if (discountUnchanged(row, prev) && num(row.rate) !== num(prev.rate)) {
+          row.rate = prev.rate;
+          fields.push("rate");
+        }
+        for (const field of fields)
+          (_e = (_d = (_c = grid == null ? void 0 : grid.grid_rows_by_docname) == null ? void 0 : _c[name]) == null ? void 0 : _d.refresh_field) == null ? void 0 : _e.call(_d, field);
+        changed = changed || fields.length > 0;
+      }
+      if (changed)
+        (_g = (_f = frm.cscript) == null ? void 0 : _f.calculate_taxes_and_totals) == null ? void 0 : _g.call(_f);
+    }
     function schedule(frm) {
       if (!enabled(frm))
         return;
       clearTimeout(frm.__retail_whole_bill_timer);
+      const generation = frm.__retail_price_generation = (frm.__retail_price_generation || 0) + 1;
       frm.__retail_whole_bill_timer = setTimeout(async () => {
+        var _a, _b;
         await frappe.after_ajax();
-        await frm.cscript.apply_pricing_rule(void 0, true);
+        if (generation !== frm.__retail_price_generation)
+          return;
+        if (((_a = frappe.request) == null ? void 0 : _a.ajax_count) || ((_b = frm.__retail_purchase_action) == null ? void 0 : _b.active) || packingBusy(frm)) {
+          schedule(frm);
+          return;
+        }
+        const before = rowSignature(frm);
+        frm.__retail_price_snapshot = before;
+        frm.__retail_expect_pricing_token = generation;
+        try {
+          await frm.cscript.apply_pricing_rule(void 0, true);
+        } finally {
+          if (frm.__retail_price_snapshot === before)
+            delete frm.__retail_price_snapshot;
+        }
+        if (generation !== frm.__retail_price_generation)
+          return;
+        restorePricedRows(frm, before);
       }, 150);
     }
     for (const parent of ["Sales Invoice", "Delivery Note"]) {
@@ -11302,21 +12078,90 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
         if (!apply)
           return;
         frm.cscript.__retail_whole_bill = true;
+        if (typeof frm.cscript._set_values_for_item_list === "function" && !frm.cscript.__retail_price_guard) {
+          frm.cscript.__retail_price_guard = true;
+          const setValues = frm.cscript._set_values_for_item_list;
+          frm.cscript._set_values_for_item_list = function(children) {
+            const before = frm.__retail_price_snapshot;
+            if (!before)
+              return setValues.call(this, children);
+            const copy = (children || []).map((child) => {
+              const next = __spreadValues({}, child);
+              const prev = before.get(child.name);
+              delete next.price_list_rate;
+              delete next.qty;
+              if (!prev)
+                return next;
+              if (discountUnchanged(next, prev))
+                delete next.rate;
+              return next;
+            });
+            return setValues.call(this, copy);
+          };
+        }
+        if (typeof frm.call === "function" && !frm.__retail_pricing_guard) {
+          frm.__retail_pricing_guard = true;
+          const call = frm.call;
+          frm.call = function(opts, ...args) {
+            const method = typeof opts === "object" ? String((opts == null ? void 0 : opts.method) || "") : "";
+            if ((opts == null ? void 0 : opts.callback) && method.includes("apply_pricing_rule") && frm.__retail_expect_pricing_token) {
+              const token = frm.__retail_expect_pricing_token;
+              delete frm.__retail_expect_pricing_token;
+              const original = opts.callback;
+              opts.callback = function(...cbArgs) {
+                if ((frm.__retail_price_generation || 0) !== token)
+                  return;
+                return original.apply(this, cbArgs);
+              };
+            }
+            return call.call(this, opts, ...args);
+          };
+        }
         frm.cscript.apply_pricing_rule = function(item, calculate, ...rest) {
-          const result = apply.call(this, enabled(frm) ? void 0 : item, calculate, ...rest);
-          if (enabled(frm))
+          if (enabled(frm) && item)
+            schedule(frm);
+          const result = apply.call(this, item, calculate, ...rest);
+          if (enabled(frm) && !item)
             Promise.resolve(result).then(() => displays(frm));
           return result;
         };
       } });
       frappe.ui.form.on(parent + " Item", {
         item_code: schedule,
-        qty: schedule,
         uom: schedule,
         price_list_rate: schedule,
         items_remove: schedule
       });
     }
+  })();
+
+  // ../retail/retail/public/js/forms/address_line_growth.js
+  (() => {
+    class AddressLine extends frappe.ui.form.ControlSmallText {
+      make_input() {
+        super.make_input();
+        const input = this.$input[0];
+        const resize = () => {
+          input.style.height = "auto";
+          input.style.height = `${Math.max(38, input.scrollHeight + 2)}px`;
+        };
+        this.$input.css({ "min-height": "38px", height: "38px", overflow: "hidden", resize: "none" }).on("input.retail_address_growth", resize);
+        new ResizeObserver(resize).observe(input);
+        requestAnimationFrame(resize);
+      }
+      set_formatted_input(value) {
+        var _a;
+        super.set_formatted_input(value);
+        (_a = this.$input) == null ? void 0 : _a.trigger("input.retail_address_growth");
+      }
+    }
+    const make_control = frappe.ui.form.make_control;
+    frappe.ui.form.make_control = function(options) {
+      var _a;
+      if (((_a = options.df) == null ? void 0 : _a.fieldname) !== "address_line1")
+        return make_control.call(this, options);
+      return new AddressLine(__spreadProps(__spreadValues({}, options), { df: __spreadProps(__spreadValues({}, options.df), { fieldtype: "Small Text" }) }));
+    };
   })();
 
   // ../retail/retail/public/retail_desk.bundle.js
@@ -11325,4 +12170,4 @@ ${scan.serial_no}`.split(/\s*\n\s*/).filter(Boolean))].join("\n");
     ["Purchase Order", "Purchase Invoice", "Purchase Receipt"].map((doctype) => [doctype, user_grid_view_settings_default[doctype]])
   );
 })();
-//# sourceMappingURL=retail_desk.bundle.7WJ4GE4P.js.map
+//# sourceMappingURL=retail_desk.bundle.RGFXCJSF.js.map

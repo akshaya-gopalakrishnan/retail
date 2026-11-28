@@ -11,7 +11,7 @@ function fixture(doctype = 'Purchase Receipt') {
   ['serial', {name:'serial',has_serial_no:1,has_batch_no:0}],
   ['batch', {name:'batch',has_serial_no:0,has_batch_no:1}],
  ]);
- const frappe = {ui:{form:{on:(dt, events)=>handlers[dt]=events}},db:{
+ const frappe = {model:{can_create:()=>false},ui:{form:{on:(dt, events)=>handlers[dt]=events}},db:{
   get_list:async (_dt,args)=>args.filters.name[1].map(code=>masters.get(code)).filter(Boolean),
  }};
  const context={frappe,$:()=>({on:(_name,fn)=>render=fn}),__:s=>s};context.window=context;
@@ -220,4 +220,95 @@ test('unchanged tracking metadata does not request another whole-grid refresh',a
  assert.equal(updates,0);assert.equal(refreshes,0);assert.equal(f.grid.resets,resets);
  f.frm.doc.items=[{item_code:'serial'}];await f.handlers['Purchase Invoice Item'].item_code(f.frm);
  assert.equal(f.grid.fields_map.serial_no.hidden,false);assert.ok(f.grid.resets>resets);
+});
+
+test('submit opens required tracking popup for missing batch and serial rows only', async () => {
+ const f=fixture('Purchase Invoice'); let options, shown=false;
+ f.frappe.ui.Dialog=class {constructor(opts){options=opts;} show(){shown=true;}};
+ f.frm.doc.items=[
+  {idx:1,item_code:'batch'}, {idx:2,item_code:'serial'},
+  {idx:3,item_code:'batch',batch_no:'B-1'},
+  {idx:4,item_code:'serial',serial_and_batch_bundle:'BUNDLE'},
+  {idx:5,item_code:'normal'},
+ ];
+ await f.handlers['Purchase Invoice'].before_submit(f.frm);
+ assert.equal(f.frappe.validated,false);assert.equal(shown,true);
+ assert.equal(options.fields.length,2);
+ assert.equal(options.fields[0].fieldtype,'Link');
+ assert.equal(options.fields[0].get_query().filters.item,'batch');
+ assert.equal(options.fields[0].get_route_options_for_new_doc().item,'batch');
+ assert.equal(options.fields[1].fieldtype,'Small Text');
+ assert.ok(options.fields.every(field=>field.reqd));
+});
+
+test('submit leaves complete and non-stock purchase invoices alone', async () => {
+ const f=fixture('Purchase Invoice');
+ f.frm.doc.items=[{item_code:'batch',batch_no:'B-1'}, {item_code:'serial',serial_no:'SN-1'}];
+ f.frappe.validated=true;
+ await f.handlers['Purchase Invoice'].before_submit(f.frm);
+ assert.equal(f.frappe.validated,true);
+ f.frm.doc.update_stock=0;f.frm.doc.items=[{item_code:'batch'}];
+ await f.handlers['Purchase Invoice'].before_submit(f.frm);
+ assert.equal(f.frappe.validated,true);
+});
+
+test('tracking popup shows stock serial count and closes on successful native save',async()=>{
+ const f=fixture('Purchase Invoice');let options,hidden=false,saved=false;
+ f.frm.doc.items=[{idx:42,item_code:'serial',qty:2,conversion_factor:3,doctype:'Purchase Invoice Item',name:'ROW'}];
+ f.frappe.ui.Dialog=class {constructor(opts){options=opts;}show(){}hide(){hidden=true;}disable_primary_action(){}enable_primary_action(){}};
+ f.frappe.throw=message=>{throw new Error(message);};
+ f.frappe.show_alert=()=>{};
+ f.frappe.model={set_value:async(_dt,_name,values)=>Object.assign(f.frm.doc.items[0],values)};
+ f.frm.save=async(action,callback)=>{assert.equal(action,'Save');saved=true;callback({});};
+ await f.handlers['Purchase Invoice'].before_submit(f.frm);
+ assert.match(options.fields[0].description,/Required serial numbers/);
+ await assert.rejects(options.primary_action({tracking_0:'1\n2\n3'}),/exactly/);
+ assert.equal(saved,false);assert.equal(hidden,false);
+ await options.primary_action({tracking_0:'1\n2\n3\n4\n5\n6'});
+ assert.equal(saved,true);assert.equal(hidden,true);
+});
+
+test('auto-created receipt batches do not block tracking popup with mandatory empty input',async()=>{
+ const f=fixture('Purchase Invoice');f.masters.get('batch').create_new_batch=1;
+ f.frm.doc.items=[{item_code:'batch',qty:1}];f.frappe.validated=true;
+ await f.handlers['Purchase Invoice'].before_submit(f.frm);
+ assert.equal(f.frappe.validated,true);
+});
+
+test('sales invoice shows tracking columns and prompts even for auto-created purchase batches',async()=>{
+ const f=fixture('Sales Invoice');let options;
+ f.frappe.ui.Dialog=class {constructor(opts){options=opts;}show(){}};
+ f.masters.get('batch').create_new_batch=1;
+ f.frm.doc.items=[{idx:1,item_code:'batch'},{idx:2,item_code:'serial',qty:2,conversion_factor:1}];
+ await f.handlers['Sales Invoice'].refresh(f.frm);
+ assert.equal(f.properties.batch_no.hidden,false);assert.equal(f.properties.serial_no.hidden,false);
+ await f.handlers['Sales Invoice'].before_submit(f.frm);
+ assert.equal(f.frappe.validated,false);assert.equal(options.fields.length,2);
+ assert.equal(options.fields[0].only_select,undefined);
+ f.frm.doc.update_stock=0;f.frappe.validated=true;options=null;
+ await f.handlers['Sales Invoice'].before_submit(f.frm);
+ assert.equal(options,null);assert.equal(f.frappe.validated,true);
+ assert.equal(f.properties.serial_no.hidden,true);assert.equal(f.properties.batch_no.hidden,true);
+});
+
+test('sales invoice does not install receipt serial-generation shortcut',()=>{
+ const f=creationFixture();f.frm.doctype='Sales Invoice';
+ const control={$input:[{setAttribute(){throw Error('Receipt shortcut bound to sale');}}]};
+ f.context.retail.purchase_tracking.bindCreate(f.frm,f.row,'serial_no',control);
+});
+
+test('sales tracking Create Batch seeds the item and fills the saved batch into its field',async()=>{
+ const f=fixture('Sales Invoice');let options,quick,selected;
+ f.frappe.model.can_create=()=>true;
+ f.frappe.ui.form.make_quick_entry=(...args)=>{quick=args;};
+ f.frappe.ui.Dialog=class {constructor(opts){options=opts;}show(){}set_value(field,value){selected={field,value};}};
+ f.frm.doc.items=[{idx:1,item_code:'batch'}];
+ await f.handlers['Sales Invoice'].before_submit(f.frm);
+ const button=options.fields.find(field=>field.fieldtype==='Button');
+ assert.equal(button.label,'Create Batch');button.click();
+ assert.equal(quick[0],'Batch');
+ let seeded;quick[2]({set_value:(field,value)=>seeded={field,value}});
+ assert.equal(seeded.field,'item');assert.equal(seeded.value,'batch');
+ quick[1]({name:'BATCH-NEW'});
+ assert.equal(selected.field,'tracking_0');assert.equal(selected.value,'BATCH-NEW');
 });

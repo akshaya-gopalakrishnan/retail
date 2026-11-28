@@ -330,3 +330,18 @@ class TestPurchaseHistory(unittest.TestCase):
 		self.assertEqual(result["baseline"]["rate"], 10)
 		self.assertEqual(result["baseline"]["rate_basis"], "Receipt reference cost")
 		self.assertEqual(result["baseline"]["status"], "Receipt rate — bill outside visible history")
+
+	def test_bulk_history_keeps_item_isolation_with_two_permission_filtered_reads(self):
+		first = self.item
+		self.purchase(rate=10)
+		self.item = self.master("Item", item_name="Second History Item", stock_uom="Nos", is_stock_item=1)
+		self.purchase(rate=25)
+		second = self.item
+		self.item = first
+		with patch.object(history, "_read_rows", wraps=history._read_rows) as reads:
+			result = history._load_histories(self.doc, [first, second, first])
+			self.assertEqual(reads.call_count, 2)
+		self.assertEqual(result[first][0][0]["rate"], 10)
+		self.assertEqual(result[second][0][0]["rate"], 25)
+		for code in (first, second):
+			self.assertEqual(result[code], history._load_history(self.doc, code))

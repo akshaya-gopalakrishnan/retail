@@ -55,6 +55,8 @@ def validate(doc, method=None):
     old_rows = {row.name: row for row in previous.items} if previous else {}
     expected_doc = frappe.copy_doc(doc)
     from retail.domains.item.packing_scan import get_item_details
+    pending = []
+    details_cache = {}
     for row, expected in zip(doc.items, expected_doc.items):
         if approved_row(doc, row):
             continue
@@ -64,23 +66,30 @@ def validate(doc, method=None):
         if old and same_context and all(row.get(f) == old.get(f) for f in (
             "item_code", "uom", "conversion_factor", "rate", "custom_foc_qty")):
             continue
-        args = frappe._dict({key: doc.get(key) for key in (
-            "company", "customer", "currency", "conversion_rate", "selling_price_list",
-            "price_list_currency", "plc_conversion_rate", "ignore_pricing_rule", "campaign", "sales_partner")})
-        args.update({key: row.get(key) for key in (
-            "item_code", "uom", "stock_uom", "qty", "conversion_factor", "warehouse", "batch_no")})
-        args.update(doctype="Sales Invoice", name=doc.name, child_docname=row.name, transaction_date=doc.posting_date,
-                    price_list=doc.selling_price_list, transaction_type="selling")
-        values = get_item_details(args, doc=expected_doc)
+        key = (row.item_code, row.get("uom"), flt(row.get("qty")), flt(row.get("conversion_factor")),
+               row.get("warehouse"), row.get("batch_no"))
+        if key not in details_cache:
+            args = frappe._dict({key: doc.get(key) for key in (
+                "company", "customer", "currency", "conversion_rate", "selling_price_list",
+                "price_list_currency", "plc_conversion_rate", "ignore_pricing_rule", "campaign", "sales_partner")})
+            args.update({key: row.get(key) for key in (
+                "item_code", "uom", "stock_uom", "qty", "conversion_factor", "warehouse", "batch_no")})
+            args.update(doctype="Sales Invoice", name=doc.name, child_docname=row.name, transaction_date=doc.posting_date,
+                        price_list=doc.selling_price_list, transaction_type="selling")
+            details_cache[key] = get_item_details(args, doc=expected_doc)
+        values = details_cache[key]
         for field in ROW_FIELDS:
             expected.set(field, values.get(field, 0))
         expected.rate = automatic_row_rate(values, row)
+        pending.append((row, expected))
+    if pending:
         from retail.promotions.promo_price import apply_inclusive_promo_prices
         apply_inclusive_promo_prices(expected_doc)
-        # Native totals may rewrite discount percentages and margins while
-        # preserving the final selling price. Approval follows that price.
+    # Native totals may rewrite discount percentages and margins while
+    # preserving the final selling price. Approval follows that price.
+    for row, expected in pending:
         for field in ("rate", "custom_foc_qty"):
-            precision = row.precision(field) if row.meta.has_field(field) else 6
+            precision = row.precision(field) if hasattr(row, "precision") else 6
             if flt(row.get(field), precision) != flt(expected.get(field), precision):
                 deny(_("change prices or discounts"))
 
@@ -195,6 +204,8 @@ def requires_approval(doc):
         return False
     except frappe.PermissionError:
         return True
+    except frappe.DoesNotExistError as exc:
+        frappe.throw(str(exc) or _("A linked record used by this invoice is missing."), frappe.ValidationError)
     finally:
         frappe.flags.mute_messages = muted
 

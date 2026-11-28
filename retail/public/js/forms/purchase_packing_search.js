@@ -21,7 +21,13 @@
 	}
 
 	function bind(control, select, selling = false) {
-		if (!control?.awesomplete || control.__retail_packing_search) return;
+		if (!control?.awesomplete) return;
+		// A transaction-specific binder may run after the generic Item binder.
+		// Keep one set of listeners, but always use the current selection action.
+		if (control.__retail_packing_search) {
+			control.__retail_select_packing = select;
+			return;
+		}
 		control.__retail_packing_search = true;
 		control.__retail_select_packing = select;
 		const awesome = control.awesomplete;
@@ -77,13 +83,35 @@
 				console.error(error);
 			}
 		}
-		control.$input[0].addEventListener("keydown", event => {
+		const onPackingKeydown = event => {
 			if (event.ctrlKey || event.metaKey || event.altKey || event.shiftKey || event.isComposing) return;
-			if (!["Enter", "Tab"].includes(event.key) || !awesome.opened || !awesome.selected) return;
+			if (!["Enter", "Tab"].includes(event.key)) return;
+			if (!awesome.opened) {
+				const row = control.doc;
+				const incomplete = ["Purchase Invoice Item", "Purchase Receipt Item"].includes(row?.doctype)
+					&& row.item_code && (!row.item_name || !row.uom);
+				const retry = control.__retail_failed_packing_choice || (incomplete ? {
+					item_code: row.item_code, uom: row.uom,
+					barcode: row.custom_item_barcode || row.barcode,
+				} : null);
+				if (event.key !== "Enter" || !retry) return;
+				event.preventDefault();
+				event.stopImmediatePropagation();
+				selectPacking(retry);
+				return true;
+			}
+			if (!awesome.selected && event.key === "Enter") {
+				const first = awesome._list.findIndex(result => result.packing);
+				if (first >= 0) awesome.goto(first);
+			}
+			if (!awesome.selected) return;
 			event.preventDefault();
 			event.stopImmediatePropagation();
 			awesome.select(undefined, undefined, event);
-		}, true);
+			return true;
+		};
+		control.$input[0].__retail_packing_keydown = onPackingKeydown;
+		control.$input[0].addEventListener("keydown", onPackingKeydown, true);
 		control.$input.off("input").on("input.retailPacking", () => {
 			clearTimeout(timer);
 			const version = ++request;
@@ -109,11 +137,24 @@
 				result?.action?.call(control);
 				return;
 			}
+			selectPacking(choice);
+		});
+		function selectPacking(choice) {
+			if (control.__retail_packing_busy) return;
 			control.set_input(choice.item_code);
 			control.__retail_packing_busy = true;
-			Promise.resolve().then(() => select(choice)).catch(error => console.error(error))
+			control.__retail_packing_selection = Promise.resolve()
+				.then(() => control.__retail_select_packing(choice))
+				.then(() => { delete control.__retail_failed_packing_choice; })
+				.catch(error => {
+					control.__retail_failed_packing_choice = choice;
+					control.set_input(control.get_model_value?.() || "");
+					console.error(error);
+					frappe.msgprint({title: __("Could not load Item"), indicator: "red",
+						message: __("The Item details could not be loaded. Check the error above, then press Enter in the Item field to retry.")});
+				})
 				.finally(() => { control.__retail_packing_busy = false; });
-		});
+		}
 	}
 	// Share packing results with Advanced Search and Add Multiple.
 	const selector = frappe.ui.form.LinkSelector?.prototype;
@@ -743,6 +784,8 @@
 					.find(field => field?.$input?.[0] === input && field.df.options === "Item");
 				window.retail.purchase_packing_search.bind(control, async choice => {
 					const row = gridRow.doc;
+					frm.__retail_selecting_count = (frm.__retail_selecting_count || 0) + 1;
+					try {
 					if (doctype === "Sales Invoice" && !row.item_code && window.retail.sales_invoice_duplicates?.preflight(frm, row, choice)) return;
 					row.__retail_selecting_packing = true;
 					if (doctype === "Sales Invoice") {
@@ -786,6 +829,7 @@
 					frm.dirty();
 					frm.refresh_field("items");
 					} finally { delete row.__retail_selecting_packing; delete row.__retail_packing_choice; }
+					} finally { frm.__retail_selecting_count = Math.max(0, (frm.__retail_selecting_count || 1) - 1); }
 				}, ["Sales Order", "Sales Invoice"].includes(doctype));
 			}, true);
 		},

@@ -1898,8 +1898,16 @@
     }
 
     // As a fallback, inject critical CSS inline to guarantee overrides
+    function syncRetailModalState() {
+        document.body.classList.toggle('retail-modal-open', Boolean(document.querySelector('.modal.show')));
+    }
+
     function injectRetailInlineCss() {
         if (document.getElementById('retail-icons-inline-css')) return;
+        // Track modal transitions once, including nested dialogs. A body :has()
+        // selector otherwise invalidates form-grid styles on every row edit.
+        $(document).on('shown.bs.modal.retailGridStack hidden.bs.modal.retailGridStack', syncRetailModalState);
+        syncRetailModalState();
         const css = `
         @media (min-width: 992px) {
             .sidebar-item-container .sidebar-item-icon > svg,
@@ -1975,13 +1983,13 @@
                 padding-right: 12px !important;
             }
 
-            body:has(.modal.show)[data-route^="Form/"] .form-grid,
-            body:has(.modal.show)[data-route^="Form/"] .grid-body,
-            body:has(.modal.show)[data-route^="Form/"] .rows,
-            body:has(.modal.show)[data-route^="Form/"] .grid-row,
-            body:has(.modal.show)[data-route^="Form/"] .data-row,
-            body:has(.modal.show)[data-route^="Form/"] .grid-static-col,
-            body:has(.modal.show)[data-route^="Form/"] .field-area {
+            body.retail-modal-open[data-route^="Form/"] .form-grid,
+            body.retail-modal-open[data-route^="Form/"] .grid-body,
+            body.retail-modal-open[data-route^="Form/"] .rows,
+            body.retail-modal-open[data-route^="Form/"] .grid-row,
+            body.retail-modal-open[data-route^="Form/"] .data-row,
+            body.retail-modal-open[data-route^="Form/"] .grid-static-col,
+            body.retail-modal-open[data-route^="Form/"] .field-area {
                 z-index: auto !important;
             }
 

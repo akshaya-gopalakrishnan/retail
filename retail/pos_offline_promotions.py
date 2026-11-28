@@ -122,7 +122,7 @@ def audit(doc, index, row, reason, expected=None):
 
 def redeem_payment_loyalty(doc):
     """Redeem this receipt's loyalty tenders once, before earning new points."""
-    if doc.is_return or doc.flags.get("payment_loyalty_redeemed"):
+    if doc.is_return or doc.get("custom_pos_modified") or doc.flags.get("payment_loyalty_redeemed"):
         return
     payload = frappe.parse_json(doc.get('custom_pos_completed_payload') or '{}')
     payments = [(index, row) for index, row in rows(payload) if mode(row) == 'Loyalty']
@@ -139,6 +139,8 @@ def redeem_payment_loyalty(doc):
 
 
 def apply(doc):
+    if doc.get("custom_pos_modified"):
+        return  # The atomic correction service owns all subsequent source movements.
     payload = frappe.parse_json(doc.get('custom_pos_completed_payload') or '{}')
     if not rows(payload) or doc.is_return:
         return

@@ -26,12 +26,13 @@ function fixture(docstatus=0, active=true, editor=false) {
     handlers['Sales Invoice'].refresh(frm);
     return {frm,calls,handlers,timers,input,field,events,focus:()=>focus({target:input}),displayCount:()=>displayCount};
 }
-test('row pricing refresh evaluates the entire bill and refreshes settled VAT displays',async()=>{
+test('row pricing refresh keeps the edited row immediate and evaluates the whole bill once idle',async()=>{
     const f=fixture();
     await f.frm.cscript.apply_pricing_rule({name:'ROW'},true);
-    await new Promise(resolve=>setImmediate(resolve));
-    assert.equal(f.calls[0].item,undefined);
+    assert.equal(f.calls[0].item.name,'ROW');
     assert.equal(f.calls[0].calculate,true);
+    await f.timers.shift()();
+    assert.equal(f.calls[1].item,undefined);
     await f.timers.shift()();
     assert.equal(f.displayCount(),1);
 });
@@ -44,13 +45,17 @@ test('completed documents and sites without whole-bill promotions keep native ro
     }
 });
 test('adding or removing an item schedules a complete native rule evaluation',async()=>{
-    for(const event of ['item_code','qty','uom','items_remove']){
+    for(const event of ['item_code','uom','items_remove']){
         const f=fixture();
         f.handlers['Sales Invoice Item'][event](f.frm);
         await f.timers.shift()();
         assert.equal(f.calls.length,1,event);
         assert.equal(f.calls[0].item,undefined,event);
     }
+});
+test('a quantity edit does not schedule a bill-wide reprice',()=>{
+    const f=fixture();
+    assert.equal(typeof f.handlers['Sales Invoice Item'].qty,'undefined');
 });
 
 

@@ -1072,6 +1072,8 @@ doctype_list_js["Loyalty Point Entry"] = "public/js/loyalty_entry_display.js"
 after_sync.append("retail.loyalty_display.install")
 after_sync.append("retail.customer_loyalty_names.install")
 after_migrate.append("retail.customer_loyalty_names.install")
+after_sync.append("retail.pos_payment_modifications.install")
+after_migrate.append("retail.pos_payment_modifications.install")
 doc_events.setdefault("Loyalty Point Entry", {})["after_insert"] = "retail.customer_loyalty_names.on_entry"
 after_migrate.append("retail.loyalty_display.install")
 
@@ -1103,7 +1105,7 @@ for _return_qty_dt in ("Purchase Invoice", "Purchase Receipt", "Sales Invoice", 
 		_scripts = [_scripts]
 	doctype_js[_return_qty_dt] = [*_scripts, "public/js/forms/return_qty.js"]
 
-for _purchase_identity_dt in ("Purchase Invoice", "Purchase Receipt"):
+for _purchase_identity_dt in ("Purchase Invoice", "Purchase Receipt", "Sales Invoice"):
 	doctype_js[_purchase_identity_dt].append("public/js/forms/purchase_stock_identity.js")
 
 # Item/serial/batch lookup on these lists, without overriding core endpoints.
@@ -1286,7 +1288,10 @@ after_sync.append("retail.app_login_setup.execute")
 after_migrate.append("retail.backend_sales_admin.install")
 after_install = ([after_install] if isinstance(after_install, str) else list(after_install))
 after_install.append("retail.backend_sales_admin.install")
-doc_events["Sales Invoice"]["validate"].append("retail.backend_sales_admin.validate")
+doc_events["Sales Invoice"].setdefault("before_validate", [])
+if isinstance(doc_events["Sales Invoice"]["before_validate"], str):
+	doc_events["Sales Invoice"]["before_validate"] = [doc_events["Sales Invoice"]["before_validate"]]
+doc_events["Sales Invoice"]["before_validate"].append("retail.backend_sales_admin.validate")
 doctype_js["Sales Invoice"].append("public/js/forms/backend_sales_admin.js")
 
 doc_events["Sales Invoice"].setdefault("before_insert", []).append("retail.backend_sales_admin.before_insert")
@@ -1322,5 +1327,9 @@ clear_cache = ["retail.desk_speed.clear_caches"]
 # Exact page counts for the editable SI/DN formats, using the native PDF renderer.
 pdf_generator = ["retail.document_print_layout.generate_pdf"]
 after_sync.append("retail.document_print_layout.install")
+after_sync.append("retail.patches.customer_credit_customer.execute")
+after_sync.append("retail.patches.address_line_text.execute")
+after_sync.append("retail.patches.item_lookup_indexes.execute")
+after_migrate.append("retail.patches.item_lookup_indexes.execute")
 after_migrate.append("retail.document_print_layout.install")
 page_js = {"print": "public/js/printing/numbered_documents.js"}

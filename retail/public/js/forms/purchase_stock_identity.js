@@ -2,6 +2,8 @@
 (() => {
 	const tracking = [["serial_no", "has_serial_no"], ["batch_no", "has_batch_no"]];
 	function bindCreate(frm, row, field, control) {
+		// Sales use existing serials/batches; receipt creation shortcuts do not apply.
+		if (frm.doctype === "Sales Invoice") return;
 		const input = control?.$input?.[0];
 		if (!input || input.__retail_tracking_create) return;
 		input.__retail_tracking_create = true;
@@ -71,7 +73,8 @@
 	window.retail.purchase_tracking = { bindCreate };
 	function applicable(frm, row, flag) {
 		return Boolean(Number(frm.__retail_purchase_tracking.items.get(row.item_code)?.[flag])) &&
-			(frm.doctype !== "Purchase Invoice" || (Number(frm.doc.update_stock) === 1 && !Number(row.is_fixed_asset)));
+			(!["Purchase Invoice", "Sales Invoice"].includes(frm.doctype) ||
+				(Number(frm.doc.update_stock) === 1 && !Number(row.is_fixed_asset)));
 	}
 
 	function styleRow(frm, row) {
@@ -107,7 +110,7 @@
 		}
 	}
 
-	async function sync(frm, reload = false) {
+	async function sync(frm, reload = false, cdn) {
 		const grid = frm.fields_dict.items?.grid;
 		if (!grid) return;
 		grid.retail_purchase_tracking = true;
@@ -121,7 +124,7 @@
 		const codes = [...new Set((frm.doc.items || []).map(row => row.item_code).filter(Boolean))];
 		// Item loading already fetched permission-filtered metadata. Reuse only
 		// the required fields from that action; ordinary refresh keeps its read.
-		if (frm.__retail_purchase_action && window.retail?.transaction_items?.preparedPurchaseItem) {
+		if (!reload && frm.__retail_purchase_action && window.retail?.transaction_items?.preparedPurchaseItem) {
 			const prepared = await Promise.all(codes.filter(code => !state.items.has(code)).map(code =>
 				window.retail.transaction_items.preparedPurchaseItem(frm, code)));
 			if (generation !== state.generation) return;
@@ -132,7 +135,7 @@
 		const missing = codes.filter(code => !state.items.has(code));
 		if (missing.length) {
 			const items = await frappe.db.get_list("Item", {
-				fields: ["name", "has_serial_no", "has_batch_no"],
+				fields: ["name", "has_serial_no", "has_batch_no", "create_new_batch"],
 				filters: { name: ["in", missing] },
 				limit: missing.length,
 			});
@@ -160,21 +163,102 @@
 				if (!unchanged) grid.update_docfield_property(field, property, value);
 			}
 		}
-		// refresh() retains visible_columns and existing row columns. Rebuild on
-		// visibility transitions, using the user's saved widths and selection.
+		// Rebuild only when a serial or batch column appears or disappears.
+		// Restyling every existing row on each added line is what makes entry lag.
 		if (visibilityChanged) grid.reset_grid();
-		for (const row of grid.grid_rows || []) styleRow(frm, row);
+		// Pagination leaves holes in grid_rows. Visiting one throws and stops refresh.
+		const renderedRows = (grid.grid_rows || []).filter(row => row);
+		if (visibilityChanged || reload) {
+			for (const row of renderedRows) styleRow(frm, row);
+		} else {
+			const target = cdn && grid.grid_rows_by_docname?.[cdn];
+			if (target) styleRow(frm, target);
+			for (const row of renderedRows) {
+				if (!row.__retail_tracking_toggle) styleRow(frm, row);
+			}
+		}
 	}
 
-	for (const doctype of ["Purchase Invoice", "Purchase Receipt"]) {
+	for (const doctype of ["Purchase Invoice", "Purchase Receipt", "Sales Invoice"]) {
 		frappe.ui.form.on(doctype, {
 			refresh: frm => sync(frm, true),
 			update_stock: frm => sync(frm),
+			async before_submit(frm) {
+				await sync(frm, true);
+				const missing = [];
+				for (const row of frm.doc.items || []) {
+					if (row.serial_and_batch_bundle) continue;
+					for (const [field, flag] of tracking) {
+						if (frm.doctype !== "Sales Invoice" && field === "batch_no" && !frm.doc.is_return &&
+							Number(frm.__retail_purchase_tracking.items.get(row.item_code)?.create_new_batch)) continue;
+						if (applicable(frm, row, flag) && !String(row[field] || "").trim()) {
+							missing.push({row, field});
+						}
+					}
+				}
+				if (!missing.length) return;
+				frappe.validated = false;
+				const dialog = new frappe.ui.Dialog({
+					title: __("Enter Batch / Serial Numbers"),
+					size: "large",
+					fields: missing.flatMap(({row, field}, index) => [{
+						fieldname: `tracking_${index}`,
+						fieldtype: field === "batch_no" ? "Link" : "Small Text",
+						options: field === "batch_no" ? "Batch" : undefined,
+						label: __("Row {0}: {1} — {2}", [row.idx, row.item_name || row.item_code,
+							field === "batch_no" ? __("Batch No") : __("Serial Nos")]),
+						reqd: 1,
+						get_query: () => ({filters: {item: row.item_code}}),
+						get_route_options_for_new_doc: () => ({item: row.item_code}),
+						description: field === "serial_no" ? __("Required serial numbers: {0}. Enter one serial number per line.",
+							[Math.abs(Number(row.qty || 0) * Number(row.conversion_factor || 1))]) : undefined,
+						}, ...(field === "batch_no" && frappe.model.can_create("Batch") ? [{
+							fieldname: `create_batch_${index}`, fieldtype: "Button", label: __("Create Batch"),
+							click: () => frappe.ui.form.make_quick_entry("Batch", batch => {
+								if ((frm.doc.items || []).includes(row)) dialog.set_value(`tracking_${index}`, batch.name);
+							}, batchDialog => batchDialog.set_value("item", row.item_code), undefined, true),
+						}] : [])]),
+					primary_action_label: __("Save Tracking Details"),
+					primary_action: async values => {
+						// Validate every serial row before changing the invoice. Quantity is
+						// in stock UOM, including packing conversion, not the purchase UOM.
+						for (const [index, {row, field}] of missing.entries()) {
+							if (field !== "serial_no") continue;
+							const serials = String(values[`tracking_${index}`] || "").split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+							const count = Math.abs(Number(row.qty || 0) * Number(row.conversion_factor || 1));
+							if (serials.length !== count || new Set(serials).size !== count) {
+								frappe.throw(__("Row {0}: enter exactly {1} unique serial numbers ({2} entered).", [row.idx, count, serials.length]));
+							}
+							values[`tracking_${index}`] = serials.join("\n");
+						}
+						dialog.disable_primary_action();
+						try {
+							for (const [index, {row, field}] of missing.entries()) {
+								if (!(frm.doc.items || []).includes(row)) return;
+								await frappe.model.set_value(row.doctype, row.name, {
+									[field]: values[`tracking_${index}`], use_serial_batch_fields: 1,
+								});
+							}
+							frappe.validated = true;
+							// Close only on the native save success callback. Form.save catches
+							// rejections internally, so awaiting it alone cannot prove success.
+							await frm.save("Save", response => {
+								if (response?.exc) return;
+								dialog.hide();
+								frappe.show_alert({message: __("Tracking details saved. Click Submit to confirm the invoice."), indicator: "green"});
+							}, undefined, () => dialog.enable_primary_action());
+						} finally {
+							dialog.enable_primary_action();
+						}
+					},
+				});
+				dialog.show();
+			},
 		});
 		frappe.ui.form.on(`${doctype} Item`, {
-			item_code: frm => sync(frm),
-			items_add: frm => sync(frm),
-			items_remove: frm => sync(frm),
+			item_code(frm, cdt, cdn) { return sync(frm, false, cdn); },
+			items_add(frm, cdt, cdn) { return sync(frm, false, cdn); },
+			items_remove(frm) { return sync(frm); },
 		});
 	}
 })();

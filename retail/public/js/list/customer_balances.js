@@ -132,6 +132,35 @@
 
 	function setup_credit_filter(listview) {
 		if (listview._credit_customer_filter) return;
+		// Broaden the existing toolbar/preset filter without making the checkbox
+		// and the positive credit limit mandatory at the same time.
+		const get_args = listview.get_args;
+		listview.get_args = function () {
+			const args = get_args.apply(this, arguments);
+			const credit = (args.filters || []).find(filter =>
+				filter[0] === "Customer Credit Limit" && filter[1] === "credit_limit" &&
+				filter[2] === ">" && Number(filter[3]) === 0);
+			if (credit) {
+				args.filters = args.filters.filter(filter => filter !== credit);
+				args.or_filters = [credit, ["Customer", "custom_is_credit_customer", "=", 1]];
+			}
+			return args;
+		};
+		const get_count_str = listview.get_count_str;
+		listview.get_count_str = async function () {
+			const args = this.get_args();
+			if (!args.or_filters) return get_count_str.apply(this, arguments);
+			const response = await frappe.call({
+				method: "frappe.desk.reportview.get_count",
+				args: { doctype: "Customer", filters: args.filters,
+					or_filters: args.or_filters, distinct: true, limit: this.count_upper_bound },
+			});
+			this.total_count = response.message || 0;
+			const count = this.total_count === this.count_upper_bound
+				? `${format_number(this.total_count - 1, null, 0)}+`
+				: format_number(this.total_count, null, 0);
+			return __("{0} of {1}", [format_number(this.data.length, null, 0), count]);
+		};
 		// Keep the standard filter bookkeeping hidden behind a toolbar toggle button.
 		// The string "0" is intentional: it remains a selected value in standard filters.
 		const control = listview.page.add_field({

@@ -235,13 +235,29 @@
 		};
 	}
 
+	function gridRows(grid) {
+		// Frappe pagination deletes off-page slots and leaves holes. A hole is
+		// not a row; reading it throws and skips the restyle for the visible page.
+		return (grid.grid_rows || []).filter(row => row?.doc || row?.row);
+	}
+
 	function widthSignature(grid) {
 		const parts = [];
+		const measured = [];
+		const packing = grid.df.fieldname === "custom_retail_packing_detail";
 		for (const [df] of grid.visible_columns || []) {
 			parts.push(df.fieldname, df.label, df.columns, df.colsize, df.width_px);
+			const compact = compactRateLabel(grid, df) !== df;
+			// Saved, pixel, and packing widths do not depend on cell text.
+			// Including every value made each added line remeasure the whole table.
+			if (packing && ["packing_name", "barcode", "packing_uom", "conversion_factor",
+				"purchase_net_rate", "purchase_gross_rate", "selling_net_rate", "selling_gross_rate",
+				"is_fast_plu_item"].includes(df.fieldname)) continue;
+			if (!compact && (Number.isFinite(df.width_px) || grid.user_defined_columns?.some(column => column.fieldname === df.fieldname))) continue;
+			measured.push(df);
 		}
-		for (const row of grid.grid_rows || []) {
-			for (const [df] of grid.visible_columns || []) parts.push(row.doc?.[df.fieldname]);
+		for (const row of gridRows(grid)) {
+			for (const df of measured) parts.push(row.doc?.[df.fieldname]);
 		}
 		return parts.join("\u0001");
 	}
@@ -264,7 +280,7 @@
 			purchase_net_rate: 112, purchase_gross_rate: 112,
 			selling_net_rate: 112, selling_gross_rate: 112, is_fast_plu_item: 72,
 		} : {};
-		for (const [df] of grid.visible_columns) {
+		for (const [df] of grid.visible_columns || []) {
 			if (packingWidths[df.fieldname]) {
 				widths[df.fieldname] = packingWidths[df.fieldname];
 				continue;
@@ -279,7 +295,7 @@
 				continue;
 			}
 			let width = measure(__(df.label || df.fieldname)) + 40;
-			for (const row of grid.grid_rows || []) {
+			for (const row of gridRows(grid)) {
 				const value = row.doc?.[df.fieldname];
 				let text = value ?? "";
 				if (frappe.format && value != null) {
@@ -324,18 +340,22 @@
 				this.on_grid_fields.push(field);
 			};
 		}
-		const itemColumn = grid.visible_columns.find(([df]) =>
+		const itemColumn = (grid.visible_columns || []).find(([df]) =>
 			df.fieldname === "item_code" && df.fieldtype === "Link" && df.options === "Item");
-		if (row.doc && itemColumn) {
+		if (row.doc && itemColumn?.[0]?.formatter) {
 			// Native rows keep their own field copies for subsequent refreshes.
 			const field = row.docfields?.find(df => df.fieldname === "item_code");
 			if (field) field.formatter = itemColumn[0].formatter;
-			row.columns?.item_code?.static_area.html(
-				itemColumn[0].formatter(row.doc.item_code, itemColumn[0], {}, row.doc));
+			const cell = row.columns?.item_code?.static_area;
+			const html = itemColumn[0].formatter(row.doc.item_code, itemColumn[0], {}, row.doc);
+			if (cell && cell.html() !== html) cell.html(html);
 		}
 		// Native GridRow takes heading labels from its own DocFields, not visible_columns.
 		if (!row.doc) {
-			for (const [df] of grid.visible_columns) {
+			// make_head puts this handler back on every redraw. It focuses row 0,
+			// and the keyboard reveal then scrolls the page to that first line.
+			row.row?.find?.("[tabindex]")?.removeAttr?.("tabindex")?.off?.("focus");
+			for (const [df] of grid.visible_columns || []) {
 				if (compactRateLabel(grid, df) === df) continue;
 				const cell = row.columns?.[df.fieldname];
 				cell?.static_area?.text(__(df.label));
@@ -348,9 +368,14 @@
 		for (const [fieldname, cell] of Object.entries(row.search_columns || {})) {
 			if (cell?.[0]) cell[0].dataset.fieldname = fieldname;
 		}
+		const cells = row.row[0]?.children && Array.from(row.row[0].children);
+		const signature = JSON.stringify([grid.__retail_content_widths, options?.pin_field,
+			grid.__retail_resizing, (grid.visible_columns || []).map(([df]) => df.fieldname)]);
+		if (cells && row.__retail_cell_style === signature && row.__retail_styled_cells?.length === cells.length &&
+			cells.every((cell, index) => cell === row.__retail_styled_cells[index])) return;
 		row.row.children(".col").each(function () {
 			const fieldname = this.dataset.fieldname;
-			const column = grid.visible_columns.find(([df]) => df.fieldname === fieldname);
+			const column = (grid.visible_columns || []).find(([df]) => df.fieldname === fieldname);
 			const width = column
 				? grid.__retail_content_widths?.[fieldname] || 80
 				: this.classList.contains("row-index")
@@ -361,11 +386,15 @@
 				? ({packing_name: 2, barcode: 1}[fieldname] || 0) : width;
 			this.style.setProperty("--retail-column-grow", column && fieldname !== grid.__retail_resizing ? String(grow) : "0");
 			this.classList.toggle("retail-grid-data-column", Boolean(column));
-			this.classList.toggle("retail-grid-pinned", fieldname === options.pin_field && grid.visible_columns[0]?.[0].fieldname === fieldname);
+			this.classList.toggle("retail-grid-pinned", fieldname === options?.pin_field && grid.visible_columns?.[0]?.[0]?.fieldname === fieldname);
 		});
 		// Use native touch scrolling. Keep touchstart: native touch-click focus
 		// handling still needs the container references initialized by that handler.
 		row.row.children("[data-fieldname]").off("touchmove");
+		if (cells) {
+			row.__retail_cell_style = signature;
+			row.__retail_styled_cells = cells;
+		}
 	}
 
 
@@ -429,7 +458,7 @@
 					column.width_px = pixels;
 					grid.__retail_content_widths[column.fieldname] = pixels;
 					grid.wrapper[0].style.setProperty("--retail-grid-width", `${138 + Object.values(grid.__retail_content_widths).reduce((sum, value) => sum + value, 0)}px`);
-					[header, grid.header_search, ...(grid.grid_rows || [])].forEach(row => styleRow(grid, row));
+					[header, grid.header_search, ...gridRows(grid)].forEach(row => styleRow(grid, row));
 				};
 				const finish = () => {
 					document.removeEventListener("pointermove", move);
@@ -449,7 +478,7 @@
 					document.removeEventListener("pointercancel", cancel);
 					cell.draggable = true;
 					delete grid.__retail_resizing;
-					layout(grid);
+					safeLayout(grid);
 				};
 				document.addEventListener("pointermove", move);
 				document.addEventListener("pointerup", finish);
@@ -473,16 +502,120 @@
 		}
 		const totalWidth =
 			138 +
-			grid.visible_columns.reduce(
-				(sum, [df]) => sum + grid.__retail_content_widths[df.fieldname],
+			(grid.visible_columns || []).reduce(
+				(sum, [df]) => sum + (grid.__retail_content_widths?.[df.fieldname] || 0),
 				0
 			);
 		grid.wrapper[0].style.setProperty("--retail-grid-width", `${totalWidth}px`);
 		configureHeader(grid);
-		[grid.header_row, grid.header_search, ...(grid.grid_rows || [])].forEach((row) =>
+		[grid.header_row, grid.header_search, ...gridRows(grid)].forEach((row) =>
 			styleRow(grid, row)
 		);
 		configureDirectColumns(grid);
+	}
+
+	// Column styling must not abort native row rendering. Save and page changes
+	// both call render_result_rows, and a throw there never reaches the server.
+	function scrollPositions(grid) {
+		const nodes = [];
+		const add = (element) => {
+			if (element && typeof element.scrollTop === "number" && !nodes.includes(element)) nodes.push(element);
+		};
+		const root = grid.wrapper?.[0];
+		if (root?.querySelectorAll) root.querySelectorAll(".form-grid-container").forEach(add);
+		let node = root;
+		while (node) {
+			add(node);
+			node = node.parentElement;
+		}
+		if (typeof document !== "undefined") add(document.scrollingElement);
+		return nodes.map((element) => ({element, top: element.scrollTop || 0, left: element.scrollLeft || 0}));
+	}
+
+	function restoreScroll(positions) {
+		for (const {element, top, left} of positions || []) {
+			if (element.scrollTop !== top) element.scrollTop = top;
+			if (element.scrollLeft !== left) element.scrollLeft = left;
+		}
+	}
+
+	function pageScroll() {
+		const scrolling = typeof document !== "undefined" ? document.scrollingElement : null;
+		return {x: window.scrollX || 0, y: window.scrollY || scrolling?.scrollTop || 0};
+	}
+
+	function holdPage(positions, page) {
+		const jq = globalThis.jQuery || globalThis.$;
+		try { jq?.("html, body")?.stop?.(true, false); } catch (error) { globalThis.console?.error?.(error); }
+		restoreScroll(positions);
+		if (!page || typeof window.scrollTo !== "function") return;
+		const x = window.scrollX || 0;
+		const y = window.scrollY || 0;
+		if (x !== page.x || y !== page.y) window.scrollTo(page.x, page.y);
+	}
+
+	function keepPlace(positions, page) {
+		holdPage(positions, page);
+		for (const delay of [0, 120, 280]) setTimeout(() => holdPage(positions, page), delay);
+	}
+
+	// The heading is the first tab stop. Removing the active cell focuses it, and
+	// its handler then opens row 0. Strip that before the body rows are rebuilt.
+	function stripHeadingJump(grid) {
+		grid.header_row?.row?.find?.("[tabindex]")?.removeAttr?.("tabindex")?.off?.("focus");
+	}
+
+	function parkFocus(grid) {
+		const active = globalThis.document?.activeElement;
+		const root = grid.wrapper?.[0];
+		if (!active || active === document.body || !root?.contains?.(active)) return;
+		const row = active.closest?.(".grid-row");
+		grid.__retail_active_row = {
+			name: row?.getAttribute?.("data-name") || "",
+			field: active.getAttribute?.("data-fieldname")
+				|| active.closest?.("[data-fieldname]")?.getAttribute?.("data-fieldname") || "",
+		};
+		let park = document.getElementById("retail-focus-park");
+		if (!park) {
+			park = document.createElement("div");
+			park.id = "retail-focus-park";
+			park.tabIndex = -1;
+			park.setAttribute("aria-hidden", "true");
+			park.style.cssText = "position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;pointer-events:none";
+			document.body.appendChild(park);
+		}
+		try { park.focus({preventScroll: true}); }
+		catch (error) { park.focus(); }
+	}
+
+	function refocusEdited(grid) {
+		const kept = grid.__retail_active_row;
+		if (!kept?.name) return;
+		const row = grid.grid_rows_by_docname?.[kept.name];
+		const input = (kept.field && row?.on_grid_fields_dict?.[kept.field]?.$input?.[0])
+			|| row?.row?.find?.("input,textarea,select")?.filter?.(":visible:first")?.[0];
+		if (!input || document.activeElement === input) return;
+		try { input.focus({preventScroll: true}); }
+		catch (error) { input.focus?.(); }
+	}
+
+	function silenceScroll(grid) {
+		if (typeof frappe === "undefined") return;
+		frappe.flags = frappe.flags || {};
+		const previous = frappe.flags.disable_auto_scroll;
+		frappe.flags.disable_auto_scroll = true;
+		globalThis.clearTimeout?.(grid.__retail_scroll_release);
+		grid.__retail_scroll_release = setTimeout(() => {
+			frappe.flags.disable_auto_scroll = previous;
+		}, 400);
+	}
+
+	function safeLayout(grid) {
+		try {
+			layout(grid);
+		} catch (error) {
+			globalThis.console?.error?.(error);
+		}
 	}
 
 	// Link suggestions must escape the overflow viewport. Keep the original UL and
@@ -594,15 +727,96 @@
 			}
 			return result;
 		};
+		// Page changes render a new set of rows without grid.refresh, so the
+		// heading keeps its column widths and the new page falls back to native ones.
+		const renderResultRows = grid.render_result_rows;
+		if (typeof renderResultRows === "function" && !renderResultRows.__retail_page_layout) {
+			grid.render_result_rows = function (...args) {
+				parkFocus(this);
+				silenceScroll(this);
+				const positions = scrollPositions(this);
+				const page = pageScroll();
+				const result = renderResultRows.apply(this, args);
+				stripHeadingJump(this);
+				safeLayout(this);
+				keepPlace(positions, page);
+				return result;
+			};
+			grid.render_result_rows.__retail_page_layout = true;
+		}
+		const makeHead = grid.make_head;
+		if (typeof makeHead === "function" && !makeHead.__retail_no_header_jump) {
+			grid.make_head = function (...args) {
+				const result = makeHead.apply(this, args);
+				stripHeadingJump(this);
+				return result;
+			};
+			grid.make_head.__retail_no_header_jump = true;
+		}
+		// Page changes and row edits call this to jump the window to the first line.
+		grid.scroll_to_top = () => {};
+		const pagination = grid.grid_pagination;
+		if (pagination?.go_to_last_page_to_add_row && !pagination.__retail_keep_place) {
+			pagination.__retail_keep_place = true;
+			const goToLast = pagination.go_to_last_page_to_add_row;
+			pagination.go_to_last_page_to_add_row = function (...args) {
+				const scrollTo = frappe.utils.scroll_to;
+				frappe.utils.scroll_to = () => {};
+				try { return goToLast.apply(this, args); }
+				finally { frappe.utils.scroll_to = scrollTo; }
+			};
+		}
+		const focusRow = grid.set_focus_on_row;
+		if (typeof focusRow === "function" && !focusRow.__retail_keep_place) {
+			grid.set_focus_on_row = function (idx) {
+				if (!this.allow_on_grid_editing?.()) return focusRow.call(this, idx);
+				let index = idx == null && idx !== 0 ? (this.grid_rows?.length || 1) - 1 : idx;
+				// The heading handler always asks for row 0. Stay on the row being edited.
+				const keptName = idx === 0 ? this.__retail_active_row?.name : "";
+				if (keptName) {
+					const found = (this.grid_rows || []).findIndex(row => row?.doc?.name === keptName);
+					if (found > 0) index = found;
+				}
+				const positions = scrollPositions(this);
+				const page = pageScroll();
+				const row = this.grid_rows?.[index];
+				if (!row?.toggle_editable_row) return;
+				const field = this.__retail_active_row?.field;
+				setTimeout(() => {
+					if (!row.row) return;
+					row.toggle_editable_row(true);
+					const input = (field && row.on_grid_fields_dict?.[field]?.$input?.[0])
+						|| row.row.find?.('input[type="Text"],textarea,select')?.filter?.(":visible:first")?.[0];
+					try { input?.focus?.({preventScroll: true}); }
+					catch (error) { input?.focus?.(); }
+					holdPage(positions, page);
+				}, 100);
+			};
+			grid.set_focus_on_row.__retail_keep_place = true;
+		}
 		const refresh = grid.refresh;
 		grid.refresh = function (...args) {
-			const scroll = this.wrapper?.find(".form-grid-container").scrollLeft() || 0;
-			const result = refresh.apply(this, args);
-			layout(this);
-			this.wrapper?.find(".form-grid-container").scrollLeft(scroll);
-			return result;
+			// Item selection waits on this refresh. A styling error must not reject it.
+			try {
+				parkFocus(this);
+				silenceScroll(this);
+				const positions = scrollPositions(this);
+				const page = pageScroll();
+				const scroll = this.wrapper?.find(".form-grid-container").scrollLeft() || 0;
+				const result = refresh.apply(this, args);
+				stripHeadingJump(this);
+				safeLayout(this);
+				this.wrapper?.find(".form-grid-container").scrollLeft(scroll);
+				keepPlace(positions, page);
+				refocusEdited(this);
+				holdPage(positions, page);
+				return result;
+			} catch (error) {
+				globalThis.console?.error?.(error);
+			}
 		};
-		const fitColumns = frappe.utils.debounce(() => layout(grid), 100);
+		const fitColumns = frappe.utils.debounce(() => safeLayout(grid), 100);
+		grid.__retail_fit_columns = fitColumns;
 		const refreshField = grid.refresh_field;
 		if (refreshField) {
 			grid.refresh_field = function (...args) {
@@ -613,10 +827,13 @@
 		}
 		grid.debounced_refresh = frappe.utils.debounce(grid.refresh.bind(grid), 100);
 		$(frm.wrapper).on(`grid-row-render.retailScroll_${fieldname}`, (_event, row) => {
-			if (row.grid === grid) {
+			if (row.grid !== grid) return;
+			try {
 				styleRow(grid, row);
-				fitColumns();
+			} catch (error) {
+				globalThis.console?.error?.(error);
 			}
+			fitColumns();
 		});
 		grid.reset_grid();
 		bindInteractions(grid);
@@ -632,7 +849,9 @@
 			},
 		});
 	}
-	retail.scrollable_grid = { enable, register };
+	retail.scrollable_grid = { enable, register,
+		scheduleLayout(grid) { grid.__retail_fit_columns?.(); },
+	};
 	function boot() {
 		if (!window.frappe?.ui?.form?.on) {
 			setTimeout(boot, 100);

@@ -575,3 +575,43 @@ test('Stock Reconciliation exposes native tracking controls while preserving sav
  assert.equal(f.grid.visible_columns[0][0].width_px,101);
  assert.equal(JSON.stringify(settings),before);
 });
+
+test("page changes restyle the visible row when off-page slots are holes", () => {
+  const f = fixture();
+  const widths = {};
+  const cell = {
+    dataset: { fieldname: "field_0" },
+    style: { setProperty: (key, value) => { widths[key] = value; } },
+    classList: { contains: () => false, toggle() {} },
+  };
+  const visible = {
+    doc: { name: "row-51", field_0: 1 },
+    row: {
+      0: { children: [cell] },
+      children: () => ({
+        each(callback) { callback.call(cell); },
+        off() {},
+      }),
+    },
+  };
+  const original = f.context.NativeGrid.prototype.render_result_rows;
+  let rendered = 0;
+  f.context.NativeGrid.prototype.render_result_rows = function () {
+    rendered += 1;
+    const rows = [];
+    rows[50] = visible;
+    this.grid_rows = rows;
+    return "page-rendered";
+  };
+  try {
+    f.handlers["Purchase Invoice"].refresh(f.frm);
+    assert.equal(f.grid.render_result_rows(), "page-rendered");
+    assert.equal(rendered, 1);
+    assert.equal(widths["--retail-column-width"], `${f.grid.__retail_content_widths.field_0}px`);
+    f.grid.wrapper.addClass = () => { throw new Error("style failed"); };
+    assert.equal(f.grid.render_result_rows(), "page-rendered");
+    assert.equal(rendered, 2);
+  } finally {
+    f.context.NativeGrid.prototype.render_result_rows = original;
+  }
+});

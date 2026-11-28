@@ -832,7 +832,125 @@ paid amounts. Existing reconciliation remains authoritative. No additional
 terminal fields or separate invoice section are needed. Reload the invoice to
 refresh settlement status.
 
-Request JSON:
+Payment corrections use this same `create_pos_invoice` API (or
+`create_credit_pos_invoice`, including its compatibility sale alias). Existing
+requests without `modified`, or with `modified: false`, retain their existing
+behavior. No existing field is renamed or made mandatory for normal sales.
+
+For a posted sale, send `modified: true`, keep its original
+`external_pos_reference`, and send the **complete final settlement**. Cash/card
+and promotion tender rows remain in `payments`; customer debt remains in
+`credit_sale_amount`; credit-note references remain in `credit_note_redemptions`.
+An omitted settlement component is cleared. `modification_type` is optional and
+defaults to `PaymentCorrection`; other modification types are rejected.
+
+Additional correction-only fields:
+
+| Field | Meaning |
+| --- | --- |
+| `modified` | `true` routes the request to payment correction. |
+| `modification_type` | Optional; `PaymentCorrection`. |
+| `operation_reference` | Required unique adjustment ID, maximum 140 characters. Reuse unchanged on retries. |
+| `expected_payment_revision` | Optional current revision. If supplied, must match the server; otherwise the server uses its locked current revision. |
+| `payment_revision` | Optional next revision. Defaults to the server's current revision plus one; supplied values must match that next revision. |
+| `reason` | Optional explanation retained with the authenticated API user. Defaults to `POS payment correction` when omitted or blank. |
+| `modified_at` | Optional POS timestamp; server correction time is also recorded. |
+
+Only `modified: true` and `operation_reference` are required additions to the
+existing invoice payload. Without explicit revisions, distinct corrections apply
+in server processing order; retries reuse their originally assigned revision.
+
+The counter's existing API authorization is checked even on retries. A correction
+cannot change the customer, ownership, items, quantities, rates, VAT, discounts,
+sale dates or total. Full original sale details may be resent unchanged, or sale
+details may be omitted; the server retrieves the original. Invoice-discount
+`voucher_redemption` / `voucher_redemptions` stay unchanged because changing them
+would change the commercial sale. Monetary promotion tenders use the existing
+`Promotion Voucher`, `Voucher Card` and `Loyalty` payment row formats. Source
+references, available balances and eligibility are checked; invalid sources do
+not produce a successful correction. `Customer`, `Voucher` and `Cancelled` are
+not cash/card payment rows; retain the existing option semantics above.
+
+Example: the existing AED 100 Cash sale is corrected to AED 100 Card. This full
+payload adds only `modified` and `operation_reference`; all other correction
+metadata is optional:
+
+```json
+{
+  "external_pos_reference": "KARAMA-C001-T001-SALE-20261128-000500",
+  "branch": "Karama",
+  "counter_code": "C001",
+  "pos_terminal_id": "T001",
+  "cashier_employee": "E-1",
+  "external_shift_reference": "KARAMA-C001-T001-SHIFT-20261128-000001",
+  "external_session_reference": "KARAMA-C001-T001-SESSION-20261128-000001",
+  "business_date": "2026-11-28",
+  "customer": "C-1",
+  "posting_date": "2026-11-28",
+  "posting_time": "10:30:00",
+  "pos_bill_no": "000500",
+  "pos_local_created_at": "2026-11-28 10:30:00",
+  "update_stock": 1,
+  "discount_amount": 0,
+  "net_total": 100,
+  "vat_amount": 0,
+  "grand_total": 100,
+  "items": [
+    {
+      "item_code": "I-1",
+      "serial_no": null,
+      "batch_no": null,
+      "qty": 1,
+      "uom": "Nos",
+      "conversion_factor": 1,
+      "rate": 100,
+      "rate_includes_vat": 0,
+      "discount_amount": 0,
+      "amount": 100,
+      "net_amount": 100,
+      "vat_rate": 0,
+      "vat_amount": 0
+    }
+  ],
+  "payments": [
+    {"mode_of_payment": "Card", "amount": 100, "reference_no": "CARD-TXN-987654"}
+  ],
+  "credit_sale_amount": 0,
+  "credit_note_redemptions": [],
+  "loyalty_redemption": null,
+  "voucher_redemption": null,
+  "modified": true,
+  "operation_reference": "KARAMA-C001-T001-SALE-20261128-000500-MOD-001"
+}
+```
+
+For Cash 40 / Card 60, send both rows totalling 100. For customer credit 100,
+send `payments: []` and `credit_sale_amount: 100`. All final payment, redemption
+and customer-credit portions must equal the unchanged total. The correction
+reposts accounting through ERPNext, reverses replaced source allocations, and
+refreshes cash/closing totals atomically. It creates no new sale or stock move.
+The original sale payload and its original retry response remain intact.
+
+Success adds `modified: true`, `modification_type: "PaymentCorrection"`,
+`payment_revision`, `operation_reference`, server `modified_at`, `reason`,
+`previous_payments`, current `payments`, `paid_amount`, `outstanding_amount`,
+`accounting_invoice` and `accounting_repost` to the normal invoice identity.
+An exact retry returns the saved correction response with `duplicate: true`;
+reuse with different data or a stale revision fails. `get_sync_status` adds the
+current `modified`, `payment_revision`, `modification_type`,
+`operation_reference`, `modified_at` and `payments` inside `pos_invoice`.
+Both invoice forms/list metadata show Modified; the form also shows the payment
+correction revision and timeline audit.
+
+The original sale must already be posted individually. A closed business day
+returns `status: "Failed", error_code: "DayClosed"`; use the existing authorized
+manager reopen workflow first. Frozen/finalized periods, bank-cleared payments,
+submitted returns, later collections/manual settlements, advances, change,
+write-offs and foreign currency require their existing accounts review workflow.
+Unallocated historical loyalty overdrafts or ambiguous historical source
+movements also require review. Failed corrections roll back all effects.
+
+Normal sale request JSON (unchanged):
 
 ```json
 {
@@ -1809,7 +1927,25 @@ returned in customer master downloads and saves the Customer's `custom_sales_per
 assignment. Alternatively, send `custom_sales_person` with the ERP Sales Person
 Link name. Unknown values are rejected; if both fields are supplied they must
 identify the same person. Omitted or null values leave the assignment unchanged;
-an empty string clears it. The response envelope is unchanged.
+an empty string clears it.
+
+Optional `is_credit_customer` (0 or 1) saves the manually selected Customer
+checkbox `custom_is_credit_customer`. Optional `credit_limit` is a non-negative
+number saved in Customer Credit Limits for the counter's company. Omitted or
+null values preserve existing settings; explicit 0 clears the flag or sets
+the company limit to zero. These fields are independent: unchecking the flag
+does not clear the limit. ERPNext's existing credit-limit fallback rules remain.
+The response includes the saved flag and this customer's explicit limit for
+the counter company (0 when no row exists), without group/company fallback.
+
+Optional `address_line` (alias `address_line1`) saves Address Line 1 on the
+Customer's linked primary Address. `address_line` works on its own; `city` and
+`country` are not required. New line-only addresses leave them blank; an existing
+primary address retains omitted fields. Optional `city`, `country`, `state`,
+`pincode`, and `address_line2` are supported with the address line. Omitted/null
+address lines leave the address unchanged; empty/whitespace lines are rejected.
+The response includes `address_line` (null without a primary address). Address
+Line 1 supports long text and expands while typing in Desk forms and Quick Entry.
 
 Request JSON:
 
@@ -1824,6 +1960,9 @@ Request JSON:
   "mobile_no": "9715XXXXXXXX",
   "email_id": "customer@example.com",
   "sales_person_id": "SP2-2",
+  "is_credit_customer": 1,
+  "credit_limit": 5000,
+  "address_line": "Building 12, Main Street",
   "tax_id": ""
 }
 ```
@@ -1831,7 +1970,7 @@ Request JSON:
 Response example:
 
 ```json
-{"message": {"status": "Success", "action": "Created", "customer": "C-1"}}
+{"message": {"status": "Success", "action": "Created", "customer": "C-1", "is_credit_customer": 1, "credit_limit": 5000}}
 ```
 
 ### Customer master: loyalty and customer vouchers (additive)
@@ -6035,3 +6174,32 @@ that account before syncing delivery charges. Item revenue and reported VAT rema
 separate. Returns use the existing return sign convention for the charge. Exact
 retries retain existing idempotency rules; altered snapshots on the same external
 reference are a reference conflict.
+
+### Optional POS master-data context and suppliers
+
+`get_pos_master_data` now includes `suppliers` in full and incremental downloads.
+Rows contain `name` (ERP Supplier ID), `supplier_name`, `supplier_group`,
+`supplier_type`, `tax_id`, `disabled`, and `modified`. Disabled rows are included
+so clients can update cached supplier availability. `modified_after` applies.
+
+`branch` and `counter_code` are optional for this download only. With both supplied,
+existing counter authorization, warehouse stock, customer credit data, operators,
+taxes, bill format and promotions remain in effect. Invalid explicit pairs still fail.
+
+With either parameter omitted, the response is general master data: `counter`,
+`tax_config`, and `bill_format` are null; promotion and operator lists are empty;
+warehouse stock values are null (unknown). Customers contain basic master fields
+without company-specific credit/balance calculations. `counters` lists active,
+offline-enabled counters, filtered by any supplied branch/counter code and the
+integration user's assignment (System Managers can see all). No terminal is selected.
+Existing POS authentication is required in both modes. POS posting/session APIs
+still require branch and counter. POS clients must fetch again with both selected
+before using terminal-specific stock, credit, tax or promotion settings.
+
+Examples:
+
+```http
+GET /api/method/retail.api.pos_sync.get_pos_master_data
+GET /api/method/retail.api.pos_sync.get_pos_master_data?branch=Business%20Demo%20Branch
+GET /api/method/retail.api.pos_sync.get_pos_master_data?branch=Business%20Demo%20Branch&counter_code=COUNTER-1
+```

@@ -129,3 +129,4 @@ retail.patches.print_item_barcodes
 retail.patches.bom_item_identity
 
 retail.patches.sync_log_navigation
+retail.patches.item_lookup_indexes

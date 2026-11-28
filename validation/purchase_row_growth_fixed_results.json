@@ -1,0 +1,2188 @@
+{
+  "site": "retail-test.localhost",
+  "scope": "Local unsaved Purchase Invoice browser validation; no business documents saved; no VPS verification.",
+  "notes": [
+    "add_ms measures adding an item; settled_ms also includes scheduled VAT work and a fixed 250ms observation wait.",
+    "Quick Entry settles its save-time debounce after each row for this test; that wait is not the item-add time.",
+    "All 15 baseline row-value snapshots match the fix; all 20 full-form snapshots match Quick Entry.",
+    "No history requests during Quick Entry; full-form grid was verified on dialog close."
+  ],
+  "comparison": [
+    {
+      "row": 5,
+      "add_ms_before": 192,
+      "add_ms_after": 111,
+      "style_ms_before": 142,
+      "style_ms_after": 11,
+      "row_refresh_before": 14,
+      "row_refresh_after": 0
+    },
+    {
+      "row": 10,
+      "add_ms_before": 239,
+      "add_ms_after": 149,
+      "style_ms_before": 202,
+      "style_ms_after": 13,
+      "row_refresh_before": 29,
+      "row_refresh_after": 0
+    },
+    {
+      "row": 15,
+      "add_ms_before": 286,
+      "add_ms_after": 168,
+      "style_ms_before": 266,
+      "style_ms_after": 13,
+      "row_refresh_before": 44,
+      "row_refresh_after": 0
+    }
+  ],
+  "full": {
+    "doctype": "Purchase Invoice",
+    "mode": "full",
+    "cssDiagnostic": {
+      "globalModalHasRules": 0
+    },
+    "samples": [
+      {
+        "row": 1,
+        "add_ms": 103,
+        "settled_ms": 438,
+        "stats": {
+          "grid_refresh": {
+            "calls": 3,
+            "sync_ms": 1.8999999910593033
+          },
+          "items_refresh": {
+            "calls": 3,
+            "sync_ms": 2.0999999940395355
+          },
+          "totals": {
+            "calls": 2,
+            "sync_ms": 3.4000000059604645
+          }
+        },
+        "long_tasks": [],
+        "values": {
+          "item": "I-79",
+          "name": "RIng ",
+          "uom": "Nos",
+          "qty": 1,
+          "rate": 10,
+          "amount": 10
+        },
+        "requests": [
+          {
+            "method": "retail.domains.purchase.line_fill.fill_line",
+            "ms": 65,
+            "bytes": 1599
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 27,
+            "bytes": 313
+          }
+        ],
+        "browser_ms": {
+          "LayoutDuration": 6,
+          "RecalcStyleDuration": 9,
+          "ScriptDuration": 21,
+          "TaskDuration": 140
+        }
+      },
+      {
+        "row": 2,
+        "add_ms": 193,
+        "settled_ms": 591,
+        "stats": {
+          "grid_refresh": {
+            "calls": 3,
+            "sync_ms": 21.099999994039536
+          },
+          "items_refresh": {
+            "calls": 3,
+            "sync_ms": 21.299999997019768
+          },
+          "row_dependency": {
+            "calls": 7,
+            "sync_ms": 0.09999999403953552
+          },
+          "totals": {
+            "calls": 2,
+            "sync_ms": 3.3999999910593033
+          }
+        },
+        "long_tasks": [],
+        "values": {
+          "item": "I-95",
+          "name": "laptop",
+          "uom": "Nos",
+          "qty": 1,
+          "rate": 0,
+          "amount": 0
+        },
+        "requests": [
+          {
+            "method": "retail.domains.purchase.line_fill.fill_line",
+            "ms": 128,
+            "bytes": 1638
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 98,
+            "bytes": 381
+          }
+        ],
+        "browser_ms": {
+          "LayoutDuration": 8,
+          "RecalcStyleDuration": 12,
+          "ScriptDuration": 17,
+          "TaskDuration": 175
+        }
+      },
+      {
+        "row": 3,
+        "add_ms": 177,
+        "settled_ms": 514,
+        "stats": {
+          "grid_refresh": {
+            "calls": 3,
+            "sync_ms": 21.099999994039536
+          },
+          "items_refresh": {
+            "calls": 3,
+            "sync_ms": 21.299999982118607
+          },
+          "row_dependency": {
+            "calls": 12,
+            "sync_ms": 0
+          },
+          "totals": {
+            "calls": 2,
+            "sync_ms": 4.0999999940395355
+          }
+        },
+        "long_tasks": [
+          57
+        ],
+        "values": {
+          "item": "I-94",
+          "name": "driver",
+          "uom": "Nos",
+          "qty": 1,
+          "rate": 0,
+          "amount": 0
+        },
+        "requests": [
+          {
+            "method": "retail.domains.purchase.line_fill.fill_line",
+            "ms": 103,
+            "bytes": 1698
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 33,
+            "bytes": 449
+          }
+        ],
+        "browser_ms": {
+          "LayoutDuration": 7,
+          "RecalcStyleDuration": 17,
+          "ScriptDuration": 14,
+          "TaskDuration": 183
+        }
+      },
+      {
+        "row": 4,
+        "add_ms": 159,
+        "settled_ms": 486,
+        "stats": {
+          "grid_refresh": {
+            "calls": 3,
+            "sync_ms": 36.1000000089407
+          },
+          "items_refresh": {
+            "calls": 3,
+            "sync_ms": 36.29999999701977
+          },
+          "row_dependency": {
+            "calls": 17,
+            "sync_ms": 0.4000000059604645
+          },
+          "totals": {
+            "calls": 2,
+            "sync_ms": 4.100000008940697
+          }
+        },
+        "long_tasks": [
+          52
+        ],
+        "values": {
+          "item": "I-93",
+          "name": "AJINO MOTTO",
+          "uom": "Kg",
+          "qty": 1,
+          "rate": 10,
+          "amount": 10
+        },
+        "requests": [
+          {
+            "method": "retail.domains.purchase.line_fill.fill_line",
+            "ms": 75,
+            "bytes": 1801
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 36,
+            "bytes": 517
+          }
+        ],
+        "browser_ms": {
+          "LayoutDuration": 5,
+          "RecalcStyleDuration": 12,
+          "ScriptDuration": 11,
+          "TaskDuration": 171
+        }
+      },
+      {
+        "row": 5,
+        "add_ms": 111,
+        "settled_ms": 428,
+        "stats": {
+          "grid_refresh": {
+            "calls": 3,
+            "sync_ms": 18.099999994039536
+          },
+          "items_refresh": {
+            "calls": 3,
+            "sync_ms": 18.200000002980232
+          },
+          "row_dependency": {
+            "calls": 21,
+            "sync_ms": 0.19999998807907104
+          },
+          "totals": {
+            "calls": 2,
+            "sync_ms": 4.300000011920929
+          }
+        },
+        "long_tasks": [],
+        "values": {
+          "item": "I-91",
+          "name": "AJINO MOTTO 100 GM",
+          "uom": "Kg",
+          "qty": 1,
+          "rate": 0,
+          "amount": 0
+        },
+        "requests": [
+          {
+            "method": "retail.domains.purchase.line_fill.fill_line",
+            "ms": 53,
+            "bytes": 1870
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 26,
+            "bytes": 585
+          }
+        ],
+        "browser_ms": {
+          "LayoutDuration": 5,
+          "RecalcStyleDuration": 11,
+          "ScriptDuration": 10,
+          "TaskDuration": 137
+        }
+      },
+      {
+        "row": 6,
+        "add_ms": 128,
+        "settled_ms": 467,
+        "stats": {
+          "grid_refresh": {
+            "calls": 3,
+            "sync_ms": 18.799999997019768
+          },
+          "items_refresh": {
+            "calls": 3,
+            "sync_ms": 18.899999991059303
+          },
+          "row_dependency": {
+            "calls": 27,
+            "sync_ms": 0.29999998211860657
+          },
+          "totals": {
+            "calls": 2,
+            "sync_ms": 4.600000008940697
+          }
+        },
+        "long_tasks": [],
+        "values": {
+          "item": "I-44",
+          "name": "Scanner ",
+          "uom": "Nos",
+          "qty": 1,
+          "rate": 2.86,
+          "amount": 2.86
+        },
+        "requests": [
+          {
+            "method": "retail.domains.purchase.line_fill.fill_line",
+            "ms": 71,
+            "bytes": 1949
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 43,
+            "bytes": 653
+          }
+        ],
+        "browser_ms": {
+          "LayoutDuration": 5,
+          "RecalcStyleDuration": 11,
+          "ScriptDuration": 13,
+          "TaskDuration": 154
+        }
+      },
+      {
+        "row": 7,
+        "add_ms": 130,
+        "settled_ms": 455,
+        "stats": {
+          "grid_refresh": {
+            "calls": 3,
+            "sync_ms": 20.899999991059303
+          },
+          "items_refresh": {
+            "calls": 3,
+            "sync_ms": 21
+          },
+          "row_dependency": {
+            "calls": 32,
+            "sync_ms": 0
+          },
+          "totals": {
+            "calls": 2,
+            "sync_ms": 5.899999976158142
+          }
+        },
+        "long_tasks": [],
+        "values": {
+          "item": "I-7",
+          "name": "ORANGE ",
+          "uom": "Box",
+          "qty": 1,
+          "rate": 1.9,
+          "amount": 1.9
+        },
+        "requests": [
+          {
+            "method": "retail.domains.purchase.line_fill.fill_line",
+            "ms": 69,
+            "bytes": 2019
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 28,
+            "bytes": 721
+          }
+        ],
+        "browser_ms": {
+          "LayoutDuration": 6,
+          "RecalcStyleDuration": 12,
+          "ScriptDuration": 12,
+          "TaskDuration": 155
+        }
+      },
+      {
+        "row": 8,
+        "add_ms": 124,
+        "settled_ms": 530,
+        "stats": {
+          "grid_refresh": {
+            "calls": 3,
+            "sync_ms": 20.50000001490116
+          },
+          "items_refresh": {
+            "calls": 3,
+            "sync_ms": 20.600000008940697
+          },
+          "row_dependency": {
+            "calls": 37,
+            "sync_ms": 0.20000001788139343
+          },
+          "totals": {
+            "calls": 2,
+            "sync_ms": 6.100000008940697
+          }
+        },
+        "long_tasks": [
+          87
+        ],
+        "values": {
+          "item": "I-30",
+          "name": "Adler pos",
+          "uom": "Nos",
+          "qty": 1,
+          "rate": 142.86,
+          "amount": 142.86
+        },
+        "requests": [
+          {
+            "method": "retail.domains.purchase.line_fill.fill_line",
+            "ms": 63,
+            "bytes": 2104
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 55,
+            "bytes": 789
+          }
+        ],
+        "browser_ms": {
+          "LayoutDuration": 9,
+          "RecalcStyleDuration": 16,
+          "ScriptDuration": 28,
+          "TaskDuration": 238
+        }
+      },
+      {
+        "row": 9,
+        "add_ms": 102,
+        "settled_ms": 420,
+        "stats": {
+          "grid_refresh": {
+            "calls": 3,
+            "sync_ms": 13.899999991059303
+          },
+          "items_refresh": {
+            "calls": 3,
+            "sync_ms": 13.899999991059303
+          },
+          "row_dependency": {
+            "calls": 41,
+            "sync_ms": 0.10000000894069672
+          },
+          "totals": {
+            "calls": 2,
+            "sync_ms": 6.0999999940395355
+          }
+        },
+        "long_tasks": [],
+        "values": {
+          "item": "I-21",
+          "name": "Flour",
+          "uom": "Kg",
+          "qty": 1,
+          "rate": 19.05,
+          "amount": 19.05
+        },
+        "requests": [
+          {
+            "method": "retail.domains.purchase.line_fill.fill_line",
+            "ms": 53,
+            "bytes": 2150
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 28,
+            "bytes": 857
+          }
+        ],
+        "browser_ms": {
+          "LayoutDuration": 5,
+          "RecalcStyleDuration": 10,
+          "ScriptDuration": 9,
+          "TaskDuration": 130
+        }
+      },
+      {
+        "row": 10,
+        "add_ms": 149,
+        "settled_ms": 482,
+        "stats": {
+          "grid_refresh": {
+            "calls": 3,
+            "sync_ms": 22.299999997019768
+          },
+          "items_refresh": {
+            "calls": 3,
+            "sync_ms": 22.49999998509884
+          },
+          "row_dependency": {
+            "calls": 47,
+            "sync_ms": 0.4000000059604645
+          },
+          "totals": {
+            "calls": 2,
+            "sync_ms": 6.700000002980232
+          }
+        },
+        "long_tasks": [],
+        "values": {
+          "item": "I-20",
+          "name": "Book",
+          "uom": "Nos",
+          "qty": 1,
+          "rate": 95.24,
+          "amount": 95.24
+        },
+        "requests": [
+          {
+            "method": "retail.domains.purchase.line_fill.fill_line",
+            "ms": 82,
+            "bytes": 2213
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 40,
+            "bytes": 925
+          }
+        ],
+        "browser_ms": {
+          "LayoutDuration": 5,
+          "RecalcStyleDuration": 13,
+          "ScriptDuration": 12,
+          "TaskDuration": 166
+        }
+      },
+      {
+        "row": 11,
+        "add_ms": 247,
+        "settled_ms": 588,
+        "stats": {
+          "grid_refresh": {
+            "calls": 3,
+            "sync_ms": 29.799999997019768
+          },
+          "items_refresh": {
+            "calls": 3,
+            "sync_ms": 29.799999997019768
+          },
+          "row_dependency": {
+            "calls": 52,
+            "sync_ms": 0.3999999910593033
+          },
+          "totals": {
+            "calls": 2,
+            "sync_ms": 13.5
+          }
+        },
+        "long_tasks": [
+          58
+        ],
+        "values": {
+          "item": "I-28",
+          "name": "cup",
+          "uom": "Nos",
+          "qty": 1,
+          "rate": 1.9,
+          "amount": 1.9
+        },
+        "requests": [
+          {
+            "method": "retail.domains.purchase.line_fill.fill_line",
+            "ms": 156,
+            "bytes": 2263
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 41,
+            "bytes": 993
+          }
+        ],
+        "browser_ms": {
+          "LayoutDuration": 8,
+          "RecalcStyleDuration": 19,
+          "ScriptDuration": 12,
+          "TaskDuration": 209
+        }
+      },
+      {
+        "row": 12,
+        "add_ms": 200,
+        "settled_ms": 533,
+        "stats": {
+          "grid_refresh": {
+            "calls": 3,
+            "sync_ms": 16.69999998807907
+          },
+          "items_refresh": {
+            "calls": 3,
+            "sync_ms": 16.69999998807907
+          },
+          "row_dependency": {
+            "calls": 57,
+            "sync_ms": 0.5
+          },
+          "totals": {
+            "calls": 2,
+            "sync_ms": 7.5999999940395355
+          }
+        },
+        "long_tasks": [],
+        "values": {
+          "item": "I-46",
+          "name": "Charger",
+          "uom": "Nos",
+          "qty": 1,
+          "rate": 10,
+          "amount": 10
+        },
+        "requests": [
+          {
+            "method": "retail.domains.purchase.line_fill.fill_line",
+            "ms": 146,
+            "bytes": 2361
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 34,
+            "bytes": 1061
+          }
+        ],
+        "browser_ms": {
+          "LayoutDuration": 6,
+          "RecalcStyleDuration": 12,
+          "ScriptDuration": 10,
+          "TaskDuration": 157
+        }
+      },
+      {
+        "row": 13,
+        "add_ms": 173,
+        "settled_ms": 557,
+        "stats": {
+          "grid_refresh": {
+            "calls": 3,
+            "sync_ms": 24.100000008940697
+          },
+          "items_refresh": {
+            "calls": 3,
+            "sync_ms": 24.200000002980232
+          },
+          "row_dependency": {
+            "calls": 61,
+            "sync_ms": 0.6000000238418579
+          },
+          "totals": {
+            "calls": 2,
+            "sync_ms": 12.099999994039536
+          }
+        },
+        "long_tasks": [
+          58,
+          55
+        ],
+        "values": {
+          "item": "I-42",
+          "name": "Pendrive",
+          "uom": "Nos",
+          "qty": 1,
+          "rate": 10,
+          "amount": 10
+        },
+        "requests": [
+          {
+            "method": "retail.domains.purchase.line_fill.fill_line",
+            "ms": 97,
+            "bytes": 2408
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 65,
+            "bytes": 1105
+          }
+        ],
+        "browser_ms": {
+          "LayoutDuration": 8,
+          "RecalcStyleDuration": 17,
+          "ScriptDuration": 16,
+          "TaskDuration": 215
+        }
+      },
+      {
+        "row": 14,
+        "add_ms": 194,
+        "settled_ms": 550,
+        "stats": {
+          "grid_refresh": {
+            "calls": 3,
+            "sync_ms": 27.50000001490116
+          },
+          "items_refresh": {
+            "calls": 3,
+            "sync_ms": 27.700000002980232
+          },
+          "row_dependency": {
+            "calls": 67,
+            "sync_ms": 0.5
+          },
+          "totals": {
+            "calls": 2,
+            "sync_ms": 9.700000002980232
+          }
+        },
+        "long_tasks": [],
+        "values": {
+          "item": "I-87",
+          "name": "DEMO Chocolate",
+          "uom": "Kg",
+          "qty": 1,
+          "rate": 19.05,
+          "amount": 19.05
+        },
+        "requests": [
+          {
+            "method": "retail.domains.purchase.line_fill.fill_line",
+            "ms": 124,
+            "bytes": 2509
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 51,
+            "bytes": 1173
+          }
+        ],
+        "browser_ms": {
+          "LayoutDuration": 6,
+          "RecalcStyleDuration": 16,
+          "ScriptDuration": 19,
+          "TaskDuration": 254
+        }
+      },
+      {
+        "row": 15,
+        "add_ms": 168,
+        "settled_ms": 548,
+        "stats": {
+          "grid_refresh": {
+            "calls": 3,
+            "sync_ms": 20.599999994039536
+          },
+          "items_refresh": {
+            "calls": 3,
+            "sync_ms": 20.900000005960464
+          },
+          "row_dependency": {
+            "calls": 72,
+            "sync_ms": 0.5
+          },
+          "totals": {
+            "calls": 2,
+            "sync_ms": 10.299999997019768
+          }
+        },
+        "long_tasks": [],
+        "values": {
+          "item": "I-89",
+          "name": "Sugar 100 gm ",
+          "uom": "Nos",
+          "qty": 1,
+          "rate": 1.39,
+          "amount": 1.39
+        },
+        "requests": [
+          {
+            "method": "retail.domains.purchase.line_fill.fill_line",
+            "ms": 96,
+            "bytes": 2611
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 80,
+            "bytes": 1241
+          }
+        ],
+        "browser_ms": {
+          "LayoutDuration": 5,
+          "RecalcStyleDuration": 13,
+          "ScriptDuration": 14,
+          "TaskDuration": 180
+        }
+      },
+      {
+        "row": 16,
+        "add_ms": 177,
+        "settled_ms": 549,
+        "stats": {
+          "grid_refresh": {
+            "calls": 3,
+            "sync_ms": 21
+          },
+          "items_refresh": {
+            "calls": 3,
+            "sync_ms": 21.400000020861626
+          },
+          "row_dependency": {
+            "calls": 77,
+            "sync_ms": 0.3999999910593033
+          },
+          "totals": {
+            "calls": 2,
+            "sync_ms": 13.200000002980232
+          }
+        },
+        "long_tasks": [],
+        "values": {
+          "item": "I-90",
+          "name": "sugar cane",
+          "uom": "Nos",
+          "qty": 1,
+          "rate": 1.3,
+          "amount": 1.3
+        },
+        "requests": [
+          {
+            "method": "retail.domains.purchase.line_fill.fill_line",
+            "ms": 107,
+            "bytes": 2604
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 71,
+            "bytes": 1309
+          }
+        ],
+        "browser_ms": {
+          "LayoutDuration": 6,
+          "RecalcStyleDuration": 15,
+          "ScriptDuration": 12,
+          "TaskDuration": 220
+        }
+      },
+      {
+        "row": 17,
+        "add_ms": 371,
+        "settled_ms": 757,
+        "stats": {
+          "grid_refresh": {
+            "calls": 3,
+            "sync_ms": 51.599999994039536
+          },
+          "items_refresh": {
+            "calls": 3,
+            "sync_ms": 51.900000005960464
+          },
+          "row_dependency": {
+            "calls": 82,
+            "sync_ms": 0.8999999910593033
+          },
+          "totals": {
+            "calls": 2,
+            "sync_ms": 14.600000008940697
+          }
+        },
+        "long_tasks": [
+          69,
+          62,
+          50
+        ],
+        "values": {
+          "item": "I-88",
+          "name": "Sugar ",
+          "uom": "Kg",
+          "qty": 1,
+          "rate": 9.52,
+          "amount": 9.52
+        },
+        "requests": [
+          {
+            "method": "retail.domains.purchase.line_fill.fill_line",
+            "ms": 257,
+            "bytes": 2676
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 67,
+            "bytes": 1377
+          }
+        ],
+        "browser_ms": {
+          "LayoutDuration": 9,
+          "RecalcStyleDuration": 33,
+          "ScriptDuration": 22,
+          "TaskDuration": 293
+        }
+      },
+      {
+        "row": 18,
+        "add_ms": 195,
+        "settled_ms": 557,
+        "stats": {
+          "grid_refresh": {
+            "calls": 3,
+            "sync_ms": 23.5
+          },
+          "items_refresh": {
+            "calls": 3,
+            "sync_ms": 23.80000001192093
+          },
+          "row_dependency": {
+            "calls": 86,
+            "sync_ms": 0.5999999940395355
+          },
+          "totals": {
+            "calls": 2,
+            "sync_ms": 14
+          }
+        },
+        "long_tasks": [
+          55
+        ],
+        "values": {
+          "item": "I-57",
+          "name": "Sugar Juice",
+          "uom": "Nos",
+          "qty": 1,
+          "rate": 28.57,
+          "amount": 28.57
+        },
+        "requests": [
+          {
+            "method": "retail.domains.purchase.line_fill.fill_line",
+            "ms": 113,
+            "bytes": 2801
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 53,
+            "bytes": 1445
+          }
+        ],
+        "browser_ms": {
+          "LayoutDuration": 7,
+          "RecalcStyleDuration": 15,
+          "ScriptDuration": 11,
+          "TaskDuration": 209
+        }
+      },
+      {
+        "row": 19,
+        "add_ms": 221,
+        "settled_ms": 629,
+        "stats": {
+          "grid_refresh": {
+            "calls": 3,
+            "sync_ms": 23.49999998509884
+          },
+          "items_refresh": {
+            "calls": 3,
+            "sync_ms": 23.49999998509884
+          },
+          "row_dependency": {
+            "calls": 92,
+            "sync_ms": 0.9000000208616257
+          },
+          "totals": {
+            "calls": 2,
+            "sync_ms": 22.5
+          }
+        },
+        "long_tasks": [
+          64,
+          55
+        ],
+        "values": {
+          "item": "I-84",
+          "name": "DEMO Flour",
+          "uom": "Kg",
+          "qty": 1,
+          "rate": 2.86,
+          "amount": 2.86
+        },
+        "requests": [
+          {
+            "method": "retail.domains.purchase.line_fill.fill_line",
+            "ms": 132,
+            "bytes": 2835
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 87,
+            "bytes": 1513
+          }
+        ],
+        "browser_ms": {
+          "LayoutDuration": 6,
+          "RecalcStyleDuration": 15,
+          "ScriptDuration": 18,
+          "TaskDuration": 249
+        }
+      },
+      {
+        "row": 20,
+        "add_ms": 192,
+        "settled_ms": 550,
+        "stats": {
+          "grid_refresh": {
+            "calls": 3,
+            "sync_ms": 27.700000002980232
+          },
+          "items_refresh": {
+            "calls": 3,
+            "sync_ms": 27.799999997019768
+          },
+          "row_dependency": {
+            "calls": 97,
+            "sync_ms": 0.3999999910593033
+          },
+          "totals": {
+            "calls": 2,
+            "sync_ms": 12.899999991059303
+          }
+        },
+        "long_tasks": [],
+        "values": {
+          "item": "I-81",
+          "name": "mik'e",
+          "uom": "Nos",
+          "qty": 1,
+          "rate": 3.63,
+          "amount": 3.63
+        },
+        "requests": [
+          {
+            "method": "retail.domains.purchase.line_fill.fill_line",
+            "ms": 112,
+            "bytes": 2836
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 54,
+            "bytes": 1581
+          }
+        ],
+        "browser_ms": {
+          "LayoutDuration": 5,
+          "RecalcStyleDuration": 15,
+          "ScriptDuration": 14,
+          "TaskDuration": 232
+        }
+      }
+    ],
+    "errors": []
+  },
+  "quick": {
+    "doctype": "Purchase Invoice",
+    "mode": "quick",
+    "cssDiagnostic": {
+      "globalModalHasRules": 0
+    },
+    "samples": [
+      {
+        "row": 1,
+        "add_ms": 85,
+        "settled_ms": 1414,
+        "stats": {
+          "totals": {
+            "calls": 3,
+            "sync_ms": 5.499999985098839
+          },
+          "quick_render": {
+            "calls": 2,
+            "sync_ms": 5.800000011920929
+          },
+          "grid_refresh": {
+            "calls": 3,
+            "sync_ms": 0.19999998807907104
+          },
+          "items_refresh": {
+            "calls": 3,
+            "sync_ms": 0.29999998211860657
+          }
+        },
+        "long_tasks": [],
+        "values": {
+          "item": "I-79",
+          "name": "RIng ",
+          "uom": "Nos",
+          "qty": 1,
+          "rate": 10,
+          "amount": 10
+        },
+        "requests": [
+          {
+            "method": "retail.domains.purchase.line_fill.fill_line",
+            "ms": 35,
+            "bytes": 1599
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 49,
+            "bytes": 313
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 15,
+            "bytes": 313
+          }
+        ],
+        "browser_ms": {
+          "LayoutDuration": 7,
+          "RecalcStyleDuration": 11,
+          "ScriptDuration": 13,
+          "TaskDuration": 186
+        }
+      },
+      {
+        "row": 2,
+        "add_ms": 85,
+        "settled_ms": 1384,
+        "stats": {
+          "totals": {
+            "calls": 3,
+            "sync_ms": 4.000000014901161
+          },
+          "quick_render": {
+            "calls": 2,
+            "sync_ms": 5.299999997019768
+          },
+          "grid_refresh": {
+            "calls": 3,
+            "sync_ms": 0
+          },
+          "items_refresh": {
+            "calls": 3,
+            "sync_ms": 0.20000000298023224
+          }
+        },
+        "long_tasks": [],
+        "values": {
+          "item": "I-95",
+          "name": "laptop",
+          "uom": "Nos",
+          "qty": 1,
+          "rate": 0,
+          "amount": 0
+        },
+        "requests": [
+          {
+            "method": "retail.domains.purchase.line_fill.fill_line",
+            "ms": 38,
+            "bytes": 1638
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 22,
+            "bytes": 381
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 16,
+            "bytes": 381
+          }
+        ],
+        "browser_ms": {
+          "LayoutDuration": 6,
+          "RecalcStyleDuration": 10,
+          "ScriptDuration": 13,
+          "TaskDuration": 189
+        }
+      },
+      {
+        "row": 3,
+        "add_ms": 92,
+        "settled_ms": 1383,
+        "stats": {
+          "totals": {
+            "calls": 3,
+            "sync_ms": 4.800000011920929
+          },
+          "quick_render": {
+            "calls": 2,
+            "sync_ms": 5.299999997019768
+          },
+          "grid_refresh": {
+            "calls": 3,
+            "sync_ms": 0.10000000894069672
+          },
+          "items_refresh": {
+            "calls": 3,
+            "sync_ms": 0.30000002682209015
+          }
+        },
+        "long_tasks": [],
+        "values": {
+          "item": "I-94",
+          "name": "driver",
+          "uom": "Nos",
+          "qty": 1,
+          "rate": 0,
+          "amount": 0
+        },
+        "requests": [
+          {
+            "method": "retail.domains.purchase.line_fill.fill_line",
+            "ms": 41,
+            "bytes": 1698
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 19,
+            "bytes": 449
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 17,
+            "bytes": 449
+          }
+        ],
+        "browser_ms": {
+          "LayoutDuration": 6,
+          "RecalcStyleDuration": 10,
+          "ScriptDuration": 11,
+          "TaskDuration": 191
+        }
+      },
+      {
+        "row": 4,
+        "add_ms": 123,
+        "settled_ms": 1508,
+        "stats": {
+          "totals": {
+            "calls": 3,
+            "sync_ms": 5.499999985098839
+          },
+          "quick_render": {
+            "calls": 2,
+            "sync_ms": 5.899999991059303
+          },
+          "grid_refresh": {
+            "calls": 3,
+            "sync_ms": 0.09999999403953552
+          },
+          "items_refresh": {
+            "calls": 3,
+            "sync_ms": 0.20000000298023224
+          }
+        },
+        "long_tasks": [],
+        "values": {
+          "item": "I-93",
+          "name": "AJINO MOTTO",
+          "uom": "Kg",
+          "qty": 1,
+          "rate": 10,
+          "amount": 10
+        },
+        "requests": [
+          {
+            "method": "retail.domains.purchase.line_fill.fill_line",
+            "ms": 70,
+            "bytes": 1801
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 42,
+            "bytes": 517
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 20,
+            "bytes": 517
+          }
+        ],
+        "browser_ms": {
+          "LayoutDuration": 7,
+          "RecalcStyleDuration": 11,
+          "ScriptDuration": 14,
+          "TaskDuration": 194
+        }
+      },
+      {
+        "row": 5,
+        "add_ms": 90,
+        "settled_ms": 1418,
+        "stats": {
+          "totals": {
+            "calls": 3,
+            "sync_ms": 6.800000011920929
+          },
+          "quick_render": {
+            "calls": 2,
+            "sync_ms": 5.800000011920929
+          },
+          "grid_refresh": {
+            "calls": 3,
+            "sync_ms": 0
+          },
+          "items_refresh": {
+            "calls": 3,
+            "sync_ms": 0
+          }
+        },
+        "long_tasks": [],
+        "values": {
+          "item": "I-91",
+          "name": "AJINO MOTTO 100 GM",
+          "uom": "Kg",
+          "qty": 1,
+          "rate": 0,
+          "amount": 0
+        },
+        "requests": [
+          {
+            "method": "retail.domains.purchase.line_fill.fill_line",
+            "ms": 40,
+            "bytes": 1870
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 48,
+            "bytes": 585
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 23,
+            "bytes": 585
+          }
+        ],
+        "browser_ms": {
+          "LayoutDuration": 6,
+          "RecalcStyleDuration": 10,
+          "ScriptDuration": 11,
+          "TaskDuration": 196
+        }
+      },
+      {
+        "row": 6,
+        "add_ms": 102,
+        "settled_ms": 1472,
+        "stats": {
+          "totals": {
+            "calls": 3,
+            "sync_ms": 7.099999979138374
+          },
+          "quick_render": {
+            "calls": 2,
+            "sync_ms": 6.799999982118607
+          },
+          "grid_refresh": {
+            "calls": 3,
+            "sync_ms": 0
+          },
+          "items_refresh": {
+            "calls": 3,
+            "sync_ms": 0
+          }
+        },
+        "long_tasks": [],
+        "values": {
+          "item": "I-44",
+          "name": "Scanner ",
+          "uom": "Nos",
+          "qty": 1,
+          "rate": 2.86,
+          "amount": 2.86
+        },
+        "requests": [
+          {
+            "method": "retail.domains.purchase.line_fill.fill_line",
+            "ms": 51,
+            "bytes": 1949
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 28,
+            "bytes": 653
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 22,
+            "bytes": 653
+          }
+        ],
+        "browser_ms": {
+          "LayoutDuration": 6,
+          "RecalcStyleDuration": 10,
+          "ScriptDuration": 14,
+          "TaskDuration": 200
+        }
+      },
+      {
+        "row": 7,
+        "add_ms": 95,
+        "settled_ms": 1391,
+        "stats": {
+          "totals": {
+            "calls": 3,
+            "sync_ms": 9.299999997019768
+          },
+          "quick_render": {
+            "calls": 2,
+            "sync_ms": 6.599999979138374
+          },
+          "grid_refresh": {
+            "calls": 3,
+            "sync_ms": 0
+          },
+          "items_refresh": {
+            "calls": 3,
+            "sync_ms": 0.09999999403953552
+          }
+        },
+        "long_tasks": [],
+        "values": {
+          "item": "I-7",
+          "name": "ORANGE ",
+          "uom": "Box",
+          "qty": 1,
+          "rate": 1.9,
+          "amount": 1.9
+        },
+        "requests": [
+          {
+            "method": "retail.domains.purchase.line_fill.fill_line",
+            "ms": 43,
+            "bytes": 2019
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 24,
+            "bytes": 721
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 26,
+            "bytes": 721
+          }
+        ],
+        "browser_ms": {
+          "LayoutDuration": 7,
+          "RecalcStyleDuration": 11,
+          "ScriptDuration": 13,
+          "TaskDuration": 213
+        }
+      },
+      {
+        "row": 8,
+        "add_ms": 150,
+        "settled_ms": 1535,
+        "stats": {
+          "totals": {
+            "calls": 3,
+            "sync_ms": 8.399999991059303
+          },
+          "quick_render": {
+            "calls": 2,
+            "sync_ms": 7.199999988079071
+          },
+          "grid_refresh": {
+            "calls": 3,
+            "sync_ms": 0.10000000894069672
+          },
+          "items_refresh": {
+            "calls": 3,
+            "sync_ms": 0.30000002682209015
+          }
+        },
+        "long_tasks": [
+          61
+        ],
+        "values": {
+          "item": "I-30",
+          "name": "Adler pos",
+          "uom": "Nos",
+          "qty": 1,
+          "rate": 142.86,
+          "amount": 142.86
+        },
+        "requests": [
+          {
+            "method": "retail.domains.purchase.line_fill.fill_line",
+            "ms": 83,
+            "bytes": 2104
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 35,
+            "bytes": 789
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 28,
+            "bytes": 789
+          }
+        ],
+        "browser_ms": {
+          "LayoutDuration": 7,
+          "RecalcStyleDuration": 13,
+          "ScriptDuration": 12,
+          "TaskDuration": 219
+        }
+      },
+      {
+        "row": 9,
+        "add_ms": 107,
+        "settled_ms": 1439,
+        "stats": {
+          "totals": {
+            "calls": 3,
+            "sync_ms": 10
+          },
+          "quick_render": {
+            "calls": 2,
+            "sync_ms": 7.300000011920929
+          },
+          "grid_refresh": {
+            "calls": 3,
+            "sync_ms": 0
+          },
+          "items_refresh": {
+            "calls": 3,
+            "sync_ms": 0.09999999403953552
+          }
+        },
+        "long_tasks": [],
+        "values": {
+          "item": "I-21",
+          "name": "Flour",
+          "uom": "Kg",
+          "qty": 1,
+          "rate": 19.05,
+          "amount": 19.05
+        },
+        "requests": [
+          {
+            "method": "retail.domains.purchase.line_fill.fill_line",
+            "ms": 53,
+            "bytes": 2150
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 49,
+            "bytes": 857
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 56,
+            "bytes": 857
+          }
+        ],
+        "browser_ms": {
+          "LayoutDuration": 7,
+          "RecalcStyleDuration": 11,
+          "ScriptDuration": 12,
+          "TaskDuration": 272
+        }
+      },
+      {
+        "row": 10,
+        "add_ms": 105,
+        "settled_ms": 1430,
+        "stats": {
+          "totals": {
+            "calls": 3,
+            "sync_ms": 10.400000020861626
+          },
+          "quick_render": {
+            "calls": 2,
+            "sync_ms": 7.300000011920929
+          },
+          "grid_refresh": {
+            "calls": 3,
+            "sync_ms": 0
+          },
+          "items_refresh": {
+            "calls": 3,
+            "sync_ms": 0
+          }
+        },
+        "long_tasks": [],
+        "values": {
+          "item": "I-20",
+          "name": "Book",
+          "uom": "Nos",
+          "qty": 1,
+          "rate": 95.24,
+          "amount": 95.24
+        },
+        "requests": [
+          {
+            "method": "retail.domains.purchase.line_fill.fill_line",
+            "ms": 50,
+            "bytes": 2213
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 52,
+            "bytes": 925
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 30,
+            "bytes": 925
+          }
+        ],
+        "browser_ms": {
+          "LayoutDuration": 6,
+          "RecalcStyleDuration": 10,
+          "ScriptDuration": 12,
+          "TaskDuration": 200
+        }
+      },
+      {
+        "row": 11,
+        "add_ms": 103,
+        "settled_ms": 1423,
+        "stats": {
+          "totals": {
+            "calls": 3,
+            "sync_ms": 11.100000008940697
+          },
+          "quick_render": {
+            "calls": 2,
+            "sync_ms": 6.799999997019768
+          },
+          "grid_refresh": {
+            "calls": 3,
+            "sync_ms": 0.09999999403953552
+          },
+          "items_refresh": {
+            "calls": 3,
+            "sync_ms": 0.09999999403953552
+          }
+        },
+        "long_tasks": [],
+        "values": {
+          "item": "I-28",
+          "name": "cup",
+          "uom": "Nos",
+          "qty": 1,
+          "rate": 1.9,
+          "amount": 1.9
+        },
+        "requests": [
+          {
+            "method": "retail.domains.purchase.line_fill.fill_line",
+            "ms": 52,
+            "bytes": 2263
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 42,
+            "bytes": 993
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 31,
+            "bytes": 993
+          }
+        ],
+        "browser_ms": {
+          "LayoutDuration": 6,
+          "RecalcStyleDuration": 9,
+          "ScriptDuration": 13,
+          "TaskDuration": 204
+        }
+      },
+      {
+        "row": 12,
+        "add_ms": 115,
+        "settled_ms": 1506,
+        "stats": {
+          "totals": {
+            "calls": 3,
+            "sync_ms": 12.699999988079071
+          },
+          "quick_render": {
+            "calls": 2,
+            "sync_ms": 6.899999991059303
+          },
+          "grid_refresh": {
+            "calls": 3,
+            "sync_ms": 0
+          },
+          "items_refresh": {
+            "calls": 3,
+            "sync_ms": 0.19999998807907104
+          }
+        },
+        "long_tasks": [
+          50
+        ],
+        "values": {
+          "item": "I-46",
+          "name": "Charger",
+          "uom": "Nos",
+          "qty": 1,
+          "rate": 10,
+          "amount": 10
+        },
+        "requests": [
+          {
+            "method": "retail.domains.purchase.line_fill.fill_line",
+            "ms": 57,
+            "bytes": 2361
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 40,
+            "bytes": 1061
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 32,
+            "bytes": 1061
+          }
+        ],
+        "browser_ms": {
+          "LayoutDuration": 6,
+          "RecalcStyleDuration": 10,
+          "ScriptDuration": 11,
+          "TaskDuration": 235
+        }
+      },
+      {
+        "row": 13,
+        "add_ms": 113,
+        "settled_ms": 1513,
+        "stats": {
+          "totals": {
+            "calls": 3,
+            "sync_ms": 13.099999994039536
+          },
+          "quick_render": {
+            "calls": 2,
+            "sync_ms": 7.399999991059303
+          },
+          "grid_refresh": {
+            "calls": 3,
+            "sync_ms": 0.09999999403953552
+          },
+          "items_refresh": {
+            "calls": 3,
+            "sync_ms": 0.29999999701976776
+          }
+        },
+        "long_tasks": [],
+        "values": {
+          "item": "I-42",
+          "name": "Pendrive",
+          "uom": "Nos",
+          "qty": 1,
+          "rate": 10,
+          "amount": 10
+        },
+        "requests": [
+          {
+            "method": "retail.domains.purchase.line_fill.fill_line",
+            "ms": 57,
+            "bytes": 2408
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 39,
+            "bytes": 1105
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 36,
+            "bytes": 1105
+          }
+        ],
+        "browser_ms": {
+          "LayoutDuration": 6,
+          "RecalcStyleDuration": 10,
+          "ScriptDuration": 12,
+          "TaskDuration": 207
+        }
+      },
+      {
+        "row": 14,
+        "add_ms": 114,
+        "settled_ms": 1539,
+        "stats": {
+          "totals": {
+            "calls": 3,
+            "sync_ms": 14.799999997019768
+          },
+          "quick_render": {
+            "calls": 2,
+            "sync_ms": 9.5
+          },
+          "grid_refresh": {
+            "calls": 3,
+            "sync_ms": 0
+          },
+          "items_refresh": {
+            "calls": 3,
+            "sync_ms": 0.09999999403953552
+          }
+        },
+        "long_tasks": [
+          50
+        ],
+        "values": {
+          "item": "I-87",
+          "name": "DEMO Chocolate",
+          "uom": "Kg",
+          "qty": 1,
+          "rate": 19.05,
+          "amount": 19.05
+        },
+        "requests": [
+          {
+            "method": "retail.domains.purchase.line_fill.fill_line",
+            "ms": 55,
+            "bytes": 2509
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 63,
+            "bytes": 1173
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 40,
+            "bytes": 1173
+          }
+        ],
+        "browser_ms": {
+          "LayoutDuration": 7,
+          "RecalcStyleDuration": 10,
+          "ScriptDuration": 12,
+          "TaskDuration": 215
+        }
+      },
+      {
+        "row": 15,
+        "add_ms": 112,
+        "settled_ms": 1526,
+        "stats": {
+          "totals": {
+            "calls": 3,
+            "sync_ms": 13.999999985098839
+          },
+          "quick_render": {
+            "calls": 2,
+            "sync_ms": 7.0999999940395355
+          },
+          "grid_refresh": {
+            "calls": 3,
+            "sync_ms": 0
+          },
+          "items_refresh": {
+            "calls": 3,
+            "sync_ms": 0.09999999403953552
+          }
+        },
+        "long_tasks": [],
+        "values": {
+          "item": "I-89",
+          "name": "Sugar 100 gm ",
+          "uom": "Nos",
+          "qty": 1,
+          "rate": 1.39,
+          "amount": 1.39
+        },
+        "requests": [
+          {
+            "method": "retail.domains.purchase.line_fill.fill_line",
+            "ms": 60,
+            "bytes": 2611
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 57,
+            "bytes": 1241
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 36,
+            "bytes": 1241
+          }
+        ],
+        "browser_ms": {
+          "LayoutDuration": 6,
+          "RecalcStyleDuration": 9,
+          "ScriptDuration": 12,
+          "TaskDuration": 200
+        }
+      },
+      {
+        "row": 16,
+        "add_ms": 113,
+        "settled_ms": 1555,
+        "stats": {
+          "totals": {
+            "calls": 3,
+            "sync_ms": 16.600000008940697
+          },
+          "quick_render": {
+            "calls": 2,
+            "sync_ms": 8.299999997019768
+          },
+          "grid_refresh": {
+            "calls": 3,
+            "sync_ms": 0
+          },
+          "items_refresh": {
+            "calls": 3,
+            "sync_ms": 0.09999999403953552
+          }
+        },
+        "long_tasks": [],
+        "values": {
+          "item": "I-90",
+          "name": "sugar cane",
+          "uom": "Nos",
+          "qty": 1,
+          "rate": 1.3,
+          "amount": 1.3
+        },
+        "requests": [
+          {
+            "method": "retail.domains.purchase.line_fill.fill_line",
+            "ms": 58,
+            "bytes": 2604
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 53,
+            "bytes": 1309
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 58,
+            "bytes": 1309
+          }
+        ],
+        "browser_ms": {
+          "LayoutDuration": 6,
+          "RecalcStyleDuration": 10,
+          "ScriptDuration": 15,
+          "TaskDuration": 247
+        }
+      },
+      {
+        "row": 17,
+        "add_ms": 150,
+        "settled_ms": 1466,
+        "stats": {
+          "totals": {
+            "calls": 3,
+            "sync_ms": 20
+          },
+          "quick_render": {
+            "calls": 2,
+            "sync_ms": 12.600000008940697
+          },
+          "grid_refresh": {
+            "calls": 3,
+            "sync_ms": 0.29999999701976776
+          },
+          "items_refresh": {
+            "calls": 3,
+            "sync_ms": 0.3999999910593033
+          }
+        },
+        "long_tasks": [
+          59,
+          73
+        ],
+        "values": {
+          "item": "I-88",
+          "name": "Sugar ",
+          "uom": "Kg",
+          "qty": 1,
+          "rate": 9.52,
+          "amount": 9.52
+        },
+        "requests": [
+          {
+            "method": "retail.domains.purchase.line_fill.fill_line",
+            "ms": 79,
+            "bytes": 2676
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 41,
+            "bytes": 1377
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 44,
+            "bytes": 1377
+          }
+        ],
+        "browser_ms": {
+          "LayoutDuration": 9,
+          "RecalcStyleDuration": 15,
+          "ScriptDuration": 16,
+          "TaskDuration": 255
+        }
+      },
+      {
+        "row": 18,
+        "add_ms": 167,
+        "settled_ms": 1492,
+        "stats": {
+          "totals": {
+            "calls": 3,
+            "sync_ms": 17.400000005960464
+          },
+          "quick_render": {
+            "calls": 2,
+            "sync_ms": 9.700000002980232
+          },
+          "grid_refresh": {
+            "calls": 3,
+            "sync_ms": 0
+          },
+          "items_refresh": {
+            "calls": 3,
+            "sync_ms": 0.09999999403953552
+          }
+        },
+        "long_tasks": [
+          53
+        ],
+        "values": {
+          "item": "I-57",
+          "name": "Sugar Juice",
+          "uom": "Nos",
+          "qty": 1,
+          "rate": 28.57,
+          "amount": 28.57
+        },
+        "requests": [
+          {
+            "method": "retail.domains.purchase.line_fill.fill_line",
+            "ms": 103,
+            "bytes": 2801
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 48,
+            "bytes": 1445
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 42,
+            "bytes": 1445
+          }
+        ],
+        "browser_ms": {
+          "LayoutDuration": 7,
+          "RecalcStyleDuration": 10,
+          "ScriptDuration": 19,
+          "TaskDuration": 246
+        }
+      },
+      {
+        "row": 19,
+        "add_ms": 142,
+        "settled_ms": 1478,
+        "stats": {
+          "totals": {
+            "calls": 3,
+            "sync_ms": 18.30000001192093
+          },
+          "quick_render": {
+            "calls": 2,
+            "sync_ms": 8.5
+          },
+          "grid_refresh": {
+            "calls": 3,
+            "sync_ms": 0
+          },
+          "items_refresh": {
+            "calls": 3,
+            "sync_ms": 0
+          }
+        },
+        "long_tasks": [
+          53
+        ],
+        "values": {
+          "item": "I-84",
+          "name": "DEMO Flour",
+          "uom": "Kg",
+          "qty": 1,
+          "rate": 2.86,
+          "amount": 2.86
+        },
+        "requests": [
+          {
+            "method": "retail.domains.purchase.line_fill.fill_line",
+            "ms": 83,
+            "bytes": 2835
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 55,
+            "bytes": 1513
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 43,
+            "bytes": 1513
+          }
+        ],
+        "browser_ms": {
+          "LayoutDuration": 7,
+          "RecalcStyleDuration": 10,
+          "ScriptDuration": 17,
+          "TaskDuration": 223
+        }
+      },
+      {
+        "row": 20,
+        "add_ms": 126,
+        "settled_ms": 1464,
+        "stats": {
+          "totals": {
+            "calls": 3,
+            "sync_ms": 18.400000005960464
+          },
+          "quick_render": {
+            "calls": 2,
+            "sync_ms": 9.300000011920929
+          },
+          "grid_refresh": {
+            "calls": 3,
+            "sync_ms": 0.09999999403953552
+          },
+          "items_refresh": {
+            "calls": 3,
+            "sync_ms": 0.20000000298023224
+          }
+        },
+        "long_tasks": [],
+        "values": {
+          "item": "I-81",
+          "name": "mik'e",
+          "uom": "Nos",
+          "qty": 1,
+          "rate": 3.63,
+          "amount": 3.63
+        },
+        "requests": [
+          {
+            "method": "retail.domains.purchase.line_fill.fill_line",
+            "ms": 69,
+            "bytes": 2836
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 61,
+            "bytes": 1581
+          },
+          {
+            "method": "retail.domains.transactions.vat.get_transaction_vat_tax_rows",
+            "ms": 43,
+            "bytes": 1581
+          }
+        ],
+        "browser_ms": {
+          "LayoutDuration": 7,
+          "RecalcStyleDuration": 10,
+          "ScriptDuration": 13,
+          "TaskDuration": 215
+        }
+      }
+    ],
+    "errors": []
+  }
+}

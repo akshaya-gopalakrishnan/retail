@@ -24,11 +24,11 @@ test('row refresh keeps page and grid positions, returns native result, and inst
     assert.equal(f.page.scrollTop,900);assert.equal(f.container.scrollTop,180);assert.equal(f.container.scrollLeft,240);
     f.page.scrollTop=600;f.grid.refresh();assert.equal(f.page.scrollTop,600,'Later manual scroll is respected');
 });
-test('Add Row focus preserves current position and only reveals the nearest row',()=>{
+test('Add Row focus preserves current position without scrolling the page',()=>{
     const f=fixture();f.grid.set_focus_on_row();f.timers.pop()();
     assert.equal(f.focused.length,1);assert.equal(f.focused[0].preventScroll,true);
     assert.equal(f.page.scrollTop,900);assert.equal(f.container.scrollLeft,240);
-    assert.equal(f.revealed[0].block,'nearest');assert.equal(f.nativeFocus(),0);
+    assert.equal(f.revealed.length,0);assert.equal(f.nativeFocus(),0);
 });
 test('expanded row mode retains native focus and a removed row does not throw',()=>{
     const f=fixture();f.grid.allow_on_grid_editing=()=>false;f.grid.set_focus_on_row(0);assert.equal(f.nativeFocus(),1);
