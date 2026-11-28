@@ -1,5 +1,9 @@
 (() => {
     const applies = frm => !["is_pos", "is_consolidated", "custom_is_van_sale"].some(f => Number(frm.doc[f]));
+    // Mirror the server's direct-operation privilege to avoid an approval RPC on
+    // every Save/Submit. The server still checks the current assigned roles.
+    const directOperations = () => frappe.session.user === "Administrator" ||
+        ["Admin", "Customer Administrator"].some(role => frappe.user.has_role(role));
     const fields = new Set(["rate", "price_list_rate", "discount_percentage", "discount_amount",
         "additional_discount_percentage", "margin_type", "margin_rate_or_amount", "custom_foc_qty",
         "custom_rate_including_vat", "custom_amount_including_vat", "ignore_pricing_rule", "is_return", "return_against"]);
@@ -28,8 +32,8 @@
                 async primary_action(values) {
                     dialog.disable_primary_action();
                     try {
-                        await frappe.after_ajax();
                         const result = await frappe.call({method: "retail.backend_sales_admin.authorize",
+                            freeze: true, freeze_message: __("Verifying approval…"),
                             type: "POST", args: {doc: frm.doc, user: values.user, password: values.password}});
                         frm.__retailSalesApprovals = [...(frm.__retailSalesApprovals || []), result.message].slice(-100);
                         frm.doc._retail_sales_approval = frm.__retailSalesApprovals;
@@ -55,6 +59,8 @@
         return frm.__retailApprovalPending;
     }
     async function ensure(frm, saving = false) {
+        clearTimeout(frm.__retailApprovalTimer);
+        if (directOperations()) return;
         if (!applies(frm) || Number(frm.doc.docstatus) !== 0) return;
         if (frm.__retailApprovalPending) await frm.__retailApprovalPending;
         clearTimeout(frm.__retailApprovalTimer);
@@ -63,7 +69,8 @@
         // request still validates every token and approved price on the server.
         if (saving && frm.doc._retail_sales_approval.length && !frm.__retailUnapprovedEdit) return;
         const generation = frm.__retailApprovalGeneration || 0;
-        const result = await frappe.call({method: "retail.backend_sales_admin.requires_approval", type: "POST", args: {doc: frm.doc}});
+        const result = await frappe.call({method: "retail.backend_sales_admin.requires_approval", type: "POST",
+            freeze: saving, freeze_message: __("Checking invoice approval…"), args: {doc: frm.doc}});
         // An older lookup must not reopen approval after a newer one completed.
         if (generation !== (frm.__retailApprovalGeneration || 0)) return;
         if (result.message) await approve(frm);
@@ -71,6 +78,11 @@
     frappe.ui.form.on("Sales Invoice", {
         refresh(frm) {
             if (!applies(frm)) return;
+            if (directOperations()) {
+                clearTimeout(frm.__retailApprovalTimer);
+                $(frm.wrapper).off("change.retailApproval");
+                return;
+            }
             // Listen only to user edits; native pricing and tax calculations keep their handlers.
             $(frm.wrapper).off("change.retailApproval").on("change.retailApproval", "input, select", function (event) {
                 const field = this.dataset.fieldname || this.closest?.("[data-fieldname]")?.dataset.fieldname;

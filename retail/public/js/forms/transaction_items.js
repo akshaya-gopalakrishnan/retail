@@ -448,10 +448,18 @@
 			.map(key => [key, request.args[key]])]);
 	// Keep read results for one native field-handler chain, including nested
 	// rate/UOM handlers. Release them when that chain finishes, never by TTL.
+	window.retail.transaction_items.withTrackingUpdates = async (frm, update) => {
+		const nested = frm.__retail_light_depth || 0;
+		frm.__retail_light_depth = nested + 1;
+		if (!nested) holdItemGrid(frm);
+		try { return await update(); }
+		finally { releaseItemGrid(frm); }
+	};
 	const heavyItemForms = ["Purchase Order", "Sales Invoice", "Purchase Receipt", "Purchase Invoice"];
 	const calculatedItemFields = ["qty", "stock_qty", "rate", "amount", "price_list_rate", "net_rate", "net_amount",
 		"discount_percentage", "discount_amount", "margin_type", "margin_rate_or_amount", "item_tax_rate",
 		"custom_rate_including_vat", "custom_amount_including_vat", "custom_vat_amount", "custom_total_stock_qty"];
+
 
 	function installLightTotals(frm) {
 		if (!heavyItemForms.includes(frm?.doc?.doctype)) return;
@@ -479,6 +487,24 @@
 	}
 
 	function holdItemGrid(frm) {
+		// Totals update many parent fields. Each native update otherwise scans
+		// every dependency and refreshes every section/tab again. Keep the field
+		// updates and calculations, then resolve the final layout once.
+		if (["Sales Invoice", "Purchase Invoice", "Purchase Receipt"].includes(frm.doc.doctype) && frm.layout) {
+			if (typeof frm.refresh_fields === "function") {
+				frm.__retail_saved_refresh_fields = frm.refresh_fields;
+				frm.__retail_full_refresh_pending = false;
+				frm.refresh_fields = function () { frm.__retail_full_refresh_pending = true; };
+			}
+			frm.__retail_layout_refresh = [];
+			for (const method of ["refresh_dependency", "refresh_sections"]) {
+				const original = frm.layout[method];
+				if (typeof original !== "function") continue;
+				const entry = {method, original, requested: false};
+				frm.__retail_layout_refresh.push(entry);
+				frm.layout[method] = function () { entry.requested = true; };
+			}
+		}
 		frm.__retail_item_names = (frm.doc.items || []).map(row => row.name).join("\u0001");
 		frm.__retail_item_refresh_pending = false;
 		snapshotItemFigures(frm);
@@ -532,11 +558,26 @@
 		const names = (frm.doc.items || []).map(row => row.name).join("\u0001");
 		const grid = frm.fields_dict?.items?.grid;
 		const missing = !grid || (frm.doc.items || []).some(row => row?.name && !grid.grid_rows_by_docname?.[row.name]);
-		if (refreshPending || names !== frm.__retail_item_names || missing) {
-			frm.refresh_field?.("items");
-			return;
+		const fullRefresh = frm.__retail_full_refresh_pending;
+		if (frm.__retail_saved_refresh_fields) frm.refresh_fields = frm.__retail_saved_refresh_fields;
+		delete frm.__retail_saved_refresh_fields;
+		delete frm.__retail_full_refresh_pending;
+		try {
+			if (fullRefresh) {
+				frm.refresh_fields();
+			} else if (refreshPending || names !== frm.__retail_item_names || missing) {
+				frm.refresh_field?.("items");
+			} else {
+				paintItemFigures(frm);
+			}
+		} finally {
+			const layoutRefresh = frm.__retail_layout_refresh || [];
+			delete frm.__retail_layout_refresh;
+			for (const entry of layoutRefresh) frm.layout[entry.method] = entry.original;
+			for (const entry of layoutRefresh) {
+				if (entry.requested) entry.original.call(frm.layout);
+			}
 		}
-		paintItemFigures(frm);
 	}
 
 	function snapshotItemFigures(frm) {

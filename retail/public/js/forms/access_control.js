@@ -1,6 +1,26 @@
+// Existing User edits must not turn password-manager autofill into a password reset.
+function retailUserPasswordGuard(frm) {
+    if (frm.is_new()) return;
+    const editing = frm.__retailPasswordEditing === frm.doc.name;
+    frm.toggle_enable("new_password", editing);
+    frm.fields_dict.new_password?.$input?.attr("autocomplete", "new-password");
+    if (!editing) {
+        frm.doc.new_password = "";
+        frm.refresh_field("new_password");
+        frm.add_custom_button(__("Change Password"), () => {
+            frm.__retailPasswordEditing = frm.doc.name;
+            frm.doc.new_password = "";
+            frm.refresh_field("new_password");
+            frm.toggle_enable("new_password", true);
+            frm.fields_dict.new_password?.$input?.trigger("focus");
+        }, __("Password"));
+    }
+}
+
 // Keep native User editors, filtered by the server to the actor's assigned access.
 frappe.ui.form.on("User", {
     refresh(frm) {
+        retailUserPasswordGuard(frm);
         if (frappe.boot.can_manage_access) {
             // The software team's editor authority does not require adding the
             // broader System Manager role to the user.
@@ -43,6 +63,16 @@ frappe.ui.form.on("User", {
         }
         // The security-rule editor remains with Super Admin; staff checkboxes are here.
         frm.remove_custom_button(__("Set User Permissions"), __("Permissions"));
+    },
+    before_save(frm) {
+        if (!frm.is_new() && frm.__retailPasswordEditing !== frm.doc.name) {
+            frm.doc.new_password = "";
+            frm.refresh_field("new_password");
+        }
+    },
+    after_save(frm) {
+        delete frm.__retailPasswordEditing;
+        retailUserPasswordGuard(frm);
     },
 });
 

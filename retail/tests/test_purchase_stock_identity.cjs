@@ -312,3 +312,48 @@ test('sales tracking Create Batch seeds the item and fills the saved batch into 
  quick[1]({name:'BATCH-NEW'});
  assert.equal(selected.field,'tracking_0');assert.equal(selected.value,'BATCH-NEW');
 });
+
+test('tracking rows run native updates sequentially inside one render batch before saving',async()=>{
+ const f=fixture('Purchase Invoice');let options,batches=0,active=0,maxActive=0,saves=0;
+ f.frm.doc.items=Array.from({length:12},(_,i)=>({idx:i+1,item_code:'batch',qty:1,doctype:'Purchase Invoice Item',name:'ROW'+i}));
+ f.frappe.ui.Dialog=class {constructor(opts){options=opts;}show(){}hide(){}disable_primary_action(){}enable_primary_action(){}};
+ f.frappe.show_alert=()=>{};
+ f.context.retail.transaction_items={withTrackingUpdates:async(frm,run)=>{batches++;assert.equal(frm,f.frm);return run();}};
+ f.frappe.model.set_value=async(_dt,name,values)=>{
+  active++;maxActive=Math.max(maxActive,active);await Promise.resolve();
+  Object.assign(f.frm.doc.items.find(r=>r.name===name),values);active--;
+ };
+ f.frm.save=async(action,callback)=>{assert.equal(action,'Save');assert.equal(active,0);saves++;callback({});};
+ await f.handlers['Purchase Invoice'].before_submit(f.frm);
+ await options.primary_action(Object.fromEntries(f.frm.doc.items.map((r,i)=>['tracking_'+i,'BATCH-'+i])));
+ assert.equal(batches,1);assert.equal(maxActive,1);assert.equal(saves,1);
+ for(const [i,row] of f.frm.doc.items.entries()){assert.equal(row.batch_no,'BATCH-'+i);assert.equal(row.use_serial_batch_fields,1);}
+});
+
+test('one tracking action reuses identical native batch reads and preserves each callback',async()=>{
+ const f=fixture('Purchase Invoice');let options,reads=0,callbacks=0,saves=0;
+ f.frm.doc.items=Array.from({length:3},(_,i)=>({idx:i+1,item_code:'batch',qty:1,uom:i===2?'Box':'Nos',doctype:'Purchase Invoice Item',name:'ROW'+i}));
+ f.frappe.ui.Dialog=class {constructor(opts){options=opts;}show(){}hide(){}disable_primary_action(){}enable_primary_action(){}};
+ f.frappe.show_alert=()=>{};
+ f.frappe.call=async()=>{reads++;return {message:7};};
+ const nativeCall=f.frappe.call;
+ f.frm.cscript={batch_no(_doc,_dt,name){
+  const row=f.frm.doc.items.find(r=>r.name===name);
+  f.frappe.call({method:'erpnext.stock.get_item_details.get_batch_based_item_price',args:{item_code:row.item_code,params:{batch_no:row.batch_no,uom:row.uom,items:[{name,child_docname:name,item_code:row.item_code,qty:row.qty}]}},callback(response){callbacks++;row.rate=response.message;}});
+ }};
+ const nativeHandler=f.frm.cscript.batch_no;
+ f.frappe.model.set_value=async(dt,name,values)=>{
+  Object.assign(f.frm.doc.items.find(r=>r.name===name),values);
+  await f.frm.cscript.batch_no(f.frm.doc,dt,name);
+  assert.equal(f.frappe.call,nativeCall,'Dispatcher restored before returning to the row handler');
+ };
+ f.frm.save=async(_action,callback)=>{assert.equal(callbacks,++saves*3);callback({});};
+ await f.handlers['Purchase Invoice'].before_submit(f.frm);
+ const values={tracking_0:'BATCH',tracking_1:'BATCH',tracking_2:'BATCH'};
+ await options.primary_action(values);
+ assert.equal(reads,2,'Same UOM reuses the read; different UOM performs its own read');
+ assert.equal(callbacks,3);assert.equal(f.frm.cscript.batch_no,nativeHandler);
+ assert.ok(f.frm.doc.items.every(r=>r.rate===7));
+ await options.primary_action(values);
+ assert.equal(reads,4,'A later action must read current prices again');
+});
