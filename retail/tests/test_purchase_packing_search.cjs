@@ -8,10 +8,12 @@ function fixture(call, options = {}) {
     const handlers = {};
     const timers = [];
     const calls = [];
+    const messages = [];
+    let keydown;
     let nativeRemovedBeforeFocus = false;
     const awesome = {ul: {}, list: [], close() {}, get_item(value) { return this.list.find(row => row.value === value); }};
     let text = 'Search';
-    const input = {0: {addEventListener() {}}, off(event) { if (event === "input" && !handlers["focus.retailSitePacking"]) nativeRemovedBeforeFocus = true; return this; },
+    const input = {0: {addEventListener(event, fn) { if (event === 'keydown') keydown = fn; }}, off(event) { if (event === "input" && !handlers["focus.retailSitePacking"]) nativeRemovedBeforeFocus = true; return this; },
         on(event, fn) { handlers[event] = fn; return this; },
         is() { return true; }, val() { return text; }, trigger() { return this; }};
     const control = {awesomplete: awesome, $input: input, df: {only_select: true, fieldtype: options.dynamic ? "Dynamic Link" : "Link", options: options.dynamic ? "quotation_to" : "Item"},
@@ -25,10 +27,10 @@ function fixture(call, options = {}) {
     const updates = [];
     const window = {retail: {}};
     const context = {window, document: {getElementById() { return true; }}, locals: {},
-        console, structuredClone, __: value => value,
+        console: {...console, error() {}}, structuredClone, __: value => value,
         $() { return {addClass() {}}; },
         setTimeout(fn) { timers.push(fn); return timers.length; }, clearTimeout() {},
-        frappe: {utils: {escape_html: String},
+        frappe: {utils: {escape_html: String}, msgprint(message) { messages.push(message); },
             meta: {has_field(dt, field) { return Object.hasOwn(options.row || {}, field); }},
             model: {async set_value(dt, name, field, value) { updates.push([field, value]); options.row[field] = value; }},
             ui: {form: {make_control: options => ({...options}), ControlLink: {prototype: {setup_awesomeplete() {}}}, on() {}}},
@@ -38,7 +40,13 @@ function fixture(call, options = {}) {
         context.frappe.ui.form.ControlLink.prototype.setup_awesomeplete.call(control);
         handlers['focus.retailSitePacking']?.call(control);
     } else window.retail.purchase_packing_search.bind(control, () => {});
-    return {awesome, calls, updates, nativeRemovedBeforeFocus, makeControl: options => context.frappe.ui.form.make_control(options),
+    awesome.goto = index => { awesome.selected = awesome.list[index]; };
+    awesome.select = () => handlers['awesomplete-select.retailPacking']({preventDefault() {}, originalEvent: {text: {value: awesome.selected.value}}});
+    Object.defineProperty(awesome, '_list', {get: () => awesome.list});
+    control.get_model_value = () => control.doc?.item_code || '';
+    return {awesome, calls, updates, control, messages, nativeRemovedBeforeFocus, makeControl: options => context.frappe.ui.form.make_control(options),
+        bind(select) { window.retail.purchase_packing_search.bind(control, select); },
+        key(key) { let prevented = false; keydown({key, preventDefault() { prevented = true; }, stopImmediatePropagation() {}}); return prevented; },
         input(value) { text = value; handlers['input.retailPacking'](); timers.shift()(); },
         select(value) { handlers['awesomplete-select.retailPacking']({preventDefault() {}, originalEvent: {text: {value}}}); }};
 }
@@ -118,4 +126,43 @@ test('Quotation dynamic customer filter is not evaluated during list constructio
     const f = fixture(async () => ({message: []}), {global: true, parent: 'Quotation', dynamic: true});
     assert.equal(f.nativeRemovedBeforeFocus, false);
     assert.equal(f.calls.length, 0);
+});
+
+test('Enter selects the first packing and uses the latest transaction binder', async () => {
+    const f = fixture(async () => ({message: [row(1)]}));
+    let first = 0, selected;
+    f.bind(() => { first++; });
+    f.bind(choice => { selected = choice.item_code; });
+    f.input('Search'); await flush();
+    f.awesome.opened = true;
+    assert.equal(f.key('Enter'), true);
+    await f.control.__retail_packing_selection;
+    assert.equal(selected, 'SKU1');
+    assert.equal(first, 0);
+});
+
+test('failed selection is visible and Enter retries it without an open dropdown', async () => {
+    const f = fixture(async () => ({message: [row(1)]}));
+    let attempts = 0;
+    f.bind(() => { if (++attempts === 1) throw new Error('Request failed'); });
+    f.input('Search'); await flush();
+    f.select(f.awesome.list[0].value);
+    await f.control.__retail_packing_selection;
+    assert.equal(f.messages[0].indicator, 'red');
+    assert.equal(f.control.__retail_packing_busy, false);
+    f.awesome.opened = false;
+    assert.equal(f.key('Enter'), true);
+    await f.control.__retail_packing_selection;
+    assert.equal(attempts, 2);
+    assert.equal(f.control.__retail_failed_packing_choice, undefined);
+});
+
+test('Enter retries an incomplete purchase row but leaves completed rows alone', async () => {
+    const line = {doctype: 'Purchase Invoice Item', item_code: 'SKU1', item_name: '', uom: ''};
+    const f = fixture(async () => ({message: []}), {row: line});
+    f.bind(choice => { assert.equal(choice.item_code, 'SKU1'); Object.assign(line, {item_name: 'Primer', uom: 'Nos'}); });
+    assert.equal(f.key('Enter'), true);
+    await f.control.__retail_packing_selection;
+    assert.equal(line.item_name, 'Primer');
+    assert.equal(f.key('Enter'), false);
 });

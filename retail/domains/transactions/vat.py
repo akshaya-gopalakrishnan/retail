@@ -59,11 +59,23 @@ def set_vat_rates(doc, method=None):
 		return
 	prepare_external_pos_taxes(doc)
 
+	_prefetch_vat_templates(doc)
 	for item in doc.get("items", []):
 		if not item.get("item_code"):
 			continue
 		if not item.meta.has_field("custom_rate_including_vat"):
 			continue
+		if not item.get("item_tax_template") and item.meta.has_field("item_tax_template"):
+			template = _get_transaction_item_vat_template(
+				item.item_code,
+				child_doctype=item.doctype,
+				parent_doctype=doc.doctype,
+				transaction_type=doc.get("transaction_type"),
+				company=doc.get("company"),
+				throw=not _is_external_pos(doc),
+			)
+			if template:
+				item.item_tax_template = template
 
 		vat_rate = get_transaction_item_vat_rate(
 			item.item_code,
@@ -71,6 +83,7 @@ def set_vat_rates(doc, method=None):
 			parent_doctype=doc.doctype,
 			transaction_type=doc.get("transaction_type"),
 			item_tax_template=item.get("item_tax_template"),
+			company=doc.get("company"),
 			throw=not _is_external_pos(doc),
 		)
 		exclusive_rate = flt(item.get("rate"))
@@ -133,6 +146,7 @@ def set_row_vat_amounts(doc, method=None):
 				item.get("item_code"), child_doctype=item.doctype,
 				parent_doctype=doc.doctype, transaction_type=doc.get("transaction_type"),
 				item_tax_template=item.get("item_tax_template"),
+				company=doc.get("company"),
 			)
 		amount = flt(item.get("qty")) * flt(item.get("rate"))
 		item.custom_vat_amount = flt(flt(amount) * rate / 100, item.precision("custom_vat_amount"))
@@ -222,6 +236,7 @@ def get_transaction_vat_tax_rows(doc):
 	tax_label = VAT_TAX_DOCTYPES.get(doc.doctype)
 	if not tax_label or not doc.meta.has_field("taxes"):
 		return {"tax_rows": [], "item_tax_rates": {}}
+	_prefetch_vat_templates(doc)
 
 	rows = []
 	for group in _get_transaction_vat_groups(doc, tax_label).values():
@@ -346,6 +361,7 @@ def get_transaction_item_vat_rate(
 		parent_doctype=parent_doctype,
 		transaction_type=transaction_type,
 		item_tax_template=item_tax_template,
+		company=company,
 		throw=throw,
 	)
 	if not template:
@@ -354,6 +370,62 @@ def get_transaction_item_vat_rate(
 	from retail.domains.item.vat_pricing import get_item_tax_rate
 
 	return flt(get_item_tax_rate(template))
+
+
+@frappe.whitelist()
+def get_transaction_item_vat_rates(
+	parent_doctype,
+	company=None,
+	transaction_type=None,
+	is_pos=0,
+	is_consolidated=0,
+	return_against=None,
+	docstatus=0,
+	custom_trading_vat_disabled=0,
+	rows=None,
+):
+	"""Return one VAT percent per line, using a single Item read for the batch."""
+	rows = frappe.parse_json(rows) or []
+	if not isinstance(rows, list):
+		rows = []
+	pending = [frappe.parse_json(row) if isinstance(row, str) else (row or {}) for row in rows]
+	context = frappe._dict(
+		doctype=parent_doctype,
+		company=company,
+		is_pos=int(is_pos or 0),
+		is_consolidated=int(is_consolidated or 0),
+		return_against=return_against,
+		docstatus=docstatus,
+		custom_trading_vat_disabled=custom_trading_vat_disabled,
+	)
+	if vat_disabled(context):
+		return [0.0] * len(pending)
+	_prefetch_vat_templates(frappe._dict(
+		doctype=parent_doctype,
+		company=company,
+		transaction_type=transaction_type,
+		items=[
+			frappe._dict(item_code=row.get("item_code"), item_tax_template=row.get("item_tax_template"))
+			for row in pending
+		],
+	))
+	return [
+		get_transaction_item_vat_rate(
+			row.get("item_code"),
+			child_doctype=row.get("child_doctype"),
+			parent_doctype=parent_doctype,
+			transaction_type=transaction_type,
+			item_tax_template=row.get("item_tax_template"),
+			throw=False,
+			company=company,
+			is_pos=is_pos,
+			is_consolidated=is_consolidated,
+			return_against=return_against,
+			docstatus=docstatus,
+			custom_trading_vat_disabled=custom_trading_vat_disabled,
+		)
+		for row in pending
+	]
 
 
 def _get_transaction_vat_groups(doc, tax_label):
@@ -368,6 +440,7 @@ def _get_transaction_vat_groups(doc, tax_label):
 			parent_doctype=doc.doctype,
 			transaction_type=doc.get("transaction_type"),
 			item_tax_template=item.get("item_tax_template"),
+			company=doc.get("company"),
 		)
 		if not template:
 			continue
@@ -415,6 +488,7 @@ def _apply_explicit_vat_totals(doc, tax_label):
 			parent_doctype=doc.doctype,
 			transaction_type=doc.get("transaction_type"),
 			item_tax_template=item.get("item_tax_template"),
+			company=doc.get("company"),
 		)
 		if not template:
 			continue
@@ -469,6 +543,7 @@ def _get_vat_tax_rate_map_for_item(doc, item):
 		parent_doctype=doc.doctype,
 		transaction_type=doc.get("transaction_type"),
 		item_tax_template=item.get("item_tax_template"),
+		company=doc.get("company"),
 	)
 	if not template:
 		return {}
@@ -480,12 +555,65 @@ def _get_vat_tax_rate_map_for_item(doc, item):
 	}
 
 
+def _item_template_cache():
+	cache = getattr(frappe.local, "_retail_item_vat_templates", None)
+	if cache is None:
+		cache = {}
+		frappe.local._retail_item_vat_templates = cache
+	return cache
+
+
+def _prefetch_vat_templates(doc):
+	"""One Item read for every line that still needs its VAT template."""
+	field = _get_vat_template_field(parent_doctype=doc.doctype, transaction_type=doc.get("transaction_type"))
+	if not field:
+		return
+	_company_default_vat_template(doc.get("company"), field)
+	codes = list(dict.fromkeys(
+		item.item_code for item in (doc.get("items") or [])
+		if item.get("item_code") and not item.get("item_tax_template")
+	))
+	cache = _item_template_cache()
+	missing = [code for code in codes if (code, field) not in cache]
+	if not missing:
+		return
+	if field not in ("custom_tax", "custom_purchase_tax_template"):
+		return
+	rows = frappe.db.sql(
+		f"select name, `{field}` as template from `tabItem` where name in %(names)s",
+		{"names": missing},
+		as_dict=True,
+	)
+	found = set()
+	for row in rows:
+		cache[(row.name, field)] = row.template
+		found.add(row.name)
+	for code in missing:
+		if code not in found:
+			cache[(code, field)] = None
+
+
+def _company_default_vat_template(company, template_field):
+	"""Company VAT default for the sales or purchase side of this document."""
+	from retail.domains.item.vat_pricing import COMPANY_VAT_FIELDS
+
+	company_field = COMPANY_VAT_FIELDS.get(template_field)
+	if not company or not company_field or not frappe.db.has_column("Company", company_field):
+		return None
+	cache = _item_template_cache()
+	key = ("company", company, company_field)
+	if key not in cache:
+		cache[key] = frappe.db.get_value("Company", company, company_field) or None
+	return cache[key]
+
+
 def _get_transaction_item_vat_template(
 	item_code,
 	child_doctype=None,
 	parent_doctype=None,
 	transaction_type=None,
 	item_tax_template=None,
+	company=None,
 	throw=False,
 ):
 	if item_tax_template:
@@ -495,11 +623,15 @@ def _get_transaction_item_vat_template(
 	if not template_field:
 		return None
 
-	template = frappe.db.get_value("Item", item_code, template_field)
+	cache = _item_template_cache()
+	key = (item_code, template_field)
+	if key not in cache:
+		cache[key] = frappe.db.get_value("Item", item_code, template_field)
+	template = cache[key] or _company_default_vat_template(company, template_field)
 	if not template and throw:
 		label = "Purchase VAT Template" if template_field == "custom_purchase_tax_template" else "Sales VAT Template"
 		frappe.throw(
-			frappe._("Set {0} in Item Master for item {1}.").format(label, item_code)
+			frappe._("Set {0} on the Item or the Company default for item {1}.").format(label, item_code)
 		)
 
 	return template
@@ -568,12 +700,9 @@ def _delete_obsolete_vat_fields(doctype):
 
 
 def _get_item_tax_template_details(template):
-	return frappe.get_all(
-		"Item Tax Template Detail",
-		filters={"parent": template},
-		fields=["tax_type", "tax_rate"],
-		limit_page_length=0,
-	)
+	from retail.domains.item.vat_pricing import get_item_tax_template_rows
+
+	return get_item_tax_template_rows(template)
 
 
 def _get_item_exclusive_amount(item):

@@ -277,7 +277,8 @@ def validate_invoice(invoice, closing):
     if invoice.company != company_for(closing.branch):
         frappe.throw(_("The bill belongs to another company."))
     from retail.pos_offline_promotions import rows as promotion_rows
-    if promotion_rows(frappe.parse_json(invoice.get("custom_pos_completed_payload") or "{}")):
+    from retail.pos_completed_sale import payload_for
+    if promotion_rows(payload_for(invoice)):
         frappe.throw(_("Offline promotion settlements require accounts review."))
     currency = frappe.get_cached_value("Company", invoice.company, "default_currency")
     if (invoice.docstatus != 1 or invoice.is_return or not invoice.consolidated_invoice
@@ -415,6 +416,9 @@ def guard_corrected_document(doc, method=None):
         return
     if doc.doctype in ("POS Invoice", "Sales Invoice"):
         old = doc.get_doc_before_save()
+        if old and any(doc.get(field) != old.get(field) for field in (
+                "custom_pos_modified", "custom_pos_payment_modified_at", "custom_pos_payment_modification_reference")):
+            frappe.throw(_("Payment correction metadata is maintained by the POS service."))
         if method == "before_cancel" and doc.get("custom_payment_revision"):
             frappe.throw(_("This bill has payment corrections. Use an authorized return instead of cancelling it."))
         if old and (doc.get("custom_payment_revision") != old.get("custom_payment_revision") or

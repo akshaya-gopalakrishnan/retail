@@ -57,6 +57,8 @@
 			}
 			if (event.key !== "Enter" || event.altKey || event.ctrlKey || event.metaKey || event.isComposing || !allowed()) return;
 			const input = event.target;
+			// Let the Item picker confirm or retry loading before Enter moves focus.
+			if (input.__retail_packing_keydown?.(event)) return;
 			// Serial numbers keep multiline entry; Link suggestions keep native selection.
 			if (!input.matches("input:not([type=button]), select") ||
 				input.getAttribute("aria-expanded") === "true" ||
@@ -153,7 +155,11 @@
 				const row = frm.fields_dict.items?.grid?.grid_rows_by_docname?.[cdn];
 				if (!row) return;
 				row.toggle_editable_row(true);
-				focusFirstEditable(row.row?.[0]);
+				const quantity = row.doc?.item_code && row.on_grid_fields_dict?.qty?.$input?.[0];
+				if (quantity && !quantity.disabled && !quantity.readOnly && quantity.getClientRects().length) {
+					quantity.focus();
+					quantity.select?.();
+				} else focusFirstEditable(row.row?.[0]);
 			});
 		}, 160);
 	}
@@ -540,6 +546,7 @@
 			const purchaseVat = this.lookup({method: "retail.domains.transactions.vat.get_transaction_item_vat_rate", args: {
 				item_code: itemCode, child_doctype: row.doctype, parent_doctype: this.frm.doc.doctype,
 				transaction_type: this.frm.doc.transaction_type, item_tax_template: row.item_tax_template,
+				company: this.frm.doc.company,
 			}});
 			const selling = frappe.meta.has_field(row.doctype, "custom_cur_sell_rate") ? [
 				this.lookup({method: "retail.domains.purchase.selling_price.get_standard_selling_rate", args: {item_code: itemCode, uom: row.uom}}),

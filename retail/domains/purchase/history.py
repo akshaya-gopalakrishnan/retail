@@ -69,7 +69,8 @@ def _read_rows(doctype, company, item_code, cutoff, supplier=None, other_supplie
 	fields += [f"`tab{child}`.`{key}` as `{('row_name' if key == 'name' else key)}`"
 		for key in child_fields if key in allowed and (key == "name" or frappe.get_meta(child).has_field(key))]
 	filters = [[doctype, "company", "=", company], [doctype, "docstatus", "=", 1],
-		[doctype, "posting_date", "<=", cutoff.date()], [child, "item_code", "=", item_code]]
+		[doctype, "posting_date", "<=", cutoff.date()],
+		[child, "item_code", "in" if isinstance(item_code, (list, tuple)) else "=", item_code]]
 	if supplier:
 		filters.append([doctype, "supplier", "!=" if other_suppliers else "=", supplier])
 	rows = frappe.get_list(
@@ -155,6 +156,24 @@ def _load_history(doc, item_code, other_suppliers=False):
 	return _chains(receipts, invoices), can_receipt and can_invoice
 
 
+def _load_histories(doc, item_codes):
+	"""Read both permission-filtered history tables once per document."""
+	codes = list(dict.fromkeys(code for code in item_codes if code))
+	if len(codes) <= 1:
+		return {code: _load_history(doc, code) for code in codes}
+	for code in codes:
+		frappe.get_doc("Item", code).check_permission("read")
+	cutoff = _cutoff(doc)
+	receipts, can_receipt = _read_rows("Purchase Receipt", doc.company, codes, cutoff, doc.supplier)
+	invoices, can_invoice = _read_rows("Purchase Invoice", doc.company, codes, cutoff, doc.supplier)
+	groups = {code: ([], []) for code in codes}
+	for rows, side in ((receipts, 0), (invoices, 1)):
+		for row in rows:
+			if row.item_code in groups and not (doc.doctype == row.doctype and doc.name == row.name):
+				groups[row.item_code][side].append(row)
+	return {code: (_chains(*rows), can_receipt and can_invoice) for code, rows in groups.items()}
+
+
 def _current_rate(row, conversion_rate, receipt=None):
 	quantity = (flt(row.get("qty")) + flt(row.get("custom_foc_qty"))) * flt(row.get("conversion_factor"))
 	if receipt and receipt.stock_qty > 0:
@@ -207,11 +226,9 @@ def get_comparisons(document):
 	rows = [row for row in doc.get("items", []) if row.item_code]
 	if len(rows) > 100:
 		frappe.throw(_("Request at most 100 item rows at a time."))
-	cache = {}
+	cache = _load_histories(doc, [row.item_code for row in rows])
 	result = []
 	for row in rows:
-		if row.item_code not in cache:
-			cache[row.item_code] = _load_history(doc, row.item_code)
 		result.append(_comparison(doc, row, *cache[row.item_code]))
 	return {"currency": frappe.get_cached_value("Company", doc.company, "default_currency"), "rows": result}
 
@@ -284,13 +301,11 @@ def warn_before_submit(doc, method=None):
 	if doc.get("is_return"):
 		return
 	try:
-		cache = {}
+		cache = _load_histories(doc, [row.item_code for row in doc.get("items", [])])
 		warnings = []
 		for row in doc.get("items", []):
 			if not row.item_code:
 				continue
-			if row.item_code not in cache:
-				cache[row.item_code] = _load_history(doc, row.item_code)
 			comparison = _comparison(doc, row, *cache[row.item_code])
 			if comparison["higher"]:
 				warnings.append(_("Row {0}: {1} — net unit cost {2} exceeds previous {3}.").format(

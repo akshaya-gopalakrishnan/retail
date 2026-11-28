@@ -44,6 +44,10 @@
 		}
 	}
 	function refresh(frm) {
+		if (frm.doc.custom_pos_modified) {
+			frm.dashboard.add_indicator(__("Modified — Payment Corrected") + " · " +
+				__("Revision {0}", [frm.doc.custom_payment_revision || 0]), "orange");
+		}
 		const grid = frm.fields_dict.payments?.grid;
 		if (!grid) return;
 		// Returns/accounting invoices can have is_pos=0 and still own settlements.

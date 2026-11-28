@@ -9,6 +9,9 @@
 	const link = (doctype, name) => name
 		? `<a href="/app/${frappe.router.slug(doctype)}/${encodeURIComponent(name)}" target="_blank" rel="noopener">${esc(name)}</a>` : "—";
 	const parents = ["Purchase Order", "Purchase Receipt", "Purchase Invoice"];
+	// These documents post every entered line. Wait until item entry is idle,
+	// or each new line sits behind a comparison that grows with the table.
+	const pacedParents = new Set(parents);
 
 	function snapshot(frm, items = frm.doc.items || []) {
 		const doc = {};
@@ -67,19 +70,26 @@
 		// Row highlights update when the comparison returns. Repainting the grid
 		// on every keystroke only repeats the previous result.
 		if (state.dialog && (state.dialog.display || state.dialog.$wrapper?.is?.(":visible"))) render(frm);
-		const delay = ["Purchase Receipt", "Purchase Invoice"].includes(frm.doc.doctype) ? 1000 : 450;
+		const delay = pacedParents.has(frm.doc.doctype) ? 1000 : 450;
 		state.timer = setTimeout(() => refresh(frm), delay);
 	}
 
 	async function refresh(frm) {
 		const state = setup(frm), generation = state.generation;
+		// The row highlights are behind Quick Entry. Resume their advisory read
+		// on idle after the dialog closes; do not join each item-add AJAX barrier.
+		if (frm.__quick_receipt?.dialog?.$wrapper?.is?.(":visible") &&
+			!state.dialog?.$wrapper?.is?.(":visible")) {
+			state.timer = setTimeout(() => refresh(frm), 1000);
+			return;
+		}
 		// Advisory history must not join the native item/pricing AJAX chain.
 		// Coalesce edits made while those requests are still completing.
-		if (["Purchase Receipt", "Purchase Invoice"].includes(frm.doc.doctype)) await frappe.after_ajax();
+		if (pacedParents.has(frm.doc.doctype)) await frappe.after_ajax();
 		if (generation !== state.generation) return;
 		// after_ajax can release between two native field handlers. Require an
 		// idle interval before advisory reads join the global AJAX chain.
-		if (["Purchase Receipt", "Purchase Invoice"].includes(frm.doc.doctype) &&
+		if (pacedParents.has(frm.doc.doctype) &&
 			(frappe.request?.ajax_count || (frm.doc.items || []).some(row =>
 				row.__retail_vat_syncing || row.__retail_sell_price_syncing) || frm.__quick_receipt?.pending ||
 				frm.__retail_purchase_action?.active)) {
@@ -252,7 +262,13 @@
 		const childEvents = {};
 		["item_code", "qty", "custom_foc_qty", "uom", "conversion_factor", "rate", "net_rate", "net_amount", "base_net_amount", "discount_percentage",
 			"discount_amount", "price_list_rate", "item_tax_template", "purchase_receipt", "custom_rate_including_vat",
-			"custom_rate_exclusive_vat", "items_add", "items_remove"].forEach((event) => childEvents[event] = schedule);
+			"custom_rate_exclusive_vat", "items_remove"].forEach((event) => childEvents[event] = schedule);
+		// A blank new line has no rate to compare. Posting the whole document
+		// here only grows with the lines already entered.
+		childEvents.items_add = (frm, cdt, cdn) => {
+			if (!locals[cdt]?.[cdn]?.item_code) return;
+			schedule(frm);
+		};
 		frappe.ui.form.on(`${doctype} Item`, childEvents);
 	});
 	const taxEvents = {};

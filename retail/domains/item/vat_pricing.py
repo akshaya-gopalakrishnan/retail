@@ -961,18 +961,31 @@ def _get_cost_net_rate(doc):
 	return get_margin_cost(doc)["cost"]
 
 
+def get_item_tax_template_rows(template):
+	"""Tax rows for one template. Repeated lines in the same request reuse this read."""
+	if not template:
+		return []
+	cache = getattr(frappe.local, "_retail_item_tax_rows", None)
+	if cache is None:
+		cache = {}
+		frappe.local._retail_item_tax_rows = cache
+	if template not in cache:
+		cache[template] = frappe.get_all(
+			"Item Tax Template Detail",
+			filters={"parent": template},
+			fields=["tax_type", "tax_rate"],
+			limit_page_length=0,
+		)
+	return cache[template]
+
+
 @frappe.whitelist()
 def get_item_tax_rate(template=None):
 	"""Return the combined percentage configured in an Item Tax Template."""
 	if not template:
 		return 0.0
 
-	return sum(
-		flt(row.tax_rate)
-		for row in frappe.get_all(
-			"Item Tax Template Detail", filters={"parent": template}, fields=["tax_rate"]
-		)
-	)
+	return sum(flt(row.tax_rate) for row in get_item_tax_template_rows(template))
 
 
 def _set_field_property(fieldname, property_name, value, property_type):

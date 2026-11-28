@@ -813,8 +813,8 @@ def _base_invoice(payload, counter_doc, is_return=False):
 	set_loyalty(doc, payload)
 
 	if is_return and doc.return_against:
-		original_payload = frappe.parse_json(frappe.db.get_value(
-			"POS Invoice", doc.return_against, "custom_pos_completed_payload") or "{}")
+		from retail.pos_completed_sale import payload_for
+		original_payload = payload_for(frappe.get_doc("POS Invoice", doc.return_against))
 		if original_payload.get("loyalty_redemption") or promotion_rows(original_payload):
 			frappe.throw("Return requires review: the original POS bill used promotion redemptions. "
 				"Restore the loyalty allocation and voucher allocation before refunding; automatic promotion returns are not supported yet.")
@@ -1457,6 +1457,8 @@ def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
 	branch = payload.get("branch")
 	counter_code = payload.get("counter_code")
 	modified_after = payload.get("modified_after")
+	if not branch or not counter_code:
+		return _general_pos_master_data(branch, counter_code, modified_after)
 	counter_doc = _counter(branch, counter_code)
 	catalog = _catalog_master_data(counter_doc.warehouse, modified_after)
 	modified_filter = [["modified", ">", modified_after]] if modified_after else []
@@ -1474,6 +1476,7 @@ def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
 		"buy_x_get_y_promotions": get_pos_buy_x_get_y_promotions(branch, counter_code, modified_after)["promotions"],
 		"gift_voucher_promotions": get_gift_voucher_promotions({"branch": branch, "counter_code": counter_code})["promotions"],
 		"customers": _customer_master_rows(counter_doc.company, modified_filter),
+		"suppliers": _supplier_master_rows(modified_filter),
 		"operators": _operator_master_rows(branch, modified_after),
 		"modes_of_payment": _pos_payment_modes(modified_filter),
 		"counters": frappe.get_all(
@@ -1493,6 +1496,55 @@ def get_pos_master_data(branch=None, counter_code=None, modified_after=None):
 			limit_page_length=0,
 		),
 	}, counter_doc.warehouse, known_items=catalog["items"])
+
+
+
+def _supplier_master_rows(modified_filter):
+	return frappe.get_all(
+		"Supplier", filters=modified_filter,
+		fields=["name", "supplier_name", "supplier_group", "supplier_type", "tax_id", "disabled", "modified"],
+		limit_page_length=0,
+	)
+
+
+def _general_pos_master_data(branch=None, counter_code=None, modified_after=None):
+	"""Unselected master download; never infer a terminal or company context."""
+	modified_filter = [["modified", ">", modified_after]] if modified_after else []
+	catalog = _catalog_master_data(None, modified_after)
+	# No warehouse was selected. Unknown stock must not look like zero stock.
+	for row in [*catalog["items"], *catalog.get("packing_details", [])]:
+		for stock_row in [row, *row.get("packings", [])]:
+			for field in ("actual_qty", "current_stock", "reserved_qty", "projected_qty", "stock_value", "stock_modified"):
+				if field in stock_row:
+					stock_row[field] = None
+	filters = {"is_active": 1, "allow_offline_sync": 1}
+	if branch:
+		filters["branch"] = branch
+	if counter_code:
+		filters["counter_code"] = counter_code
+	if "System Manager" not in frappe.get_roles():
+		filters["integration_user"] = ["in", ["", frappe.session.user]]
+	return with_item_identity({
+		"status": "Success",
+		"server_time": now_datetime(),
+		"server_timezone": get_system_timezone(),
+		"counter": None,
+		"tax_config": None,
+		"bill_format": None,
+		**catalog,
+		"promo_prices": [],
+		"buy_x_get_y_promotions": [],
+		"gift_voucher_promotions": [],
+		"customers": frappe.get_all("Customer", filters=[["disabled", "=", 0], *modified_filter],
+			fields=["name", "customer_name", "customer_group", "territory", "custom_sales_person", "modified"],
+			limit_page_length=0),
+		"suppliers": _supplier_master_rows(modified_filter),
+		"operators": [],
+		"modes_of_payment": _pos_payment_modes(modified_filter),
+		"counters": frappe.get_all("POS Branch Counter", filters=filters,
+			fields=["name", "branch", "warehouse", "cost_center", "counter_code", "counter_name",
+				"terminal_id", "printer_name", "pos_profile"], limit_page_length=0),
+	}, None, known_items=catalog["items"])
 
 
 def _catalog_master_data(warehouse, modified_after=None):
@@ -1853,6 +1905,9 @@ def verify_cashier_quick_pin(data=None, **kwargs):
 def create_pos_invoice(data=None, **kwargs):
 	_assert_pos_user()
 	payload = _as_dict(data, **kwargs)
+	from retail.pos_payment_modifications import is_modification, correct
+	if is_modification(payload):
+		return correct(payload)
 	if any(flt(row.get("qty")) < 0 for row in payload.get("items") or []):
 		from retail.pos_exchange import post_exchange
 		return _run("Sales Invoice", payload, lambda: post_exchange(payload))
@@ -1921,6 +1976,9 @@ def create_credit_pos_invoice(data=None, **kwargs):
 	"""Create an approved customer's unpaid sale as a submitted POS Invoice."""
 	_assert_pos_user()
 	payload = _as_dict(data, **kwargs)
+	from retail.pos_payment_modifications import is_modification, correct
+	if is_modification(payload):
+		return correct(payload)
 
 	def handler():
 		existing = _existing_invoice(payload.external_pos_reference)
@@ -2296,6 +2354,9 @@ def get_sync_status(data=None, external_references=None):
 			["name", "status", "pos_invoice", "sales_invoice", "exception_reason"], as_dict=True)
 		if accepted:
 			accepted.current_accounting_outstanding = frappe.db.get_value("Sales Invoice", accepted.sales_invoice, "outstanding_amount") if accepted.sales_invoice else None
+		if pos_invoice:
+			from retail.pos_payment_modifications import status_details
+			pos_invoice.update(status_details(pos_invoice.name))
 		result[ref] = {
 			"settlement": accepted,
 			"pos_invoice": pos_invoice,
@@ -2870,7 +2931,7 @@ def upsert_customer(data=None, **kwargs):
 	payload = _as_dict(data, **kwargs)
 
 	def handler():
-		_counter(payload.get("branch"), payload.get("counter_code"))
+		counter = _counter(payload.get("branch"), payload.get("counter_code"))
 		external_id = payload.get("external_customer_id")
 		if not external_id:
 			frappe.throw(_("external_customer_id is required."))
@@ -2878,16 +2939,92 @@ def upsert_customer(data=None, **kwargs):
 		values = {key: payload.get(key) for key in ("customer_name", "customer_group", "territory", "mobile_no", "email_id", "tax_id") if payload.get(key) is not None}
 		values["external_pos_customer_id"] = external_id
 		values.update(_customer_sales_person_values(payload))
+		credit_values = _customer_credit_values(payload)
+		if "is_credit_customer" in credit_values:
+			values["custom_is_credit_customer"] = credit_values["is_credit_customer"]
 		if name:
 			frappe.db.set_value("Customer", name, values)
-			return {"status": "Success", "action": "Updated", "customer": name}
-		if not values.get("customer_name"):
-			frappe.throw(_("customer_name is required for a new customer."))
-		customer = frappe.get_doc({"doctype": "Customer", **values})
-		customer.insert(ignore_permissions=True)
-		return {"status": "Success", "action": "Created", "customer": customer.name}
+			customer = frappe.get_doc("Customer", name)
+			action = "Updated"
+		else:
+			if not values.get("customer_name"):
+				frappe.throw(_("customer_name is required for a new customer."))
+			customer = frappe.get_doc({"doctype": "Customer", **values})
+			customer.insert(ignore_permissions=True)
+			action = "Created"
+		if "credit_limit" in credit_values:
+			row = next((row for row in customer.credit_limits if row.company == counter.company), None)
+			if row is None:
+				row = customer.append("credit_limits", {"company": counter.company})
+			row.credit_limit = credit_values["credit_limit"]
+			customer.save(ignore_permissions=True)
+		address = _upsert_customer_address(customer, payload)
+		return {"status": "Success", "action": action, "customer": customer.name,
+			"address_line": address,
+			"is_credit_customer": cint(customer.custom_is_credit_customer),
+			"credit_limit": flt(next((row.credit_limit for row in customer.credit_limits
+				if row.company == counter.company), 0))}
 
 	return _run("Customer Upsert", payload, handler)
+
+
+def _upsert_customer_address(customer, payload):
+	"""Save the supplied line on the customer's linked primary Address."""
+	from frappe.contacts.doctype.address.address import get_address_display
+
+	line = payload.get("address_line", payload.get("address_line1"))
+	name = customer.customer_primary_address
+	if line is None:
+		return frappe.db.get_value("Address", name, "address_line1") if name else None
+	if not isinstance(line, str) or not line.strip():
+		frappe.throw(_("address_line must be non-empty text."))
+	if name:
+		address = frappe.get_doc("Address", name)
+		if not any(row.link_doctype == "Customer" and row.link_name == customer.name for row in address.links):
+			frappe.throw(_("Primary Address must be linked to this Customer."))
+	else:
+		address = frappe.get_doc({"doctype": "Address", "address_title": customer.customer_name,
+			"address_type": "Billing", "is_primary_address": 1,
+			"city": "", "country": "",
+			"links": [{"link_doctype": "Customer", "link_name": customer.name}]})
+	address.address_line1 = line
+	for field in ("city", "country", "state", "pincode", "address_line2"):
+		if payload.get(field) is not None:
+			address.set(field, payload[field])
+	# This POS contract permits a line-only address. Keep the exception local
+	# to this save, while still rejecting any other missing mandatory fields.
+	if not address.city or not address.country:
+		missing = [field for field, _message in address._get_missing_mandatory_fields()
+			if field not in ("city", "country")]
+		if missing:
+			frappe.throw(_("Missing address fields: {0}").format(", ".join(missing)))
+		address.flags.ignore_mandatory = True
+	address.save(ignore_permissions=True)
+	customer.db_set({"customer_primary_address": address.name,
+		"primary_address": get_address_display(address.as_dict())})
+	return address.address_line1
+
+
+def _customer_credit_values(payload):
+	"""Validate optional manual flag and company-specific limit before writing."""
+	import math
+
+	values = {}
+	flag = payload.get("is_credit_customer")
+	if flag is not None:
+		if flag not in (0, 1, "0", "1"):
+			frappe.throw(_("is_credit_customer must be 0 or 1."))
+		values["is_credit_customer"] = cint(flag)
+	limit = payload.get("credit_limit")
+	if limit is not None:
+		try:
+			number = float(limit)
+		except (TypeError, ValueError):
+			frappe.throw(_("credit_limit must be a non-negative number."))
+		if isinstance(limit, bool) or not math.isfinite(number) or number < 0:
+			frappe.throw(_("credit_limit must be a non-negative number."))
+		values["credit_limit"] = number
+	return values
 
 
 def _customer_sales_person_values(payload):

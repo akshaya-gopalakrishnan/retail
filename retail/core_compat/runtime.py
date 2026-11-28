@@ -10,6 +10,9 @@ import frappe
 
 
 def install(*args, **kwargs):
+    _install_error_response_guard()
+    _install_batch_negative_stock_setting()
+    _install_sales_negative_stock_valuation()
     from erpnext.stock import get_item_details as core
     from retail.promotions.whole_bill import install as install_whole_bill
 
@@ -32,6 +35,65 @@ def install(*args, **kwargs):
 
     insert_item_price._retail_invoice_guard = True
     core.insert_item_price = insert_item_price
+
+
+def _install_batch_negative_stock_setting():
+    """Apply the existing Stock Settings switch to the batch total check too."""
+    from erpnext.stock import serial_batch_bundle as core
+
+    if getattr(core.throw_negative_batch_validation, "_retail_stock_setting", False) is True:
+        return
+    original = core.throw_negative_batch_validation
+
+    @wraps(original)
+    def throw_negative_batch_validation(batch_no, qty):
+        if frappe.db.get_single_value("Stock Settings", "allow_negative_stock_for_batch"):
+            return
+        return original(batch_no, qty)
+
+    throw_negative_batch_validation._retail_stock_setting = True
+    core.throw_negative_batch_validation = throw_negative_batch_validation
+
+
+def _install_sales_negative_stock_valuation():
+    """Permit a missing-cost sales fallback under the negative-stock setting."""
+    from erpnext.stock import stock_ledger as core
+
+    if getattr(core.get_valuation_rate, "_retail_sales_negative_stock", False) is True:
+        return
+    original = core.get_valuation_rate
+
+    @wraps(original)
+    def get_valuation_rate(item_code, warehouse, voucher_type, voucher_no,
+                           allow_zero_rate=False, *args, **kwargs):
+        enabled = voucher_type == "Sales Invoice" and frappe.db.get_single_value(
+            "Stock Settings", "allow_negative_stock"
+        )
+        rate = original(item_code, warehouse, voucher_type, voucher_no,
+                        allow_zero_rate or bool(enabled), *args, **kwargs)
+        return 0.0 if enabled and rate is None else rate
+
+    get_valuation_rate._retail_sales_negative_stock = True
+    core.get_valuation_rate = get_valuation_rate
+
+
+def _install_error_response_guard():
+    """Keep validation responses intact when a development console disconnects."""
+    if getattr(frappe.errprint, "_retail_broken_pipe_guard", False) is True:
+        return
+    original = frappe.errprint
+
+    @wraps(original)
+    def errprint(msg):
+        try:
+            return original(msg)
+        except BrokenPipeError:
+            # Core prints before adding the traceback to the request-local
+            # response. A closed stdout pipe must not replace the real error.
+            frappe.error_log.append({"exc": frappe.as_unicode(msg)})
+
+    errprint._retail_broken_pipe_guard = True
+    frappe.errprint = errprint
 
 
 def _install_purchase_master_fallback(core):

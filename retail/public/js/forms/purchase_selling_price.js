@@ -6,6 +6,9 @@
 
 	parentDoctypes.forEach((doctype) => {
 		frappe.ui.form.on(doctype, {
+			onload(frm) {
+				frm.__retail_loaded_selling_rates = new Set();
+			},
 			refresh(frm) {
 				toggleSellPriceColumns(frm);
 				addSellPriceButtons(frm);
@@ -172,6 +175,12 @@
 
 	function toggleSellPriceColumns(frm) {
 		if (!hasSellPriceFields(frm)) return;
+		const grid = frm.fields_dict.items.grid;
+		const update = (field, property, value) => {
+			const current = grid.fields_map[field]?.[property];
+			const same = typeof value === "boolean" ? current != null && Boolean(current) === value : current === value;
+			if (!same) grid.update_docfield_property(field, property, value);
+		};
 
 		const show = Boolean(frm.doc.custom_allow_selling_price);
 		const fields = [
@@ -184,16 +193,19 @@
 		}
 
 		fields.forEach((fieldname) => {
-			frm.fields_dict.items.grid.update_docfield_property(fieldname, "hidden", !show);
+			update(fieldname, "hidden", !show);
 		});
-		frm.fields_dict.items.grid.update_docfield_property("custom_new_sell_rate", "read_only", !show);
-		frm.fields_dict.items.grid.update_docfield_property("custom_new_sell_rate", "depends_on", "");
-		frm.fields_dict.items.grid.update_docfield_property("custom_new_sell_incl", "read_only", !show);
-		frm.fields_dict.items.grid.update_docfield_property("custom_new_sell_incl", "depends_on", "");
+		update("custom_new_sell_rate", "read_only", !show);
+		update("custom_new_sell_rate", "depends_on", "");
+		update("custom_new_sell_incl", "read_only", !show);
+		update("custom_new_sell_incl", "depends_on", "");
 		if (frm.doctype === "Purchase Receipt") {
-			frm.fields_dict.items.grid.update_docfield_property("custom_sell_margin", "hidden", true);
+			update("custom_sell_margin", "hidden", true);
 		}
-		frm.refresh_field("items");
+	}
+
+	function sellingRateKey(frm, row) {
+		return JSON.stringify([frm.doc.company, row.item_code, row.uom]);
 	}
 
 	function refreshAllRows(frm) {
@@ -201,7 +213,8 @@
 		if (frm.doc.docstatus !== 0) return;
 		if (!frm.doc.custom_allow_selling_price) return;
 		(frm.doc.items || []).forEach((row) => {
-			if (row.item_code && !flt(row.custom_cur_sell_rate)) {
+			if (row.item_code && !flt(row.custom_cur_sell_rate) &&
+				!frm.__retail_loaded_selling_rates?.has(sellingRateKey(frm, row))) {
 				fetchCurrentSellingRate(frm, row.doctype, row.name);
 			} else {
 				updateMargin(frm, row.doctype, row.name);
@@ -260,6 +273,9 @@
 		if (locals[cdt]?.[cdn] !== row || row.item_code !== itemCode || row.uom !== uom ||
 			row.__retail_selling_request !== request) return;
 		const rate = flt(response.message);
+		// Zero is a loaded price too. Saving must not refetch every zero-price
+		// row; a reload or explicit Item/UOM edit still performs a fresh lookup.
+		(frm.__retail_loaded_selling_rates ||= new Set()).add(sellingRateKey(frm, row));
 		const values = { custom_cur_sell_rate: rate };
 		if (row.custom_upd_sell_price && !flt(row.custom_new_sell_rate)) {
 			values.custom_new_sell_rate = rate;

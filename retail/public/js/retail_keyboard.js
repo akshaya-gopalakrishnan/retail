@@ -36,10 +36,31 @@
 				!field.grid && enabled(field.$input?.[0]));
 	};
 	function reveal(input) {
-		if (!input?.getBoundingClientRect || !input.scrollIntoView) return;
+		if (!input?.getBoundingClientRect) return;
+		const margin = 12;
+		// Item rows stay where the user is working. scrollIntoView walks every
+		// ancestor, so a refresh that focuses the heading pulls the page to row 1.
+		if (input.closest?.(".form-grid-container") || input.closest?.(".retail-scrollable-grid") || input.closest?.(".form-grid")) {
+			const container = input.closest(".retail-scrollable-grid .form-grid-container");
+			const row = input.closest(".data-row");
+			if (!container || !row || input.closest(".retail-grid-pinned")) return;
+			const bounds = container.getBoundingClientRect();
+			let left = Math.max(0, bounds.left) + margin;
+			let right = Math.min(window.innerWidth, bounds.right) - margin;
+			for (const pinned of row.querySelectorAll(".row-check, .row-index, .retail-grid-pinned")) {
+				if (getComputedStyle(pinned).position !== "sticky") continue;
+				const pin = pinned.getBoundingClientRect();
+				if (getComputedStyle(container).direction === "rtl") right = Math.min(right, pin.left - margin);
+				else left = Math.max(left, pin.right + margin);
+			}
+			const cell = input.getBoundingClientRect();
+			const dx = cell.left < left ? cell.left - left : cell.right > right ? cell.right - right : 0;
+			if (dx) container.scrollBy({left: dx, top: 0, behavior: "instant"});
+			return;
+		}
+		if (!input.scrollIntoView) return;
 		// Native nearest scrolling handles the page and nested vertical containers.
 		input.scrollIntoView({block: "nearest", inline: "nearest", behavior: "instant"});
-		const margin = 12;
 		const viewportHeight = window.innerHeight;
 		let top = margin;
 		const rect = input.getBoundingClientRect();
@@ -57,22 +78,6 @@
 		const dy = rect.top < top ? rect.top - top :
 			rect.bottom > viewportHeight - margin ? rect.bottom - viewportHeight + margin : 0;
 		if (dy) window.scrollBy({top: dy, left: 0, behavior: "instant"});
-
-		const container = input.closest(".retail-scrollable-grid .form-grid-container");
-		const row = input.closest(".data-row");
-		if (!container || !row || input.closest(".retail-grid-pinned")) return;
-		const bounds = container.getBoundingClientRect();
-		let left = Math.max(0, bounds.left) + margin;
-		let right = Math.min(window.innerWidth, bounds.right) - margin;
-		for (const pinned of row.querySelectorAll(".row-check, .row-index, .retail-grid-pinned")) {
-			if (getComputedStyle(pinned).position !== "sticky") continue;
-			const pin = pinned.getBoundingClientRect();
-			if (getComputedStyle(container).direction === "rtl") right = Math.min(right, pin.left - margin);
-			else left = Math.max(left, pin.right + margin);
-		}
-		const cell = input.getBoundingClientRect();
-		const dx = cell.left < left ? cell.left - left : cell.right > right ? cell.right - right : 0;
-		if (dx) container.scrollBy({left: dx, top: 0, behavior: "instant"});
 	}
 
 	const focus = (field) => {

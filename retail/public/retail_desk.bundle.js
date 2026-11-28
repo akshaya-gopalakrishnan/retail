@@ -1,3 +1,4 @@
+import "./js/utils/prevent_history_swipe.js";
 import "./js/forms/sales_document_design.js";
 import "./js/forms/sales_invoice_scroll.js";
 import "./js/forms/sales_invoice_duplicates.js";
@@ -47,3 +48,4 @@ import "./js/reports/pos_printing.js";
 import "./js/forms/restaurant_table.js";
 
 import "./js/forms/whole_bill_promotions.js";
+import "./js/forms/address_line_growth.js";

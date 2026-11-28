@@ -107,3 +107,27 @@ for(const parent of ['Purchase Receipt','Purchase Invoice']) {
   assert.equal(f.row.custom_new_sell_incl,20);
  });
 }
+
+test('zero selling prices are not refetched after Save; Item edits and reload still refresh them',async()=>{
+ const f=fixture('Purchase Invoice');
+ f.frappe.call=async args=>{f.calls.push(args);return {message:args.method.endsWith('get_standard_selling_rate')?0:5};};
+ await f.trigger('item_code');f.calls.length=0;
+ await f.handlers['Purchase Invoice'].refresh(f.frm);
+ await Promise.resolve();
+ assert.equal(f.calls.length,0,'A resolved zero price is retained across Save refresh');
+ await f.trigger('uom');assert.ok(f.calls.length>0,'Explicit UOM action still fetches current values');
+ f.calls.length=0;await f.handlers['Purchase Invoice'].onload(f.frm);
+ await f.handlers['Purchase Invoice'].refresh(f.frm);await Promise.resolve();
+ assert.ok(f.calls.length>0,'Reload clears the per-form zero-price knowledge');
+});
+
+test('unchanged selling-price column metadata does not rebuild the grid on Save refresh',async()=>{
+ const f=fixture('Purchase Invoice');let updates=0;
+ f.frm.fields_dict.items.grid.update_docfield_property=(field,key,value)=>{
+  updates++;f.frm.fields_dict.items.grid.fields_map[field][key]=value;
+ };
+ f.row.custom_cur_sell_rate=10;
+ await f.handlers['Purchase Invoice'].refresh(f.frm);assert.ok(updates>0);
+ updates=0;await f.handlers['Purchase Invoice'].refresh(f.frm);
+ assert.equal(updates,0);
+});

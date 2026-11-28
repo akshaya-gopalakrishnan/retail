@@ -11,6 +11,13 @@ from erpnext.accounts.doctype.pos_invoice.pos_invoice import POSInvoice
 
 def payload_for(doc):
 	if doc.doctype == "POS Invoice" and doc.get("pos_sync_source") == "Offline POS":
+		if doc.flags.get("payment_correction_payload") is not None:
+			return doc.flags.payment_correction_payload
+		if doc.get("custom_pos_modified"):
+			current = frappe.db.get_value("POS Accepted Transaction",
+				{"external_pos_reference": doc.external_pos_reference}, "correction_payload_json")
+			if current:
+				return frappe.parse_json(current)
 		return frappe.parse_json(doc.get("custom_pos_completed_payload") or "{}")
 	return {}
 

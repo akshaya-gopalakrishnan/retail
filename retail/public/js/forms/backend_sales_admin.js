@@ -99,10 +99,13 @@
             }
         },
         async before_save(frm) {
-            await frappe.after_ajax();
+            window.retail?.transaction_items?.releaseSaveWait?.(frm);
             await ensure(frm, true);
         },
-        async before_submit(frm) { await ensure(frm, true); },
+        async before_submit(frm) {
+            window.retail?.transaction_items?.releaseSaveWait?.(frm);
+            await ensure(frm, true);
+        },
         after_save(frm) {
             if (frm.__retailSalesApprovals?.length && !frm.__retailUnapprovedEdit) rememberApprovedValues(frm);
         },

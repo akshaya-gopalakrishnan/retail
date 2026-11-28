@@ -2,6 +2,12 @@ frappe.listview_settings["Item"] = frappe.listview_settings["Item"] || {};
 frappe.listview_settings["Item"].add_fields = [
 	...new Set([...(frappe.listview_settings["Item"].add_fields || []), "item_code"]),
 ];
+frappe.listview_settings["Item"].formatters = {
+	...(frappe.listview_settings["Item"].formatters || {}),
+	custom_margin_(value, df, doc) {
+		return frappe.format(value || 0, { ...df, fieldtype: "Percent" }, null, doc);
+	},
+};
 
 function arrangeRetailItemFilters(listview) {
 	const wrapper = listview.filter_area.standard_filters_wrapper;

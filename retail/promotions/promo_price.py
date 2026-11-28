@@ -248,16 +248,25 @@ def row_matches_item(row, item):
 def item_belongs_to_group(item_code, item_group):
 	if not item_code or not item_group:
 		return False
+	cache = getattr(frappe.local, "_retail_item_group_membership", None)
+	if cache is None:
+		cache = {}
+		frappe.local._retail_item_group_membership = cache
+	key = (item_code, item_group)
+	if key in cache:
+		return cache[key]
 
 	item_group_name = frappe.db.get_value("Item", item_code, "item_group")
 	if not item_group_name:
+		cache[key] = False
 		return False
 
 	lft, rgt = frappe.db.get_value("Item Group", item_group, ["lft", "rgt"]) or (None, None)
 	if not lft or not rgt:
-		return item_group_name == item_group
+		cache[key] = item_group_name == item_group
+		return cache[key]
 
-	return bool(
+	cache[key] = bool(
 		frappe.db.exists(
 			"Item Group",
 			{
@@ -267,6 +276,7 @@ def item_belongs_to_group(item_code, item_group):
 			},
 		)
 	)
+	return cache[key]
 
 
 def get_doc_gross_total(doc):

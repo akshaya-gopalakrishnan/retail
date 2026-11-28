@@ -1,0 +1,20 @@
+{
+  "site": "retail-test.localhost",
+  "method": "Temporary invoice copies with save/submit transactions rolled back; source records unchanged.",
+  "browser_save_ms": {
+    "Sales Invoice": 702,
+    "Purchase Invoice": 2260
+  },
+  "server_seconds": {
+    "Sales Invoice": {
+      "save": 0.419,
+      "submit": 0.371
+    },
+    "Purchase Invoice": {
+      "save": 1.371,
+      "submit": 3.259
+    }
+  },
+  "target_met_for_PI56": false,
+  "production_deployed": false
+}

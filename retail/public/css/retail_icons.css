@@ -891,13 +891,13 @@ input[type="checkbox"]:checked,
     z-index: 1051 !important;
 }
 
-body:has(.modal.show) [data-page-route^="Form/"] .form-grid,
-body:has(.modal.show) [data-page-route^="Form/"] .grid-body,
-body:has(.modal.show) [data-page-route^="Form/"] .rows,
-body:has(.modal.show) [data-page-route^="Form/"] .grid-row,
-body:has(.modal.show) [data-page-route^="Form/"] .data-row,
-body:has(.modal.show) [data-page-route^="Form/"] .grid-static-col,
-body:has(.modal.show) [data-page-route^="Form/"] .field-area {
+body.retail-modal-open [data-page-route^="Form/"] .form-grid,
+body.retail-modal-open [data-page-route^="Form/"] .grid-body,
+body.retail-modal-open [data-page-route^="Form/"] .rows,
+body.retail-modal-open [data-page-route^="Form/"] .grid-row,
+body.retail-modal-open [data-page-route^="Form/"] .data-row,
+body.retail-modal-open [data-page-route^="Form/"] .grid-static-col,
+body.retail-modal-open [data-page-route^="Form/"] .field-area {
     z-index: auto !important;
 }
 

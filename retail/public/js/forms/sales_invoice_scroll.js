@@ -1,4 +1,4 @@
-// Preserve the working position while Sales Invoice item rows are rebuilt.
+// Preserve the working position while item rows are rebuilt.
 (() => {
     function snapshot(grid) {
         const nodes = new Set();
@@ -40,11 +40,10 @@
                 const input = row.row.find('input[type="Text"],textarea,select').filter(':visible:first')[0];
                 input?.focus({preventScroll: true});
                 restore(positions);
-                // Unlike default focus centering, nearest leaves an already
-                // visible row in its current position and reveals new rows gently.
-                input?.scrollIntoView({block: 'nearest', inline: 'nearest', behavior: 'instant'});
             }, 100);
         };
     }
-    for (const doctype of ['Sales Invoice', 'Delivery Note']) frappe.ui.form.on(doctype, {refresh: install});
+    for (const doctype of ['Purchase Order', 'Purchase Receipt', 'Purchase Invoice', 'Sales Invoice', 'Delivery Note']) {
+        frappe.ui.form.on(doctype, {refresh: install});
+    }
 })();

@@ -22,16 +22,20 @@
                 barcode: row.barcode, custom_packing_detail: row.custom_packing_detail,
                 custom_item_barcode: row.custom_item_barcode}))}, no_spinner: true});
         if (generation !== frm.__retail_barcode_generation) return;
-        let changed = false;
+        const painted = [];
         for (const row of rows) {
             if (snapshots.get(row.name) !== signature(row) || !(row.name in (message || {}))) continue;
             if (row.custom_item_barcode !== message[row.name]) {
                 row.custom_item_barcode = message[row.name];
-                changed = true;
+                painted.push(row);
             }
             resolved.set(row, signature(row));
         }
-        if (changed) frm.refresh_field("items");
+        // Paint the barcode cell only. Refreshing the items table rebuilds every line.
+        const grid = frm.fields_dict?.items?.grid;
+        for (const row of painted) {
+            grid?.grid_rows_by_docname?.[row.name]?.refresh_field?.("custom_item_barcode");
+        }
     }
     function schedule(frm) {
         clearTimeout(frm.__retail_barcode_timer);

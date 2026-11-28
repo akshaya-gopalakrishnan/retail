@@ -1,0 +1,5 @@
+html,
+body {
+    overscroll-behavior-x: none !important;
+    overflow-x: hidden;
+}
